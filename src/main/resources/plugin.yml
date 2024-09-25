@@ -1,4 +1,7 @@
-name: ParticlesTesting
+name: ParticleEmitter
 version: '1.0-SNAPSHOT'
-main: com.ixume.particlesTesting.ParticlesTesting
+main: com.ixume.particleemitter.ParticleEmitter
 api-version: '1.20'
+
+commands:
+  customparticle:

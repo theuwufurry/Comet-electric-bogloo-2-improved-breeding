@@ -1,25 +1,26 @@
-package com.ixume.particlesTesting.emitter.rate
+package com.ixume.particleemitter.emitter.rate
 
 import com.google.gson.JsonElement
-import com.ixume.particlesTesting.emitter.EmitterMochaData
-import com.ixume.particlesTesting.emitter.EmitterMochaFunction
-import com.ixume.particlesTesting.parsing.expression
-import javassist.LoaderClassPath
-import team.unnamed.mocha.MochaEngine
+import com.ixume.particleemitter.ParticleEmitter
+import com.ixume.particleemitter.emitter.EmitterData
+import com.ixume.particleemitter.parsing.expression
+import javax.script.Bindings
+import javax.script.Compilable
+import javax.script.CompiledScript
 import kotlin.math.floor
 
-class SteadyRateComponent(private val spawnRate: EmitterMochaFunction, private val maxParticles: EmitterMochaFunction?) : RateComponent {
+class SteadyRateComponent(private val spawnRate: CompiledScript, private val maxParticles: CompiledScript?) : RateComponent {
     companion object {
         fun parse(jsonElement: JsonElement): SteadyRateComponent? {
-            val mochaEngine = MochaEngine.createStandard()
-            mochaEngine.classPool().appendClassPath(LoaderClassPath(EmitterMochaFunction::class.java.classLoader))
+            val engine = ParticleEmitter.scriptEngineFactory.scriptEngine as Compilable
             val jsonObject = jsonElement.asJsonObject
-            return SteadyRateComponent(mochaEngine.compile(jsonObject.expression("spawn_rate") ?: return null, EmitterMochaFunction::class.java), mochaEngine.compile(jsonObject.expression("max_particles") ?: return null, EmitterMochaFunction::class.java))
+            return SteadyRateComponent(engine.compile(jsonObject.expression("spawn_rate") ?: return null), engine.compile(jsonObject.expression("max_particles") ?: return null))
         }
     }
 
-    override fun toEmit(emitterData: EmitterMochaData): Int {
-        val evaluatedSpawnRate = spawnRate.eval(emitterData.age)
+    override fun toEmit(emitterData: EmitterData, bindings: Bindings): Int {
+        val evaluatedSpawnRate = spawnRate.eval(bindings) as Double
+        println(evaluatedSpawnRate)
         //evaluatedSpawnRate is per second, we need per tick.
         //tick spawn rate is floor(evaluatedSpawnRate / 20) + leftovers
         //leftovers = (evaluatedSpawnRate % 20). leftovers are every few ticks. should be evenly spaced throughout 20 tick interval.

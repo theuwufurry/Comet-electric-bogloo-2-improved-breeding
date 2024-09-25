@@ -1,4 +1,4 @@
-package command
+package com.ixume.particleemitter.command
 
 import com.ixume.particleemitter.GlobalTicker
 import com.ixume.particleemitter.ParticleEmitter
@@ -14,8 +14,8 @@ object CustomParticleSpawnCommand : CommandExecutor {
     }
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
-        if (sender !is Player) return false
-        GlobalTicker.emitters += ParticleJsonParser.jsonUnrealizdEmitters["loading"]!!.realize(sender.location)
+        if (sender !is Player || args?.size != 1) return false
+        GlobalTicker.emitters += ParticleJsonParser.jsonUnrealizedEmitters[args[0]]!!.realize(sender.location)
         return true
     }
 }

@@ -1,8 +1,9 @@
-package com.ixume.particlesTesting.emitter.shape
+package com.ixume.particleemitter.emitter.shape
 
-import com.ixume.particlesTesting.emitter.EmitterMochaData
+import com.ixume.particleemitter.emitter.EmitterData
 import org.joml.Vector3d
+import javax.script.Bindings
 
 interface ShapeComponent {
-    fun offset(emitterData: EmitterMochaData): Vector3d
+    fun offset(emitterData: EmitterData, emitterBindings: Bindings): Vector3d
 }

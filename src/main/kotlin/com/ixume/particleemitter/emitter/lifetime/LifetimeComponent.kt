@@ -1,10 +1,9 @@
-package com.ixume.particlesTesting.emitter.lifetime
+package com.ixume.particleemitter.emitter.lifetime
 
-import com.ixume.particlesTesting.emitter.Emitter
-import com.ixume.particlesTesting.emitter.EmitterMochaData
-import com.ixume.particlesTesting.particle.Particle
-import com.ixume.particlesTesting.particle.ParticleMochaData
+import com.ixume.particleemitter.emitter.EmitterData
+import com.ixume.particleemitter.particle.ParticleData
+import javax.script.Bindings
 
 interface LifetimeComponent {
-    fun live(emitterData: EmitterMochaData, particleData: ParticleMochaData): Boolean
+    fun keepAlive(emitterData: EmitterData, emitterBindings: Bindings, particleData: ParticleData, particleBindings: Bindings): Boolean
 }

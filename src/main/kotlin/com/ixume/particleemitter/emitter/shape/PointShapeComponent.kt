@@ -1,29 +1,26 @@
-package com.ixume.particlesTesting.emitter.shape
+package com.ixume.particleemitter.emitter.shape
 
 import com.google.gson.JsonElement
-import com.ixume.particlesTesting.emitter.Emitter
-import com.ixume.particlesTesting.emitter.EmitterMochaData
-import com.ixume.particlesTesting.emitter.EmitterMochaFunction
-import com.ixume.particlesTesting.parsing.renameVariables
-import javassist.LoaderClassPath
+import com.ixume.particleemitter.ParticleEmitter
+import com.ixume.particleemitter.emitter.EmitterData
 import org.joml.Vector3d
-import team.unnamed.mocha.MochaEngine
-import team.unnamed.mocha.runtime.MochaFunction
+import javax.script.Bindings
+import javax.script.Compilable
+import javax.script.CompiledScript
 
-class PointShapeComponent(private val xOffset: EmitterMochaFunction, private val yOffset: EmitterMochaFunction, private val zOffset: EmitterMochaFunction) : ShapeComponent {
+class PointShapeComponent(private val xOffset: CompiledScript, private val yOffset: CompiledScript, private val zOffset: CompiledScript) : ShapeComponent {
     companion object {
         fun parse(jsonElement: JsonElement): PointShapeComponent? {
-            val mochaEngine = MochaEngine.createStandard()
-            mochaEngine.classPool().appendClassPath(LoaderClassPath(EmitterMochaFunction::class.java.classLoader))
+            val engine = ParticleEmitter.scriptEngineFactory.scriptEngine as Compilable
             val offsetVector = jsonElement.asJsonObject?.get("offset")?.asJsonArray ?: return null
             return PointShapeComponent(
-                mochaEngine.compile(offsetVector.get(0)?.asString?.renameVariables() ?: return null, EmitterMochaFunction::class.java),
-                mochaEngine.compile(offsetVector.get(1)?.asString?.renameVariables() ?: return null, EmitterMochaFunction::class.java),
-                mochaEngine.compile(offsetVector.get(2)?.asString?.renameVariables() ?: return null, EmitterMochaFunction::class.java))
+                engine.compile(offsetVector.get(0)?.asString ?: return null),
+                engine.compile(offsetVector.get(1)?.asString ?: return null),
+                engine.compile(offsetVector.get(2)?.asString ?: return null))
         }
     }
 
-    override fun offset(emitterData: EmitterMochaData): Vector3d {
-        return Vector3d(xOffset.eval(emitterData.age), yOffset.eval(emitterData.age), zOffset.eval(emitterData.age))
+    override fun offset(emitterData: EmitterData, emitterBindings: Bindings): Vector3d {
+        return Vector3d(xOffset.eval(emitterBindings) as Double, yOffset.eval(emitterBindings) as Double, zOffset.eval(emitterBindings) as Double)
     }
 }

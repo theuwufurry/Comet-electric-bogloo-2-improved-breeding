@@ -1,49 +1,32 @@
-package com.ixume.particlesTesting.parsing
+package com.ixume.particleemitter.parsing
 
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import com.ixume.particlesTesting.ParticleEmitter
-import com.ixume.particlesTesting.emitter.UnrealizedEmitter
-import com.ixume.particlesTesting.emitter.lifetime.LifetimeComponent
-import com.ixume.particlesTesting.emitter.lifetime.LifetimeExpressionComponent
-import com.ixume.particlesTesting.emitter.rate.RateComponent
-import com.ixume.particlesTesting.emitter.rate.SteadyRateComponent
-import com.ixume.particlesTesting.emitter.shape.PointShapeComponent
-import com.ixume.particlesTesting.emitter.shape.ShapeComponent
+import com.ixume.particleemitter.ParticleEmitter
+import com.ixume.particleemitter.emitter.UnrealizedEmitter
+import com.ixume.particleemitter.emitter.lifetime.LifetimeComponent
+import com.ixume.particleemitter.emitter.lifetime.LifetimeExpressionComponent
+import com.ixume.particleemitter.emitter.rate.RateComponent
+import com.ixume.particleemitter.emitter.rate.SteadyRateComponent
+import com.ixume.particleemitter.emitter.shape.PointShapeComponent
+import com.ixume.particleemitter.emitter.shape.ShapeComponent
 import java.io.FileReader
-
-val variableReassignment : Map<String, String> = mapOf(
-    "variable.particle_age" to "particle_age",
-    "variable.emitter_age" to "emitter_age"
-)
-
-fun String.replaceWithMap(map: Map<String, String>): String {
-    var string = this
-    for ((old, new) in map) {
-        string = string.replace(old, new)
-    }
-
-    return string
-}
-
-internal fun String.renameVariables(): String {
-    return this.replaceWithMap(variableReassignment)
-}
 
 fun JsonObject.expression(field: String): String? {
     if (field !in keySet()) return null
     val fieldElement = this.get(field)
     if (!fieldElement.isJsonPrimitive) return null
     val fieldPrimitive = fieldElement.asJsonPrimitive
-    return (if (fieldPrimitive.isNumber) fieldPrimitive.asNumber.toString() else fieldPrimitive.asString).renameVariables()
+    return ((if (fieldPrimitive.isNumber) fieldPrimitive.asNumber.toString() else fieldPrimitive.asString)).also { println(it) }
 }
 
 object ParticleJsonParser {
-    lateinit var jsonUnrealizdEmitters: Map<String, UnrealizedEmitter>
+    lateinit var jsonUnrealizedEmitters: Map<String, UnrealizedEmitter>
         private set
 
     fun parseJsons() {
         val dataFolder = ParticleEmitter.INSTANCE.dataFolder
+        if (!dataFolder.exists()) return
 
         val logger = ParticleEmitter.INSTANCE.logger
 
@@ -54,13 +37,7 @@ object ParticleJsonParser {
 
             val rootObject = JsonParser.parseReader(FileReader(file)).asJsonObject
 
-            val particleEffectObject: JsonObject? = rootObject.getAsJsonObject("particle_effect")
-            if (particleEffectObject == null) {
-                logger.warning("""Field "particle_effect" is null in ${file.name}!""")
-                continue
-            }
-
-            val componentsObject: JsonObject? = particleEffectObject.getAsJsonObject("components")
+            val componentsObject: JsonObject? = rootObject.getAsJsonObject("components")
             if (componentsObject == null) {
                 logger.warning("""Field "components" is null in ${file.name}!""")
                 continue
@@ -72,7 +49,7 @@ object ParticleJsonParser {
             }
         }
 
-        jsonUnrealizdEmitters = unrealizedEmitters
+        jsonUnrealizedEmitters = unrealizedEmitters
     }
 
     private fun parseComponents(componentsObject: JsonObject): UnrealizedEmitter? {

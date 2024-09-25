@@ -1,6 +1,6 @@
-package com.ixume.particlesTesting
+package com.ixume.particleemitter
 
-import com.ixume.particlesTesting.emitter.Emitter
+import com.ixume.particleemitter.emitter.Emitter
 import org.bukkit.Bukkit
 import java.util.concurrent.CopyOnWriteArrayList
 

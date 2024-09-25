@@ -1,7 +1,8 @@
-package com.ixume.particlesTesting.emitter.rate
+package com.ixume.particleemitter.emitter.rate
 
-import com.ixume.particlesTesting.emitter.EmitterMochaData
+import com.ixume.particleemitter.emitter.EmitterData
+import javax.script.Bindings
 
 interface RateComponent {
-    fun toEmit(emitterData: EmitterMochaData): Int
+    fun toEmit(emitterData: EmitterData, bindings: Bindings): Int
 }
