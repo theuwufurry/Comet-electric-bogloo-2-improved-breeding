@@ -24,9 +24,9 @@ class SteadyRateComponent(private val spawnRate: CompiledScript, private val max
         //evaluatedSpawnRate is per second, we need per tick.
         //tick spawn rate is floor(evaluatedSpawnRate / 20) + leftovers
         //leftovers = (evaluatedSpawnRate % 20). leftovers are every few ticks. should be evenly spaced throughout 20 tick interval.
-        val leftovers = evaluatedSpawnRate % 20
+        val leftovers = evaluatedSpawnRate % 20.0
         val leftoversBonus = if (leftovers != 0.0) {
-            if (emitterData.age % (20.0 / leftovers) == 0.0) 1 else 0
+            if (emitterData.age % (20.0 / leftovers).toInt() == 0.0) 1 else 0
         } else {
             0
         }
