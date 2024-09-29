@@ -5,16 +5,14 @@ import com.ixume.particleemitter.parsing.ParticleJsonParser
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
-import org.bukkit.entity.Player
 
-object CustomParticleSpawnCommand : CommandExecutor {
+object ReloadParticleScriptsCommand : CommandExecutor {
     init {
-        ParticleEmitter.INSTANCE.getCommand("customparticle")!!.setExecutor(this)
+        ParticleEmitter.INSTANCE.getCommand("reloadparticles")!!.setExecutor(this)
     }
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
-        if (sender !is Player || args?.size != 1) return false
-        ParticleJsonParser.jsonUnrealizedEmitters[args[0]]!!.realize(sender.location)
+        ParticleJsonParser.parseJsons()
         return true
     }
 }

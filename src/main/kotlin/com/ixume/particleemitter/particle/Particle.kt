@@ -1,41 +1,47 @@
 package com.ixume.particleemitter.particle
 
+import com.ixume.particleemitter.particle.data.PacketEntity
+import com.ixume.particleemitter.ParticleEmitter.Companion.unsafe
 import com.ixume.particleemitter.ParticleIDProvider
-import net.minecraft.network.chat.Component
+import com.ixume.particleemitter.particle.data.ComponentData
+import com.ixume.particleemitter.particle.data.EntityDataBuilder
+import net.minecraft.network.protocol.Packet
+import net.minecraft.network.protocol.game.ClientGamePacketListener
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket
-import net.minecraft.network.protocol.game.ClientboundBundlePacket
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
-import net.minecraft.world.entity.Display
-import net.minecraft.world.entity.Display.TextDisplay
+import net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.phys.Vec3
-import org.bukkit.Color
 import org.bukkit.World
-import org.bukkit.craftbukkit.CraftWorld
 import org.joml.Vector3d
 import java.util.UUID
-import javax.script.Bindings
-import javax.script.SimpleBindings
 
-class Particle(private var location: Vector3d) {
-    val data: ParticleData = ParticleData(0.0)
-    val bindings: Bindings = SimpleBindings(mapOf("particle" to data))
+class Particle(var origin: Vector3d, var data: ParticleData) {
 
     val id = ParticleIDProvider.id
     private val uuid = UUID.randomUUID()
+    private val packetEntity: PacketEntity = unsafe.allocateInstance(PacketEntity::class.java) as PacketEntity
+    init {
+        packetEntity.particle = this
+    }
 
     fun tick() {
         data.age++
     }
 
-    fun getAddPacket(world: World): net.minecraft.network.protocol.Packet<*> {
-        val level = (world as CraftWorld).handle
-        val entity = TextDisplay(EntityType.TEXT_DISPLAY, level)
-        entity.text = Component.literal("P")
-        entity.billboardConstraints = Display.BillboardConstraints.CENTER
-        entity.entityData.set(TextDisplay.DATA_BACKGROUND_COLOR_ID, Color.fromARGB(0, 0, 0, 0).asARGB())
-        val packet = ClientboundAddEntityPacket(id, uuid, location.x, location.y, location.z, 0F, 0F, EntityType.TEXT_DISPLAY, 0, Vec3(0.0, 0.0, 0.0), 0.0)
-        val entityDataPacket = entity.entityData.nonDefaultValues?.let { ClientboundSetEntityDataPacket(id, it) }
-        return ClientboundBundlePacket(listOf(packet, entityDataPacket))
+    fun getAddPacket(): Pair<Packet<in ClientGamePacketListener>, Packet<in ClientGamePacketListener>?> {
+        val packet = ClientboundAddEntityPacket(id, uuid, origin.x + data.relativePosition.x, origin.y + data.relativePosition.y, origin.z + data.relativePosition.z, 0F, 0F, EntityType.TEXT_DISPLAY, 0, Vec3(0.0, 0.0, 0.0), 0.0)
+        val data = EntityDataBuilder.getDataFor(ComponentData(data.sprite, data.color, data.matrix))
+        val entityDataPacket: Packet<in ClientGamePacketListener>? =
+            data.nonDefaultValues?.let { ClientboundSetEntityDataPacket(id, it) }
+        return Pair(packet, entityDataPacket)
+    }
+
+    fun updatePacket(): ClientboundSetEntityDataPacket? {
+        return EntityDataBuilder.getDataFor(ComponentData(data.sprite, data.color, data.matrix)).nonDefaultValues?.let { ClientboundSetEntityDataPacket(id, it) }
+    }
+
+    fun getMovementPacket(): ClientboundTeleportEntityPacket {
+        return ClientboundTeleportEntityPacket(packetEntity)
     }
 }
