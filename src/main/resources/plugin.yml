@@ -1,6 +1,6 @@
 name: ParticleEmitter
 version: '1.0-SNAPSHOT'
-main: com.ixume.particleemitter.ParticleEmitter
+main: gg.aquatic.particleemitter.ParticleEmitter
 api-version: '1.20'
 
 commands:
