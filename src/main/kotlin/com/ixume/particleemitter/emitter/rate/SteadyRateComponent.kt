@@ -3,9 +3,7 @@ package com.ixume.particleemitter.emitter.rate
 import com.google.gson.JsonElement
 import com.ixume.particleemitter.ParticleEmitter
 import com.ixume.particleemitter.emitter.EmitterData
-import com.ixume.particleemitter.parsing.ComponentParser
-import com.ixume.particleemitter.parsing.ParticleJsonParser
-import com.ixume.particleemitter.parsing.expression
+import com.ixume.particleemitter.parsing.*
 import javax.script.Compilable
 import javax.script.CompiledScript
 import javax.script.ScriptContext
@@ -17,12 +15,10 @@ class SteadyRateComponent(private val spawnRate: CompiledScript, private val myE
             ParticleJsonParser.rateComponentParsers += "emitter_rate_steady" to this
         }
 
-        override fun parse(jsonElement: JsonElement): SteadyRateComponent? {
-            val engine = ParticleEmitter.scriptEngineFactory.scriptEngine
-            val emitterData = EmitterData(0.0)
-            engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("emitter" to emitterData)
+        override fun parse(jsonElement: JsonElement, macros: Map<String, String>?): SteadyRateComponent? {
+            val (engine, emitterData) = emitterEngine()
             val jsonObject = jsonElement.asJsonObject
-            return SteadyRateComponent((engine as Compilable).compile(jsonObject.expression("spawn_rate") ?: return null), emitterData)
+            return SteadyRateComponent(engine.compile(jsonObject.expression("spawn_rate") ?: return null, macros), emitterData)
         }
     }
 

@@ -1,14 +1,9 @@
 package com.ixume.particleemitter.emitter.lifetime
 
 import com.google.gson.JsonElement
-import com.ixume.particleemitter.ParticleEmitter
 import com.ixume.particleemitter.emitter.EmitterData
-import com.ixume.particleemitter.parsing.ComponentParser
-import com.ixume.particleemitter.parsing.ParticleJsonParser
-import com.ixume.particleemitter.parsing.expression
-import javax.script.Compilable
+import com.ixume.particleemitter.parsing.*
 import javax.script.CompiledScript
-import javax.script.ScriptContext
 
 class TimedEmitterLifetimeComponent(private val lifetimeScript: CompiledScript, private val myEmitterData: EmitterData) : EmitterLifetimeComponent {
     companion object : ComponentParser<TimedEmitterLifetimeComponent> {
@@ -16,12 +11,10 @@ class TimedEmitterLifetimeComponent(private val lifetimeScript: CompiledScript, 
             ParticleJsonParser.emitterLifetimeComponentParsers += "timed_emitter_lifetime" to this
         }
 
-        override fun parse(jsonElement: JsonElement): TimedEmitterLifetimeComponent? {
-            val engine = ParticleEmitter.scriptEngineFactory.scriptEngine
-            val emitterData = EmitterData(0.0)
-            engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("emitter" to emitterData)
+        override fun parse(jsonElement: JsonElement, macros: Map<String, String>?): TimedEmitterLifetimeComponent? {
+            val (engine, emitterData) = emitterEngine()
             val jsonObject = jsonElement.asJsonObject
-            return TimedEmitterLifetimeComponent((engine as Compilable).compile(jsonObject.expression("expiration_expression") ?: return null), emitterData)
+            return TimedEmitterLifetimeComponent(engine.compile(jsonObject.expression("expiration_expression") ?: return null, macros), emitterData)
         }
     }
 

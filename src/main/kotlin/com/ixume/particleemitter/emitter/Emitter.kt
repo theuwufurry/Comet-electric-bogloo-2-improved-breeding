@@ -22,17 +22,17 @@ import org.joml.Matrix4f
 import org.joml.Vector3d
 import org.joml.Vector3f
 
-data class Emitter(val rateComponent: RateComponent,
-                   val particleLifetimeComponent: ParticleLifetimeComponent,
-                   val shapeComponent: ShapeComponent,
-                   val spriteComponent: SpriteComponent,
-                   val colorComponent: ColorComponent,
-                   val emitterLifetimeComponent: EmitterLifetimeComponent,
-                   val positionComponent: PositionComponent,
-                   val scaleComponent: ScaleComponent,
-                   var location: Location,
-                   var task: BukkitTask?) {
-    private val emitterData: EmitterData = EmitterData(0.0)
+class Emitter(private val rateComponent: RateComponent,
+              private val particleLifetimeComponent: ParticleLifetimeComponent,
+              private val shapeComponent: ShapeComponent,
+              private val spriteComponent: SpriteComponent,
+              private val colorComponent: ColorComponent,
+              private val emitterLifetimeComponent: EmitterLifetimeComponent,
+              private val positionComponent: PositionComponent,
+              private val scaleComponent: ScaleComponent,
+              private var location: Location,
+              var task: BukkitTask?) {
+    private val emitterData: EmitterData = EmitterData()
     private val particles: MutableList<Particle> = mutableListOf()
     private val deadParticles: MutableList<Particle> = mutableListOf()
     private var blocked = false

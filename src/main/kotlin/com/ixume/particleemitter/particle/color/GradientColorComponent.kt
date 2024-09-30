@@ -2,16 +2,11 @@ package com.ixume.particleemitter.particle.color
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import com.ixume.particleemitter.ParticleEmitter
 import com.ixume.particleemitter.emitter.EmitterData
-import com.ixume.particleemitter.parsing.ComponentParser
-import com.ixume.particleemitter.parsing.ParticleJsonParser
-import com.ixume.particleemitter.parsing.expression
+import com.ixume.particleemitter.parsing.*
 import com.ixume.particleemitter.particle.ParticleData
 import java.awt.Color
-import javax.script.Compilable
 import javax.script.CompiledScript
-import javax.script.ScriptContext
 
 class GradientColorComponent(private val interpolantScript: CompiledScript, private val gradient: List<Pair<Double, CompiledScript>>, private val myEmitterData: EmitterData, private val myParticleData: ParticleData) : ColorComponent {
     companion object : ComponentParser<ColorComponent> {
@@ -19,20 +14,16 @@ class GradientColorComponent(private val interpolantScript: CompiledScript, priv
             ParticleJsonParser.colorComponentParsers += "gradient_color" to this
         }
 
-        override fun parse(jsonElement: JsonElement): GradientColorComponent {
-            val engine = ParticleEmitter.scriptEngineFactory.scriptEngine
-            val emitterData = EmitterData()
-            val particleData = ParticleData()
-            engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("emitter" to emitterData)
-            engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("particle" to particleData)
+        override fun parse(jsonElement: JsonElement, macros: Map<String, String>?): GradientColorComponent? {
+            val (engine, emitterData, particleData) = particleEngine()
             val jsonObject = jsonElement.asJsonObject
             val gradient: MutableList<Pair<Double, CompiledScript>> = mutableListOf()
             for (element in jsonObject.getAsJsonArray("data")) {
-                gradient += (element as JsonObject).getAsJsonPrimitive("index").asNumber.toDouble() to (engine as Compilable).compile(element.expression("color")?.addDependency())
+                gradient += (element as JsonObject).getAsJsonPrimitive("index").asNumber.toDouble() to engine.compile(element.expression("color")?.addDependency() ?: return null, macros)
             }
 
             return GradientColorComponent(
-                (engine as Compilable).compile(jsonObject.expression("interpolant")),
+                engine.compile(jsonObject.expression("interpolant") ?: return null, macros),
                 gradient,
                 emitterData,
                 particleData

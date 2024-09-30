@@ -24,7 +24,7 @@ fun JsonObject.expression(field: String): String? {
 }
 
 interface ComponentParser<T> {
-    fun parse(jsonElement: JsonElement): T?
+    fun parse(jsonElement: JsonElement, macros: Map<String, String>?): T?
 }
 
 object ParticleJsonParser {
@@ -45,8 +45,6 @@ object ParticleJsonParser {
         val dataFolder = ParticleEmitter.INSTANCE.dataFolder
         if (!dataFolder.exists()) return
 
-        val logger = ParticleEmitter.INSTANCE.logger
-
         val unrealizedEmitters: MutableMap<String, UnrealizedEmitter> = mutableMapOf()
 
         for (file in dataFolder.listFiles()!!) {
@@ -54,22 +52,22 @@ object ParticleJsonParser {
 
             val rootObject = JsonParser.parseReader(FileReader(file)).asJsonObject
 
-            val componentsObject: JsonObject? = rootObject.getAsJsonObject("components")
-            if (componentsObject == null) {
-                logger.warning("""Field "components" is null in ${file.name}!""")
-                continue
-            }
-
-            val emitter = parseComponents(componentsObject)
+            val emitter = parseComponents(rootObject)
             emitter?.run {
                 unrealizedEmitters += file.nameWithoutExtension to emitter
+            } ?: run {
+                ParticleEmitter.INSTANCE.logger.warning("""Field "components" is null in ${file.name}!""")
             }
         }
 
         jsonUnrealizedEmitters = unrealizedEmitters
     }
 
-    private fun parseComponents(componentsObject: JsonObject): UnrealizedEmitter? {
+    private fun parseComponents(rootObject: JsonObject): UnrealizedEmitter? {
+        val macros: Map<String, String>? = rootObject.getAsJsonObject("macros")?.asMap()?.mapValues { it.value.asString }
+
+        val componentsObject: JsonObject = rootObject.getAsJsonObject("components") ?: return null
+
         var rateComponent: RateComponent? = null
         var particleLifetimeComponent: ParticleLifetimeComponent? = null
         var shapeComponent: ShapeComponent? = null
@@ -80,7 +78,7 @@ object ParticleJsonParser {
         var scaleComponent: ScaleComponent? = null
         for ((key, componentElement) in componentsObject.entrySet()) {
             if (key in rateComponentParsers) {
-                val component = rateComponentParsers[key]!!.parse(componentElement)
+                val component = rateComponentParsers[key]!!.parse(componentElement, macros)
                 if (component != null) {
                     rateComponent = component
                 }
@@ -89,7 +87,7 @@ object ParticleJsonParser {
             }
 
             if (key in emitterLifetimeComponentParsers) {
-                val component = emitterLifetimeComponentParsers[key]!!.parse(componentElement)
+                val component = emitterLifetimeComponentParsers[key]!!.parse(componentElement, macros)
                 if (component != null) {
                     emitterLifetimeComponent = component
                 }
@@ -98,7 +96,7 @@ object ParticleJsonParser {
             }
 
             if (key in shapeComponentParsers) {
-                val component = shapeComponentParsers[key]!!.parse(componentElement)
+                val component = shapeComponentParsers[key]!!.parse(componentElement, macros)
                 if (component != null) {
                     shapeComponent = component
                 }
@@ -107,7 +105,7 @@ object ParticleJsonParser {
             }
 
             if (key in particleLifetimeComponentParsers) {
-                val component = particleLifetimeComponentParsers[key]!!.parse(componentElement)
+                val component = particleLifetimeComponentParsers[key]!!.parse(componentElement, macros)
                 if (component != null) {
                    particleLifetimeComponent = component
                 }
@@ -116,7 +114,7 @@ object ParticleJsonParser {
             }
 
             if (key in colorComponentParsers) {
-                val component = colorComponentParsers[key]!!.parse(componentElement)
+                val component = colorComponentParsers[key]!!.parse(componentElement, macros)
                 if (component != null) {
                     colorComponent = component
                 }
@@ -125,7 +123,7 @@ object ParticleJsonParser {
             }
 
             if (key in spriteComponentParsers) {
-                val component = spriteComponentParsers[key]!!.parse(componentElement)
+                val component = spriteComponentParsers[key]!!.parse(componentElement, macros)
                 if (component != null) {
                     spriteComponent = component
                 }
@@ -134,7 +132,7 @@ object ParticleJsonParser {
             }
 
             if (key in positionComponentParsers) {
-                val component = positionComponentParsers[key]!!.parse(componentElement)
+                val component = positionComponentParsers[key]!!.parse(componentElement, macros)
                 if (component != null) {
                     positionComponent = component
                 }
@@ -143,7 +141,7 @@ object ParticleJsonParser {
             }
 
             if (key in scaleComponentParsers) {
-                val component = scaleComponentParsers[key]!!.parse(componentElement)
+                val component = scaleComponentParsers[key]!!.parse(componentElement, macros)
                 if (component != null) {
                     scaleComponent = component
                 }
