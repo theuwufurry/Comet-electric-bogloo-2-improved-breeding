@@ -22,6 +22,7 @@ import com.ixume.particleemitter.particle.position.ExpressionPositionComponent
 import com.ixume.particleemitter.particle.position.PositionComponent
 import com.ixume.particleemitter.particle.sprite.ConstantSpriteComponent
 import com.ixume.particleemitter.particle.sprite.ExpressionSpriteComponent
+import com.ixume.particleemitter.particle.sprite.FlipbookSpriteComponent
 import com.ixume.particleemitter.particle.sprite.SpriteComponent
 import com.ixume.particleemitter.particle.transformation.scale.ExpressionScaleComponent
 import com.ixume.particleemitter.particle.transformation.scale.ScaleComponent
@@ -66,6 +67,7 @@ object ParticleJsonParser {
 
         ConstantSpriteComponent
         ExpressionSpriteComponent
+        FlipbookSpriteComponent
 
         ExpressionPositionComponent
 
