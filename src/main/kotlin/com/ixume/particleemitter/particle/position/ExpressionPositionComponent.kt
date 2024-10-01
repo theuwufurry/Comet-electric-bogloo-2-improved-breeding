@@ -3,6 +3,7 @@ package com.ixume.particleemitter.particle.position
 import com.google.gson.JsonElement
 import com.ixume.particleemitter.emitter.EmitterData
 import com.ixume.particleemitter.parsing.*
+import com.ixume.particleemitter.parsing.macro.Macro
 import com.ixume.particleemitter.particle.ParticleData
 import org.joml.Vector3d
 import javax.script.CompiledScript
@@ -13,7 +14,7 @@ class ExpressionPositionComponent(private val xOffset: CompiledScript, private v
             ParticleJsonParser.positionComponentParsers += "expression_relative_position" to this
         }
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, String>?): PositionComponent? {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): PositionComponent? {
             val (engine, emitterData, particleData) = particleEngine()
             val jsonObject = jsonElement.asJsonObject
             return ExpressionPositionComponent(

@@ -3,6 +3,7 @@ package com.ixume.particleemitter.particle.lifetime
 import com.google.gson.JsonElement
 import com.ixume.particleemitter.emitter.EmitterData
 import com.ixume.particleemitter.parsing.*
+import com.ixume.particleemitter.parsing.macro.Macro
 import com.ixume.particleemitter.particle.ParticleData
 import javax.script.CompiledScript
 
@@ -12,7 +13,7 @@ class ParticleLifetimeExpressionComponent(private val lifetimeExpression: Compil
             ParticleJsonParser.particleLifetimeComponentParsers += "particle_lifetime_expression" to this
         }
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, String>?): ParticleLifetimeExpressionComponent? {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ParticleLifetimeExpressionComponent {
             val (engine, emitterData, particleData) = particleEngine()
             val jsonObject = jsonElement.asJsonObject
             return ParticleLifetimeExpressionComponent(

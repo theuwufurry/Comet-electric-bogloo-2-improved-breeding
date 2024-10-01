@@ -3,6 +3,7 @@ package com.ixume.particleemitter.particle.color
 import com.google.gson.JsonElement
 import com.ixume.particleemitter.emitter.EmitterData
 import com.ixume.particleemitter.parsing.*
+import com.ixume.particleemitter.parsing.macro.Macro
 import com.ixume.particleemitter.particle.ParticleData
 import java.awt.Color
 import javax.script.CompiledScript
@@ -13,7 +14,7 @@ class ConstantColorComponent(private val colorScript: CompiledScript, private va
             ParticleJsonParser.colorComponentParsers += "constant_color" to this
         }
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, String>?): ConstantColorComponent? {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ConstantColorComponent? {
             val (engine, emitterData) = emitterEngine()
             val jsonObject = jsonElement.asJsonObject
             return ConstantColorComponent(

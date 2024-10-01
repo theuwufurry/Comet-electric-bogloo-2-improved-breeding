@@ -3,6 +3,7 @@ package com.ixume.particleemitter.emitter.lifetime
 import com.google.gson.JsonElement
 import com.ixume.particleemitter.emitter.EmitterData
 import com.ixume.particleemitter.parsing.*
+import com.ixume.particleemitter.parsing.macro.Macro
 import javax.script.CompiledScript
 
 class TimedEmitterLifetimeComponent(private val lifetimeScript: CompiledScript, private val myEmitterData: EmitterData) : EmitterLifetimeComponent {
@@ -11,7 +12,7 @@ class TimedEmitterLifetimeComponent(private val lifetimeScript: CompiledScript, 
             ParticleJsonParser.emitterLifetimeComponentParsers += "timed_emitter_lifetime" to this
         }
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, String>?): TimedEmitterLifetimeComponent? {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): TimedEmitterLifetimeComponent? {
             val (engine, emitterData) = emitterEngine()
             val jsonObject = jsonElement.asJsonObject
             return TimedEmitterLifetimeComponent(engine.compile(jsonObject.expression("expiration_expression") ?: return null, macros), emitterData)

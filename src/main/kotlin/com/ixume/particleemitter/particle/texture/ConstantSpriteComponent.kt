@@ -3,6 +3,7 @@ package com.ixume.particleemitter.particle.texture
 import com.google.gson.JsonElement
 import com.ixume.particleemitter.emitter.EmitterData
 import com.ixume.particleemitter.parsing.*
+import com.ixume.particleemitter.parsing.macro.Macro
 import com.ixume.particleemitter.particle.ParticleData
 import javax.script.CompiledScript
 
@@ -12,7 +13,7 @@ class ConstantSpriteComponent(private val sprite: CompiledScript, private val my
             ParticleJsonParser.spriteComponentParsers += "constant_sprite" to this
         }
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, String>?): ConstantSpriteComponent? {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ConstantSpriteComponent? {
             val (engine, emitterData) = emitterEngine()
             val jsonObject = jsonElement.asJsonObject
             return ConstantSpriteComponent(

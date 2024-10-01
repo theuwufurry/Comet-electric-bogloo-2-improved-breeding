@@ -6,12 +6,23 @@ import com.google.gson.JsonParser
 import com.ixume.particleemitter.ParticleEmitter
 import com.ixume.particleemitter.emitter.UnrealizedEmitter
 import com.ixume.particleemitter.emitter.lifetime.EmitterLifetimeComponent
+import com.ixume.particleemitter.emitter.lifetime.TimedEmitterLifetimeComponent
 import com.ixume.particleemitter.particle.color.ColorComponent
 import com.ixume.particleemitter.particle.lifetime.ParticleLifetimeComponent
 import com.ixume.particleemitter.emitter.rate.RateComponent
+import com.ixume.particleemitter.emitter.rate.SteadyRateComponent
+import com.ixume.particleemitter.emitter.shape.PointShapeComponent
 import com.ixume.particleemitter.emitter.shape.ShapeComponent
+import com.ixume.particleemitter.parsing.macro.Macro
+import com.ixume.particleemitter.parsing.macro.MacrosParser
+import com.ixume.particleemitter.particle.color.ConstantColorComponent
+import com.ixume.particleemitter.particle.color.GradientColorComponent
+import com.ixume.particleemitter.particle.lifetime.ParticleLifetimeExpressionComponent
+import com.ixume.particleemitter.particle.position.ExpressionPositionComponent
 import com.ixume.particleemitter.particle.position.PositionComponent
+import com.ixume.particleemitter.particle.texture.ConstantSpriteComponent
 import com.ixume.particleemitter.particle.texture.SpriteComponent
+import com.ixume.particleemitter.particle.transformation.scale.ExpressionScaleComponent
 import com.ixume.particleemitter.particle.transformation.scale.ScaleComponent
 import java.io.FileReader
 
@@ -24,7 +35,7 @@ fun JsonObject.expression(field: String): String? {
 }
 
 interface ComponentParser<T> {
-    fun parse(jsonElement: JsonElement, macros: Map<String, String>?): T?
+    fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): T?
 }
 
 object ParticleJsonParser {
@@ -37,6 +48,20 @@ object ParticleJsonParser {
     val emitterLifetimeComponentParsers: MutableMap<String, ComponentParser<out EmitterLifetimeComponent>> = mutableMapOf()
     val rateComponentParsers: MutableMap<String, ComponentParser<out RateComponent>> = mutableMapOf()
     val shapeComponentParsers: MutableMap<String, ComponentParser<out ShapeComponent>> = mutableMapOf()
+
+    fun init() {
+        MacrosParser
+        TimedEmitterLifetimeComponent
+        SteadyRateComponent
+        PointShapeComponent
+
+        ConstantColorComponent
+        GradientColorComponent
+        ParticleLifetimeExpressionComponent
+        ConstantSpriteComponent
+        ExpressionPositionComponent
+        ExpressionScaleComponent
+    }
 
     lateinit var jsonUnrealizedEmitters: Map<String, UnrealizedEmitter>
         private set
@@ -64,7 +89,7 @@ object ParticleJsonParser {
     }
 
     private fun parseComponents(rootObject: JsonObject): UnrealizedEmitter? {
-        val macros: Map<String, String>? = rootObject.getAsJsonObject("macros")?.asMap()?.mapValues { it.value.asString }
+        val macros: Map<String, Macro>? = rootObject.getAsJsonObject("macros")?.let { MacrosParser.parseMacros(it) }
 
         val componentsObject: JsonObject = rootObject.getAsJsonObject("components") ?: return null
 

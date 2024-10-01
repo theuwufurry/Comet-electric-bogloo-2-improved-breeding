@@ -4,6 +4,7 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.ixume.particleemitter.emitter.EmitterData
 import com.ixume.particleemitter.parsing.*
+import com.ixume.particleemitter.parsing.macro.Macro
 import com.ixume.particleemitter.particle.ParticleData
 import java.awt.Color
 import javax.script.CompiledScript
@@ -14,7 +15,7 @@ class GradientColorComponent(private val interpolantScript: CompiledScript, priv
             ParticleJsonParser.colorComponentParsers += "gradient_color" to this
         }
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, String>?): GradientColorComponent? {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): GradientColorComponent? {
             val (engine, emitterData, particleData) = particleEngine()
             val jsonObject = jsonElement.asJsonObject
             val gradient: MutableList<Pair<Double, CompiledScript>> = mutableListOf()

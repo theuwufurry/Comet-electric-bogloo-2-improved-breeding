@@ -3,6 +3,7 @@ package com.ixume.particleemitter.particle.transformation.scale
 import com.google.gson.JsonElement
 import com.ixume.particleemitter.emitter.EmitterData
 import com.ixume.particleemitter.parsing.*
+import com.ixume.particleemitter.parsing.macro.Macro
 import com.ixume.particleemitter.particle.ParticleData
 import org.joml.Vector3f
 import javax.script.CompiledScript
@@ -13,7 +14,7 @@ class ExpressionScaleComponent (private val xScale: CompiledScript, private val 
             ParticleJsonParser.scaleComponentParsers += "expression_scale" to this
         }
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, String>?): ScaleComponent? {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ScaleComponent? {
             val (engine, emitterData, particleData) = particleEngine()
             val jsonObject = jsonElement.asJsonObject
             return ExpressionScaleComponent(

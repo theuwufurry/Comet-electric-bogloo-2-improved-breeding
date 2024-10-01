@@ -2,7 +2,9 @@ package com.ixume.particleemitter.parsing
 
 import com.ixume.particleemitter.ParticleEmitter
 import com.ixume.particleemitter.emitter.EmitterData
+import com.ixume.particleemitter.parsing.macro.Macro
 import com.ixume.particleemitter.particle.ParticleData
+import org.openjdk.nashorn.api.scripting.NashornScriptEngine
 import javax.script.Compilable
 import javax.script.CompiledScript
 import javax.script.ScriptContext
@@ -24,11 +26,14 @@ fun particleEngine(): Triple<Compilable, EmitterData, ParticleData> {
 }
 
 
-fun Compilable.compile(input: String, macros: Map<String, String>?): CompiledScript {
+fun Compilable.compile(input: String, macros: Map<String, Macro>?): CompiledScript {
     var output = input
     if (macros != null) {
-        for ((from, to ) in macros) {
-            output = output.replace(from, to)
+        for ((from, macro ) in macros) {
+            output = output.replace(from, macro.to)
+            if (macro.binding != null) {
+                (this as NashornScriptEngine).getBindings(ScriptContext.ENGINE_SCOPE) += macro.binding
+            }
         }
     }
 

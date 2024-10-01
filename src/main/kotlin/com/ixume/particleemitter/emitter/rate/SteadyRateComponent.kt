@@ -1,12 +1,10 @@
 package com.ixume.particleemitter.emitter.rate
 
 import com.google.gson.JsonElement
-import com.ixume.particleemitter.ParticleEmitter
 import com.ixume.particleemitter.emitter.EmitterData
 import com.ixume.particleemitter.parsing.*
-import javax.script.Compilable
+import com.ixume.particleemitter.parsing.macro.Macro
 import javax.script.CompiledScript
-import javax.script.ScriptContext
 import kotlin.math.floor
 
 class SteadyRateComponent(private val spawnRate: CompiledScript, private val myEmitterData: EmitterData) : RateComponent {
@@ -15,7 +13,7 @@ class SteadyRateComponent(private val spawnRate: CompiledScript, private val myE
             ParticleJsonParser.rateComponentParsers += "emitter_rate_steady" to this
         }
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, String>?): SteadyRateComponent? {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): SteadyRateComponent? {
             val (engine, emitterData) = emitterEngine()
             val jsonObject = jsonElement.asJsonObject
             return SteadyRateComponent(engine.compile(jsonObject.expression("spawn_rate") ?: return null, macros), emitterData)

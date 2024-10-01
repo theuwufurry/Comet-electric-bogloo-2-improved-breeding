@@ -3,6 +3,7 @@ package com.ixume.particleemitter.emitter.shape
 import com.google.gson.JsonElement
 import com.ixume.particleemitter.emitter.EmitterData
 import com.ixume.particleemitter.parsing.*
+import com.ixume.particleemitter.parsing.macro.Macro
 import com.ixume.particleemitter.particle.ParticleData
 import org.joml.Vector3d
 import javax.script.CompiledScript
@@ -13,7 +14,7 @@ class PointShapeComponent(private val xOffset: CompiledScript, private val yOffs
             ParticleJsonParser.shapeComponentParsers += "emitter_shape_point" to this
         }
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, String>?): PointShapeComponent? {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): PointShapeComponent? {
             val (engine, emitterData, particleData) = particleEngine()
             val offsetVector = jsonElement.asJsonObject?.get("offset")?.asJsonArray ?: return null
             return PointShapeComponent(
