@@ -19,6 +19,7 @@ import com.ixume.particleemitter.particle.color.ConstantColorComponent
 import com.ixume.particleemitter.particle.color.GradientColorComponent
 import com.ixume.particleemitter.particle.lifetime.ParticleLifetimeExpressionComponent
 import com.ixume.particleemitter.particle.position.ExpressionPositionComponent
+import com.ixume.particleemitter.particle.position.MotionPositionComponent
 import com.ixume.particleemitter.particle.position.PositionComponent
 import com.ixume.particleemitter.particle.sprite.ConstantSpriteComponent
 import com.ixume.particleemitter.particle.sprite.ExpressionSpriteComponent
@@ -70,6 +71,7 @@ object ParticleJsonParser {
         FlipbookSpriteComponent
 
         ExpressionPositionComponent
+        MotionPositionComponent
 
         ExpressionScaleComponent
     }

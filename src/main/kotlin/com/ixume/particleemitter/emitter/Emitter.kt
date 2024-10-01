@@ -116,8 +116,9 @@ class Emitter(private val rateComponent: RateComponent,
             var particleData = ParticleData()
             val spawnOffset = shapeComponent.offset(emitterData, particleData)
             val matrix = matrixFromParts(scaleComponent.scale(emitterData, particleData))
-            particleData = ParticleData(0.0, spriteComponent.sprite(emitterData, particleData), colorComponent.color(emitterData, particleData), Vector3d(0.0), matrix, particleData.random)
-            val particle = Particle(Vector3d(location.x + spawnOffset.x, location.y + spawnOffset.y, location.z + spawnOffset.z), particleData)
+            particleData = ParticleData(0.0, spriteComponent.sprite(emitterData, particleData), colorComponent.color(emitterData, particleData), Vector3d(), matrix, particleData.random, Vector3d())
+            val relativePosition = positionComponent.pos(emitterData, particleData)
+            val particle = Particle(Vector3d(location.x + spawnOffset.x + relativePosition.x, location.y + spawnOffset.y + relativePosition.y, location.z + spawnOffset.z + relativePosition.z), particleData)
             val packets = particle.getAddPacket()
             bundle.add(packets.first)
             packets.second?.let { it1 -> bundle.add(it1) }

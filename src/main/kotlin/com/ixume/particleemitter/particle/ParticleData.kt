@@ -8,8 +8,9 @@ data class ParticleData(var age: Double,
                         var color: Int,
                         var relativePosition: Vector3d,
                         var matrix: Matrix4f,
-                        var random: Double) {
-    constructor() : this(0.0, "", 0, Vector3d(0.0), Matrix4f(), Math.random())
+                        var random: Double,
+                        var velocity: Vector3d) {
+    constructor() : this(0.0, "", 0, Vector3d(), Matrix4f(), Math.random(), Vector3d())
 
     fun copyFrom(other: ParticleData) {
         age = other.age
@@ -18,5 +19,6 @@ data class ParticleData(var age: Double,
         relativePosition = other.relativePosition
         matrix = other.matrix
         random = other.random
+        velocity = other.velocity
     }
 }
