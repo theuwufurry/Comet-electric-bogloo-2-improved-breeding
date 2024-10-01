@@ -20,8 +20,9 @@ import com.ixume.particleemitter.particle.color.GradientColorComponent
 import com.ixume.particleemitter.particle.lifetime.ParticleLifetimeExpressionComponent
 import com.ixume.particleemitter.particle.position.ExpressionPositionComponent
 import com.ixume.particleemitter.particle.position.PositionComponent
-import com.ixume.particleemitter.particle.texture.ConstantSpriteComponent
-import com.ixume.particleemitter.particle.texture.SpriteComponent
+import com.ixume.particleemitter.particle.sprite.ConstantSpriteComponent
+import com.ixume.particleemitter.particle.sprite.ExpressionSpriteComponent
+import com.ixume.particleemitter.particle.sprite.SpriteComponent
 import com.ixume.particleemitter.particle.transformation.scale.ExpressionScaleComponent
 import com.ixume.particleemitter.particle.transformation.scale.ScaleComponent
 import java.io.FileReader
@@ -51,15 +52,23 @@ object ParticleJsonParser {
 
     fun init() {
         MacrosParser
+
         TimedEmitterLifetimeComponent
+
         SteadyRateComponent
+
         PointShapeComponent
 
         ConstantColorComponent
         GradientColorComponent
+
         ParticleLifetimeExpressionComponent
+
         ConstantSpriteComponent
+        ExpressionSpriteComponent
+
         ExpressionPositionComponent
+
         ExpressionScaleComponent
     }
 

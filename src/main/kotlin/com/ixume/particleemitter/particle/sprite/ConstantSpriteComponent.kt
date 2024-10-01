@@ -1,4 +1,4 @@
-package com.ixume.particleemitter.particle.texture
+package com.ixume.particleemitter.particle.sprite
 
 import com.google.gson.JsonElement
 import com.ixume.particleemitter.emitter.EmitterData

@@ -7,7 +7,7 @@ import com.ixume.particleemitter.particle.lifetime.ParticleLifetimeComponent
 import com.ixume.particleemitter.emitter.rate.RateComponent
 import com.ixume.particleemitter.emitter.shape.ShapeComponent
 import com.ixume.particleemitter.particle.position.PositionComponent
-import com.ixume.particleemitter.particle.texture.SpriteComponent
+import com.ixume.particleemitter.particle.sprite.SpriteComponent
 import com.ixume.particleemitter.particle.transformation.scale.ScaleComponent
 import org.bukkit.Bukkit
 import org.bukkit.Location

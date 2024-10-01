@@ -5,7 +5,7 @@ import com.ixume.particleemitter.particle.color.ColorComponent
 import com.ixume.particleemitter.particle.lifetime.ParticleLifetimeComponent
 import com.ixume.particleemitter.emitter.rate.RateComponent
 import com.ixume.particleemitter.emitter.shape.ShapeComponent
-import com.ixume.particleemitter.particle.texture.SpriteComponent
+import com.ixume.particleemitter.particle.sprite.SpriteComponent
 import com.ixume.particleemitter.particle.Particle
 import com.ixume.particleemitter.particle.ParticleData
 import com.ixume.particleemitter.particle.position.PositionComponent
@@ -66,6 +66,12 @@ class Emitter(private val rateComponent: RateComponent,
             }
 
             var updateParticle = false
+
+            val newSprite = spriteComponent.sprite(emitterData, particle.data)
+            if (newSprite != particle.data.sprite) {
+                updateParticle = true
+                particle.data.sprite = newSprite
+            }
 
             val newColor  = colorComponent.color(emitterData, particle.data)
             if (newColor != particle.data.color) {
