@@ -37,8 +37,19 @@ class MotionPositionComponent(private val initialVelocityComponent: DirectionSub
                     particleData)
             } else if ("random_velocity" in jsonObject.keySet()) {
                 val velocityObject = jsonObject.getAsJsonObject("random_velocity") ?: return null
+                val directionPair: Pair<DirectionSubcomponent, CompiledScript>? = velocityObject.getAsJsonObject("bias")?.let l@{
+                    Pair(ExpressionDirectionSubcomponent(
+                        engine.compile(it.getAsJsonArray("direction")[0].expression() ?: return@l null, macros),
+                        engine.compile(it.getAsJsonArray("direction")[1].expression() ?: return@l null, macros),
+                        engine.compile(it.getAsJsonArray("direction")[2].expression() ?: return@l null, macros),
+                        emitterData,
+                        particleData
+                    ), engine.compile(it.getAsJsonPrimitive("spread").expression() ?: return@l null, macros))
+                }
+
                 velocityComponent = RandomDirectionSubcomponent(
                     velocityObject.expression("magnitude")?.let { engine.compile(it, macros) },
+                    directionPair,
                     emitterData,
                     particleData)
             }

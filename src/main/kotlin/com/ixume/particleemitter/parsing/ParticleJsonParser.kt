@@ -37,6 +37,12 @@ fun JsonObject.expression(field: String): String? {
     return ((if (fieldPrimitive.isNumber) fieldPrimitive.asNumber.toString() else fieldPrimitive.asString)).also { println(it) }
 }
 
+fun JsonElement.expression(): String? {
+    if (!this.isJsonPrimitive) return null
+    val asPrimitive = this.asJsonPrimitive
+    return ((if (asPrimitive.isNumber) asPrimitive.asNumber.toString() else asPrimitive.asString)).also { println(it) }
+}
+
 interface ComponentParser<T> {
     fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): T?
 }
