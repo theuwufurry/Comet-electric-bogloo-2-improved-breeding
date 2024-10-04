@@ -21,9 +21,13 @@ data class UnrealizedEmitter(val unrealizedRateComponent: UnrealizedComponent<ou
                              val unrealizedEmitterLifetimeComponent: UnrealizedComponent<out EmitterLifetimeComponent>,
                              val unrealizedPositionComponent: UnrealizedComponent<out PositionComponent>,
                              val unrealizedScaleComponent: UnrealizedComponent<out ScaleComponent>) {
-    fun realize(location: Location) {
-        val emitterData = EmitterData(world = location.world)
-        val emitter = Emitter(unrealizedRateComponent.realizeComponent(emitterData),
+
+    private var cachedEmitter: CachedEmitter = cacheEmitter()
+
+    private fun cacheEmitter(): CachedEmitter {
+        val emitterData = EmitterData()
+        return CachedEmitter(
+            unrealizedRateComponent.realizeComponent(emitterData),
             unrealizedParticleLifetimeComponent.realizeComponent(emitterData),
             unrealizedShapeComponent.realizeComponent(emitterData),
             unrealizedSpriteComponent.realizeComponent(emitterData),
@@ -31,9 +35,35 @@ data class UnrealizedEmitter(val unrealizedRateComponent: UnrealizedComponent<ou
             unrealizedEmitterLifetimeComponent.realizeComponent(emitterData),
             unrealizedPositionComponent.realizeComponent(emitterData),
             unrealizedScaleComponent.realizeComponent(emitterData),
+        )
+    }
+
+    fun realize(location: Location) {
+        val emitterData = EmitterData(world = location.world)
+        val emitter = Emitter(
+            cachedEmitter.rateComponent,
+            cachedEmitter.particleLifetimeComponent,
+            cachedEmitter.shapeComponent,
+            cachedEmitter.spriteComponent,
+            cachedEmitter.colorComponent,
+            cachedEmitter.emitterLifetimeComponent,
+            cachedEmitter.positionComponent,
+            cachedEmitter.scaleComponent,
             location, emitterData,null)
         emitter.task = Bukkit.getScheduler().runTaskTimerAsynchronously(ParticleEmitter.INSTANCE, Runnable {
             emitter.tick()
         }, 0, 1)
+
+        cachedEmitter = cacheEmitter()
     }
 }
+
+class CachedEmitter(
+    val rateComponent: RateComponent,
+    val particleLifetimeComponent: ParticleLifetimeComponent,
+    val shapeComponent: ShapeComponent,
+    val spriteComponent: SpriteComponent,
+    val colorComponent: ColorComponent,
+    val emitterLifetimeComponent: EmitterLifetimeComponent,
+    val positionComponent: PositionComponent,
+    val scaleComponent: ScaleComponent)
