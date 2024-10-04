@@ -1,13 +1,12 @@
 package com.ixume.particleemitter.particle.position
 
 import com.google.gson.JsonElement
+import com.ixume.particleemitter.UnrealizedComponent
 import com.ixume.particleemitter.emitter.EmitterData
 import com.ixume.particleemitter.parsing.*
 import com.ixume.particleemitter.parsing.macro.Macro
 import com.ixume.particleemitter.particle.ParticleData
-import com.ixume.particleemitter.particle.position.direction.DirectionSubcomponent
-import com.ixume.particleemitter.particle.position.direction.ExpressionDirectionSubcomponent
-import com.ixume.particleemitter.particle.position.direction.RandomDirectionSubcomponent
+import com.ixume.particleemitter.particle.position.direction.*
 import org.bukkit.Material
 import org.bukkit.World
 import org.bukkit.block.Block
@@ -25,62 +24,57 @@ class MotionPositionComponent(
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData
 ) : PositionComponent {
-    companion object : ComponentParser<PositionComponent> {
+    companion object : ComponentParser<MotionPositionComponent> {
         init {
             ParticleJsonParser.positionComponentParsers += "motion_position" to this
         }
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): PositionComponent? {
-            val (engine, emitterData, particleData) = particleEngine()
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): UnrealizedComponent<MotionPositionComponent>? {
             val jsonObject = jsonElement.asJsonObject
 
-            var velocityComponent: DirectionSubcomponent? = null
+            var velocityComponent: UnrealizedComponent<out DirectionSubcomponent>? = null
 
             if ("initial_velocity" in jsonObject.keySet()) {
                 val velocityObject = jsonObject.getAsJsonObject("initial_velocity") ?: return null
-                velocityComponent = ExpressionDirectionSubcomponent(
-                    engine.compile(velocityObject.expression("x") ?: return null, macros),
-                    engine.compile(velocityObject.expression("y") ?: return null, macros),
-                    engine.compile(velocityObject.expression("z") ?: return null, macros),
-                    emitterData,
-                    particleData
+                velocityComponent = UnrealizedExpressionDirectionSubcomponent(
+                    velocityObject.expression("x") ?: return null,
+                    velocityObject.expression("y") ?: return null,
+                    velocityObject.expression("z") ?: return null,
+                    macros
                 )
             } else if ("random_velocity" in jsonObject.keySet()) {
                 val velocityObject = jsonObject.getAsJsonObject("random_velocity") ?: return null
-                val directionPair: Pair<DirectionSubcomponent, CompiledScript>? =
+                val directionPair: Pair<UnrealizedComponent<out DirectionSubcomponent>, String>? =
                     velocityObject.getAsJsonObject("bias")?.let l@{
                         Pair(
-                            ExpressionDirectionSubcomponent(
-                                engine.compile(it.getAsJsonArray("direction")[0].expression() ?: return@l null, macros),
-                                engine.compile(it.getAsJsonArray("direction")[1].expression() ?: return@l null, macros),
-                                engine.compile(it.getAsJsonArray("direction")[2].expression() ?: return@l null, macros),
-                                emitterData,
-                                particleData
-                            ), engine.compile(it.getAsJsonPrimitive("spread").expression() ?: return@l null, macros)
+                            UnrealizedExpressionDirectionSubcomponent(
+                                it.getAsJsonArray("direction")[0].expression() ?: return@l null,
+                                it.getAsJsonArray("direction")[1].expression() ?: return@l null,
+                                it.getAsJsonArray("direction")[2].expression() ?: return@l null,
+                                macros
+                            ), it.getAsJsonPrimitive("spread").expression() ?: return@l null
                         )
                     }
 
-                velocityComponent = RandomDirectionSubcomponent(
-                    velocityObject.expression("magnitude")?.let { engine.compile(it, macros) },
+                velocityComponent = UnrealizedRandomDirectionSubcomponent(
+                    velocityObject.expression("magnitude"),
                     directionPair,
-                    emitterData,
-                    particleData
+                    macros
                 )
             }
 
             val accelerationObject = jsonObject.getAsJsonObject("acceleration") ?: return null
-            val accelerationScript: Triple<CompiledScript, CompiledScript, CompiledScript> = Triple(
-                engine.compile(accelerationObject.expression("x") ?: return null, macros),
-                engine.compile(accelerationObject.expression("y") ?: return null, macros),
-                engine.compile(accelerationObject.expression("z") ?: return null, macros)
+            val accelerationScript: Triple<String, String, String> = Triple(
+                accelerationObject.expression("x") ?: return null,
+                accelerationObject.expression("y") ?: return null,
+                accelerationObject.expression("z") ?: return null,
             )
-            return MotionPositionComponent(
+            return UnrealizedMotionPositionComponent(
                 velocityComponent ?: return null,
                 accelerationScript,
-                engine.compile(jsonObject.expression("drag") ?: return null, macros),
-                jsonObject.expression("restitution")?.let{ engine.compile(it, macros) },
-                emitterData,
-                particleData
+                jsonObject.expression("drag") ?: return null,
+                jsonObject.expression("restitution"),
+                macros
             )
         }
     }
@@ -250,6 +244,24 @@ class MotionPositionComponent(
             floor(vector3d.x).toInt(),
             floor(vector3d.y).toInt(),
             floor(vector3d.z).toInt()
+        )
+    }
+}
+
+class UnrealizedMotionPositionComponent(private val initialVelocityComponent: UnrealizedComponent<out DirectionSubcomponent>,
+                                        private val acceleration: Triple<String, String, String>,
+                                        private val dragScript: String,
+                                        private val restitutionScript: String?,
+                                        private val macros: Map<String, Macro>?) : UnrealizedComponent<MotionPositionComponent> {
+    override fun realizeComponent(emitterData: EmitterData): MotionPositionComponent {
+        val (engine, particleData) = particleEngine(emitterData)
+        return MotionPositionComponent(
+            initialVelocityComponent.realizeComponent(emitterData),
+            Triple(engine.compile(acceleration.first, macros), engine.compile(acceleration.second, macros), engine.compile(acceleration.third, macros)),
+            engine.compile(dragScript, macros),
+            restitutionScript?.let { engine.compile(it, macros) },
+            emitterData,
+            particleData
         )
     }
 }

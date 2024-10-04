@@ -1,6 +1,7 @@
 package com.ixume.particleemitter.particle.sprite
 
 import com.google.gson.JsonElement
+import com.ixume.particleemitter.UnrealizedComponent
 import com.ixume.particleemitter.emitter.EmitterData
 import com.ixume.particleemitter.parsing.*
 import com.ixume.particleemitter.parsing.macro.Macro
@@ -8,18 +9,16 @@ import com.ixume.particleemitter.particle.ParticleData
 import javax.script.CompiledScript
 
 class ConstantSpriteComponent(private val sprite: CompiledScript, private val myEmitterData: EmitterData) : SpriteComponent {
-    companion object : ComponentParser<SpriteComponent> {
+    companion object : ComponentParser<ConstantSpriteComponent> {
         init {
             ParticleJsonParser.spriteComponentParsers += "constant_sprite" to this
         }
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ConstantSpriteComponent? {
-            val (engine, emitterData) = emitterEngine()
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): UnrealizedComponent<ConstantSpriteComponent>? {
             val jsonObject = jsonElement.asJsonObject
-            return ConstantSpriteComponent(
-                jsonObject.expression("sprite")?.let {
-                    engine.compile(it, macros) } ?: return null,
-                emitterData
+            return UnrealizedConstantSpriteComponent(
+                jsonObject.expression("sprite") ?: return null,
+                macros
             )
         }
     }
@@ -31,5 +30,12 @@ class ConstantSpriteComponent(private val sprite: CompiledScript, private val my
         } else {
             otherParticleData.sprite
         }
+    }
+}
+
+class UnrealizedConstantSpriteComponent(private val sprite: String, private val macros: Map<String, Macro>?) : UnrealizedComponent<ConstantSpriteComponent> {
+    override fun realizeComponent(emitterData: EmitterData): ConstantSpriteComponent {
+        val engine = emitterEngine(emitterData)
+        return ConstantSpriteComponent(engine.compile(sprite, macros), emitterData)
     }
 }

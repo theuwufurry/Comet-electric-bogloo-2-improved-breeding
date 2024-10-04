@@ -4,6 +4,7 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.ixume.particleemitter.ParticleEmitter
+import com.ixume.particleemitter.UnrealizedComponent
 import com.ixume.particleemitter.emitter.UnrealizedEmitter
 import com.ixume.particleemitter.emitter.lifetime.EmitterLifetimeComponent
 import com.ixume.particleemitter.emitter.lifetime.TimedEmitterLifetimeComponent
@@ -44,7 +45,7 @@ fun JsonElement.expression(): String? {
 }
 
 interface ComponentParser<T> {
-    fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): T?
+    fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): UnrealizedComponent<T>?
 }
 
 object ParticleJsonParser {
@@ -112,14 +113,14 @@ object ParticleJsonParser {
 
         val componentsObject: JsonObject = rootObject.getAsJsonObject("components") ?: return null
 
-        var rateComponent: RateComponent? = null
-        var particleLifetimeComponent: ParticleLifetimeComponent? = null
-        var shapeComponent: ShapeComponent? = null
-        var spriteComponent: SpriteComponent? = null
-        var colorComponent: ColorComponent? = null
-        var emitterLifetimeComponent: EmitterLifetimeComponent? = null
-        var positionComponent: PositionComponent? = null
-        var scaleComponent: ScaleComponent? = null
+        var rateComponent: UnrealizedComponent<out RateComponent>? = null
+        var particleLifetimeComponent: UnrealizedComponent<out ParticleLifetimeComponent>? = null
+        var shapeComponent: UnrealizedComponent<out ShapeComponent>? = null
+        var spriteComponent: UnrealizedComponent<out SpriteComponent>? = null
+        var colorComponent: UnrealizedComponent<out ColorComponent>? = null
+        var emitterLifetimeComponent: UnrealizedComponent<out EmitterLifetimeComponent>? = null
+        var positionComponent: UnrealizedComponent<out PositionComponent>? = null
+        var scaleComponent: UnrealizedComponent<out ScaleComponent>? = null
         for ((key, componentElement) in componentsObject.entrySet()) {
             if (key in rateComponentParsers) {
                 val component = rateComponentParsers[key]!!.parse(componentElement, macros)

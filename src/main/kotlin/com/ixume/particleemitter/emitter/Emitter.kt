@@ -31,8 +31,8 @@ class Emitter(private val rateComponent: RateComponent,
               private val positionComponent: PositionComponent,
               private val scaleComponent: ScaleComponent,
               private var location: Location,
+              private val emitterData: EmitterData,
               var task: BukkitTask?) {
-    private val emitterData: EmitterData = EmitterData(world = location.world)
     private val particles: MutableList<Particle> = mutableListOf()
     private val deadParticles: MutableList<Particle> = mutableListOf()
     private var blocked = false

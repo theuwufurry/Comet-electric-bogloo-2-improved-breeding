@@ -2,6 +2,7 @@ package com.ixume.particleemitter.particle.color
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import com.ixume.particleemitter.UnrealizedComponent
 import com.ixume.particleemitter.emitter.EmitterData
 import com.ixume.particleemitter.parsing.*
 import com.ixume.particleemitter.parsing.macro.Macro
@@ -10,24 +11,22 @@ import java.awt.Color
 import javax.script.CompiledScript
 
 class GradientColorComponent(private val interpolantScript: CompiledScript, private val gradient: List<Pair<Double, CompiledScript>>, private val myEmitterData: EmitterData, private val myParticleData: ParticleData) : ColorComponent {
-    companion object : ComponentParser<ColorComponent> {
+    companion object : ComponentParser<GradientColorComponent> {
         init {
             ParticleJsonParser.colorComponentParsers += "gradient_color" to this
         }
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): GradientColorComponent? {
-            val (engine, emitterData, particleData) = particleEngine()
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): UnrealizedComponent<GradientColorComponent>? {
             val jsonObject = jsonElement.asJsonObject
-            val gradient: MutableList<Pair<Double, CompiledScript>> = mutableListOf()
+            val gradient: MutableList<Pair<Double, String>> = mutableListOf()
             for (element in jsonObject.getAsJsonArray("data")) {
-                gradient += (element as JsonObject).getAsJsonPrimitive("index").asNumber.toDouble() to engine.compile(element.expression("color")?.addDependency() ?: return null, macros)
+                gradient += (element as JsonObject).getAsJsonPrimitive("index").asNumber.toDouble() to (element.expression("color")?.addDependency() ?: return null)
             }
 
-            return GradientColorComponent(
-                engine.compile(jsonObject.expression("interpolant") ?: return null, macros),
+            return UnrealizedGradientColorComponent(
+                jsonObject.expression("interpolant") ?: return null,
                 gradient,
-                emitterData,
-                particleData
+                macros
             )
         }
     }
@@ -57,5 +56,15 @@ class GradientColorComponent(private val interpolantScript: CompiledScript, priv
         }
 
         return (gradient.last().second.eval() as Color).rgb
+    }
+}
+
+class UnrealizedGradientColorComponent(private val interpolation: String, private val gradient: List<Pair<Double, String>>, private val macros: Map<String, Macro>?) : UnrealizedComponent<GradientColorComponent> {
+    override fun realizeComponent(emitterData: EmitterData): GradientColorComponent {
+        val (engine, particleData) = particleEngine(emitterData)
+        return GradientColorComponent(engine.compile(interpolation, macros),
+            gradient.map { Pair(it.first, engine.compile(it.second, macros)) },
+            emitterData,
+            particleData)
     }
 }

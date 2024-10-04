@@ -9,20 +9,18 @@ import javax.script.Compilable
 import javax.script.CompiledScript
 import javax.script.ScriptContext
 
-fun emitterEngine(): Pair<Compilable, EmitterData> {
+fun emitterEngine(emitterData: EmitterData): Compilable {
     val engine = ParticleEmitter.scriptEngineFactory.scriptEngine
-    val emitterData = EmitterData()
     engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("emitter" to emitterData)
-    return Pair(engine as Compilable, emitterData)
+    return engine as Compilable
 }
 
-fun particleEngine(): Triple<Compilable, EmitterData, ParticleData> {
+fun particleEngine(emitterData: EmitterData): Pair<Compilable, ParticleData> {
     val engine = ParticleEmitter.scriptEngineFactory.scriptEngine
-    val emitterData = EmitterData()
     val particleData = ParticleData()
     engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("emitter" to emitterData)
     engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("particle" to particleData)
-    return Triple(engine as Compilable, emitterData, particleData)
+    return Pair(engine as Compilable, particleData)
 }
 
 

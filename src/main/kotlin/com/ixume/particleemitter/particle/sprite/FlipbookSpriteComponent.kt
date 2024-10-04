@@ -2,6 +2,7 @@ package com.ixume.particleemitter.particle.sprite
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import com.ixume.particleemitter.UnrealizedComponent
 import com.ixume.particleemitter.emitter.EmitterData
 import com.ixume.particleemitter.parsing.*
 import com.ixume.particleemitter.parsing.macro.Macro
@@ -12,24 +13,22 @@ class FlipbookSpriteComponent(private val inputScript: CompiledScript,
                               private val spriteScripts: List<Pair<Double, CompiledScript>>,
                               private val myEmitterData: EmitterData,
                               private val myParticleData: ParticleData) : SpriteComponent {
-    companion object : ComponentParser<SpriteComponent> {
+    companion object : ComponentParser<FlipbookSpriteComponent> {
         init {
             ParticleJsonParser.spriteComponentParsers += "flipbook_sprite" to this
         }
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): SpriteComponent? {
-            val (engine, emitterData, particleData) = particleEngine()
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): UnrealizedComponent<FlipbookSpriteComponent>? {
             val jsonObject = jsonElement.asJsonObject
-            val sprites: MutableList<Pair<Double, CompiledScript>> = mutableListOf()
+            val sprites: MutableList<Pair<Double, String>> = mutableListOf()
             for (element in jsonObject.getAsJsonArray("sprites")) {
-                sprites += (element as JsonObject).getAsJsonPrimitive("index").asNumber.toDouble() to engine.compile(element.expression("sprite") ?: return null, macros)
+                sprites += (element as JsonObject).getAsJsonPrimitive("index").asNumber.toDouble() to (element.expression("sprite") ?: return null)
             }
 
-            return FlipbookSpriteComponent(
-                engine.compile(jsonObject.expression("input") ?: return null, macros),
+            return UnrealizedFlipbookSpriteComponent(
+                jsonObject.expression("input") ?: return null,
                 sprites,
-                emitterData,
-                particleData
+                macros
             )
         }
     }
@@ -42,5 +41,16 @@ class FlipbookSpriteComponent(private val inputScript: CompiledScript,
         var i = 0
         while (i + 1 < spriteScripts.size && inputResult >= spriteScripts[i + 1].first) i++
         return spriteScripts[i].second.eval() as String
+    }
+}
+
+class UnrealizedFlipbookSpriteComponent(private val input: String, private val sprites: List<Pair<Double, String>>, private val macros: Map<String, Macro>?) : UnrealizedComponent<FlipbookSpriteComponent> {
+    override fun realizeComponent(emitterData: EmitterData): FlipbookSpriteComponent {
+        val (engine, particleData) = particleEngine(emitterData)
+        return FlipbookSpriteComponent(
+            engine.compile(input, macros),
+            sprites.map { Pair(it.first, engine.compile(it.second, macros)) },
+            emitterData, particleData
+        )
     }
 }
