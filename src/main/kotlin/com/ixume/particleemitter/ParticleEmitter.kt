@@ -3,9 +3,13 @@ package com.ixume.particleemitter
 import com.ixume.particleemitter.command.CustomParticleSpawnCommand
 import com.ixume.particleemitter.command.ReloadParticleScriptsCommand
 import com.ixume.particleemitter.parsing.ParticleJsonParser
+import org.bukkit.Color
+import org.bukkit.Particle
 import org.bukkit.plugin.java.JavaPlugin
 import org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory
 import sun.misc.Unsafe
+
+val debugDust: Particle.DustOptions = Particle.DustOptions(Color.fromRGB(255, 255, 255), 0.6F)
 
 class ParticleEmitter : JavaPlugin() {
     companion object {

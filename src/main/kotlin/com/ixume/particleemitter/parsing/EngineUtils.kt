@@ -11,7 +11,7 @@ import javax.script.ScriptContext
 
 fun emitterEngine(): Pair<Compilable, EmitterData> {
     val engine = ParticleEmitter.scriptEngineFactory.scriptEngine
-    val emitterData = EmitterData(0.0)
+    val emitterData = EmitterData()
     engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("emitter" to emitterData)
     return Pair(engine as Compilable, emitterData)
 }

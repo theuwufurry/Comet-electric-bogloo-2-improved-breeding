@@ -32,7 +32,7 @@ class Emitter(private val rateComponent: RateComponent,
               private val scaleComponent: ScaleComponent,
               private var location: Location,
               var task: BukkitTask?) {
-    private val emitterData: EmitterData = EmitterData()
+    private val emitterData: EmitterData = EmitterData(world = location.world)
     private val particles: MutableList<Particle> = mutableListOf()
     private val deadParticles: MutableList<Particle> = mutableListOf()
     private var blocked = false
@@ -46,6 +46,7 @@ class Emitter(private val rateComponent: RateComponent,
         blocked = true
 
         emitterData.age++
+
         if (!dead && !emitterLifetimeComponent.keepAlive(emitterData)) {
             dead = true
         }
@@ -82,6 +83,7 @@ class Emitter(private val rateComponent: RateComponent,
             val newPos = positionComponent.pos(emitterData, particle.data)
             if (newPos != particle.data.relativePosition) {
                 particle.data.relativePosition = newPos
+//                location.world.spawnParticle(org.bukkit.Particle.DUST, Location(location.world, particle.data.origin.x + newPos.x, particle.data.origin.y + newPos.y, particle.data.origin.z + newPos.z), 1, debugDust)
                 dataPackets += particle.getMovementPacket()
             }
 
@@ -110,15 +112,15 @@ class Emitter(private val rateComponent: RateComponent,
         blocked = false
     }
 
-    fun spawnParticles() {
+    private fun spawnParticles() {
         val bundle: MutableList<Packet<in ClientGamePacketListener>> = mutableListOf()
         repeat(rateComponent.toEmit(emitterData)) {
             var particleData = ParticleData()
             val spawnOffset = shapeComponent.offset(emitterData, particleData)
             val matrix = matrixFromParts(scaleComponent.scale(emitterData, particleData))
-            particleData = ParticleData(0.0, spriteComponent.sprite(emitterData, particleData), colorComponent.color(emitterData, particleData), Vector3d(), matrix, particleData.random, Vector3d())
             val relativePosition = positionComponent.pos(emitterData, particleData)
-            val particle = Particle(Vector3d(location.x + spawnOffset.x + relativePosition.x, location.y + spawnOffset.y + relativePosition.y, location.z + spawnOffset.z + relativePosition.z), particleData)
+            particleData = ParticleData(origin = Vector3d(location.x + spawnOffset.x + relativePosition.x, location.y + spawnOffset.y + relativePosition.y, location.z + spawnOffset.z + relativePosition.z), relativePosition = relativePosition, sprite = spriteComponent.sprite(emitterData, particleData), color = colorComponent.color(emitterData, particleData), matrix = matrix, random = particleData.random)
+            val particle = Particle(particleData)
             val packets = particle.getAddPacket()
             bundle.add(packets.first)
             packets.second?.let { it1 -> bundle.add(it1) }

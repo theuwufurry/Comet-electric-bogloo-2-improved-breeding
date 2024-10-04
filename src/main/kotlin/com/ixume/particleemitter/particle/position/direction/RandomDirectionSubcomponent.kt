@@ -5,6 +5,9 @@ import com.ixume.particleemitter.particle.ParticleData
 import org.joml.Quaterniond
 import org.joml.Vector3d
 import javax.script.CompiledScript
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 class RandomDirectionSubcomponent(private val magnitudeScript: CompiledScript?, private val directionScript: Pair<DirectionSubcomponent, CompiledScript>?, private val myEmitterData: EmitterData, private val myParticleData: ParticleData) : DirectionSubcomponent {
     override fun dir(): Vector3d {
@@ -23,7 +26,9 @@ class RandomDirectionSubcomponent(private val magnitudeScript: CompiledScript?, 
 
     private fun randomVector(magnitude: Double, dir: Vector3d?, spread: Double?): Vector3d {
         if (dir == null || spread == null) return randomVector(magnitude)
-        val point = Vector3d((Math.random() - 0.5) * spread, 1.0, (Math.random() - 0.5) * spread)
+        val randomAngle = Math.random() * Math.PI * 2.0
+        val randomRadius = sqrt(Math.random()) * spread
+        val point = Vector3d(cos(randomAngle) * randomRadius, 1.0, sin(randomAngle) * randomRadius)
         return point.rotate(Quaterniond().rotateTo(Vector3d(0.0, 1.0, 0.0), dir)).normalize(magnitude)
     }
 }
