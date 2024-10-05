@@ -6,7 +6,9 @@ import com.ixume.particleemitter.emitter.EmitterData
 import com.ixume.particleemitter.parsing.*
 import com.ixume.particleemitter.parsing.macro.Macro
 import com.ixume.particleemitter.particle.ParticleData
-import com.ixume.particleemitter.particle.position.direction.*
+import com.ixume.particleemitter.particle.position.direction.DirectionSubcomponent
+import com.ixume.particleemitter.particle.position.direction.UnrealizedExpressionDirectionSubcomponent
+import com.ixume.particleemitter.particle.position.direction.UnrealizedRandomDirectionSubcomponent
 import org.bukkit.Material
 import org.bukkit.World
 import org.bukkit.block.Block
@@ -29,7 +31,10 @@ class MotionPositionComponent(
             ParticleJsonParser.positionComponentParsers += "motion_position" to this
         }
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): UnrealizedComponent<MotionPositionComponent>? {
+        override fun parse(
+            jsonElement: JsonElement,
+            macros: Map<String, Macro>?
+        ): UnrealizedComponent<MotionPositionComponent>? {
             val jsonObject = jsonElement.asJsonObject
 
             var velocityComponent: UnrealizedComponent<out DirectionSubcomponent>? = null
@@ -79,15 +84,18 @@ class MotionPositionComponent(
         }
     }
 
-    override fun pos(otherEmitterData: EmitterData, otherParticleData: ParticleData): Vector3d {
-        myEmitterData.copyFrom(otherEmitterData)
+    override fun pos(otherParticleData: ParticleData): Vector3d {
         myParticleData.copyFrom(otherParticleData)
         if (otherParticleData.age == 0.0) {
             return initialVelocityComponent.dir()
         }
 
         val dragCoefficient = dragScript.eval() as Double
-        val acceleration = Vector3d(accelerationScript.first.eval() as Double, accelerationScript.second.eval() as Double, accelerationScript.third.eval() as Double)
+        val acceleration = Vector3d(
+            accelerationScript.first.eval() as Double,
+            accelerationScript.second.eval() as Double,
+            accelerationScript.third.eval() as Double
+        )
 
         val correctionVector = Vector3d()
         if (restitutionScript != null) {
@@ -98,7 +106,7 @@ class MotionPositionComponent(
             val oldVelocity = Vector3d(absolutePos).sub(oldPoint)
             val maxOffset =
                 (oldVelocity.x + 1.0) * (oldVelocity.x + 1.0) + (oldVelocity.y + 1.0) * (oldVelocity.y + 1.0) + (oldVelocity.z + 1.0) * (oldVelocity.z + 1.0)
-            if (blockAt(otherEmitterData.world!!, absolutePos).type != Material.AIR) {
+            if (blockAt(myEmitterData.world!!, absolutePos).type != Material.AIR) {
                 //block-plane offset
                 val offset = Vector3i()
                 //only ever have 3 intersections at any given time, 1 for each axis
@@ -116,7 +124,7 @@ class MotionPositionComponent(
                         if (yzDistance < xyDistance) {
                             //yzDistance is smallest
                             val yzIntersection = Vector3d(oldPoint).add(Vector3d(oldVelocity).mul(yzDistance))
-                            if (otherEmitterData.world!!.getBlockAt(
+                            if (myEmitterData.world!!.getBlockAt(
                                     (yzPlane - 0.5 + 0.5 * sign(oldVelocity.x)).toInt(),
                                     floor(yzIntersection.y).toInt(),
                                     floor(yzIntersection.z).toInt()
@@ -144,7 +152,7 @@ class MotionPositionComponent(
                         } else {
                             //xyDistance is smallest
                             val xyIntersection = Vector3d(oldPoint).add(Vector3d(oldVelocity).mul(xyDistance))
-                            if (otherEmitterData.world!!.getBlockAt(
+                            if (myEmitterData.world!!.getBlockAt(
                                     floor(xyIntersection.x).toInt(),
                                     floor(xyIntersection.y).toInt(),
                                     (xyPlane - 0.5 + 0.5 * sign(oldVelocity.z)).toInt()
@@ -173,7 +181,7 @@ class MotionPositionComponent(
                         if (xzDistance < xyDistance) {
                             //xzDistance is smallest
                             val xzIntersection = Vector3d(oldPoint).add(Vector3d(oldVelocity).mul(xzDistance))
-                            if (otherEmitterData.world!!.getBlockAt(
+                            if (myEmitterData.world!!.getBlockAt(
                                     floor(xzIntersection.x).toInt(),
                                     (xzPlane - 0.5 + 0.5 * sign(oldVelocity.y)).toInt(),
                                     floor(xzIntersection.z).toInt()
@@ -200,7 +208,7 @@ class MotionPositionComponent(
                         } else {
                             //xyDistance is smallest
                             val xyIntersection = Vector3d(oldPoint).add(Vector3d(oldVelocity).mul(xyDistance))
-                            if (otherEmitterData.world!!.getBlockAt(
+                            if (myEmitterData.world!!.getBlockAt(
                                     floor(xyIntersection.x).toInt(),
                                     floor(xyIntersection.y).toInt(),
                                     (xyPlane - 0.5 + 0.5 * sign(oldVelocity.z)).toInt()
@@ -248,16 +256,22 @@ class MotionPositionComponent(
     }
 }
 
-class UnrealizedMotionPositionComponent(private val initialVelocityComponent: UnrealizedComponent<out DirectionSubcomponent>,
-                                        private val acceleration: Triple<String, String, String>,
-                                        private val dragScript: String,
-                                        private val restitutionScript: String?,
-                                        private val macros: Map<String, Macro>?) : UnrealizedComponent<MotionPositionComponent> {
+class UnrealizedMotionPositionComponent(
+    private val initialVelocityComponent: UnrealizedComponent<out DirectionSubcomponent>,
+    private val acceleration: Triple<String, String, String>,
+    private val dragScript: String,
+    private val restitutionScript: String?,
+    private val macros: Map<String, Macro>?
+) : UnrealizedComponent<MotionPositionComponent> {
     override fun realizeComponent(emitterData: EmitterData): MotionPositionComponent {
         val (engine, particleData) = particleEngine(emitterData)
         return MotionPositionComponent(
             initialVelocityComponent.realizeComponent(emitterData),
-            Triple(engine.compile(acceleration.first, macros), engine.compile(acceleration.second, macros), engine.compile(acceleration.third, macros)),
+            Triple(
+                engine.compile(acceleration.first, macros),
+                engine.compile(acceleration.second, macros),
+                engine.compile(acceleration.third, macros)
+            ),
             engine.compile(dragScript, macros),
             restitutionScript?.let { engine.compile(it, macros) },
             emitterData,

@@ -10,7 +10,7 @@ import com.ixume.particleemitter.particle.ParticleData
 import java.awt.Color
 import javax.script.CompiledScript
 
-class GradientColorComponent(private val interpolantScript: CompiledScript, private val gradient: List<Pair<Double, CompiledScript>>, private val myEmitterData: EmitterData, private val myParticleData: ParticleData) : ColorComponent {
+class GradientColorComponent(private val interpolantScript: CompiledScript, private val gradient: List<Pair<Double, CompiledScript>>, private val myParticleData: ParticleData) : ColorComponent {
     companion object : ComponentParser<GradientColorComponent> {
         init {
             ParticleJsonParser.colorComponentParsers += "gradient_color" to this
@@ -31,8 +31,7 @@ class GradientColorComponent(private val interpolantScript: CompiledScript, priv
         }
     }
 
-    override fun color(otherEmitterData: EmitterData, otherParticleData: ParticleData): Int {
-        myEmitterData.copyFrom(otherEmitterData)
+    override fun color(otherParticleData: ParticleData): Int {
         myParticleData.copyFrom(otherParticleData)
         val interpolantResult = interpolantScript.eval() as Double
 
@@ -64,7 +63,6 @@ class UnrealizedGradientColorComponent(private val interpolation: String, privat
         val (engine, particleData) = particleEngine(emitterData)
         return GradientColorComponent(engine.compile(interpolation, macros),
             gradient.map { Pair(it.first, engine.compile(it.second, macros)) },
-            emitterData,
             particleData)
     }
 }

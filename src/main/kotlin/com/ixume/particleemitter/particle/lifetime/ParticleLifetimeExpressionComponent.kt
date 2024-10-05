@@ -8,7 +8,7 @@ import com.ixume.particleemitter.parsing.macro.Macro
 import com.ixume.particleemitter.particle.ParticleData
 import javax.script.CompiledScript
 
-class ParticleLifetimeExpressionComponent(private val lifetimeExpression: CompiledScript?, private val maxLife: Int?, private val myParticleData: ParticleData, private val myEmitterData: EmitterData) : ParticleLifetimeComponent {
+class ParticleLifetimeExpressionComponent(private val lifetimeExpression: CompiledScript?, private val maxLife: Int?, private val myParticleData: ParticleData) : ParticleLifetimeComponent {
     companion object : ComponentParser<ParticleLifetimeExpressionComponent> {
         init {
             ParticleJsonParser.particleLifetimeComponentParsers += "particle_lifetime_expression" to this
@@ -25,11 +25,9 @@ class ParticleLifetimeExpressionComponent(private val lifetimeExpression: Compil
     }
 
     override fun keepAlive(
-        otherEmitterData: EmitterData,
         otherParticleData: ParticleData,
     ): Boolean {
         myParticleData.copyFrom(otherParticleData)
-        myEmitterData.copyFrom(otherEmitterData)
         return lifetimeExpression?.run {
             (eval() as Double) <= 0.0
         } ?: maxLife?.let { otherParticleData.age <= it } ?: false
@@ -42,8 +40,7 @@ class UnrealizedParticleLifetimeExpressionComponent(private val lifetime: String
         return ParticleLifetimeExpressionComponent(
             lifetime?.let { engine.compile(lifetime, macros) },
             maxLife?.let { engine.compile(maxLife, macros) }?.eval() as? Int,
-            particleData,
-            emitterData
+            particleData
         )
     }
 }

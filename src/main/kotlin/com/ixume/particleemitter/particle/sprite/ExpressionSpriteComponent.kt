@@ -8,7 +8,7 @@ import com.ixume.particleemitter.parsing.macro.Macro
 import com.ixume.particleemitter.particle.ParticleData
 import javax.script.CompiledScript
 
-class ExpressionSpriteComponent(private val sprite: CompiledScript, private val myEmitterData: EmitterData, private val myParticleData: ParticleData) : SpriteComponent {
+class ExpressionSpriteComponent(private val sprite: CompiledScript, private val myParticleData: ParticleData) : SpriteComponent {
     companion object : ComponentParser<ExpressionSpriteComponent> {
         init {
             ParticleJsonParser.spriteComponentParsers += "expression_sprite" to this
@@ -23,8 +23,7 @@ class ExpressionSpriteComponent(private val sprite: CompiledScript, private val 
         }
     }
 
-    override fun sprite(otherEmitterData: EmitterData, otherParticleData: ParticleData): String {
-        myEmitterData.copyFrom(otherEmitterData)
+    override fun sprite(otherParticleData: ParticleData): String {
         myParticleData.copyFrom(otherParticleData)
         return sprite.eval() as String
     }
@@ -33,6 +32,6 @@ class ExpressionSpriteComponent(private val sprite: CompiledScript, private val 
 class UnrealizedExpressionSpriteComponent(private val sprite: String, private val macros: Map<String, Macro>?) : UnrealizedComponent<ExpressionSpriteComponent> {
     override fun realizeComponent(emitterData: EmitterData): ExpressionSpriteComponent {
         val (engine, particleData) = particleEngine(emitterData)
-        return ExpressionSpriteComponent(engine.compile(sprite, macros), emitterData, particleData)
+        return ExpressionSpriteComponent(engine.compile(sprite, macros), particleData)
     }
 }

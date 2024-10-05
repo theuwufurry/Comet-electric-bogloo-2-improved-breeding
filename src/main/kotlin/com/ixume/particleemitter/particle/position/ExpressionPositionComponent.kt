@@ -10,7 +10,7 @@ import com.ixume.particleemitter.particle.ParticleData
 import org.joml.Vector3d
 import javax.script.CompiledScript
 
-class ExpressionPositionComponent(private val xOffset: CompiledScript, private val yOffset: CompiledScript, private val zOffset: CompiledScript, private val myEmitterData: EmitterData, private val myParticleData: ParticleData) : PositionComponent {
+class ExpressionPositionComponent(private val xOffset: CompiledScript, private val yOffset: CompiledScript, private val zOffset: CompiledScript, private val myParticleData: ParticleData) : PositionComponent {
     companion object : ComponentParser<ExpressionPositionComponent> {
         init {
             ParticleJsonParser.positionComponentParsers += "expression_relative_position" to this
@@ -26,8 +26,7 @@ class ExpressionPositionComponent(private val xOffset: CompiledScript, private v
         }
     }
 
-    override fun pos(otherEmitterData: EmitterData, otherParticleData: ParticleData): Vector3d {
-        myEmitterData.copyFrom(otherEmitterData)
+    override fun pos(otherParticleData: ParticleData): Vector3d {
         myParticleData.copyFrom(otherParticleData)
 
         return Vector3d(xOffset.eval() as Double, yOffset.eval() as Double, zOffset.eval() as Double)
@@ -41,6 +40,6 @@ class UnrealizedExpressionPositionComponent(private val xOffset: String, private
             engine.compile(xOffset, macros),
             engine.compile(yOffset, macros),
             engine.compile(zOffset, macros),
-            emitterData, particleData)
+            particleData)
     }
 }

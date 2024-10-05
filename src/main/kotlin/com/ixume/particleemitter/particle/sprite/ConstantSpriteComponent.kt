@@ -8,7 +8,7 @@ import com.ixume.particleemitter.parsing.macro.Macro
 import com.ixume.particleemitter.particle.ParticleData
 import javax.script.CompiledScript
 
-class ConstantSpriteComponent(private val sprite: CompiledScript, private val myEmitterData: EmitterData) : SpriteComponent {
+class ConstantSpriteComponent(private val sprite: CompiledScript) : SpriteComponent {
     companion object : ComponentParser<ConstantSpriteComponent> {
         init {
             ParticleJsonParser.spriteComponentParsers += "constant_sprite" to this
@@ -23,9 +23,8 @@ class ConstantSpriteComponent(private val sprite: CompiledScript, private val my
         }
     }
 
-    override fun sprite(otherEmitterData: EmitterData, otherParticleData: ParticleData): String {
+    override fun sprite(otherParticleData: ParticleData): String {
         return if (otherParticleData.age == 0.0) {
-            myEmitterData.copyFrom(otherEmitterData)
             sprite.eval() as String
         } else {
             otherParticleData.sprite
@@ -36,6 +35,6 @@ class ConstantSpriteComponent(private val sprite: CompiledScript, private val my
 class UnrealizedConstantSpriteComponent(private val sprite: String, private val macros: Map<String, Macro>?) : UnrealizedComponent<ConstantSpriteComponent> {
     override fun realizeComponent(emitterData: EmitterData): ConstantSpriteComponent {
         val engine = emitterEngine(emitterData)
-        return ConstantSpriteComponent(engine.compile(sprite, macros), emitterData)
+        return ConstantSpriteComponent(engine.compile(sprite, macros))
     }
 }

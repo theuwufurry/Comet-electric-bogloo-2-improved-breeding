@@ -11,7 +11,6 @@ import javax.script.CompiledScript
 
 class FlipbookSpriteComponent(private val inputScript: CompiledScript,
                               private val spriteScripts: List<Pair<Double, CompiledScript>>,
-                              private val myEmitterData: EmitterData,
                               private val myParticleData: ParticleData) : SpriteComponent {
     companion object : ComponentParser<FlipbookSpriteComponent> {
         init {
@@ -33,8 +32,7 @@ class FlipbookSpriteComponent(private val inputScript: CompiledScript,
         }
     }
 
-    override fun sprite(otherEmitterData: EmitterData, otherParticleData: ParticleData): String {
-        myEmitterData.copyFrom(otherEmitterData)
+    override fun sprite(otherParticleData: ParticleData): String {
         myParticleData.copyFrom(otherParticleData)
         val inputResult = inputScript.eval() as Double
 
@@ -50,7 +48,7 @@ class UnrealizedFlipbookSpriteComponent(private val input: String, private val s
         return FlipbookSpriteComponent(
             engine.compile(input, macros),
             sprites.map { Pair(it.first, engine.compile(it.second, macros)) },
-            emitterData, particleData
+            particleData
         )
     }
 }

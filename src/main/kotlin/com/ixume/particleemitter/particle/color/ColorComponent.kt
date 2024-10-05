@@ -12,5 +12,5 @@ fun String.addDependency(): String {
 }
 
 interface ColorComponent {
-    fun color(otherEmitterData: EmitterData, otherParticleData: ParticleData): Int
+    fun color(otherParticleData: ParticleData): Int
 }

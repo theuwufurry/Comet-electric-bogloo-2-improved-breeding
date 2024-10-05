@@ -27,6 +27,7 @@ data class UnrealizedEmitter(val unrealizedRateComponent: UnrealizedComponent<ou
     private fun cacheEmitter(): CachedEmitter {
         val emitterData = EmitterData()
         return CachedEmitter(
+            emitterData,
             unrealizedRateComponent.realizeComponent(emitterData),
             unrealizedParticleLifetimeComponent.realizeComponent(emitterData),
             unrealizedShapeComponent.realizeComponent(emitterData),
@@ -39,7 +40,7 @@ data class UnrealizedEmitter(val unrealizedRateComponent: UnrealizedComponent<ou
     }
 
     fun realize(location: Location) {
-        val emitterData = EmitterData(world = location.world)
+        cachedEmitter.emitterData.world = location.world
         val emitter = Emitter(
             cachedEmitter.rateComponent,
             cachedEmitter.particleLifetimeComponent,
@@ -49,7 +50,7 @@ data class UnrealizedEmitter(val unrealizedRateComponent: UnrealizedComponent<ou
             cachedEmitter.emitterLifetimeComponent,
             cachedEmitter.positionComponent,
             cachedEmitter.scaleComponent,
-            location, emitterData,null)
+            location, cachedEmitter.emitterData,null)
         emitter.task = Bukkit.getScheduler().runTaskTimerAsynchronously(ParticleEmitter.INSTANCE, Runnable {
             emitter.tick()
         }, 0, 1)
@@ -59,6 +60,7 @@ data class UnrealizedEmitter(val unrealizedRateComponent: UnrealizedComponent<ou
 }
 
 class CachedEmitter(
+    val emitterData: EmitterData,
     val rateComponent: RateComponent,
     val particleLifetimeComponent: ParticleLifetimeComponent,
     val shapeComponent: ShapeComponent,

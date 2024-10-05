@@ -9,7 +9,7 @@ import com.ixume.particleemitter.particle.ParticleData
 import java.awt.Color
 import javax.script.CompiledScript
 
-class ConstantColorComponent(private val colorScript: CompiledScript, private val myEmitterData: EmitterData) : ColorComponent {
+class ConstantColorComponent(private val colorScript: CompiledScript) : ColorComponent {
     companion object : ComponentParser<ConstantColorComponent> {
         init {
             ParticleJsonParser.colorComponentParsers += "constant_color" to this
@@ -24,9 +24,8 @@ class ConstantColorComponent(private val colorScript: CompiledScript, private va
         }
     }
 
-    override fun color(otherEmitterData: EmitterData, otherParticleData: ParticleData): Int {
+    override fun color(otherParticleData: ParticleData): Int {
         return if (otherParticleData.age == 0.0) {
-            myEmitterData.copyFrom(otherEmitterData)
             (colorScript.eval() as Color).rgb
         } else {
             otherParticleData.color
@@ -37,6 +36,6 @@ class ConstantColorComponent(private val colorScript: CompiledScript, private va
 class UnrealizedConstantColorComponent(private val color: String, private val macros: Map<String, Macro>?): UnrealizedComponent<ConstantColorComponent> {
     override fun realizeComponent(emitterData: EmitterData): ConstantColorComponent {
         val engine = emitterEngine(emitterData)
-        return ConstantColorComponent(engine.compile(color, macros), emitterData)
+        return ConstantColorComponent(engine.compile(color, macros))
     }
 }

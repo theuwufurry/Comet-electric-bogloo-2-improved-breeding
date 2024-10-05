@@ -7,7 +7,7 @@ import com.ixume.particleemitter.parsing.*
 import com.ixume.particleemitter.parsing.macro.Macro
 import javax.script.CompiledScript
 
-class TimedEmitterLifetimeComponent(private val lifetimeScript: CompiledScript, private val myEmitterData: EmitterData) : EmitterLifetimeComponent {
+class TimedEmitterLifetimeComponent(private val lifetimeScript: CompiledScript) : EmitterLifetimeComponent {
     companion object : ComponentParser<TimedEmitterLifetimeComponent> {
         init {
             ParticleJsonParser.emitterLifetimeComponentParsers += "timed_emitter_lifetime" to this
@@ -19,8 +19,7 @@ class TimedEmitterLifetimeComponent(private val lifetimeScript: CompiledScript, 
         }
     }
 
-    override fun keepAlive(otherEmitterData: EmitterData): Boolean {
-        myEmitterData.copyFrom(otherEmitterData)
+    override fun keepAlive(): Boolean {
         return (lifetimeScript.eval() as Double) <= 0
     }
 }
@@ -28,6 +27,6 @@ class TimedEmitterLifetimeComponent(private val lifetimeScript: CompiledScript, 
 class UnrealizedTimedEmitterComponent(private val lifetimeScript: String, private val macros: Map<String, Macro>?) : UnrealizedComponent<TimedEmitterLifetimeComponent> {
     override fun realizeComponent(emitterData: EmitterData): TimedEmitterLifetimeComponent {
         val engine = emitterEngine(emitterData)
-        return TimedEmitterLifetimeComponent(engine.compile(lifetimeScript, macros), emitterData)
+        return TimedEmitterLifetimeComponent(engine.compile(lifetimeScript, macros))
     }
 }

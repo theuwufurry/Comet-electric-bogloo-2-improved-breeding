@@ -9,7 +9,7 @@ import com.ixume.particleemitter.particle.ParticleData
 import org.joml.Vector3f
 import javax.script.CompiledScript
 
-class ExpressionScaleComponent(private val xScale: CompiledScript, private val yScale: CompiledScript, private val zScale: CompiledScript, private val myEmitterData: EmitterData, private val myParticleData: ParticleData) : ScaleComponent {
+class ExpressionScaleComponent(private val xScale: CompiledScript, private val yScale: CompiledScript, private val zScale: CompiledScript, private val myParticleData: ParticleData) : ScaleComponent {
     companion object : ComponentParser<ExpressionScaleComponent> {
         init {
             ParticleJsonParser.scaleComponentParsers += "expression_scale" to this
@@ -25,8 +25,7 @@ class ExpressionScaleComponent(private val xScale: CompiledScript, private val y
         }
     }
 
-    override fun scale(otherEmitterData: EmitterData, otherParticleData: ParticleData): Vector3f {
-        myEmitterData.copyFrom(otherEmitterData)
+    override fun scale(otherParticleData: ParticleData): Vector3f {
         myParticleData.copyFrom(otherParticleData)
 
         return Vector3f((xScale.eval() as Double).toFloat(), (yScale.eval() as Double).toFloat(), (zScale.eval() as Double).toFloat())
@@ -40,7 +39,6 @@ class UnrealizedExpressionScaleComponent(private val xScale: String, private val
             engine.compile(xScale, macros),
             engine.compile(yScale, macros),
             engine.compile(zScale, macros),
-            emitterData,
             particleData
         )
     }
