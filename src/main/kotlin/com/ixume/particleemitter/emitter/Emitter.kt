@@ -18,9 +18,7 @@ import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket
 import org.bukkit.Location
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.scheduler.BukkitTask
-import org.joml.Matrix4f
-import org.joml.Vector3d
-import org.joml.Vector3f
+import org.joml.*
 
 class Emitter(private val rateComponent: RateComponent,
               private val particleLifetimeComponent: ParticleLifetimeComponent,
@@ -33,6 +31,7 @@ class Emitter(private val rateComponent: RateComponent,
               private var location: Location,
               private val emitterData: EmitterData,
               var task: BukkitTask?) {
+    //origin can change, rotation can change
     private val particles: MutableList<Particle> = mutableListOf()
     private val deadParticles: MutableList<Particle> = mutableListOf()
     private var blocked = false
