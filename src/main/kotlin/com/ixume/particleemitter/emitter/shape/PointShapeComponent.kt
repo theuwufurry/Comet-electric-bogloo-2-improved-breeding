@@ -13,6 +13,7 @@ import javax.script.CompiledScript
 class PointShapeComponent(private val xOffset: CompiledScript,
                           private val yOffset: CompiledScript,
                           private val zOffset: CompiledScript,
+                          private val myEmitterData: EmitterData,
                           private val myParticleData: ParticleData) : ShapeComponent {
     companion object : ComponentParser<PointShapeComponent> {
         init {
@@ -31,7 +32,7 @@ class PointShapeComponent(private val xOffset: CompiledScript,
 
     override fun offset(otherParticleData: ParticleData): Vector3d {
         myParticleData.copyFrom(otherParticleData)
-        return Vector3d(xOffset.eval() as Double, yOffset.eval() as Double, zOffset.eval() as Double)
+        return Vector3d(xOffset.eval() as Double, yOffset.eval() as Double, zOffset.eval() as Double).rotate(myEmitterData.rotation)
     }
 }
 
@@ -45,6 +46,7 @@ class UnrealizedPointShapeComponent(private val xOffset: String,
             engine.compile(xOffset, macros),
             engine.compile(yOffset, macros),
             engine.compile(zOffset, macros),
+            emitterData,
             particleData)
     }
 }

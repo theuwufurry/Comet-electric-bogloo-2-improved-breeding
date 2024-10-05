@@ -114,9 +114,9 @@ class Emitter(private val rateComponent: RateComponent,
         val bundle: MutableList<Packet<in ClientGamePacketListener>> = mutableListOf()
         repeat(rateComponent.toEmit()) {
             var particleData = ParticleData()
-            val spawnOffset = shapeComponent.offset(particleData).rotate(emitterData.rotation)
+            val spawnOffset = shapeComponent.offset(particleData)
             val matrix = matrixFromParts(scaleComponent.scale(particleData))
-            val relativePosition = positionComponent.pos(particleData).rotate(emitterData.rotation)
+            val relativePosition = positionComponent.pos(particleData)
             particleData = ParticleData(origin = Vector3d(location.x + spawnOffset.x + relativePosition.x, location.y + spawnOffset.y + relativePosition.y, location.z + spawnOffset.z + relativePosition.z), relativePosition = relativePosition, sprite = spriteComponent.sprite(particleData), color = colorComponent.color(particleData), matrix = matrix, random = particleData.random)
             val particle = Particle(particleData)
             val packets = particle.getAddPacket()
