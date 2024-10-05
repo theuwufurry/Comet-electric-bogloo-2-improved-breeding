@@ -87,7 +87,7 @@ class MotionPositionComponent(
     override fun pos(otherParticleData: ParticleData): Vector3d {
         myParticleData.copyFrom(otherParticleData)
         if (otherParticleData.age == 0.0) {
-            return initialVelocityComponent.dir().rotate(myEmitterData.rotation)
+            return initialVelocityComponent.dir(otherParticleData).rotate(myEmitterData.rotation)
         }
 
         val dragCoefficient = dragScript.eval() as Double

@@ -10,7 +10,8 @@ import org.joml.Vector3d
 import javax.script.CompiledScript
 
 class ExpressionDirectionSubcomponent(private val xOffset: CompiledScript, private val yOffset: CompiledScript, private val zOffset: CompiledScript, val myParticleData: ParticleData) : DirectionSubcomponent {
-    override fun dir(): Vector3d {
+    override fun dir(otherParticleData: ParticleData): Vector3d {
+        myParticleData.copyFrom(otherParticleData)
         return Vector3d(xOffset.eval() as Double, yOffset.eval() as Double, zOffset.eval() as Double)
     }
 }

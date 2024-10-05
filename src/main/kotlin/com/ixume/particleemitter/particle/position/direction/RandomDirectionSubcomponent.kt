@@ -14,9 +14,10 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 class RandomDirectionSubcomponent(private val magnitudeScript: CompiledScript?, private val directionScript: Pair<DirectionSubcomponent, CompiledScript>?, private val myParticleData: ParticleData) : DirectionSubcomponent {
-    override fun dir(): Vector3d {
+    override fun dir(otherParticleData: ParticleData): Vector3d {
+        myParticleData.copyFrom(otherParticleData)
         if (myParticleData.age == 0.0) {
-            val dir: Vector3d? = directionScript?.first?.dir()
+            val dir: Vector3d? = directionScript?.first?.dir(otherParticleData)
             val spread: Double? = directionScript?.second?.eval() as? Double
             return randomVector(magnitudeScript?.let { it.eval() as Double } ?: 1.0, dir, spread)
         }
