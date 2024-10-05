@@ -12,6 +12,8 @@ import com.ixume.particleemitter.particle.sprite.SpriteComponent
 import com.ixume.particleemitter.particle.transformation.scale.ScaleComponent
 import org.bukkit.Bukkit
 import org.bukkit.Location
+import org.joml.Quaterniond
+import org.joml.Vector3d
 
 data class UnrealizedEmitter(val unrealizedRateComponent: UnrealizedComponent<out RateComponent>,
                              val unrealizedParticleLifetimeComponent: UnrealizedComponent<out ParticleLifetimeComponent>,
@@ -41,6 +43,7 @@ data class UnrealizedEmitter(val unrealizedRateComponent: UnrealizedComponent<ou
 
     fun realize(location: Location) {
         cachedEmitter.emitterData.world = location.world
+        cachedEmitter.emitterData.rotation = Quaterniond().rotateTo(Vector3d(0.0, 0.0, 1.0), location.direction.toVector3d().normalize())
         val emitter = Emitter(
             cachedEmitter.rateComponent,
             cachedEmitter.particleLifetimeComponent,

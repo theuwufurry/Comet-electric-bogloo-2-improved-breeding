@@ -1,6 +1,6 @@
 package com.ixume.particleemitter.emitter
 
 import org.bukkit.World
+import org.joml.Quaterniond
 
-data class EmitterData(var age: Double = 0.0, var world: World? = null) {
-}
+data class EmitterData(var age: Double = 0.0, var world: World? = null, var rotation: Quaterniond? = Quaterniond())
