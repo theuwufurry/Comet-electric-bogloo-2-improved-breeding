@@ -2,6 +2,7 @@ package com.ixume.particleemitter.particle.position
 
 import com.google.gson.JsonElement
 import com.ixume.particleemitter.UnrealizedComponent
+import com.ixume.particleemitter.debugDust
 import com.ixume.particleemitter.emitter.EmitterData
 import com.ixume.particleemitter.parsing.*
 import com.ixume.particleemitter.parsing.macro.Macro
@@ -10,6 +11,7 @@ import com.ixume.particleemitter.particle.position.direction.DirectionSubcompone
 import com.ixume.particleemitter.particle.position.direction.UnrealizedExpressionDirectionSubcomponent
 import com.ixume.particleemitter.particle.position.direction.UnrealizedRandomDirectionSubcomponent
 import org.bukkit.Material
+import org.bukkit.Particle
 import org.bukkit.World
 import org.bukkit.block.Block
 import org.joml.Vector3d
@@ -99,16 +101,46 @@ class MotionPositionComponent(
             accelerationScript.third.eval() as Double
         )
 
-        val correctionVector = Vector3d()
-        val absolutePos = Vector3d(otherParticleData.origin).add(otherParticleData.relativePosition)
-        if (restitutionScript != null && blockAt(myEmitterData.world!!, absolutePos).type != Material.AIR) {
-            val restitution = restitutionScript.eval() as Double
-            val oldPoint = Vector3d(otherParticleData.origin).add(otherParticleData.oldRelativePosition)
+        val correctionVector = fixCollisions(acceleration)
 
+        val updatedPos = Vector3d(otherParticleData.relativePosition).add(correctionVector)
+
+        val velocity = Vector3d(updatedPos).sub(otherParticleData.oldRelativePosition)
+
+        velocity.mul(1.0 - dragCoefficient)
+
+        otherParticleData.oldRelativePosition = Vector3d(updatedPos)
+
+        return Vector3d(updatedPos).add(velocity).add(acceleration)
+    }
+
+    private fun fixCollisions(acceleration: Vector3d): Vector3d {
+        if (restitutionScript != null) {
+            val oldPoint = Vector3d(myParticleData.origin).add(myParticleData.oldRelativePosition)
+            val absolutePos = Vector3d(myParticleData.origin).add(myParticleData.relativePosition)
             val oldVelocity = Vector3d(absolutePos).sub(oldPoint)
+            val block = blockAt(myEmitterData.world!!, oldPoint)
+
+            val restitution = restitutionScript.eval() as Double
+
+            val intersection = block.intersect(oldPoint, oldVelocity)
+            if (intersection != null) {
+                val correctionVector = Vector3d(intersection.intersection).sub(absolutePos)
+                when (intersection.direction) {
+                    0 -> acceleration.add(Vector3d(oldVelocity).mul(-restitution, restitution, restitution))
+                    1 -> acceleration.add(Vector3d(oldVelocity).mul(restitution, -restitution, restitution))
+                    else -> acceleration.add(Vector3d(oldVelocity).mul(restitution, restitution, -restitution))
+                }
+
+                acceleration.add(Vector3d(oldVelocity).add(correctionVector).mul(-1.0))
+
+                return correctionVector
+            }
 
             val maxOffset =
-                (abs(oldVelocity.x) + 1.0) * (abs(oldVelocity.x) + 1.0) + (abs(oldVelocity.y) + 1.0) * (abs(oldVelocity.y) + 1.0) + (abs(oldVelocity.z) + 1.0) * (abs(oldVelocity.z) + 1.0)
+                (abs(oldVelocity.x) + 1.0) * (abs(oldVelocity.x) + 1.0) + (abs(oldVelocity.y) + 1.0) * (abs(oldVelocity.y) + 1.0) + (abs(
+                    oldVelocity.z
+                ) + 1.0) * (abs(oldVelocity.z) + 1.0)
 
             //block-plane offset
             val offset = Vector3i()
@@ -132,118 +164,84 @@ class MotionPositionComponent(
                     xyDistance = Double.MAX_VALUE
                 }
 
-                if (min(min(yzDistance, xzDistance), xyDistance) == Double.MAX_VALUE) {
-                    println("break")
-                    break
+                if (min(min(yzDistance, xzDistance), xyDistance) > 1.0) {
+                    return Vector3d()
                 }
 
-                if (yzDistance < xzDistance) {
-                    if (yzDistance < xyDistance) {
-                        //yzDistance is smallest
+                val index = min(yzDistance, xzDistance, xyDistance)
+                when (index) {
+                    //yzDistance is smallest
+                    0 -> {
                         val yzIntersection = Vector3d(oldPoint).add(Vector3d(oldVelocity).mul(yzDistance))
-                        if (myEmitterData.world!!.getBlockAt(
-                                (yzPlane - 0.5 + 0.5 * sign(oldVelocity.x)).toInt(),
-                                floor(yzIntersection.y).toInt(),
-                                floor(yzIntersection.z).toInt()
-                            ).type != Material.AIR
-                        ) {
-                            //done!
-                            val correction = yzPlane - absolutePos.x - 0.00001 * sign(oldVelocity.x)
-                            correctionVector
-                                .add(
-                                    Vector3d(
-                                        correction,
-                                        yzIntersection.y - absolutePos.y,
-                                        yzIntersection.z - absolutePos.z
-                                    )
-                                )
+                        val yzBlock = myEmitterData.world!!.getBlockAt(
+                            (yzPlane - 0.5 + 0.5 * sign(oldVelocity.x)).toInt(),
+                            floor(yzIntersection.y).toInt(),
+                            floor(yzIntersection.z).toInt()
+                        )
+                        if (yzBlock.isCollidable) {
+                            val result = yzBlock.intersect(oldPoint, oldVelocity)
+                            if (result == null) {
+                                offset.x++
+                                continue
+                            }
+
+                            val correctionVector = Vector3d(result.intersection).sub(absolutePos)
                             acceleration.add(Vector3d(oldVelocity).mul(-restitution, restitution, restitution))
-                            //remove into-bounce velocity
                             acceleration.add(Vector3d(oldVelocity).add(correctionVector).mul(-1.0))
-                            break
+                            return correctionVector
                         } else {
                             //not done...
                             offset.x++
                             continue
                         }
-                    } else {
-                        //xyDistance is smallest
-                        val xyIntersection = Vector3d(oldPoint).add(Vector3d(oldVelocity).mul(xyDistance))
-                        if (myEmitterData.world!!.getBlockAt(
-                                floor(xyIntersection.x).toInt(),
-                                floor(xyIntersection.y).toInt(),
-                                (xyPlane - 0.5 + 0.5 * sign(oldVelocity.z)).toInt()
-                            ).type != Material.AIR
-                        ) {
-                            //done!
-                            val correction = xyPlane - absolutePos.z - 0.00001 * sign(oldVelocity.z)
-                            correctionVector
-                                .add(
-                                    Vector3d(
-                                        xyIntersection.x - absolutePos.x,
-                                        xyIntersection.y - absolutePos.y,
-                                        correction
-                                    )
-                                )
-                            acceleration.add(Vector3d(oldVelocity).mul(restitution, restitution, -restitution))
-                            acceleration.add(Vector3d(oldVelocity).add(correctionVector).mul(-1.0))
-                            break
-                        } else {
-                            //not done...
-                            offset.z++
-                            continue
-                        }
                     }
-                } else {
-                    if (xzDistance < xyDistance) {
+
+                    1 -> {
                         //xzDistance is smallest
                         val xzIntersection = Vector3d(oldPoint).add(Vector3d(oldVelocity).mul(xzDistance))
-                        if (myEmitterData.world!!.getBlockAt(
-                                floor(xzIntersection.x).toInt(),
-                                (xzPlane - 0.5 + 0.5 * sign(oldVelocity.y)).toInt(),
-                                floor(xzIntersection.z).toInt()
-                            ).type != Material.AIR
-                        ) {
-                            //done!
-                            val correction = xzPlane - absolutePos.y// - 0.1 * sign(oldVelocity.y)
-                            correctionVector
-                                .add(
-                                    Vector3d(
-                                        xzIntersection.x - absolutePos.x,
-                                        correction,
-                                        xzIntersection.z - absolutePos.z
-                                    )
-                                )
+                        val xzBlock = myEmitterData.world!!.getBlockAt(
+                            floor(xzIntersection.x).toInt(),
+                            (xzPlane - 0.5 + 0.5 * sign(oldVelocity.y)).toInt(),
+                            floor(xzIntersection.z).toInt()
+                        )
+
+                        if (xzBlock.isCollidable) {
+                            val result = xzBlock.intersect(oldPoint, oldVelocity)
+                            if (result == null) {
+                                offset.y++
+                                continue
+                            }
+
+                            val correctionVector = Vector3d(result.intersection).sub(absolutePos)
                             acceleration.add(Vector3d(oldVelocity).mul(restitution, -restitution, restitution))
                             acceleration.add(Vector3d(oldVelocity).add(correctionVector).mul(-1.0))
-                            break
+                            return correctionVector
                         } else {
                             //not done...
                             offset.y++
                             continue
                         }
-                    } else {
+                    }
+
+                    2 -> {
                         //xyDistance is smallest
                         val xyIntersection = Vector3d(oldPoint).add(Vector3d(oldVelocity).mul(xyDistance))
-                        if (myEmitterData.world!!.getBlockAt(
-                                floor(xyIntersection.x).toInt(),
-                                floor(xyIntersection.y).toInt(),
-                                (xyPlane - 0.5 + 0.5 * sign(oldVelocity.z)).toInt()
-                            ).type != Material.AIR
-                        ) {
-                            //done!
-                            val correction = xyPlane - absolutePos.z - 0.00001 * sign(oldVelocity.z)
-                            correctionVector
-                                .add(
-                                    Vector3d(
-                                        xyIntersection.x - absolutePos.x,
-                                        xyIntersection.y - absolutePos.y,
-                                        correction
-                                    )
-                                )
+                        val xyBlock = myEmitterData.world!!.getBlockAt(
+                            floor(xyIntersection.x).toInt(),
+                            floor(xyIntersection.y).toInt(),
+                            (xyPlane - 0.5 + 0.5 * sign(oldVelocity.z)).toInt()
+                        )
+                        if (xyBlock.isCollidable) {
+                            val result = xyBlock.intersect(oldPoint, oldVelocity)
+                            if (result == null) {
+                                offset.z++
+                                continue
+                            }
+
+                            val correctionVector = Vector3d(result.intersection).sub(absolutePos)
                             acceleration.add(Vector3d(oldVelocity).mul(restitution, restitution, -restitution))
                             acceleration.add(Vector3d(oldVelocity).add(correctionVector).mul(-1.0))
-                            break
+                            return correctionVector
                         } else {
                             //not done...
                             offset.z++
@@ -254,15 +252,7 @@ class MotionPositionComponent(
             }
         }
 
-        val updatedPos = Vector3d(otherParticleData.relativePosition).add(correctionVector)
-
-        val velocity = Vector3d(updatedPos).sub(otherParticleData.oldRelativePosition)
-
-        velocity.mul(1.0 - dragCoefficient)
-
-        otherParticleData.oldRelativePosition = Vector3d(updatedPos)
-
-        return Vector3d(updatedPos).add(velocity).add(acceleration)
+        return Vector3d()
     }
 
     private fun blockAt(world: World, vector3d: Vector3d): Block {
@@ -272,7 +262,79 @@ class MotionPositionComponent(
             floor(vector3d.z).toInt()
         )
     }
+
+    private fun min(first: Double, second: Double, third: Double): Int {
+        return if (first < second) {
+            if (first < third) {
+                0
+            } else {
+                2
+            }
+        } else {
+            if (second < third) {
+                1
+            } else {
+                2
+            }
+        }
+    }
+
+    private fun Block.contains(point: Vector3d): Boolean {
+        if (!isCollidable) return false
+
+        val transformedPoint = Vector3d(point).sub(location.toVector().toVector3d())
+        for (boundingBox in collisionShape.boundingBoxes) {
+            if (boundingBox.contains(transformedPoint.x, transformedPoint.y, transformedPoint.z)) return true
+        }
+
+        return false
+    }
+
+    private fun Block.intersect(origin: Vector3d, velocity: Vector3d): IntersectionResult? {
+        val blockPos = location.toVector().toVector3d()
+        var closestResult: IntersectionResult? = null
+
+        for (boundingBox in collisionShape.boundingBoxes) {
+            val yzPlane: Double = blockPos.x + (boundingBox.centerX - boundingBox.widthX * 0.5 * sign(velocity.x))
+            var yzDistance: Double = (yzPlane - origin.x) / velocity.x
+            val yzIntersection = Vector3d(origin).add(Vector3d(velocity).mul(yzDistance))
+            if (yzDistance < 0.0
+                || yzIntersection.y - blockPos.y !in boundingBox.minY..boundingBox.maxY
+                || yzIntersection.z - blockPos.z !in boundingBox.minZ..boundingBox.maxZ
+            ) yzDistance = Double.MAX_VALUE
+
+            val xzPlane: Double = blockPos.y + (boundingBox.centerY - boundingBox.height * 0.5 * sign(velocity.y))
+            var xzDistance: Double = (xzPlane - origin.y) / velocity.y
+            val xzIntersection = Vector3d(origin).add(Vector3d(velocity).mul(xzDistance))
+            if (xzDistance < 0.0
+                || xzIntersection.x - blockPos.x !in boundingBox.minX..boundingBox.maxX
+                || xzIntersection.z - blockPos.z !in boundingBox.minZ..boundingBox.maxZ
+            ) xzDistance = Double.MAX_VALUE
+
+            val xyPlane: Double = blockPos.z + (boundingBox.centerZ - boundingBox.widthZ * 0.5 * sign(velocity.z))
+            var xyDistance: Double = (xyPlane - origin.z) / velocity.z
+            val xyIntersection = Vector3d(origin).add(Vector3d(velocity).mul(xyDistance))
+            if (xyDistance < 0.0
+                || xyIntersection.x - blockPos.x !in boundingBox.minX..boundingBox.maxX
+                || xyIntersection.y - blockPos.y !in boundingBox.minY..boundingBox.maxY
+            ) xyDistance = Double.MAX_VALUE
+
+            if (min(min(yzDistance, xzDistance), xyDistance) > 1.0) continue
+            val index = min(yzDistance, xzDistance, xyDistance)
+            val result = when (index) {
+                0 -> IntersectionResult(0, yzDistance, yzIntersection.add(-0.00001 * sign(velocity.x), 0.0, 0.0))
+                1 -> IntersectionResult(1, xzDistance, xzIntersection.add(0.0, -0.00001 * sign(velocity.y), 0.0))
+                else -> IntersectionResult(2, xyDistance, xyIntersection.add(0.0, 0.0, -0.00001 * sign(velocity.z)))
+            }
+
+            closestResult = closestResult?.let { if (result.distance < it.distance) result else it} ?: result
+        }
+
+        return closestResult
+    }
 }
+
+class IntersectionResult(val direction: Int, val distance: Double, val intersection: Vector3d)
 
 class UnrealizedMotionPositionComponent(
     private val initialVelocityComponent: UnrealizedComponent<out DirectionSubcomponent>,

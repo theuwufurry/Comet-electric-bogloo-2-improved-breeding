@@ -39,7 +39,7 @@ class UnrealizedParticleLifetimeExpressionComponent(private val lifetime: String
         val (engine, particleData) = particleEngine(emitterData)
         return ParticleLifetimeExpressionComponent(
             lifetime?.let { engine.compile(lifetime, macros) },
-            maxLife?.let { engine.compile(maxLife, macros) }?.eval() as? Int,
+            (maxLife?.let { engine.compile(maxLife, macros) }?.eval() as? Number)?.toInt(),
             particleData
         )
     }

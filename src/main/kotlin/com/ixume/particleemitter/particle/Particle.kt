@@ -12,8 +12,6 @@ import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
 import net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.phys.Vec3
-import org.bukkit.World
-import org.joml.Vector3d
 import java.util.UUID
 
 class Particle(var data: ParticleData) {
