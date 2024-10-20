@@ -2,7 +2,6 @@ package com.ixume.particleemitter.particle.position
 
 import com.google.gson.JsonElement
 import com.ixume.particleemitter.UnrealizedComponent
-import com.ixume.particleemitter.debugDust
 import com.ixume.particleemitter.emitter.EmitterData
 import com.ixume.particleemitter.parsing.*
 import com.ixume.particleemitter.parsing.macro.Macro
@@ -10,8 +9,6 @@ import com.ixume.particleemitter.particle.ParticleData
 import com.ixume.particleemitter.particle.position.direction.DirectionSubcomponent
 import com.ixume.particleemitter.particle.position.direction.UnrealizedExpressionDirectionSubcomponent
 import com.ixume.particleemitter.particle.position.direction.UnrealizedRandomDirectionSubcomponent
-import org.bukkit.Material
-import org.bukkit.Particle
 import org.bukkit.World
 import org.bukkit.block.Block
 import org.joml.Vector3d
@@ -277,17 +274,6 @@ class MotionPositionComponent(
                 2
             }
         }
-    }
-
-    private fun Block.contains(point: Vector3d): Boolean {
-        if (!isCollidable) return false
-
-        val transformedPoint = Vector3d(point).sub(location.toVector().toVector3d())
-        for (boundingBox in collisionShape.boundingBoxes) {
-            if (boundingBox.contains(transformedPoint.x, transformedPoint.y, transformedPoint.z)) return true
-        }
-
-        return false
     }
 
     private fun Block.intersect(origin: Vector3d, velocity: Vector3d): IntersectionResult? {
