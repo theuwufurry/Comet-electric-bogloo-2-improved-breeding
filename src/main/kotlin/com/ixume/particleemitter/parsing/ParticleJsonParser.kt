@@ -29,6 +29,7 @@ import com.ixume.particleemitter.particle.sprite.SpriteComponent
 import com.ixume.particleemitter.particle.transformation.rotation.RotationComponent
 import com.ixume.particleemitter.particle.transformation.scale.ExpressionScaleComponent
 import com.ixume.particleemitter.particle.transformation.scale.ScaleComponent
+import net.minecraft.world.entity.Display.BillboardConstraints
 import java.io.FileReader
 
 fun JsonObject.expression(field: String): String? {
@@ -130,8 +131,17 @@ object ParticleJsonParser {
         var positionComponent: UnrealizedComponent<out PositionComponent>? = null
         var scaleComponent: UnrealizedComponent<out ScaleComponent>? = null
         var rotationComponent: UnrealizedComponent<out RotationComponent>? = null
+        var billboardConstraints: BillboardConstraints? = null
 
         for ((key, componentElement) in componentsObject.entrySet()) {
+            if (key == "display_type") {
+                billboardConstraints = when (componentElement.asString) {
+                    "fixed" -> BillboardConstraints.FIXED
+                    "center" -> BillboardConstraints.CENTER
+                    else ->  BillboardConstraints.CENTER
+                }
+            }
+
             if (key in rateComponentParsers) {
                 val component = rateComponentParsers[key]!!.parse(componentElement, macros)
                 if (component != null) {
@@ -223,7 +233,8 @@ object ParticleJsonParser {
             emitterLifetimeComponent ?: return null,
             positionComponent ?: return null,
             scaleComponent ?: return null,
-            rotationComponent ?: return null
+            rotationComponent ?: return null,
+            billboardConstraints ?: return null
         )
     }
 }

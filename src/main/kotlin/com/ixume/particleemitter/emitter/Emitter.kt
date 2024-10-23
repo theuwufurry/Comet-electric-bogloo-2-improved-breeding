@@ -16,6 +16,7 @@ import net.minecraft.network.protocol.Packet
 import net.minecraft.network.protocol.game.ClientGamePacketListener
 import net.minecraft.network.protocol.game.ClientboundBundlePacket
 import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket
+import net.minecraft.world.entity.Display.BillboardConstraints
 import org.bukkit.Location
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.scheduler.BukkitTask
@@ -30,6 +31,7 @@ class Emitter(private val rateComponent: RateComponent,
               private val positionComponent: PositionComponent,
               private val scaleComponent: ScaleComponent,
               private val rotationComponent: RotationComponent,
+              private val billboardConstraints: BillboardConstraints,
               private var location: Location,
               private val emitterData: EmitterData,
               var task: BukkitTask?) {
@@ -120,7 +122,7 @@ class Emitter(private val rateComponent: RateComponent,
             val spawnOffset = shapeComponent.offset(particleData)
             val matrix = matrixFromParts(scaleComponent.scale(particleData), rotationComponent.rotation(particleData))
             val relativePosition = positionComponent.pos(particleData)
-            particleData = ParticleData(origin = Vector3d(location.x + spawnOffset.x + relativePosition.x, location.y + spawnOffset.y + relativePosition.y, location.z + spawnOffset.z + relativePosition.z), relativePosition = relativePosition, sprite = spriteComponent.sprite(particleData), color = colorComponent.color(particleData), matrix = matrix, random = particleData.random)
+            particleData = ParticleData(origin = Vector3d(location.x + spawnOffset.x + relativePosition.x, location.y + spawnOffset.y + relativePosition.y, location.z + spawnOffset.z + relativePosition.z), relativePosition = relativePosition, sprite = spriteComponent.sprite(particleData), color = colorComponent.color(particleData), matrix = matrix, random = particleData.random, billboardConstraints = billboardConstraints)
             val particle = Particle(particleData)
             val packets = particle.getAddPacket()
             bundle.add(packets.first)

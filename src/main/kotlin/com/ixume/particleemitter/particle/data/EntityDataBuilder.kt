@@ -8,6 +8,7 @@ import net.minecraft.core.RegistryAccess
 import net.minecraft.network.chat.Component
 import net.minecraft.network.syncher.SynchedEntityData
 import net.minecraft.world.entity.Display
+import net.minecraft.world.entity.Display.BillboardConstraints
 import net.minecraft.world.entity.Display.TextDisplay
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.level.Level
@@ -29,7 +30,7 @@ object EntityDataBuilder {
         val entity = TextDisplay(EntityType.TEXT_DISPLAY, level)
         entity.text = Component.Serializer.fromJson(JSONComponentSerializer.json().serialize(net.kyori.adventure.text.Component.translatable(component.translation).font(
             Key.key("particlecreator.${component.color ushr 24}:default")).color(TextColor.color(component.color and 0xFFFFFF))), RegistryAccess.ImmutableRegistryAccess.EMPTY)!!
-        entity.billboardConstraints = Display.BillboardConstraints.CENTER
+        entity.billboardConstraints = component.billboardConstraints
         entity.entityData.set(TextDisplay.DATA_BACKGROUND_COLOR_ID, 0)
         entity.entityData.set(Display.DATA_POS_ROT_INTERPOLATION_DURATION_ID, 1)
         entity.setTransformation(Transformation(component.matrix))
@@ -39,4 +40,4 @@ object EntityDataBuilder {
     }
 }
 
-data class ComponentData(val translation: String, val color: Int, val matrix: Matrix4f)
+data class ComponentData(val translation: String, val color: Int, val matrix: Matrix4f, val billboardConstraints: BillboardConstraints)

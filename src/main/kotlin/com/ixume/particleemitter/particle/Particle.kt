@@ -29,14 +29,14 @@ class Particle(var data: ParticleData) {
 
     fun getAddPacket(): Pair<Packet<in ClientGamePacketListener>, Packet<in ClientGamePacketListener>?> {
         val packet = ClientboundAddEntityPacket(id, uuid, data.origin.x + data.relativePosition.x, data.origin.y + data.relativePosition.y, data.origin.z + data.relativePosition.z, 0F, 0F, EntityType.TEXT_DISPLAY, 0, Vec3(0.0, 0.0, 0.0), 0.0)
-        val data = EntityDataBuilder.getDataFor(ComponentData(data.sprite, data.color, data.matrix))
+        val data = EntityDataBuilder.getDataFor(ComponentData(data.sprite, data.color, data.matrix, data.billboardConstraints))
         val entityDataPacket: Packet<in ClientGamePacketListener>? =
             data.nonDefaultValues?.let { ClientboundSetEntityDataPacket(id, it) }
         return Pair(packet, entityDataPacket)
     }
 
     fun updatePacket(): ClientboundSetEntityDataPacket? {
-        return EntityDataBuilder.getDataFor(ComponentData(data.sprite, data.color, data.matrix)).nonDefaultValues?.let { ClientboundSetEntityDataPacket(id, it) }
+        return EntityDataBuilder.getDataFor(ComponentData(data.sprite, data.color, data.matrix, data.billboardConstraints)).nonDefaultValues?.let { ClientboundSetEntityDataPacket(id, it) }
     }
 
     fun getMovementPacket(): ClientboundTeleportEntityPacket {

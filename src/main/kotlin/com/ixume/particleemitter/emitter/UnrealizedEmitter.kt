@@ -11,6 +11,7 @@ import com.ixume.particleemitter.particle.position.PositionComponent
 import com.ixume.particleemitter.particle.sprite.SpriteComponent
 import com.ixume.particleemitter.particle.transformation.rotation.RotationComponent
 import com.ixume.particleemitter.particle.transformation.scale.ScaleComponent
+import net.minecraft.world.entity.Display.BillboardConstraints
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.joml.Quaterniond
@@ -25,7 +26,8 @@ data class UnrealizedEmitter(
     val unrealizedEmitterLifetimeComponent: UnrealizedComponent<out EmitterLifetimeComponent>,
     val unrealizedPositionComponent: UnrealizedComponent<out PositionComponent>,
     val unrealizedScaleComponent: UnrealizedComponent<out ScaleComponent>,
-    val unrealizedRotationComponent: UnrealizedComponent<out RotationComponent>
+    val unrealizedRotationComponent: UnrealizedComponent<out RotationComponent>,
+    val billboardConstraints: BillboardConstraints,
 ) {
 
     private var cachedEmitter: CachedEmitter = cacheEmitter()
@@ -60,7 +62,7 @@ data class UnrealizedEmitter(
             cachedEmitter.positionComponent,
             cachedEmitter.scaleComponent,
             cachedEmitter.rotationComponent,
-            location, cachedEmitter.emitterData, null
+            billboardConstraints, location, cachedEmitter.emitterData, null
         )
         emitter.task = Bukkit.getScheduler().runTaskTimerAsynchronously(ParticleEmitter.INSTANCE, Runnable {
             emitter.tick()
@@ -80,5 +82,5 @@ class CachedEmitter(
     val emitterLifetimeComponent: EmitterLifetimeComponent,
     val positionComponent: PositionComponent,
     val scaleComponent: ScaleComponent,
-    val rotationComponent: RotationComponent
+    val rotationComponent: RotationComponent,
 )
