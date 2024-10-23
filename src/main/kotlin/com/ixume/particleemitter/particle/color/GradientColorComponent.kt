@@ -38,7 +38,7 @@ class GradientColorComponent(private val interpolantScript: CompiledScript, priv
         var (prevIndex, prevScript: CompiledScript) = gradient[0]
         for ((index, script) in gradient) {
             if (index == interpolantResult) {
-                return (script.eval() as Color).rgb
+                return (script.eval() as Color).argb()
             }
 
             if (index > interpolantResult) {
@@ -47,14 +47,15 @@ class GradientColorComponent(private val interpolantScript: CompiledScript, priv
                 val endColor = script.eval() as Color
                 return (((endColor.red * interpolationFactor + prevColor.red * (1 - interpolationFactor)).toInt() shl 16) +
                         ((endColor.green * interpolationFactor + prevColor.green * (1 - interpolationFactor)).toInt() shl 8) +
-                        (endColor.blue * interpolationFactor + prevColor.blue * (1 - interpolationFactor)).toInt())
+                        (endColor.blue * interpolationFactor + prevColor.blue * (1 - interpolationFactor)).toInt() +
+                        ((endColor.alpha * interpolationFactor + prevColor.alpha * (1 - interpolationFactor)).toInt() shl 24))
             }
 
             prevIndex = index
             prevScript = script
         }
 
-        return (gradient.last().second.eval() as Color).rgb
+        return (gradient.last().second.eval() as Color).argb()
     }
 }
 

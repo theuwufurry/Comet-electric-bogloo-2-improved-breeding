@@ -105,6 +105,7 @@ class MotionPositionComponent(
         val velocity = Vector3d(updatedPos).sub(otherParticleData.oldRelativePosition)
 
         velocity.mul(1.0 - dragCoefficient)
+        acceleration.mul(1.0 - dragCoefficient)
 
         otherParticleData.oldRelativePosition = Vector3d(updatedPos)
 
@@ -308,9 +309,9 @@ class MotionPositionComponent(
             if (min(min(yzDistance, xzDistance), xyDistance) > 1.0) continue
             val index = min(yzDistance, xzDistance, xyDistance)
             val result = when (index) {
-                0 -> IntersectionResult(0, yzDistance, yzIntersection.add(-0.00001 * sign(velocity.x), 0.0, 0.0))
-                1 -> IntersectionResult(1, xzDistance, xzIntersection.add(0.0, -0.00001 * sign(velocity.y), 0.0))
-                else -> IntersectionResult(2, xyDistance, xyIntersection.add(0.0, 0.0, -0.00001 * sign(velocity.z)))
+                0 -> IntersectionResult(0, yzDistance, yzIntersection/*.add(.00000 * sign(velocity.x), 0.0, 0.0)*/)
+                1 -> IntersectionResult(1, xzDistance, xzIntersection/*.add(0.0, -0.00000 * sign(velocity.y), 0.0)*/)
+                else -> IntersectionResult(2, xyDistance, xyIntersection/*.add(0.0, 0.0, -0.00000 * sign(velocity.z))*/)
             }
 
             closestResult = closestResult?.let { if (result.distance < it.distance) result else it} ?: result

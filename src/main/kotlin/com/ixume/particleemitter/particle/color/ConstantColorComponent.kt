@@ -26,7 +26,7 @@ class ConstantColorComponent(private val colorScript: CompiledScript) : ColorCom
 
     override fun color(otherParticleData: ParticleData): Int {
         return if (otherParticleData.age == 0.0) {
-            (colorScript.eval() as Color).rgb
+            return (colorScript.eval() as Color).argb()
         } else {
             otherParticleData.color
         }

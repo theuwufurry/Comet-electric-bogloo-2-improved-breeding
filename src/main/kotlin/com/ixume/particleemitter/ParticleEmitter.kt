@@ -3,6 +3,7 @@ package com.ixume.particleemitter
 import com.ixume.particleemitter.command.CustomParticleSpawnCommand
 import com.ixume.particleemitter.command.ReloadParticleScriptsCommand
 import com.ixume.particleemitter.parsing.ParticleJsonParser
+import com.ixume.particleemitter.parsing.ResourcepackCreator
 import org.bukkit.Color
 import org.bukkit.Particle
 import org.bukkit.plugin.java.JavaPlugin
@@ -31,6 +32,8 @@ class ParticleEmitter : JavaPlugin() {
 
         ParticleJsonParser.parseJsons()
         dataFolder.mkdir()
+
+        ResourcepackCreator.genPack()
 
         CustomParticleSpawnCommand
         ReloadParticleScriptsCommand

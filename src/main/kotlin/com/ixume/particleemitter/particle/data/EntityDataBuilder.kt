@@ -28,7 +28,7 @@ object EntityDataBuilder {
     private fun genData(component: ComponentData): SynchedEntityData {
         val entity = TextDisplay(EntityType.TEXT_DISPLAY, level)
         entity.text = Component.Serializer.fromJson(JSONComponentSerializer.json().serialize(net.kyori.adventure.text.Component.translatable(component.translation).font(
-            Key.key("customparticle:default")).color(TextColor.color(component.color))), RegistryAccess.ImmutableRegistryAccess.EMPTY)!!
+            Key.key("particlecreator.${component.color ushr 24}:default")).color(TextColor.color(component.color and 0xFFFFFF))), RegistryAccess.ImmutableRegistryAccess.EMPTY)!!
         entity.billboardConstraints = Display.BillboardConstraints.CENTER
         entity.entityData.set(TextDisplay.DATA_BACKGROUND_COLOR_ID, 0)
         entity.entityData.set(Display.DATA_POS_ROT_INTERPOLATION_DURATION_ID, 1)
