@@ -8,16 +8,16 @@ import com.ixume.particleemitter.UnrealizedComponent
 import com.ixume.particleemitter.emitter.UnrealizedEmitter
 import com.ixume.particleemitter.emitter.lifetime.EmitterLifetimeComponent
 import com.ixume.particleemitter.emitter.lifetime.TimedEmitterLifetimeComponent
-import com.ixume.particleemitter.particle.color.ColorComponent
-import com.ixume.particleemitter.particle.lifetime.ParticleLifetimeComponent
 import com.ixume.particleemitter.emitter.rate.RateComponent
 import com.ixume.particleemitter.emitter.rate.SteadyRateComponent
 import com.ixume.particleemitter.emitter.shape.PointShapeComponent
 import com.ixume.particleemitter.emitter.shape.ShapeComponent
 import com.ixume.particleemitter.parsing.macro.Macro
 import com.ixume.particleemitter.parsing.macro.MacrosParser
+import com.ixume.particleemitter.particle.color.ColorComponent
 import com.ixume.particleemitter.particle.color.ConstantColorComponent
 import com.ixume.particleemitter.particle.color.GradientColorComponent
+import com.ixume.particleemitter.particle.lifetime.ParticleLifetimeComponent
 import com.ixume.particleemitter.particle.lifetime.ParticleLifetimeExpressionComponent
 import com.ixume.particleemitter.particle.position.ExpressionPositionComponent
 import com.ixume.particleemitter.particle.position.MotionPositionComponent
@@ -26,6 +26,7 @@ import com.ixume.particleemitter.particle.sprite.ConstantSpriteComponent
 import com.ixume.particleemitter.particle.sprite.ExpressionSpriteComponent
 import com.ixume.particleemitter.particle.sprite.FlipbookSpriteComponent
 import com.ixume.particleemitter.particle.sprite.SpriteComponent
+import com.ixume.particleemitter.particle.transformation.rotation.RotationComponent
 import com.ixume.particleemitter.particle.transformation.scale.ExpressionScaleComponent
 import com.ixume.particleemitter.particle.transformation.scale.ScaleComponent
 import java.io.FileReader
@@ -35,7 +36,11 @@ fun JsonObject.expression(field: String): String? {
     val fieldElement = this.get(field)
     if (!fieldElement.isJsonPrimitive) return null
     val fieldPrimitive = fieldElement.asJsonPrimitive
-    return ((if (fieldPrimitive.isNumber) fieldPrimitive.asNumber.toString() else fieldPrimitive.asString)).also { println(it) }
+    return ((if (fieldPrimitive.isNumber) fieldPrimitive.asNumber.toString() else fieldPrimitive.asString)).also {
+        println(
+            it
+        )
+    }
 }
 
 fun JsonElement.expression(): String? {
@@ -49,13 +54,16 @@ interface ComponentParser<T> {
 }
 
 object ParticleJsonParser {
-    val particleLifetimeComponentParsers: MutableMap<String, ComponentParser<out ParticleLifetimeComponent>> = mutableMapOf()
+    val particleLifetimeComponentParsers: MutableMap<String, ComponentParser<out ParticleLifetimeComponent>> =
+        mutableMapOf()
     val spriteComponentParsers: MutableMap<String, ComponentParser<out SpriteComponent>> = mutableMapOf()
     val colorComponentParsers: MutableMap<String, ComponentParser<out ColorComponent>> = mutableMapOf()
     val positionComponentParsers: MutableMap<String, ComponentParser<out PositionComponent>> = mutableMapOf()
     val scaleComponentParsers: MutableMap<String, ComponentParser<out ScaleComponent>> = mutableMapOf()
+    val rotationComponentParsers: MutableMap<String, ComponentParser<out RotationComponent>> = mutableMapOf()
 
-    val emitterLifetimeComponentParsers: MutableMap<String, ComponentParser<out EmitterLifetimeComponent>> = mutableMapOf()
+    val emitterLifetimeComponentParsers: MutableMap<String, ComponentParser<out EmitterLifetimeComponent>> =
+        mutableMapOf()
     val rateComponentParsers: MutableMap<String, ComponentParser<out RateComponent>> = mutableMapOf()
     val shapeComponentParsers: MutableMap<String, ComponentParser<out ShapeComponent>> = mutableMapOf()
 
@@ -121,6 +129,8 @@ object ParticleJsonParser {
         var emitterLifetimeComponent: UnrealizedComponent<out EmitterLifetimeComponent>? = null
         var positionComponent: UnrealizedComponent<out PositionComponent>? = null
         var scaleComponent: UnrealizedComponent<out ScaleComponent>? = null
+        var rotationComponent: UnrealizedComponent<out RotationComponent>? = null
+
         for ((key, componentElement) in componentsObject.entrySet()) {
             if (key in rateComponentParsers) {
                 val component = rateComponentParsers[key]!!.parse(componentElement, macros)
@@ -152,7 +162,7 @@ object ParticleJsonParser {
             if (key in particleLifetimeComponentParsers) {
                 val component = particleLifetimeComponentParsers[key]!!.parse(componentElement, macros)
                 if (component != null) {
-                   particleLifetimeComponent = component
+                    particleLifetimeComponent = component
                 }
 
                 continue
@@ -193,6 +203,15 @@ object ParticleJsonParser {
 
                 continue
             }
+
+            if (key in rotationComponentParsers) {
+                val component = rotationComponentParsers[key]!!.parse(componentElement, macros)
+                if (component != null) {
+                    rotationComponent = component
+                }
+
+                continue
+            }
         }
 
         return UnrealizedEmitter(
@@ -203,6 +222,8 @@ object ParticleJsonParser {
             colorComponent ?: return null,
             emitterLifetimeComponent ?: return null,
             positionComponent ?: return null,
-            scaleComponent ?: return null)
+            scaleComponent ?: return null,
+            rotationComponent ?: return null
+        )
     }
 }

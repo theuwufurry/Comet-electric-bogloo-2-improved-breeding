@@ -9,6 +9,7 @@ import com.ixume.particleemitter.particle.sprite.SpriteComponent
 import com.ixume.particleemitter.particle.Particle
 import com.ixume.particleemitter.particle.ParticleData
 import com.ixume.particleemitter.particle.position.PositionComponent
+import com.ixume.particleemitter.particle.transformation.rotation.RotationComponent
 import com.ixume.particleemitter.particle.transformation.scale.ScaleComponent
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import net.minecraft.network.protocol.Packet
@@ -28,6 +29,7 @@ class Emitter(private val rateComponent: RateComponent,
               private val emitterLifetimeComponent: EmitterLifetimeComponent,
               private val positionComponent: PositionComponent,
               private val scaleComponent: ScaleComponent,
+              private val rotationComponent: RotationComponent,
               private var location: Location,
               private val emitterData: EmitterData,
               var task: BukkitTask?) {
@@ -86,7 +88,8 @@ class Emitter(private val rateComponent: RateComponent,
             }
 
             val newScale = scaleComponent.scale(particle.data)
-            val matrix = matrixFromParts(newScale)
+            val newRotation = rotationComponent.rotation(particle.data)
+            val matrix = matrixFromParts(newScale, newRotation)
             if (matrix != particle.data.matrix) {
                 updateParticle = true
                 particle.data.matrix = matrix
@@ -115,7 +118,7 @@ class Emitter(private val rateComponent: RateComponent,
         repeat(rateComponent.toEmit()) {
             var particleData = ParticleData()
             val spawnOffset = shapeComponent.offset(particleData)
-            val matrix = matrixFromParts(scaleComponent.scale(particleData))
+            val matrix = matrixFromParts(scaleComponent.scale(particleData), rotationComponent.rotation(particleData))
             val relativePosition = positionComponent.pos(particleData)
             particleData = ParticleData(origin = Vector3d(location.x + spawnOffset.x + relativePosition.x, location.y + spawnOffset.y + relativePosition.y, location.z + spawnOffset.z + relativePosition.z), relativePosition = relativePosition, sprite = spriteComponent.sprite(particleData), color = colorComponent.color(particleData), matrix = matrix, random = particleData.random)
             val particle = Particle(particleData)
@@ -132,9 +135,9 @@ class Emitter(private val rateComponent: RateComponent,
         }
     }
 
-    private fun matrixFromParts(scale: Vector3f): Matrix4f {
+    private fun matrixFromParts(scale: Vector3f, rotation: Matrix4f): Matrix4f {
         val matrix = Matrix4f()
-        matrix.scale(scale)
+        matrix.mul(rotation).scale(scale)
         return matrix
     }
 }
