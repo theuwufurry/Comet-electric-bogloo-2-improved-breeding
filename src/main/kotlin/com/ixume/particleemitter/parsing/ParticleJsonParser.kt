@@ -26,6 +26,7 @@ import com.ixume.particleemitter.particle.sprite.ConstantSpriteComponent
 import com.ixume.particleemitter.particle.sprite.ExpressionSpriteComponent
 import com.ixume.particleemitter.particle.sprite.FlipbookSpriteComponent
 import com.ixume.particleemitter.particle.sprite.SpriteComponent
+import com.ixume.particleemitter.particle.transformation.rotation.ExpressionRotationComponent
 import com.ixume.particleemitter.particle.transformation.rotation.RotationComponent
 import com.ixume.particleemitter.particle.transformation.scale.ExpressionScaleComponent
 import com.ixume.particleemitter.particle.transformation.scale.ScaleComponent
@@ -90,6 +91,8 @@ object ParticleJsonParser {
         MotionPositionComponent
 
         ExpressionScaleComponent
+
+        ExpressionRotationComponent
     }
 
     lateinit var jsonUnrealizedEmitters: Map<String, UnrealizedEmitter>
@@ -223,6 +226,17 @@ object ParticleJsonParser {
                 continue
             }
         }
+
+        if (rateComponent == null) println("Rate component null!")
+        if (particleLifetimeComponent == null) println("Particle lifetime null!")
+        if (spriteComponent == null) println("Sprite null!")
+        if (shapeComponent == null) println("Shape null!")
+        if (colorComponent == null) println("Color null!")
+        if (emitterLifetimeComponent == null) println("Emitter life null!")
+        if (positionComponent == null) println("Position null!")
+        if (scaleComponent == null) println("Scale null!")
+        if (rotationComponent == null) println("Rotation null!")
+        if (billboardConstraints == null) println("Billboard null!")
 
         return UnrealizedEmitter(
             rateComponent ?: return null,
