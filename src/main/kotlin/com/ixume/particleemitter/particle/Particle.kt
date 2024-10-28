@@ -3,8 +3,9 @@ package com.ixume.particleemitter.particle
 import com.ixume.particleemitter.particle.data.PacketEntity
 import com.ixume.particleemitter.ParticleEmitter.Companion.unsafe
 import com.ixume.particleemitter.ParticleIDProvider
-import com.ixume.particleemitter.particle.data.ComponentData
+import com.ixume.particleemitter.particle.data.EntityData
 import com.ixume.particleemitter.particle.data.EntityDataBuilder
+import com.ixume.particleemitter.particle.display.sprite.SpriteData
 import net.minecraft.network.protocol.Packet
 import net.minecraft.network.protocol.game.ClientGamePacketListener
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket
@@ -28,15 +29,15 @@ class Particle(var data: ParticleData) {
     }
 
     fun getAddPacket(): Pair<Packet<in ClientGamePacketListener>, Packet<in ClientGamePacketListener>?> {
-        val packet = ClientboundAddEntityPacket(id, uuid, data.origin.x + data.relativePosition.x, data.origin.y + data.relativePosition.y, data.origin.z + data.relativePosition.z, 0F, 0F, EntityType.TEXT_DISPLAY, 0, Vec3(0.0, 0.0, 0.0), 0.0)
-        val data = EntityDataBuilder.getDataFor(ComponentData(data.sprite, data.color, data.matrix, data.billboardConstraints))
+        val packet = ClientboundAddEntityPacket(id, uuid, data.origin.x + data.relativePosition.x, data.origin.y + data.relativePosition.y, data.origin.z + data.relativePosition.z, 0F, 0F, if (data.displayData is SpriteData) EntityType.TEXT_DISPLAY else EntityType.ITEM_DISPLAY, 0, Vec3(0.0, 0.0, 0.0), 0.0)
+        val data = EntityDataBuilder.getDataFor(EntityData(data.displayData, data.color, data.matrix, data.billboardConstraints))
         val entityDataPacket: Packet<in ClientGamePacketListener>? =
             data.nonDefaultValues?.let { ClientboundSetEntityDataPacket(id, it) }
         return Pair(packet, entityDataPacket)
     }
 
     fun updatePacket(): ClientboundSetEntityDataPacket? {
-        return EntityDataBuilder.getDataFor(ComponentData(data.sprite, data.color, data.matrix, data.billboardConstraints)).nonDefaultValues?.let { ClientboundSetEntityDataPacket(id, it) }
+        return EntityDataBuilder.getDataFor(EntityData(data.displayData, data.color, data.matrix, data.billboardConstraints)).nonDefaultValues?.let { ClientboundSetEntityDataPacket(id, it) }
     }
 
     fun getMovementPacket(): ClientboundTeleportEntityPacket {

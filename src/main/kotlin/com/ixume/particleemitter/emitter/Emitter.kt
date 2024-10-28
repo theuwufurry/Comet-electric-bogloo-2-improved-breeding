@@ -5,9 +5,10 @@ import com.ixume.particleemitter.particle.color.ColorComponent
 import com.ixume.particleemitter.particle.lifetime.ParticleLifetimeComponent
 import com.ixume.particleemitter.emitter.rate.RateComponent
 import com.ixume.particleemitter.emitter.shape.ShapeComponent
-import com.ixume.particleemitter.particle.sprite.SpriteComponent
+import com.ixume.particleemitter.particle.display.sprite.SpriteComponent
 import com.ixume.particleemitter.particle.Particle
 import com.ixume.particleemitter.particle.ParticleData
+import com.ixume.particleemitter.particle.display.DisplayComponent
 import com.ixume.particleemitter.particle.position.PositionComponent
 import com.ixume.particleemitter.particle.transformation.rotation.RotationComponent
 import com.ixume.particleemitter.particle.transformation.scale.ScaleComponent
@@ -25,7 +26,7 @@ import org.joml.*
 class Emitter(private val rateComponent: RateComponent,
               private val particleLifetimeComponent: ParticleLifetimeComponent,
               private val shapeComponent: ShapeComponent,
-              private val spriteComponent: SpriteComponent,
+              private val displayComponent: DisplayComponent,
               private val colorComponent: ColorComponent,
               private val emitterLifetimeComponent: EmitterLifetimeComponent,
               private val positionComponent: PositionComponent,
@@ -71,10 +72,10 @@ class Emitter(private val rateComponent: RateComponent,
 
             var updateParticle = false
 
-            val newSprite = spriteComponent.sprite(particle.data)
-            if (newSprite != particle.data.sprite) {
+            val newDisplay = displayComponent.display(particle.data)
+            if (newDisplay != particle.data.displayData) {
                 updateParticle = true
-                particle.data.sprite = newSprite
+                particle.data.displayData = newDisplay
             }
 
             val newColor  = colorComponent.color(particle.data)
@@ -122,7 +123,7 @@ class Emitter(private val rateComponent: RateComponent,
             val spawnOffset = shapeComponent.offset(particleData)
             val matrix = matrixFromParts(scaleComponent.scale(particleData), rotationComponent.rotation(particleData))
             val relativePosition = positionComponent.pos(particleData)
-            particleData = ParticleData(origin = Vector3d(location.x + spawnOffset.x + relativePosition.x, location.y + spawnOffset.y + relativePosition.y, location.z + spawnOffset.z + relativePosition.z), relativePosition = relativePosition, sprite = spriteComponent.sprite(particleData), color = colorComponent.color(particleData), matrix = matrix, random = particleData.random, billboardConstraints = billboardConstraints)
+            particleData = ParticleData(origin = Vector3d(location.x + spawnOffset.x + relativePosition.x, location.y + spawnOffset.y + relativePosition.y, location.z + spawnOffset.z + relativePosition.z), relativePosition = relativePosition, displayData = displayComponent.display(particleData), color = colorComponent.color(particleData), matrix = matrix, random = particleData.random, billboardConstraints = billboardConstraints)
             val particle = Particle(particleData)
             val packets = particle.getAddPacket()
             bundle.add(packets.first)

@@ -1,4 +1,4 @@
-package com.ixume.particleemitter.particle.sprite
+package com.ixume.particleemitter.particle.display.sprite
 
 import com.google.gson.JsonElement
 import com.ixume.particleemitter.UnrealizedComponent
@@ -11,7 +11,7 @@ import javax.script.CompiledScript
 class ExpressionSpriteComponent(private val sprite: CompiledScript, private val myParticleData: ParticleData) : SpriteComponent {
     companion object : ComponentParser<ExpressionSpriteComponent> {
         init {
-            ParticleJsonParser.spriteComponentParsers += "expression_sprite" to this
+            ParticleJsonParser.displayComponentParsers += "expression_sprite" to this
         }
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): UnrealizedComponent<ExpressionSpriteComponent>? {
@@ -23,9 +23,9 @@ class ExpressionSpriteComponent(private val sprite: CompiledScript, private val 
         }
     }
 
-    override fun sprite(otherParticleData: ParticleData): String {
+    override fun display(otherParticleData: ParticleData): SpriteData {
         myParticleData.copyFrom(otherParticleData)
-        return sprite.eval() as String
+        return SpriteData(sprite.eval() as String)
     }
 }
 

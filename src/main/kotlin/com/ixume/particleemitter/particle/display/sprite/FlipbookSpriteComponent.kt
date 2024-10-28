@@ -1,4 +1,4 @@
-package com.ixume.particleemitter.particle.sprite
+package com.ixume.particleemitter.particle.display.sprite
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
@@ -14,7 +14,7 @@ class FlipbookSpriteComponent(private val inputScript: CompiledScript,
                               private val myParticleData: ParticleData) : SpriteComponent {
     companion object : ComponentParser<FlipbookSpriteComponent> {
         init {
-            ParticleJsonParser.spriteComponentParsers += "flipbook_sprite" to this
+            ParticleJsonParser.displayComponentParsers += "flipbook_sprite" to this
         }
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): UnrealizedComponent<FlipbookSpriteComponent>? {
@@ -32,13 +32,13 @@ class FlipbookSpriteComponent(private val inputScript: CompiledScript,
         }
     }
 
-    override fun sprite(otherParticleData: ParticleData): String {
+    override fun display(otherParticleData: ParticleData): SpriteData {
         myParticleData.copyFrom(otherParticleData)
         val inputResult = inputScript.eval() as Double
 
         var i = 0
         while (i + 1 < spriteScripts.size && inputResult >= spriteScripts[i + 1].first) i++
-        return spriteScripts[i].second.eval() as String
+        return SpriteData(spriteScripts[i].second.eval() as String)
     }
 }
 

@@ -115,8 +115,8 @@ class MotionPositionComponent(
     private fun fixCollisions(acceleration: Vector3d): Vector3d {
         if (restitutionScript != null) {
             val oldPoint = Vector3d(myParticleData.origin).add(myParticleData.oldRelativePosition)
-            val absolutePos = Vector3d(myParticleData.origin).add(myParticleData.relativePosition)
-            val oldVelocity = Vector3d(absolutePos).sub(oldPoint)
+            val oldVelocity = Vector3d(myParticleData.relativePosition).sub(myParticleData.oldRelativePosition)
+            val absolutePos = Vector3d(oldPoint).add(oldVelocity)
             val block = blockAt(myEmitterData.world!!, oldPoint)
 
             val restitution = restitutionScript.eval() as Double

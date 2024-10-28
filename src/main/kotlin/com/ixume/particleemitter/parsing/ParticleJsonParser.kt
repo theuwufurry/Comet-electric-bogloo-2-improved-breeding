@@ -17,15 +17,16 @@ import com.ixume.particleemitter.parsing.macro.MacrosParser
 import com.ixume.particleemitter.particle.color.ColorComponent
 import com.ixume.particleemitter.particle.color.ConstantColorComponent
 import com.ixume.particleemitter.particle.color.GradientColorComponent
+import com.ixume.particleemitter.particle.display.DisplayComponent
+import com.ixume.particleemitter.particle.display.model.ConstantModelComponent
 import com.ixume.particleemitter.particle.lifetime.ParticleLifetimeComponent
 import com.ixume.particleemitter.particle.lifetime.ParticleLifetimeExpressionComponent
 import com.ixume.particleemitter.particle.position.ExpressionPositionComponent
 import com.ixume.particleemitter.particle.position.MotionPositionComponent
 import com.ixume.particleemitter.particle.position.PositionComponent
-import com.ixume.particleemitter.particle.sprite.ConstantSpriteComponent
-import com.ixume.particleemitter.particle.sprite.ExpressionSpriteComponent
-import com.ixume.particleemitter.particle.sprite.FlipbookSpriteComponent
-import com.ixume.particleemitter.particle.sprite.SpriteComponent
+import com.ixume.particleemitter.particle.display.sprite.ConstantSpriteComponent
+import com.ixume.particleemitter.particle.display.sprite.ExpressionSpriteComponent
+import com.ixume.particleemitter.particle.display.sprite.FlipbookSpriteComponent
 import com.ixume.particleemitter.particle.transformation.rotation.ExpressionRotationComponent
 import com.ixume.particleemitter.particle.transformation.rotation.RotationComponent
 import com.ixume.particleemitter.particle.transformation.scale.ExpressionScaleComponent
@@ -58,7 +59,7 @@ interface ComponentParser<T> {
 object ParticleJsonParser {
     val particleLifetimeComponentParsers: MutableMap<String, ComponentParser<out ParticleLifetimeComponent>> =
         mutableMapOf()
-    val spriteComponentParsers: MutableMap<String, ComponentParser<out SpriteComponent>> = mutableMapOf()
+    val displayComponentParsers: MutableMap<String, ComponentParser<out DisplayComponent>> = mutableMapOf()
     val colorComponentParsers: MutableMap<String, ComponentParser<out ColorComponent>> = mutableMapOf()
     val positionComponentParsers: MutableMap<String, ComponentParser<out PositionComponent>> = mutableMapOf()
     val scaleComponentParsers: MutableMap<String, ComponentParser<out ScaleComponent>> = mutableMapOf()
@@ -86,6 +87,8 @@ object ParticleJsonParser {
         ConstantSpriteComponent
         ExpressionSpriteComponent
         FlipbookSpriteComponent
+
+        ConstantModelComponent
 
         ExpressionPositionComponent
         MotionPositionComponent
@@ -128,7 +131,7 @@ object ParticleJsonParser {
         var rateComponent: UnrealizedComponent<out RateComponent>? = null
         var particleLifetimeComponent: UnrealizedComponent<out ParticleLifetimeComponent>? = null
         var shapeComponent: UnrealizedComponent<out ShapeComponent>? = null
-        var spriteComponent: UnrealizedComponent<out SpriteComponent>? = null
+        var displayComponent: UnrealizedComponent<out DisplayComponent>? = null
         var colorComponent: UnrealizedComponent<out ColorComponent>? = null
         var emitterLifetimeComponent: UnrealizedComponent<out EmitterLifetimeComponent>? = null
         var positionComponent: UnrealizedComponent<out PositionComponent>? = null
@@ -190,10 +193,10 @@ object ParticleJsonParser {
                 continue
             }
 
-            if (key in spriteComponentParsers) {
-                val component = spriteComponentParsers[key]!!.parse(componentElement, macros)
+            if (key in displayComponentParsers) {
+                val component = displayComponentParsers[key]!!.parse(componentElement, macros)
                 if (component != null) {
-                    spriteComponent = component
+                    displayComponent = component
                 }
 
                 continue
@@ -229,7 +232,7 @@ object ParticleJsonParser {
 
         if (rateComponent == null) println("Rate component null!")
         if (particleLifetimeComponent == null) println("Particle lifetime null!")
-        if (spriteComponent == null) println("Sprite null!")
+        if (displayComponent == null) println("Display null!")
         if (shapeComponent == null) println("Shape null!")
         if (colorComponent == null) println("Color null!")
         if (emitterLifetimeComponent == null) println("Emitter life null!")
@@ -241,7 +244,7 @@ object ParticleJsonParser {
         return UnrealizedEmitter(
             rateComponent ?: return null,
             particleLifetimeComponent ?: return null,
-            spriteComponent ?: return null,
+            displayComponent ?: return null,
             shapeComponent ?: return null,
             colorComponent ?: return null,
             emitterLifetimeComponent ?: return null,

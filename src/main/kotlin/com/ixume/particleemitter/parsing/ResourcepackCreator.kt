@@ -3,10 +3,13 @@ package com.ixume.particleemitter.parsing
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
+import com.google.gson.stream.JsonReader
 import com.ixume.particleemitter.ParticleEmitter
 import java.awt.AlphaComposite
 import java.awt.image.BufferedImage
 import java.io.File
+import java.io.FileReader
 import javax.imageio.ImageIO
 
 object ResourcepackCreator {
@@ -20,21 +23,79 @@ object ResourcepackCreator {
         if (!dataFolder.exists()) return
 
         val texturesFolder = File(dataFolder.path + "/textures")
-        if (!texturesFolder.exists()) return
         val images: MutableList<File> = mutableListOf()
 
         val oldRPFolder = File(dataFolder.path + "/output/$RP_NAME")
         if (oldRPFolder.exists()) oldRPFolder.deleteRecursively()
 
-        for (file in texturesFolder.listFiles()!!) {
-            if (file.extension != "png") continue
-            images += file
+        if (texturesFolder.exists()) {
+            for (file in texturesFolder.listFiles()!!) {
+                if (file.extension != "png") continue
+                images += file
+            }
+
+            genSprites(images)
         }
 
-        genPackFiles(images)
+        val modelFolder = File(dataFolder.path + "/models")
+
+        if (modelFolder.exists()) {
+            val models: MutableList<File> = mutableListOf()
+            for (file in modelFolder.listFiles()) {
+                if (file.isDirectory) models += file
+            }
+
+            genModels(models)
+        }
     }
 
-    private fun genPackFiles(images: List<File>) {
+    private fun genModels(files: List<File>) {
+        val dataFolder = ParticleEmitter.INSTANCE.dataFolder
+
+        val itemFolder = File(dataFolder.path + "/output/$RP_NAME/assets/minecraft/models/item")
+        itemFolder.mkdirs()
+
+        val modelFolder = File(dataFolder.path + "/output/$RP_NAME/assets/minecraft/models/item/particlecreator")
+        modelFolder.mkdirs()
+
+        val texturesFolder = File(dataFolder.path + "/output/$RP_NAME/assets/minecraft/textures/item/particlecreator")
+        texturesFolder.mkdirs()
+
+        for (file in files) {
+            val model = File(file.path + "/" + file.nameWithoutExtension + ".json")
+            val texture = File(file.path + "/" + file.nameWithoutExtension + ".png")
+            if (!model.exists() || !texture.exists()) continue
+            var item: File? = null
+
+            for (subFile in file.listFiles()) {
+                if (subFile != model && subFile != texture) {
+                    item = subFile
+                    break
+                }
+            }
+
+            if (item == null) continue
+
+            val newModel = File(modelFolder.path + "/" + model.name)
+            model.copyTo(newModel)
+
+            val rootObject = JsonParser.parseReader(FileReader(newModel)).asJsonObject
+            val texturesObject = rootObject.getAsJsonObject("textures")
+
+            texturesObject.remove("0")
+            texturesObject.addProperty("0", "item/particlecreator/" + file.nameWithoutExtension)
+            texturesObject.remove("particle")
+            texturesObject.addProperty("particle", "item/particlecreator/" + file.nameWithoutExtension)
+
+            val gson = GsonBuilder().setPrettyPrinting().create()
+            newModel.writeText(gson.toJson(rootObject))
+
+            texture.copyTo(File(texturesFolder.path + "/" + texture.name))
+            item.copyTo(File(itemFolder.path + "/" + item.name))
+        }
+    }
+
+    private fun genSprites(images: List<File>) {
         val dataFolder = ParticleEmitter.INSTANCE.dataFolder
 
         val packImage = File(dataFolder.path + "/output/$RP_NAME/pack.png")
@@ -45,13 +106,13 @@ object ResourcepackCreator {
         packMeta.writeBytes(ParticleEmitter.INSTANCE.getResource(RP_META)!!.readAllBytes())
 
         for (i in 0..255) {
-            genTextures(images, i)
+            genImages(images, i)
             genFont(images, i)
             genLang(images, i)
         }
     }
 
-    private fun genTextures(images: List<File>, alpha: Int) {
+    private fun genImages(images: List<File>, alpha: Int) {
         val dataFolder = ParticleEmitter.INSTANCE.dataFolder
 
         val texturesFolder = File(dataFolder.path + "/output/$RP_NAME/assets/$NAMESPACE.$alpha/textures/font")

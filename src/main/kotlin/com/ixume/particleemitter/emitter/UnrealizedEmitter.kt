@@ -6,9 +6,9 @@ import com.ixume.particleemitter.emitter.lifetime.EmitterLifetimeComponent
 import com.ixume.particleemitter.emitter.rate.RateComponent
 import com.ixume.particleemitter.emitter.shape.ShapeComponent
 import com.ixume.particleemitter.particle.color.ColorComponent
+import com.ixume.particleemitter.particle.display.DisplayComponent
 import com.ixume.particleemitter.particle.lifetime.ParticleLifetimeComponent
 import com.ixume.particleemitter.particle.position.PositionComponent
-import com.ixume.particleemitter.particle.sprite.SpriteComponent
 import com.ixume.particleemitter.particle.transformation.rotation.RotationComponent
 import com.ixume.particleemitter.particle.transformation.scale.ScaleComponent
 import net.minecraft.world.entity.Display.BillboardConstraints
@@ -20,7 +20,7 @@ import org.joml.Vector3d
 data class UnrealizedEmitter(
     val unrealizedRateComponent: UnrealizedComponent<out RateComponent>,
     val unrealizedParticleLifetimeComponent: UnrealizedComponent<out ParticleLifetimeComponent>,
-    val unrealizedSpriteComponent: UnrealizedComponent<out SpriteComponent>,
+    val unrealizedSpriteComponent: UnrealizedComponent<out DisplayComponent>,
     val unrealizedShapeComponent: UnrealizedComponent<out ShapeComponent>,
     val unrealizedColorComponent: UnrealizedComponent<out ColorComponent>,
     val unrealizedEmitterLifetimeComponent: UnrealizedComponent<out EmitterLifetimeComponent>,
@@ -56,7 +56,7 @@ data class UnrealizedEmitter(
             cachedEmitter.rateComponent,
             cachedEmitter.particleLifetimeComponent,
             cachedEmitter.shapeComponent,
-            cachedEmitter.spriteComponent,
+            cachedEmitter.displayComponent,
             cachedEmitter.colorComponent,
             cachedEmitter.emitterLifetimeComponent,
             cachedEmitter.positionComponent,
@@ -77,7 +77,7 @@ class CachedEmitter(
     val rateComponent: RateComponent,
     val particleLifetimeComponent: ParticleLifetimeComponent,
     val shapeComponent: ShapeComponent,
-    val spriteComponent: SpriteComponent,
+    val displayComponent: DisplayComponent,
     val colorComponent: ColorComponent,
     val emitterLifetimeComponent: EmitterLifetimeComponent,
     val positionComponent: PositionComponent,
