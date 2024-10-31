@@ -25,7 +25,10 @@ object HermiteParser : MacroParser {
 //needs to store n - 1 degree 3 polynomial coefficients for every n points
 //needs to also store n x values (for bounds for polynomials)
 //doesn't technically need a "last" point
-class HermiteEvaluator private constructor(private val polynomials: List<List<Double>>, private val domains: List<Double>) {
+class HermiteEvaluator private constructor(
+    private val polynomials: List<List<Double>>,
+    private val domains: List<Double>
+) {
     companion object {
         fun fromPoints(points: List<Vector2d>): HermiteEvaluator? {
             if (points.size < 2) return null
@@ -44,7 +47,7 @@ class HermiteEvaluator private constructor(private val polynomials: List<List<Do
                 val coefficients: MutableList<Double> = mutableListOf()
                 coefficients += points[i].y
                 coefficients += (points[i + 1].x - points[i].x) * slopes[i]
-                coefficients += -3.0 * points[i].y + 3.0 * points[i + 1].y + 2.0 * (points[i].x - points[i + 1].x ) * slopes[i] + (points[i].x - points[i + 1].x) * slopes[i + 1]
+                coefficients += -3.0 * points[i].y + 3.0 * points[i + 1].y + 2.0 * (points[i].x - points[i + 1].x) * slopes[i] + (points[i].x - points[i + 1].x) * slopes[i + 1]
                 coefficients += 2.0 * points[i].y - 2.0 * points[i + 1].y + (slopes[i] + slopes[i + 1]) * (points[i + 1].x - points[i].x)
                 polynomials += coefficients
             }
@@ -64,7 +67,10 @@ class HermiteEvaluator private constructor(private val polynomials: List<List<Do
         val coefficients = polynomials[i]
         val transformedInput = (input - domains[i]) / (domains[i + 1] - domains[i])
         val result =
-            coefficients[0] + coefficients[1] * transformedInput + coefficients[2] * transformedInput.pow(2.0) + coefficients[3] * transformedInput.pow(3.0)
+            coefficients[0] + coefficients[1] * transformedInput + coefficients[2] * transformedInput.pow(2.0) + coefficients[3] * transformedInput.pow(
+                3.0
+            )
+
         return result
     }
 }

@@ -27,7 +27,7 @@ fun particleEngine(emitterData: EmitterData): Pair<Compilable, ParticleData> {
 fun Compilable.compile(input: String, macros: Map<String, Macro>?): CompiledScript {
     var output = input
     if (macros != null) {
-        for ((from, macro ) in macros) {
+        for ((from, macro) in macros) {
             output = output.replace(from, macro.to)
             if (macro.binding != null) {
                 (this as NashornScriptEngine).getBindings(ScriptContext.ENGINE_SCOPE) += macro.binding

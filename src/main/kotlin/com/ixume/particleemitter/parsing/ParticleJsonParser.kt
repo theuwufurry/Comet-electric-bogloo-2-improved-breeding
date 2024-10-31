@@ -4,12 +4,12 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.ixume.particleemitter.ParticleEmitter
-import com.ixume.particleemitter.UnrealizedComponent
 import com.ixume.particleemitter.emitter.UnrealizedEmitter
 import com.ixume.particleemitter.emitter.lifetime.EmitterLifetimeComponent
 import com.ixume.particleemitter.emitter.lifetime.TimedEmitterLifetimeComponent
 import com.ixume.particleemitter.emitter.rate.RateComponent
 import com.ixume.particleemitter.emitter.rate.SteadyRateComponent
+import com.ixume.particleemitter.emitter.recursive.RecursiveEmitterComponent
 import com.ixume.particleemitter.emitter.shape.PointShapeComponent
 import com.ixume.particleemitter.emitter.shape.ShapeComponent
 import com.ixume.particleemitter.parsing.macro.Macro
@@ -19,14 +19,14 @@ import com.ixume.particleemitter.particle.color.ConstantColorComponent
 import com.ixume.particleemitter.particle.color.GradientColorComponent
 import com.ixume.particleemitter.particle.display.DisplayComponent
 import com.ixume.particleemitter.particle.display.model.ConstantModelComponent
+import com.ixume.particleemitter.particle.display.sprite.ConstantSpriteComponent
+import com.ixume.particleemitter.particle.display.sprite.ExpressionSpriteComponent
+import com.ixume.particleemitter.particle.display.sprite.FlipbookSpriteComponent
 import com.ixume.particleemitter.particle.lifetime.ParticleLifetimeComponent
 import com.ixume.particleemitter.particle.lifetime.ParticleLifetimeExpressionComponent
 import com.ixume.particleemitter.particle.position.ExpressionPositionComponent
 import com.ixume.particleemitter.particle.position.MotionPositionComponent
 import com.ixume.particleemitter.particle.position.PositionComponent
-import com.ixume.particleemitter.particle.display.sprite.ConstantSpriteComponent
-import com.ixume.particleemitter.particle.display.sprite.ExpressionSpriteComponent
-import com.ixume.particleemitter.particle.display.sprite.FlipbookSpriteComponent
 import com.ixume.particleemitter.particle.transformation.rotation.ExpressionRotationComponent
 import com.ixume.particleemitter.particle.transformation.rotation.RotationComponent
 import com.ixume.particleemitter.particle.transformation.scale.ExpressionScaleComponent
@@ -39,21 +39,17 @@ fun JsonObject.expression(field: String): String? {
     val fieldElement = this.get(field)
     if (!fieldElement.isJsonPrimitive) return null
     val fieldPrimitive = fieldElement.asJsonPrimitive
-    return ((if (fieldPrimitive.isNumber) fieldPrimitive.asNumber.toString() else fieldPrimitive.asString)).also {
-        println(
-            it
-        )
-    }
+    return ((if (fieldPrimitive.isNumber) fieldPrimitive.asNumber.toString() else fieldPrimitive.asString))
 }
 
 fun JsonElement.expression(): String? {
     if (!this.isJsonPrimitive) return null
     val asPrimitive = this.asJsonPrimitive
-    return ((if (asPrimitive.isNumber) asPrimitive.asNumber.toString() else asPrimitive.asString)).also { println(it) }
+    return ((if (asPrimitive.isNumber) asPrimitive.asNumber.toString() else asPrimitive.asString))
 }
 
 interface ComponentParser<T> {
-    fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): UnrealizedComponent<T>?
+    fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): T?
 }
 
 object ParticleJsonParser {
@@ -69,6 +65,8 @@ object ParticleJsonParser {
         mutableMapOf()
     val rateComponentParsers: MutableMap<String, ComponentParser<out RateComponent>> = mutableMapOf()
     val shapeComponentParsers: MutableMap<String, ComponentParser<out ShapeComponent>> = mutableMapOf()
+
+    lateinit var recursiveEmitterComponentParser: Pair<String, ComponentParser<RecursiveEmitterComponent>>
 
     fun init() {
         MacrosParser
@@ -90,12 +88,16 @@ object ParticleJsonParser {
 
         ConstantModelComponent
 
+        RecursiveEmitterComponent
+
         ExpressionPositionComponent
         MotionPositionComponent
 
         ExpressionScaleComponent
 
         ExpressionRotationComponent
+
+        RecursiveEmitterComponent
     }
 
     lateinit var jsonUnrealizedEmitters: Map<String, UnrealizedEmitter>
@@ -121,6 +123,8 @@ object ParticleJsonParser {
         }
 
         jsonUnrealizedEmitters = unrealizedEmitters
+
+        postInit()
     }
 
     private fun parseComponents(rootObject: JsonObject): UnrealizedEmitter? {
@@ -128,23 +132,24 @@ object ParticleJsonParser {
 
         val componentsObject: JsonObject = rootObject.getAsJsonObject("components") ?: return null
 
-        var rateComponent: UnrealizedComponent<out RateComponent>? = null
-        var particleLifetimeComponent: UnrealizedComponent<out ParticleLifetimeComponent>? = null
-        var shapeComponent: UnrealizedComponent<out ShapeComponent>? = null
-        var displayComponent: UnrealizedComponent<out DisplayComponent>? = null
-        var colorComponent: UnrealizedComponent<out ColorComponent>? = null
-        var emitterLifetimeComponent: UnrealizedComponent<out EmitterLifetimeComponent>? = null
-        var positionComponent: UnrealizedComponent<out PositionComponent>? = null
-        var scaleComponent: UnrealizedComponent<out ScaleComponent>? = null
-        var rotationComponent: UnrealizedComponent<out RotationComponent>? = null
+        var rateComponent: RateComponent? = null
+        var particleLifetimeComponent: ParticleLifetimeComponent? = null
+        var shapeComponent: ShapeComponent? = null
+        var displayComponent: DisplayComponent? = null
+        var colorComponent: ColorComponent? = null
+        var emitterLifetimeComponent: EmitterLifetimeComponent? = null
+        var positionComponent: PositionComponent? = null
+        var scaleComponent: ScaleComponent? = null
+        var rotationComponent: RotationComponent? = null
         var billboardConstraints: BillboardConstraints? = null
+        var recursiveEmitterComponent: RecursiveEmitterComponent? = null
 
         for ((key, componentElement) in componentsObject.entrySet()) {
             if (key == "display_type") {
                 billboardConstraints = when (componentElement.asString) {
                     "fixed" -> BillboardConstraints.FIXED
                     "center" -> BillboardConstraints.CENTER
-                    else ->  BillboardConstraints.CENTER
+                    else -> BillboardConstraints.CENTER
                 }
             }
 
@@ -228,6 +233,10 @@ object ParticleJsonParser {
 
                 continue
             }
+
+            if (key == recursiveEmitterComponentParser.first) {
+                recursiveEmitterComponent = recursiveEmitterComponentParser.second.parse(componentElement, macros)
+            }
         }
 
         if (rateComponent == null) println("Rate component null!")
@@ -251,7 +260,14 @@ object ParticleJsonParser {
             positionComponent ?: return null,
             scaleComponent ?: return null,
             rotationComponent ?: return null,
+            recursiveEmitterComponent,
             billboardConstraints ?: return null
         )
+    }
+
+    fun postInit() {
+        for ((_, unrealizedEmitter) in jsonUnrealizedEmitters) {
+            unrealizedEmitter.recursiveEmitterComponent?.realize()
+        }
     }
 }

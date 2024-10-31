@@ -25,7 +25,7 @@ import org.bukkit.craftbukkit.CraftWorld
 import org.joml.Matrix4f
 
 object EntityDataBuilder {
-    private val cache: MutableMap<EntityData, SynchedEntityData> = mutableMapOf()
+//    private val cache: MutableMap<EntityData, SynchedEntityData> = mutableMapOf()
     private val level: Level = (Bukkit.getWorld("world") as CraftWorld).handle
     private val dataComponentType =
         BuiltInRegistries.DATA_COMPONENT_TYPE.get(
@@ -35,13 +35,13 @@ object EntityDataBuilder {
             )
         ) as DataComponentType<CustomModelData>
 
-    fun getDataFor(entityData: EntityData): SynchedEntityData {
+    fun getDataFor(entityData: EntityData): SynchedEntityData? {
         return genData(entityData)
 //        performance of this is questionable
 //        return cache[componentData]?.let { return it } ?: genData(componentData).also { cache += (componentData to it) }
     }
 
-    private fun genData(component: EntityData): SynchedEntityData {
+    private fun genData(component: EntityData): SynchedEntityData? {
         val entity: Display
         if (component.displayData is SpriteData) {
             entity = TextDisplay(EntityType.TEXT_DISPLAY, level)
@@ -53,6 +53,8 @@ object EntityDataBuilder {
                 ), RegistryAccess.ImmutableRegistryAccess.EMPTY
             )!!
             entity.entityData.set(TextDisplay.DATA_BACKGROUND_COLOR_ID, 0)
+//            (entity as TextDisplay).textOpacity = ((component.color ushr 24 - 26)).toByte()
+//            entity.entityData.set(TextDisplay., component.color ushr 24)
         } else {
             entity = ItemDisplay(EntityType.ITEM_DISPLAY, level)
             val modelData = component.displayData as ModelData
@@ -65,7 +67,7 @@ object EntityDataBuilder {
         }
 
         entity.billboardConstraints = component.billboardConstraints
-        entity.entityData.set(DATA_POS_ROT_INTERPOLATION_DURATION_ID, 1)
+        entity.entityData.set(DATA_POS_ROT_INTERPOLATION_DURATION_ID, 2)
         entity.setTransformation(Transformation(component.matrix))
         entity.transformationInterpolationDuration = 2
         entity.transformationInterpolationDelay = -1

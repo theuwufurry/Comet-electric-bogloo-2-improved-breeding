@@ -1,5 +1,6 @@
 package com.ixume.particleemitter.particle.color
 
+import com.ixume.particleemitter.emitter.EmitterData
 import com.ixume.particleemitter.particle.ParticleData
 import java.awt.Color
 
@@ -12,7 +13,7 @@ fun String.addDependency(): String {
 }
 
 interface ColorComponent {
-    fun color(otherParticleData: ParticleData): Int
+    fun color(otherEmitterData: EmitterData, otherParticleData: ParticleData): Int
 }
 
 fun Color.argb(): Int {

@@ -22,7 +22,11 @@ class PacketEntity(type: EntityType<*>, world: Level) : Entity(type, world) {
     }
 
     override fun trackingPosition(): Vec3 {
-        return Vec3(particle!!.data.origin.x + particle!!.data.relativePosition.x, particle!!.data.origin.y + particle!!.data.relativePosition.y, particle!!.data.origin.z + particle!!.data.relativePosition.z)
+        return Vec3(
+            particle!!.data.origin.x + particle!!.data.relativePosition.x,
+            particle!!.data.origin.y + particle!!.data.relativePosition.y,
+            particle!!.data.origin.z + particle!!.data.relativePosition.z
+        )
     }
 
     override fun getYRot(): Float {

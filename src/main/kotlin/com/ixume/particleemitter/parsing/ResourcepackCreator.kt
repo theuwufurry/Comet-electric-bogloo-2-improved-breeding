@@ -4,7 +4,6 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import com.google.gson.stream.JsonReader
 import com.ixume.particleemitter.ParticleEmitter
 import java.awt.AlphaComposite
 import java.awt.image.BufferedImage
@@ -41,7 +40,7 @@ object ResourcepackCreator {
 
         if (modelFolder.exists()) {
             val models: MutableList<File> = mutableListOf()
-            for (file in modelFolder.listFiles()) {
+            for (file in modelFolder.listFiles()!!) {
                 if (file.isDirectory) models += file
             }
 
@@ -67,7 +66,7 @@ object ResourcepackCreator {
             if (!model.exists() || !texture.exists()) continue
             var item: File? = null
 
-            for (subFile in file.listFiles()) {
+            for (subFile in file.listFiles()!!) {
                 if (subFile != model && subFile != texture) {
                     item = subFile
                     break
@@ -185,7 +184,7 @@ object ResourcepackCreator {
         val jsonObject = JsonObject()
         var index = '\uE000'
 
-        for(image in images) {
+        for (image in images) {
             val bufferedImage: BufferedImage = ImageIO.read(image) ?: continue
             val width = bufferedImage.width
             val height = bufferedImage.height
