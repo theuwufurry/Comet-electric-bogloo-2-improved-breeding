@@ -8,3 +8,5 @@ interface DisplayComponent {
 }
 
 interface DisplayData
+
+data class TextDisplayComponent(val string: String) : DisplayData

@@ -6,6 +6,7 @@ import com.ixume.particleemitter.parsing.*
 import com.ixume.particleemitter.parsing.macro.Macro
 import com.ixume.particleemitter.particle.ParticleData
 import com.ixume.particleemitter.particle.display.DisplayData
+import com.ixume.particleemitter.particle.display.TextDisplayComponent
 import javax.script.CompiledScript
 
 class ConstantSpriteComponent(private val sprite: CompiledScript, private val myEmitterData: EmitterData) :
@@ -30,7 +31,12 @@ class ConstantSpriteComponent(private val sprite: CompiledScript, private val my
     override fun display(otherEmitterData: EmitterData, otherParticleData: ParticleData): DisplayData {
         myEmitterData.copyFrom(otherEmitterData)
         return if (otherParticleData.age == 0.0) {
-            SpriteData(sprite.eval() as String)
+            val str = sprite.eval() as String
+            if (str.first() == '\"' && str.last() == '\"') {
+                return TextDisplayComponent(str.substring(1, str.length - 1))
+            } else {
+                return SpriteData(str)
+            }
         } else {
             otherParticleData.displayData
         }

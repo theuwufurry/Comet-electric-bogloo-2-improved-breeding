@@ -5,6 +5,7 @@ import com.ixume.particleemitter.ParticleIDProvider
 import com.ixume.particleemitter.particle.data.EntityData
 import com.ixume.particleemitter.particle.data.EntityDataBuilder
 import com.ixume.particleemitter.particle.data.PacketEntity
+import com.ixume.particleemitter.particle.display.TextDisplayComponent
 import com.ixume.particleemitter.particle.display.sprite.SpriteData
 import net.minecraft.network.protocol.Packet
 import net.minecraft.network.protocol.game.ClientGamePacketListener
@@ -38,7 +39,7 @@ open class Particle(var data: ParticleData) {
             data.origin.z + data.relativePosition.z,
             0F,
             0F,
-            if (data.displayData is SpriteData) EntityType.TEXT_DISPLAY else EntityType.ITEM_DISPLAY,
+            if (data.displayData is SpriteData || data.displayData is TextDisplayComponent) EntityType.TEXT_DISPLAY else EntityType.ITEM_DISPLAY,
             0,
             Vec3(0.0, 0.0, 0.0),
             0.0

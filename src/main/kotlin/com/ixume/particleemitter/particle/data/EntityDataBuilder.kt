@@ -1,6 +1,7 @@
 package com.ixume.particleemitter.particle.data
 
 import com.ixume.particleemitter.particle.display.DisplayData
+import com.ixume.particleemitter.particle.display.TextDisplayComponent
 import com.ixume.particleemitter.particle.display.model.ModelData
 import com.ixume.particleemitter.particle.display.sprite.SpriteData
 import com.mojang.math.Transformation
@@ -54,29 +55,39 @@ object EntityDataBuilder {
 
     private fun genData(component: EntityData): SynchedEntityData? {
         val entity: Display
-        if (component.displayData is SpriteData) {
-            entity = placeholderTextDisplay
-            entity.text = Component.translatable(component.displayData.id).withColor(component.color and 0xFFFFFF)
-                .withStyle(
-                    Style.EMPTY.withFont(
-                        ResourceLocation(
-                            "particlecreator.${component.color ushr 24}",
-                            "default"
+        when (component.displayData) {
+            is SpriteData -> {
+                entity = placeholderTextDisplay
+                entity.text = Component.translatable(component.displayData.id).withColor(component.color and 0xFFFFFF)
+                    .withStyle(
+                        Style.EMPTY.withFont(
+                            ResourceLocation(
+                                "particlecreator",
+                                "default"
+                            )
                         )
                     )
-                )
 
-//            (entity as TextDisplay).textOpacity = ((component.color ushr 24 - 26)).toByte()
-//            entity.entityData.set(TextDisplay., component.color ushr 24)
-        } else {
-            entity = placeholderItemDisplay
-            val modelData = component.displayData as ModelData
-            entity.itemStack = ItemStack(BuiltInRegistries.ITEM[ResourceLocation.tryBuild("minecraft", modelData.item)])
-            entity.itemStack.applyComponents(
-                DataComponentMap.builder().set(
-                    dataComponentType, CustomModelData(modelData.id)
-                ).build()
-            )
+                entity.textOpacity = ((component.color ushr 24) + 14).coerceAtMost(255).toByte()
+    //            entity.entityData.set(TextDisplay, component.color ushr 24)
+            }
+
+            is ModelData -> {
+                entity = placeholderItemDisplay
+                val modelData = component.displayData
+                entity.itemStack = ItemStack(BuiltInRegistries.ITEM[ResourceLocation.tryBuild("minecraft", modelData.item)])
+                entity.itemStack.applyComponents(
+                    DataComponentMap.builder().set(
+                        dataComponentType, CustomModelData(modelData.id)
+                    ).build()
+                )
+            }
+
+            else -> {
+                entity = placeholderTextDisplay
+                entity.text = Component.literal((component.displayData as TextDisplayComponent).string).withColor(component.color and 0xFFFFFF)
+                entity.textOpacity = ((component.color ushr 24) + 14).coerceAtMost(255).toByte()
+            }
         }
 
         entity.billboardConstraints = component.billboardConstraints

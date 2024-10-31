@@ -104,35 +104,27 @@ object ResourcepackCreator {
         val packMeta = File(dataFolder.path + "/output/$RP_NAME/pack.mcmeta")
         packMeta.writeBytes(ParticleEmitter.INSTANCE.getResource(RP_META)!!.readAllBytes())
 
-        for (i in 0..255) {
-            genImages(images, i)
-            genFont(images, i)
-            genLang(images, i)
-        }
+        genImages(images)
+        genFont(images)
+        genLang(images)
     }
 
-    private fun genImages(images: List<File>, alpha: Int) {
+    private fun genImages(images: List<File>) {
         val dataFolder = ParticleEmitter.INSTANCE.dataFolder
 
-        val texturesFolder = File(dataFolder.path + "/output/$RP_NAME/assets/$NAMESPACE.$alpha/textures/font")
+        val texturesFolder = File(dataFolder.path + "/output/$RP_NAME/assets/$NAMESPACE/textures/font")
         texturesFolder.mkdirs()
 
         for (image in images) {
-            val rawImage = ImageIO.read(image)
-            val alphaImage = BufferedImage(rawImage.width, rawImage.height, BufferedImage.TYPE_INT_ARGB)
-            val graphics = alphaImage.createGraphics()
-            graphics.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha / 255F)
-            graphics.drawImage(rawImage, 0, 0, null)
-            graphics.dispose()
             val imageFile = File(texturesFolder.path + "/" + image.name)
-            ImageIO.write(alphaImage, "png", imageFile)
+            image.copyTo(imageFile)
         }
     }
 
-    private fun genFont(images: List<File>, alpha: Int) {
+    private fun genFont(images: List<File>) {
         val dataFolder = ParticleEmitter.INSTANCE.dataFolder
 
-        val font = File(dataFolder.path + "/output/$RP_NAME/assets/$NAMESPACE.$alpha/font/default.json")
+        val font = File(dataFolder.path + "/output/$RP_NAME/assets/$NAMESPACE/font/default.json")
         font.parentFile.mkdirs()
 
         val providers = JsonArray()
@@ -160,7 +152,7 @@ object ResourcepackCreator {
             charArray.add(chars.toString())
 
             jsonObject.addProperty("type", "bitmap")
-            jsonObject.addProperty("file", "$NAMESPACE.$alpha:font/${image.name}")
+            jsonObject.addProperty("file", "$NAMESPACE:font/${image.name}")
             jsonObject.addProperty("ascent", 1)
             jsonObject.addProperty("height", 8)
             jsonObject.add("chars", charArray)
@@ -175,10 +167,10 @@ object ResourcepackCreator {
         font.writeText(gson.toJson(completeObject))
     }
 
-    private fun genLang(images: List<File>, alpha: Int) {
+    private fun genLang(images: List<File>) {
         val dataFolder = ParticleEmitter.INSTANCE.dataFolder
 
-        val lang = File(dataFolder.path + "/output/$RP_NAME/assets/$NAMESPACE.$alpha/lang/en_us.json")
+        val lang = File(dataFolder.path + "/output/$RP_NAME/assets/$NAMESPACE/lang/en_us.json")
         lang.parentFile.mkdirs()
 
         val jsonObject = JsonObject()
