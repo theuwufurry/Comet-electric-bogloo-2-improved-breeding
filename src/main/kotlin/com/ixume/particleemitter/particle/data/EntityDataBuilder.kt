@@ -44,6 +44,9 @@ object EntityDataBuilder {
 
 
         placeholderTextDisplay.transformationInterpolationDuration = 2
+        placeholderTextDisplay.transformationInterpolationDelay = -1
+
+        placeholderItemDisplay.transformationInterpolationDuration = 2
         placeholderItemDisplay.transformationInterpolationDelay = -1
     }
 

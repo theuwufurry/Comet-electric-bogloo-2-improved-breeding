@@ -1,9 +1,6 @@
 package com.ixume.particleemitter
 
-import com.ixume.particleemitter.command.ExplosionParticleSpawnCommand
-import com.ixume.particleemitter.command.FireParticleSpawnCommand
-import com.ixume.particleemitter.command.OffsetTest
-import com.ixume.particleemitter.command.ReloadParticleScriptsCommand
+import com.ixume.particleemitter.command.*
 import com.ixume.particleemitter.parsing.ParticleJsonParser
 import com.ixume.particleemitter.parsing.ResourcepackCreator
 import org.bukkit.Color
@@ -39,6 +36,7 @@ class ParticleEmitter : JavaPlugin() {
 
         FireParticleSpawnCommand
         ExplosionParticleSpawnCommand
+        BloodParticleSpawnCommand
         OffsetTest
         ReloadParticleScriptsCommand
     }

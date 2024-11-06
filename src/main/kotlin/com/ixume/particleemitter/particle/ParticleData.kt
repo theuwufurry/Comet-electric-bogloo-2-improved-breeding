@@ -6,6 +6,7 @@ import com.ixume.particleemitter.particle.display.sprite.SpriteData
 import net.minecraft.world.entity.Display.BillboardConstraints
 import org.joml.Matrix4f
 import org.joml.Vector3d
+import org.joml.Vector3f
 
 data class ParticleData(
     var age: Double = 0.0,
@@ -19,7 +20,8 @@ data class ParticleData(
     var random: Double = Math.random(),
     var velocity: Vector3d = Vector3d(),
     var billboardConstraints: BillboardConstraints = BillboardConstraints.CENTER,
-    var emitter: Emitter? = null
+    var emitter: Emitter? = null,
+    var acceleration: Vector3d = Vector3d()
 ) {
 
     fun copyFrom(other: ParticleData) {
@@ -34,5 +36,6 @@ data class ParticleData(
         random = other.random
         velocity = other.velocity
         billboardConstraints = other.billboardConstraints
+        acceleration = other.acceleration
     }
 }
