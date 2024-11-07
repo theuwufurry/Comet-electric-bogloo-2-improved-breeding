@@ -1,10 +1,50 @@
-# TODO - Feature List - Ixume
-- Emitter movement -> localization options
-- Transition to YML
-- Knowledgable error handling
-- "Kill-plane" particle lifetime
-- On collision death & on collision events
-- User-defined variables -> on init & on update
-- Emitter layering - multiple emitters packaged in 1 "Particle Effect"
+# TODO - Feature List
 
-Premade assets will be very important as well.
+Variables:
+- On emitter initialization, to be used throughout the emitter's lifetime
+- Emitter variables can be updated per emitter tick
+- On particle initialization, to be cached throughout particles's lifetime
+- Particle variabels can be updated per particle tick
+- Variables passed to sub-emitters
+
+Events Triggers:
+- On Emitter Spawn
+- On Particle Spawn
+- On Emitter Tick
+- On Particle Tick
+- On Collision
+- On Expression
+
+Actions:
+- Kill particle
+- Kill emitter
+- spawn sub-emitter
+- variable update
+- change texture?
+
+Misc:
+- CREATE A WIKI
+- "Once" emitter spawn rate component
+- per tick emitter spawn rate component
+- map based emitter spawn rate component
+- randomized display & color component
+- Default components
+- Global macros
+- Standardize vector input
+- Switch to YML
+- Remove need for escaped quotes to return a string
+- Handle input as Number not Double
+- Emitter max lifetime (like particle max life time) component
+- Informative errors
+- Config-based colors (no more 'new Color()' shenanigans)
+- Emitter layering
+- Localized / Global movement
+- Folders for different emitter configs
+- Premade assets.
+
+Performance:
+- Asynchronously compile new scripts and distribute them continously, supporting more threads over time / under heavy load.
+- Make components constant if they dont have any changing variables (AHEM GRADIENT COMPONENT AHEM)
+
+Bugs:
+- Particles randomly teleporting incorrectly when too many. Sync issue?
