@@ -1,6 +1,7 @@
 package com.ixume.particleemitter
 
 import com.ixume.particleemitter.command.*
+import com.ixume.particleemitter.emitter.EmitterTickersHolder
 import com.ixume.particleemitter.parsing.ParticleJsonParser
 import com.ixume.particleemitter.parsing.ResourcepackCreator
 import org.bukkit.Color
@@ -39,9 +40,5 @@ class ParticleEmitter : JavaPlugin() {
         BloodParticleSpawnCommand
         OffsetTest
         ReloadParticleScriptsCommand
-    }
-
-    override fun onDisable() {
-        GlobalEmitterTicker.kill()
     }
 }

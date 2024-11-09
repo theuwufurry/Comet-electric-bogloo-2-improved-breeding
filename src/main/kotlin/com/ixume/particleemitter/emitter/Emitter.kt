@@ -1,6 +1,5 @@
 package com.ixume.particleemitter.emitter
 
-import com.ixume.particleemitter.GlobalEmitterTicker
 import com.ixume.particleemitter.emitter.lifetime.EmitterLifetimeComponent
 import com.ixume.particleemitter.emitter.rate.RateComponent
 import com.ixume.particleemitter.emitter.recursive.RecursiveEmitterComponent
@@ -22,6 +21,7 @@ import net.minecraft.world.entity.Display.BillboardConstraints
 import org.bukkit.Location
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.joml.Matrix4f
+import org.joml.Quaternionf
 import org.joml.Vector3d
 import org.joml.Vector3f
 
@@ -37,22 +37,20 @@ class Emitter(
     private val rotationComponent: RotationComponent,
     private val recursiveEmitterComponent: RecursiveEmitterComponent?,
     private val billboardConstraints: BillboardConstraints,
-    @Volatile private var location: Location,
-    private val emitterData: EmitterData
+    private var location: Location,
+    private val emitterData: EmitterData,
+    private val unrealizedHolder: UnrealizedEmitter
 ) {
     //origin can change, rotation can change
     private val particles: MutableList<Particle> = mutableListOf()
     private val deadParticles: MutableList<Particle> = mutableListOf()
     private var blocked = false
-    var dead = false
+    private var dead = false
+    private val emitterRotation = Quaternionf().rotateTo(Vector3f(0f, 0f, 1f), location.direction.normalize().toVector3f())
 
-    init {
-        GlobalEmitterTicker.emitters += this
-    }
-
-    fun tick() {
+    fun tick(): Boolean {
         if (blocked) {
-            return
+            return true
         }
 
         blocked = true
@@ -64,19 +62,31 @@ class Emitter(
         }
 
         if (dead && particles.size == 0) {
-            GlobalEmitterTicker.emitters.remove(this)
-            return
+            return false
         }
 
         val world = location.world
         val dataPackets: MutableList<Packet<in ClientGamePacketListener>> = mutableListOf()
 
+        //loop through particles, only connection to emitter is emitterData
+        //data packets can be done per thread
+        //so:
+        //call update on particles in object Ticker
+        //each component has its own list of compiled scripts
+        //number of compiled scripts per component should equal to thread count
+        //different compiled scripts means different myEmitterData and myParticleData
+        //ticker signals which thread it's on with simple index.
         for (particle in particles) {
+            fun die() {
+                deadParticles += particle
+                particle.data.emitter?.dead = true
+            }
+
             particle.tick()
             recursiveEmitterComponent?.updateEmitter(emitterData, particle.data)
 
             if (!particleLifetimeComponent.keepAlive(emitterData, particle.data)) {
-                deadParticles += particle
+                die()
                 continue
             }
 
@@ -95,8 +105,14 @@ class Emitter(
             }
 
             val newPos = positionComponent.pos(emitterData, particle.data)
-            if (newPos != particle.data.relativePosition) {
-                particle.data.relativePosition = newPos
+
+            if (!newPos.keepAlive) {
+                die()
+                continue
+            }
+
+            if (newPos.data != particle.data.relativePosition) {
+                particle.data.relativePosition = newPos.data
                 particle.getMovementPacket().let { dataPackets += it }
             }
 
@@ -108,7 +124,7 @@ class Emitter(
                 particle.data.matrix = matrix
             }
 
-            if (updateParticle) particle.updatePacket()?.let { dataPackets += it }
+            if (updateParticle) particle.updatePacket(unrealizedHolder.myEntityDataBuilder)?.let { dataPackets += it }
         }
 
         particles.removeAll(deadParticles)
@@ -124,6 +140,7 @@ class Emitter(
         if (!dead) spawnParticles()
 
         blocked = false
+        return true
     }
 
     private fun spawnParticles() {
@@ -135,7 +152,7 @@ class Emitter(
                 scaleComponent.scale(emitterData, particleData),
                 rotationComponent.rotation(emitterData, particleData)
             )
-            particleData.relativePosition = positionComponent.pos(emitterData, particleData)
+            particleData.relativePosition = positionComponent.pos(emitterData, particleData).data
             particleData.origin =
                 Vector3d(location.x + spawnOffset.x, location.y + spawnOffset.y, location.z + spawnOffset.z)
             particleLifetimeComponent.keepAlive(emitterData, particleData)
@@ -144,9 +161,8 @@ class Emitter(
             particleData.billboardConstraints = billboardConstraints
             particleData.matrix = matrix
             recursiveEmitterComponent?.run { updateEmitter(emitterData, particleData) }
-//            particleData = ParticleData(origin = particleData.origin, relativePosition = relativePosition, displayData = displayComponent.display(particleData), color = colorComponent.color(particleData), matrix = matrix, random = particleData.random, billboardConstraints = billboardConstraints)
             val particle = Particle(particleData)
-            val packets = particle.getAddPacket()
+            val packets = particle.getAddPacket(unrealizedHolder.myEntityDataBuilder)
             bundle.add(packets.first)
             packets.second?.let { it1 -> bundle.add(it1) }
 
@@ -166,9 +182,8 @@ class Emitter(
         location.z = z
     }
 
-    private fun matrixFromParts(scale: Vector3f, rotation: Matrix4f): Matrix4f {
+    fun matrixFromParts(scale: Vector3f, rotation: Matrix4f): Matrix4f {
         val matrix = Matrix4f()
-        matrix.mul(rotation).scale(scale).translate(-0.0125f, 0f, 0f)
-        return matrix
+        return (if (billboardConstraints == BillboardConstraints.FIXED) matrix.rotate(emitterRotation) else matrix).mul(rotation).scale(scale).translate(-0.0125f, 0f, 0f)
     }
 }

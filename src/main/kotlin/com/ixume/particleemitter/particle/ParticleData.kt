@@ -6,7 +6,6 @@ import com.ixume.particleemitter.particle.display.sprite.SpriteData
 import net.minecraft.world.entity.Display.BillboardConstraints
 import org.joml.Matrix4f
 import org.joml.Vector3d
-import org.joml.Vector3f
 
 data class ParticleData(
     var age: Double = 0.0,

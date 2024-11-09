@@ -4,6 +4,7 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.ixume.particleemitter.ParticleEmitter
+import com.ixume.particleemitter.emitter.EmitterTickersHolder
 import com.ixume.particleemitter.emitter.UnrealizedEmitter
 import com.ixume.particleemitter.emitter.lifetime.EmitterLifetimeComponent
 import com.ixume.particleemitter.emitter.lifetime.TimedEmitterLifetimeComponent
@@ -24,9 +25,7 @@ import com.ixume.particleemitter.particle.display.sprite.ExpressionSpriteCompone
 import com.ixume.particleemitter.particle.display.sprite.FlipbookSpriteComponent
 import com.ixume.particleemitter.particle.lifetime.ParticleLifetimeComponent
 import com.ixume.particleemitter.particle.lifetime.ParticleLifetimeExpressionComponent
-import com.ixume.particleemitter.particle.position.ExpressionPositionComponent
-import com.ixume.particleemitter.particle.position.MotionPositionComponent
-import com.ixume.particleemitter.particle.position.PositionComponent
+import com.ixume.particleemitter.particle.position.*
 import com.ixume.particleemitter.particle.transformation.rotation.ExpressionRotationComponent
 import com.ixume.particleemitter.particle.transformation.rotation.RotationComponent
 import com.ixume.particleemitter.particle.transformation.scale.ExpressionScaleComponent
@@ -50,6 +49,7 @@ fun JsonElement.expression(): String? {
 
 interface ComponentParser<T> {
     fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): T?
+//    fun parseProvider(jsonElement: JsonElement, macros: Map<String, Macro>?): ComponentProvider<T>?
 }
 
 object ParticleJsonParser {
@@ -108,6 +108,8 @@ object ParticleJsonParser {
         if (!dataFolder.exists()) return
 
         val unrealizedEmitters: MutableMap<String, UnrealizedEmitter> = mutableMapOf()
+
+        EmitterTickersHolder.kill()
 
         for (file in dataFolder.listFiles()!!) {
             if (file.extension != "json") continue
@@ -265,9 +267,10 @@ object ParticleJsonParser {
         )
     }
 
-    fun postInit() {
+    private fun postInit() {
         for ((_, unrealizedEmitter) in jsonUnrealizedEmitters) {
             unrealizedEmitter.recursiveEmitterComponent?.realize()
+            (unrealizedEmitter.positionComponent as? PostInit)?.realize()
         }
     }
 }

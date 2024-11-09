@@ -1,15 +1,19 @@
 package com.ixume.particleemitter.particle.position
 
 import com.google.gson.JsonElement
+import com.ixume.particleemitter.emitter.ComponentResult
 import com.ixume.particleemitter.emitter.EmitterData
+import com.ixume.particleemitter.emitter.UnrealizedEmitter
 import com.ixume.particleemitter.parsing.*
 import com.ixume.particleemitter.parsing.macro.Macro
 import com.ixume.particleemitter.particle.ParticleData
 import com.ixume.particleemitter.particle.position.direction.DirectionSubcomponent
 import com.ixume.particleemitter.particle.position.direction.ExpressionDirectionSubcomponent
 import com.ixume.particleemitter.particle.position.direction.RandomDirectionSubcomponent
+import org.bukkit.Location
 import org.bukkit.World
 import org.bukkit.block.Block
+import org.bukkit.util.Vector
 import org.joml.Vector3d
 import org.joml.Vector3i
 import javax.script.CompiledScript
@@ -23,9 +27,10 @@ class MotionPositionComponent(
     private val accelerationScript: Triple<CompiledScript, CompiledScript, CompiledScript>,
     private val dragScript: CompiledScript,
     private val restitutionScript: CompiledScript?,
+    private val onCollisionEmitterID: String?,
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData
-) : PositionComponent {
+) : PositionComponent, PostInit {
     companion object : ComponentParser<MotionPositionComponent> {
         init {
             ParticleJsonParser.positionComponentParsers += "motion_position" to this
@@ -76,21 +81,34 @@ class MotionPositionComponent(
                 engine.compile(accelerationObject.expression("y") ?: return null, macros),
                 engine.compile(accelerationObject.expression("z") ?: return null, macros)
             )
+
             return MotionPositionComponent(
                 velocityComponent ?: return null,
                 accelerationScript,
                 engine.compile(jsonObject.expression("drag") ?: return null, macros),
                 engine.compile(jsonObject.expression("restitution") ?: return null, macros),
+                jsonObject.expression("on_collision_emitter"),
                 emitterData, particleData
             )
         }
     }
 
-    override fun pos(otherEmitterData: EmitterData, otherParticleData: ParticleData): Vector3d {
+    private var unrealizedEmitter: UnrealizedEmitter? = null
+
+    override fun realize() {
+        onCollisionEmitterID?.let { unrealizedEmitter = ParticleJsonParser.jsonUnrealizedEmitters[it]!! }
+    }
+
+    override fun pos(
+        otherEmitterData: EmitterData,
+        otherParticleData: ParticleData
+    ): ComponentResult<Vector3d> {
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
         if (otherParticleData.age == 0.0) {
-            return initialVelocityComponent.dir(otherEmitterData, otherParticleData).rotate(myEmitterData.rotation)
+            return ComponentResult(
+                initialVelocityComponent.dir(otherEmitterData, otherParticleData).rotate(myEmitterData.rotation), true
+            )
         }
 
         val dragCoefficient = dragScript.eval() as Double
@@ -110,12 +128,31 @@ class MotionPositionComponent(
         otherParticleData.oldRelativePosition = Vector3d(otherParticleData.relativePosition)
 
         val newPos = Vector3d(otherParticleData.relativePosition).add(velocity).add(acceleration)
-        val correctionVector = fixCollisions(newPos, otherParticleData.acceleration)
+        val correction = fixCollisions(newPos, otherParticleData.acceleration)
+        if (correction != null) {
+            newPos.add(correction.vector)
 
-        return Vector3d(newPos).add(correctionVector)
+            if (correction.vector.lengthSquared() > 0.01) {
+                onCollision(Vector3d(newPos).add(otherParticleData.origin), correction.direction)
+                return ComponentResult(Vector3d(newPos), false)
+            }
+        }
+
+        return ComponentResult(Vector3d(newPos), true)
     }
 
-    private fun fixCollisions(rawNewPos: Vector3d, acceleration: Vector3d): Vector3d {
+    private fun onCollision(pos: Vector3d, direction: Vector3d) {
+        unrealizedEmitter?.realize(
+            Location(
+                myEmitterData.world,
+                pos.x + direction.x * Math.random() * 0.1,
+                pos.y + direction.y * Math.random() * 0.1,
+                pos.z + direction.z * Math.random() * 0.1
+            ).setDirection(Vector(direction.x, direction.y, direction.z))
+        )
+    }
+
+    private fun fixCollisions(rawNewPos: Vector3d, acceleration: Vector3d): CorrectionResult? {
         if (restitutionScript != null) {
             val currentPos = Vector3d(myParticleData.origin).add(myParticleData.relativePosition)
             val velocity = Vector3d(rawNewPos).sub(myParticleData.relativePosition)
@@ -127,15 +164,27 @@ class MotionPositionComponent(
             val intersection = block.intersect(currentPos, velocity)
             if (intersection != null) {
                 val correctionVector = Vector3d(intersection.intersection).sub(newPos)
+                val direction: Vector3d
                 when (intersection.direction) {
-                    0 -> acceleration.add(Vector3d(velocity).mul(-restitution, restitution, restitution))
-                    1 -> acceleration.add(Vector3d(velocity).mul(restitution, -restitution, restitution))
-                    else -> acceleration.add(Vector3d(velocity).mul(restitution, restitution, -restitution))
+                    0 -> {
+                        acceleration.add(Vector3d(velocity).mul(-restitution, restitution, restitution))
+                        direction = Vector3d(-sign(velocity.x), 0.0, 0.0)
+                    }
+
+                    1 -> {
+                        acceleration.add(Vector3d(velocity).mul(restitution, -restitution, restitution))
+                        direction = Vector3d(0.0, -sign(velocity.y), 0.0)
+                    }
+
+                    else -> {
+                        acceleration.add(Vector3d(velocity).mul(restitution, restitution, -restitution))
+                        direction = Vector3d(0.0, 0.0, -sign(velocity.z))
+                    }
                 }
 
                 acceleration.add(Vector3d(velocity).add(correctionVector).mul(-1.0))
 
-                return correctionVector
+                return CorrectionResult(correctionVector, direction)
             }
 
             val maxOffset =
@@ -166,7 +215,7 @@ class MotionPositionComponent(
                 }
 
                 if (min(min(yzDistance, xzDistance), xyDistance) > 1.0) {
-                    return Vector3d()
+                    return null
                 }
 
                 val index = min(yzDistance, xzDistance, xyDistance)
@@ -189,7 +238,7 @@ class MotionPositionComponent(
                             val correctionVector = Vector3d(result.intersection).sub(newPos)
                             acceleration.add(Vector3d(velocity).mul(-restitution, restitution, restitution))
                             acceleration.add(Vector3d(velocity).add(correctionVector).mul(-1.0))
-                            return correctionVector
+                            return CorrectionResult(correctionVector, Vector3d(-sign(velocity.x), 0.0, 0.0))
                         } else {
                             //not done...
                             offset.x++
@@ -216,7 +265,7 @@ class MotionPositionComponent(
                             val correctionVector = Vector3d(result.intersection).sub(newPos)
                             acceleration.add(Vector3d(velocity).mul(restitution, -restitution, restitution))
                             acceleration.add(Vector3d(velocity).add(correctionVector).mul(-1.0))
-                            return correctionVector
+                            return CorrectionResult(correctionVector, Vector3d(0.0, -sign(velocity.y), 0.0))
                         } else {
                             //not done...
                             offset.y++
@@ -242,7 +291,7 @@ class MotionPositionComponent(
                             val correctionVector = Vector3d(result.intersection).sub(newPos)
                             acceleration.add(Vector3d(velocity).mul(restitution, restitution, -restitution))
                             acceleration.add(Vector3d(velocity).add(correctionVector).mul(-1.0))
-                            return correctionVector
+                            return CorrectionResult(correctionVector, Vector3d(0.0, 0.0, -sign(velocity.z)))
                         } else {
                             //not done...
                             offset.z++
@@ -253,7 +302,7 @@ class MotionPositionComponent(
             }
         }
 
-        return Vector3d()
+        return null
     }
 
     private fun blockAt(world: World, vector3d: Vector3d): Block {
@@ -325,3 +374,4 @@ class MotionPositionComponent(
 }
 
 class IntersectionResult(val direction: Int, val distance: Double, val intersection: Vector3d)
+class CorrectionResult(val vector: Vector3d, val direction: Vector3d)

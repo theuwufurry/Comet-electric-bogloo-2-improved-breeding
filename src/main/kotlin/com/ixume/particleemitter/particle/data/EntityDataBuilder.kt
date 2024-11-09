@@ -22,8 +22,7 @@ import org.bukkit.Bukkit
 import org.bukkit.craftbukkit.CraftWorld
 import org.joml.Matrix4f
 
-object EntityDataBuilder {
-    //    private val cache: MutableMap<EntityData, SynchedEntityData> = mutableMapOf()
+class EntityDataBuilder {
     private val level: Level = (Bukkit.getWorld("world") as CraftWorld).handle
     private val dataComponentType =
         BuiltInRegistries.DATA_COMPONENT_TYPE.get(
@@ -52,8 +51,6 @@ object EntityDataBuilder {
 
     fun getDataFor(entityData: EntityData): SynchedEntityData? {
         return genData(entityData)
-//        performance of this is questionable
-//        return cache[componentData]?.let { return it } ?: genData(componentData).also { cache += (componentData to it) }
     }
 
     private fun genData(component: EntityData): SynchedEntityData? {
@@ -71,7 +68,7 @@ object EntityDataBuilder {
                         )
                     )
 
-                entity.textOpacity = ((component.color ushr 24) + 14).coerceAtMost(255).toByte()
+                entity.textOpacity = ((component.color ushr 24) + 26).coerceAtMost(255).toByte()
     //            entity.entityData.set(TextDisplay, component.color ushr 24)
             }
 

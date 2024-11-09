@@ -4,18 +4,17 @@ import com.google.gson.JsonElement
 import com.ixume.particleemitter.emitter.Emitter
 import com.ixume.particleemitter.emitter.EmitterData
 import com.ixume.particleemitter.emitter.UnrealizedEmitter
-import com.ixume.particleemitter.parsing.ComponentParser
-import com.ixume.particleemitter.parsing.ParticleJsonParser
+import com.ixume.particleemitter.parsing.*
 import com.ixume.particleemitter.parsing.ParticleJsonParser.recursiveEmitterComponentParser
-import com.ixume.particleemitter.parsing.emitterEngine
-import com.ixume.particleemitter.parsing.expression
 import com.ixume.particleemitter.parsing.macro.Macro
 import com.ixume.particleemitter.particle.ParticleData
 import org.bukkit.Location
 import org.joml.Vector3d
 
+//async between sub emitters means data is being edited weirdly
+
 //add all unrealized emitters with unrealized recursive emitter components
-class RecursiveEmitterComponent(private val unrealizedEmitterID: String, private val myEmitterData: EmitterData) {
+class RecursiveEmitterComponent(private val unrealizedEmitterID: String, private val myEmitterData: EmitterData) : PostInit {
     companion object : ComponentParser<RecursiveEmitterComponent> {
         init {
             recursiveEmitterComponentParser = "sub_emitter" to RecursiveEmitterComponent
@@ -35,7 +34,7 @@ class RecursiveEmitterComponent(private val unrealizedEmitterID: String, private
 
     private lateinit var unrealizedEmitter: UnrealizedEmitter
 
-    fun realize() {
+    override fun realize() {
         unrealizedEmitter = ParticleJsonParser.jsonUnrealizedEmitters[unrealizedEmitterID]!!
     }
 

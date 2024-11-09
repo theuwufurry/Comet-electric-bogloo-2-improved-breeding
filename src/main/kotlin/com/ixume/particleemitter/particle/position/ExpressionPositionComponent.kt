@@ -1,6 +1,7 @@
 package com.ixume.particleemitter.particle.position
 
 import com.google.gson.JsonElement
+import com.ixume.particleemitter.emitter.ComponentResult
 import com.ixume.particleemitter.emitter.EmitterData
 import com.ixume.particleemitter.parsing.*
 import com.ixume.particleemitter.parsing.macro.Macro
@@ -34,10 +35,10 @@ class ExpressionPositionComponent(
         }
     }
 
-    override fun pos(otherEmitterData: EmitterData, otherParticleData: ParticleData): Vector3d {
+    override fun pos(otherEmitterData: EmitterData, otherParticleData: ParticleData): ComponentResult<Vector3d> {
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
         val newPos = Vector3d(xOffset.eval() as Double, yOffset.eval() as Double, zOffset.eval() as Double)
-        return newPos.rotate(myEmitterData.rotation)
+        return ComponentResult(newPos.rotate(myEmitterData.rotation), true)
     }
 }

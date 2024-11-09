@@ -30,7 +30,7 @@ open class Particle(var data: ParticleData) {
         data.age++
     }
 
-    fun getAddPacket(): Pair<Packet<in ClientGamePacketListener>, Packet<in ClientGamePacketListener>?> {
+    fun getAddPacket(entityDataBuilder: EntityDataBuilder): Pair<Packet<in ClientGamePacketListener>, Packet<in ClientGamePacketListener>?> {
         val packet = ClientboundAddEntityPacket(
             id,
             uuid,
@@ -44,7 +44,7 @@ open class Particle(var data: ParticleData) {
             Vec3(0.0, 0.0, 0.0),
             0.0
         )
-        val data = EntityDataBuilder.getDataFor(
+        val data = entityDataBuilder.getDataFor(
             EntityData(
                 data.displayData,
                 data.color,
@@ -57,8 +57,8 @@ open class Particle(var data: ParticleData) {
         return Pair(packet, entityDataPacket)
     }
 
-    fun updatePacket(): ClientboundSetEntityDataPacket? {
-        return EntityDataBuilder.getDataFor(
+    fun updatePacket(entityDataBuilder: EntityDataBuilder): ClientboundSetEntityDataPacket? {
+        return entityDataBuilder.getDataFor(
             EntityData(
                 data.displayData,
                 data.color,
