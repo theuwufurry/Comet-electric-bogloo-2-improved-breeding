@@ -43,8 +43,9 @@ Misc:
 - Premade assets.
 
 Performance:
-- Asynchronously compile new scripts and distribute them continously, supporting more threads over time / under heavy load.
 - Make components constant if they dont have any changing variables (AHEM GRADIENT COMPONENT AHEM)
+- Smart caching with once-per-lifetime evaluations
+- Cache entire particle systems
 
 Bugs:
 - Particles randomly teleporting incorrectly when too many. Sync issue?
