@@ -2,12 +2,12 @@ package gg.aquatic.particleemitter.particle.color
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import com.ixume.particleemitter.ParticleEmitter
-import com.ixume.particleemitter.emitter.EmitterData
-import com.ixume.particleemitter.parsing.ComponentParser
-import com.ixume.particleemitter.parsing.ParticleJsonParser
-import com.ixume.particleemitter.parsing.expression
-import com.ixume.particleemitter.particle.ParticleData
+import gg.aquatic.particleemitter.ParticleEmitter
+import gg.aquatic.particleemitter.emitter.EmitterData
+import gg.aquatic.particleemitter.parsing.ComponentParser
+import gg.aquatic.particleemitter.parsing.ParticleJsonParser
+import gg.aquatic.particleemitter.parsing.expression
+import gg.aquatic.particleemitter.particle.ParticleData
 import java.awt.Color
 import javax.script.Compilable
 import javax.script.CompiledScript

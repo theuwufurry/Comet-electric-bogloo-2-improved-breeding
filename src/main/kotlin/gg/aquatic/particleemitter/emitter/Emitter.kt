@@ -10,6 +10,9 @@ import gg.aquatic.particleemitter.particle.lifetime.ParticleLifetimeComponent
 import gg.aquatic.particleemitter.particle.position.PositionComponent
 import gg.aquatic.particleemitter.particle.texture.SpriteComponent
 import gg.aquatic.particleemitter.particle.transformation.scale.ScaleComponent
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
+import gg.aquatic.waves.util.toUser
 import org.bukkit.Location
 import org.bukkit.scheduler.BukkitTask
 import org.joml.Matrix4f
@@ -50,7 +53,7 @@ data class Emitter(val rateComponent: RateComponent,
         }
 
         val world = location.world
-        val dataPackets: MutableList<Packet<in ClientGamePacketListener>> = mutableListOf()
+        val dataPackets: MutableList<PacketWrapper<*>> = mutableListOf()
 
         for (particle in particles) {
             particle.tick()
@@ -84,11 +87,16 @@ data class Emitter(val rateComponent: RateComponent,
         }
 
         particles.removeAll(deadParticles)
-        val dataUpdatePacket = ClientboundBundlePacket(dataPackets)
-        val ids = IntArrayList(deadParticles.map {it.id})
-        for (player in world.players) {
-            (player as CraftPlayer).handle.connection.send(ClientboundRemoveEntitiesPacket(ids))
-            player.handle.connection.send(dataUpdatePacket)
+        //val dataUpdatePacket = ClientboundBundlePacket(dataPackets)
+        val ids = deadParticles.map {it.id}.toIntArray()
+        for (player in world!!.players) {
+            val user = player.toUser()
+            if (ids.isNotEmpty()) {
+                user.sendPacket(WrapperPlayServerDestroyEntities(*ids))
+            }
+            for (dataPacket in dataPackets) {
+                user.sendPacket(dataPacket)
+            }
         }
 
         deadParticles.clear()
@@ -99,7 +107,7 @@ data class Emitter(val rateComponent: RateComponent,
     }
 
     fun spawnParticles() {
-        val bundle: MutableList<Packet<in ClientGamePacketListener>> = mutableListOf()
+        val bundle: MutableList<PacketWrapper<*>> = mutableListOf()
         repeat(rateComponent.toEmit(emitterData)) {
             var particleData = ParticleData()
             val spawnOffset = shapeComponent.offset(emitterData, particleData)
@@ -108,14 +116,15 @@ data class Emitter(val rateComponent: RateComponent,
             val particle = Particle(Vector3d(location.x + spawnOffset.x, location.y + spawnOffset.y, location.z + spawnOffset.z), particleData)
             val packets = particle.getAddPacket()
             bundle.add(packets.first)
-            packets.second?.let { it1 -> bundle.add(it1) }
+            bundle.add(packets.second)
             particles += particle
         }
 
-        val bundlePacket = ClientboundBundlePacket(bundle)
-
-        for (player in location.world.players) {
-            (player as CraftPlayer).handle.connection.send(bundlePacket)
+        for (player in location.world!!.players) {
+            val user = player.toUser()
+            for (packetWrapper in bundle) {
+                user.sendPacket(packetWrapper)
+            }
         }
     }
 

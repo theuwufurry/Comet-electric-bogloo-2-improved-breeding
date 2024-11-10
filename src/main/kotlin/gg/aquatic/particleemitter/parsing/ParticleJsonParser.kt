@@ -3,16 +3,16 @@ package gg.aquatic.particleemitter.parsing
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import com.ixume.particleemitter.ParticleEmitter
-import com.ixume.particleemitter.emitter.UnrealizedEmitter
-import com.ixume.particleemitter.emitter.lifetime.EmitterLifetimeComponent
-import com.ixume.particleemitter.particle.color.ColorComponent
-import com.ixume.particleemitter.particle.lifetime.ParticleLifetimeComponent
-import com.ixume.particleemitter.emitter.rate.RateComponent
-import com.ixume.particleemitter.emitter.shape.ShapeComponent
-import com.ixume.particleemitter.particle.position.PositionComponent
-import com.ixume.particleemitter.particle.texture.SpriteComponent
-import com.ixume.particleemitter.particle.transformation.scale.ScaleComponent
+import gg.aquatic.particleemitter.ParticleEmitter
+import gg.aquatic.particleemitter.emitter.UnrealizedEmitter
+import gg.aquatic.particleemitter.emitter.lifetime.EmitterLifetimeComponent
+import gg.aquatic.particleemitter.emitter.rate.RateComponent
+import gg.aquatic.particleemitter.emitter.shape.ShapeComponent
+import gg.aquatic.particleemitter.particle.color.ColorComponent
+import gg.aquatic.particleemitter.particle.lifetime.ParticleLifetimeComponent
+import gg.aquatic.particleemitter.particle.position.PositionComponent
+import gg.aquatic.particleemitter.particle.texture.SpriteComponent
+import gg.aquatic.particleemitter.particle.transformation.scale.ScaleComponent
 import java.io.FileReader
 
 fun JsonObject.expression(field: String): String? {
