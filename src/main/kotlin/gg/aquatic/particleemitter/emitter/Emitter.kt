@@ -92,7 +92,11 @@ data class Emitter(
 
         particles.removeAll(deadParticles)
         //val dataUpdatePacket = ClientboundBundlePacket(dataPackets)
-        val ids = deadParticles.map { it.id }.toIntArray()
+        for (deadParticle in deadParticles) {
+            deadParticle.fakeEntity.destroy()
+        }
+        /*
+        val ids = deadParticles.map { it.fakeEntity.entityId }.toIntArray()
         for (player in world!!.players) {
             val user = player.toUser()
             if (ids.isNotEmpty()) {
@@ -102,6 +106,7 @@ data class Emitter(
                 user.sendPacket(dataPacket)
             }
         }
+         */
 
         deadParticles.clear()
 

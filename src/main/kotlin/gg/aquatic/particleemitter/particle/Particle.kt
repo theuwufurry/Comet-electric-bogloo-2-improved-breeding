@@ -1,11 +1,8 @@
 package gg.aquatic.particleemitter.particle
 
 import gg.aquatic.aquaticseries.lib.util.mapPair
-import gg.aquatic.particleemitter.ParticleEmitter.Companion.unsafe
-import gg.aquatic.particleemitter.ParticleIDProvider
 import gg.aquatic.particleemitter.particle.data.ComponentData
 import gg.aquatic.particleemitter.particle.data.EntityDataBuilder
-import gg.aquatic.particleemitter.particle.data.PacketEntity
 import gg.aquatic.waves.fake.block.FakeEntity
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.type.EntityTypes
 import org.bukkit.Location
@@ -15,20 +12,9 @@ class Particle(
     val location: Location,
     var origin: Vector3d, var data: ParticleData
 ) {
-
-
-    val id = ParticleIDProvider.id
-    //private val uuid = UUID.randomUUID()
-    private val packetEntity: PacketEntity = unsafe.allocateInstance(PacketEntity::class.java) as PacketEntity
-
-    init {
-        packetEntity.particle = this
-    }
-
     fun tick() {
         data.age++
     }
-
 
     val fakeEntity = FakeEntity(
         EntityTypes.TEXT_DISPLAY,
