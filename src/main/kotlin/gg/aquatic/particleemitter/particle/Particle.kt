@@ -1,22 +1,24 @@
 package gg.aquatic.particleemitter.particle
 
+import gg.aquatic.aquaticseries.lib.util.mapPair
 import gg.aquatic.particleemitter.ParticleEmitter.Companion.unsafe
 import gg.aquatic.particleemitter.ParticleIDProvider
 import gg.aquatic.particleemitter.particle.data.ComponentData
 import gg.aquatic.particleemitter.particle.data.EntityDataBuilder
 import gg.aquatic.particleemitter.particle.data.PacketEntity
+import gg.aquatic.waves.fake.block.FakeEntity
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.type.EntityTypes
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity
+import org.bukkit.Location
 import org.joml.Vector3d
-import java.util.*
 
-class Particle(var origin: Vector3d, var data: ParticleData) {
+class Particle(
+    val location: Location,
+    var origin: Vector3d, var data: ParticleData
+) {
+
 
     val id = ParticleIDProvider.id
-    private val uuid = UUID.randomUUID()
+    //private val uuid = UUID.randomUUID()
     private val packetEntity: PacketEntity = unsafe.allocateInstance(PacketEntity::class.java) as PacketEntity
 
     init {
@@ -27,6 +29,25 @@ class Particle(var origin: Vector3d, var data: ParticleData) {
         data.age++
     }
 
+
+    val fakeEntity = FakeEntity(
+        EntityTypes.TEXT_DISPLAY,
+        location,
+        50,
+    ) {
+        val data = EntityDataBuilder.getDataFor(
+            ComponentData(
+                data.sprite,
+                data.color,
+                data.matrix
+            )
+        ).mapPair { it.index to it }
+        this.entityData += data
+    }.apply {
+        register()
+    }
+
+    /*
     fun getAddPacket(): Pair<PacketWrapper<*>, PacketWrapper<*>> {
         val packet = WrapperPlayServerSpawnEntity(
             packetEntity.id,
@@ -45,7 +66,29 @@ class Particle(var origin: Vector3d, var data: ParticleData) {
         )
         return Pair(packet, updatePacket())
     }
+     */
 
+    fun updateParticle() {
+        val data = EntityDataBuilder.getDataFor(
+            ComponentData(
+                data.sprite,
+                data.color,
+                data.matrix
+            )
+        ).mapPair { it.index to it }
+        fakeEntity.updateEntity {
+            entityData.clear()
+            entityData += data
+        }
+    }
+    fun updateLocation() {
+        this.location.x = origin.x + data.relativePosition.x
+        this.location.y = origin.y + data.relativePosition.y
+        this.location.z = origin.z + data.relativePosition.z
+        fakeEntity.teleport(location)
+    }
+
+    /*
     fun updatePacket(): PacketWrapper<*> {
         val data = EntityDataBuilder.getDataFor(
             ComponentData(
@@ -61,6 +104,8 @@ class Particle(var origin: Vector3d, var data: ParticleData) {
     }
 
     fun getMovementPacket(): PacketWrapper<*> {
-        return WrapperPlayServerEntityTeleport(packetEntity.id, packetEntity.trackingPosition(),0f,0f,false)
+        return WrapperPlayServerEntityTeleport(packetEntity.id, packetEntity.trackingPosition(), 0f, 0f, false)
     }
+
+     */
 }

@@ -5,6 +5,7 @@ import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.E
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
+import org.joml.Matrix3f
 import org.joml.Matrix4f
 
 object EntityDataBuilder {
@@ -18,6 +19,7 @@ object EntityDataBuilder {
     }
 
     private fun genData(component: ComponentData): MutableList<EntityData> {
+        val matrix3f = Matrix3f(component.matrix)
         return mutableListOf(
             EntityData(
                 23, EntityDataTypes.ADV_COMPONENT,

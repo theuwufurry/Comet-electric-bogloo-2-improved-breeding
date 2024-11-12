@@ -19,16 +19,18 @@ import org.joml.Matrix4f
 import org.joml.Vector3d
 import org.joml.Vector3f
 
-data class Emitter(val rateComponent: RateComponent,
-                   val particleLifetimeComponent: ParticleLifetimeComponent,
-                   val shapeComponent: ShapeComponent,
-                   val spriteComponent: SpriteComponent,
-                   val colorComponent: ColorComponent,
-                   val emitterLifetimeComponent: EmitterLifetimeComponent,
-                   val positionComponent: PositionComponent,
-                   val scaleComponent: ScaleComponent,
-                   var location: Location,
-                   var task: BukkitTask?) {
+data class Emitter(
+    val rateComponent: RateComponent,
+    val particleLifetimeComponent: ParticleLifetimeComponent,
+    val shapeComponent: ShapeComponent,
+    val spriteComponent: SpriteComponent,
+    val colorComponent: ColorComponent,
+    val emitterLifetimeComponent: EmitterLifetimeComponent,
+    val positionComponent: PositionComponent,
+    val scaleComponent: ScaleComponent,
+    var location: Location,
+    var task: BukkitTask?
+) {
     private val emitterData: EmitterData = EmitterData(0.0)
     private val particles: MutableList<Particle> = mutableListOf()
     private val deadParticles: MutableList<Particle> = mutableListOf()
@@ -64,7 +66,7 @@ data class Emitter(val rateComponent: RateComponent,
 
             var updateParticle = false
 
-            val newColor  = colorComponent.color(emitterData, particle.data)
+            val newColor = colorComponent.color(emitterData, particle.data)
             if (newColor != particle.data.color) {
                 updateParticle = true
                 particle.data.color = newColor
@@ -73,7 +75,7 @@ data class Emitter(val rateComponent: RateComponent,
             val newPos = positionComponent.pos(emitterData, particle.data)
             if (newPos != particle.data.relativePosition) {
                 particle.data.relativePosition = newPos
-                dataPackets += particle.getMovementPacket()
+                particle.updateLocation()
             }
 
             val newScale = scaleComponent.scale(emitterData, particle.data)
@@ -83,12 +85,14 @@ data class Emitter(val rateComponent: RateComponent,
                 particle.data.matrix = matrix
             }
 
-            if (updateParticle) particle.updatePacket()?.let { dataPackets += it }
+            if (updateParticle) {
+                particle.updateParticle()
+            }
         }
 
         particles.removeAll(deadParticles)
         //val dataUpdatePacket = ClientboundBundlePacket(dataPackets)
-        val ids = deadParticles.map {it.id}.toIntArray()
+        val ids = deadParticles.map { it.id }.toIntArray()
         for (player in world!!.players) {
             val user = player.toUser()
             if (ids.isNotEmpty()) {
@@ -107,25 +111,41 @@ data class Emitter(val rateComponent: RateComponent,
     }
 
     fun spawnParticles() {
-        val bundle: MutableList<PacketWrapper<*>> = mutableListOf()
+        //val bundle: MutableList<PacketWrapper<*>> = mutableListOf()
         repeat(rateComponent.toEmit(emitterData)) {
             var particleData = ParticleData()
             val spawnOffset = shapeComponent.offset(emitterData, particleData)
             val matrix = matrixFromParts(scaleComponent.scale(emitterData, particleData))
-            particleData = ParticleData(0.0, spriteComponent.sprite(emitterData, particleData), colorComponent.color(emitterData, particleData), Vector3d(0.0), matrix, particleData.random)
-            val particle = Particle(Vector3d(location.x + spawnOffset.x, location.y + spawnOffset.y, location.z + spawnOffset.z), particleData)
-            val packets = particle.getAddPacket()
-            bundle.add(packets.first)
-            bundle.add(packets.second)
+            particleData = ParticleData(
+                0.0,
+                spriteComponent.sprite(emitterData, particleData),
+                colorComponent.color(emitterData, particleData),
+                Vector3d(0.0),
+                matrix,
+                particleData.random
+            )
+            val particle = Particle(
+                location.clone().apply {
+                    yaw = 0f
+                    pitch = 0f
+                },
+                Vector3d(location.x + spawnOffset.x, location.y + spawnOffset.y, location.z + spawnOffset.z),
+                particleData
+            )
+            //val packets = particle.getAddPacket()
+            //bundle.add(packets.first)
+            //bundle.add(packets.second)
             particles += particle
         }
 
+        /*
         for (player in location.world!!.players) {
             val user = player.toUser()
             for (packetWrapper in bundle) {
                 user.sendPacket(packetWrapper)
             }
         }
+         */
     }
 
     private fun matrixFromParts(scale: Vector3f): Matrix4f {
