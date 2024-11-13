@@ -131,7 +131,8 @@ data class Emitter(
                     pitch = 0f
                 },
                 Vector3d(location.x + spawnOffset.x, location.y + spawnOffset.y, location.z + spawnOffset.z),
-                particleData
+                particleData,
+                audience
             )
             //val packets = particle.getAddPacket()
             //bundle.add(packets.first)

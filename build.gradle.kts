@@ -18,7 +18,7 @@ repositories {
 
 dependencies {
     compileOnly("org.spigotmc:spigot-api:1.19.4-R0.1-SNAPSHOT")
-    compileOnly("gg.aquatic.waves:Waves:1.0.48:publish")
+    compileOnly("gg.aquatic.waves:Waves:1.0.50:publish")
 }
 
 val targetJavaVersion = 17

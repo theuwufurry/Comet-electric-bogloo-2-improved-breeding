@@ -1,16 +1,19 @@
 package gg.aquatic.particleemitter.particle
 
+import gg.aquatic.aquaticseries.lib.audience.AquaticAudience
 import gg.aquatic.aquaticseries.lib.util.mapPair
 import gg.aquatic.particleemitter.particle.data.ComponentData
 import gg.aquatic.particleemitter.particle.data.EntityDataBuilder
-import gg.aquatic.waves.fake.block.FakeEntity
+import gg.aquatic.waves.fake.entity.FakeEntity
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.type.EntityTypes
 import org.bukkit.Location
 import org.joml.Vector3d
 
 class Particle(
     val location: Location,
-    var origin: Vector3d, var data: ParticleData
+    var origin: Vector3d,
+    var data: ParticleData,
+    audience: AquaticAudience
 ) {
     fun tick() {
         data.age++
@@ -20,6 +23,7 @@ class Particle(
         EntityTypes.TEXT_DISPLAY,
         location,
         50,
+        audience
     ) {
         val data = EntityDataBuilder.getDataFor(
             ComponentData(
