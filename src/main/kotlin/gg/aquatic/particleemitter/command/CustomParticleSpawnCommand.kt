@@ -1,5 +1,6 @@
 package gg.aquatic.particleemitter.command
 
+import gg.aquatic.aquaticseries.lib.audience.GlobalAudience
 import gg.aquatic.particleemitter.ParticleEmitter
 import gg.aquatic.particleemitter.parsing.ParticleJsonParser
 import org.bukkit.command.Command
@@ -14,7 +15,7 @@ object CustomParticleSpawnCommand : CommandExecutor {
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         if (sender !is Player || args.size != 1) return false
-        ParticleJsonParser.jsonUnrealizedEmitters[args[0]]!!.realize(sender.location)
+        ParticleJsonParser.jsonUnrealizedEmitters[args[0]]!!.realize(sender.location, GlobalAudience())
         return true
     }
 }

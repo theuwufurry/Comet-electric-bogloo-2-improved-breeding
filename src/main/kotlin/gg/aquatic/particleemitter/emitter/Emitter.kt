@@ -1,5 +1,6 @@
 package gg.aquatic.particleemitter.emitter
 
+import gg.aquatic.aquaticseries.lib.audience.AquaticAudience
 import gg.aquatic.particleemitter.emitter.lifetime.EmitterLifetimeComponent
 import gg.aquatic.particleemitter.emitter.rate.RateComponent
 import gg.aquatic.particleemitter.emitter.shape.ShapeComponent
@@ -10,9 +11,6 @@ import gg.aquatic.particleemitter.particle.lifetime.ParticleLifetimeComponent
 import gg.aquatic.particleemitter.particle.position.PositionComponent
 import gg.aquatic.particleemitter.particle.texture.SpriteComponent
 import gg.aquatic.particleemitter.particle.transformation.scale.ScaleComponent
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
-import gg.aquatic.waves.util.toUser
 import org.bukkit.Location
 import org.bukkit.scheduler.BukkitTask
 import org.joml.Matrix4f
@@ -29,7 +27,8 @@ data class Emitter(
     val positionComponent: PositionComponent,
     val scaleComponent: ScaleComponent,
     var location: Location,
-    var task: BukkitTask?
+    var task: BukkitTask?,
+    val audience: AquaticAudience
 ) {
     private val emitterData: EmitterData = EmitterData(0.0)
     private val particles: MutableList<Particle> = mutableListOf()
@@ -53,9 +52,6 @@ data class Emitter(
             task!!.cancel()
             return
         }
-
-        val world = location.world
-        val dataPackets: MutableList<PacketWrapper<*>> = mutableListOf()
 
         for (particle in particles) {
             particle.tick()
