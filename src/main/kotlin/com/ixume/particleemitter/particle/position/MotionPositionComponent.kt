@@ -1,19 +1,19 @@
 package com.ixume.particleemitter.particle.position
 
 import com.google.gson.JsonElement
+import com.ixume.particleemitter.emitter.action.Action
 import com.ixume.particleemitter.emitter.ComponentResult
 import com.ixume.particleemitter.emitter.EmitterData
 import com.ixume.particleemitter.emitter.UnrealizedEmitter
+import com.ixume.particleemitter.emitter.action.ActionContext
 import com.ixume.particleemitter.parsing.*
 import com.ixume.particleemitter.parsing.macro.Macro
 import com.ixume.particleemitter.particle.ParticleData
 import com.ixume.particleemitter.particle.position.direction.DirectionSubcomponent
 import com.ixume.particleemitter.particle.position.direction.ExpressionDirectionSubcomponent
 import com.ixume.particleemitter.particle.position.direction.RandomDirectionSubcomponent
-import org.bukkit.Location
 import org.bukkit.World
 import org.bukkit.block.Block
-import org.bukkit.util.Vector
 import org.joml.Vector3d
 import org.joml.Vector3i
 import javax.script.CompiledScript
@@ -27,6 +27,7 @@ class MotionPositionComponent(
     private val accelerationScript: Triple<CompiledScript, CompiledScript, CompiledScript>,
     private val dragScript: CompiledScript,
     private val restitutionScript: CompiledScript?,
+    private val onCollisionAction: Action?,
     private val onCollisionEmitterID: String?,
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData
@@ -82,11 +83,14 @@ class MotionPositionComponent(
                 engine.compile(accelerationObject.expression("z") ?: return null, macros)
             )
 
+            val action = jsonObject.getAsJsonArray("on_collision")?.let { Action.parse(it, macros) }
+
             return MotionPositionComponent(
                 velocityComponent ?: return null,
                 accelerationScript,
                 engine.compile(jsonObject.expression("drag") ?: return null, macros),
                 engine.compile(jsonObject.expression("restitution") ?: return null, macros),
+                action,
                 jsonObject.expression("on_collision_emitter"),
                 emitterData, particleData
             )
@@ -97,6 +101,7 @@ class MotionPositionComponent(
 
     override fun realize() {
         onCollisionEmitterID?.let { unrealizedEmitter = ParticleJsonParser.jsonUnrealizedEmitters[it]!! }
+        onCollisionAction?.subActions?.filterIsInstance<PostInit>()?.forEach { it.realize() }
     }
 
     override fun pos(
@@ -107,7 +112,7 @@ class MotionPositionComponent(
         myParticleData.copyFrom(otherParticleData)
         if (otherParticleData.age == 0.0) {
             return ComponentResult(
-                initialVelocityComponent.dir(otherEmitterData, otherParticleData).rotate(myEmitterData.rotation), true
+                initialVelocityComponent.dir(otherEmitterData, otherParticleData).rotate(myEmitterData.rotation)
             )
         }
 
@@ -132,24 +137,17 @@ class MotionPositionComponent(
         if (correction != null) {
             newPos.add(correction.vector)
 
-            if (correction.vector.lengthSquared() > 0.01) {
-                onCollision(Vector3d(newPos).add(otherParticleData.origin), correction.direction)
-                return ComponentResult(Vector3d(newPos), false)
+            if (velocity.lengthSquared() > 0.01) {
+                onCollision(ActionContext(otherParticleData, otherEmitterData, Vector3d(newPos).add(otherParticleData.origin), correction.direction))
+                return ComponentResult(Vector3d(newPos))
             }
         }
 
-        return ComponentResult(Vector3d(newPos), true)
+        return ComponentResult(Vector3d(newPos))
     }
 
-    private fun onCollision(pos: Vector3d, direction: Vector3d) {
-        unrealizedEmitter?.realize(
-            Location(
-                myEmitterData.world,
-                pos.x + direction.x * Math.random() * 0.1,
-                pos.y + direction.y * Math.random() * 0.1,
-                pos.z + direction.z * Math.random() * 0.1
-            ).setDirection(Vector(direction.x, direction.y, direction.z))
-        )
+    private fun onCollision(context: ActionContext) {
+        onCollisionAction?.execute(context)
     }
 
     private fun fixCollisions(rawNewPos: Vector3d, acceleration: Vector3d): CorrectionResult? {

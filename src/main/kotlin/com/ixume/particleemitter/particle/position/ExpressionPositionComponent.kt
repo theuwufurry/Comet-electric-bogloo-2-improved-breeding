@@ -39,6 +39,6 @@ class ExpressionPositionComponent(
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
         val newPos = Vector3d(xOffset.eval() as Double, yOffset.eval() as Double, zOffset.eval() as Double)
-        return ComponentResult(newPos.rotate(myEmitterData.rotation), true)
+        return ComponentResult(newPos.rotate(myEmitterData.rotation))
     }
 }

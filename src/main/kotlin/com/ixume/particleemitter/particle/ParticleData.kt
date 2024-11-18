@@ -8,6 +8,7 @@ import org.joml.Matrix4f
 import org.joml.Vector3d
 
 data class ParticleData(
+    var dead: Boolean = false,
     var age: Double = 0.0,
     var maxLife: Int = 0,
     var displayData: DisplayData = SpriteData(""),
@@ -24,6 +25,7 @@ data class ParticleData(
 ) {
 
     fun copyFrom(other: ParticleData) {
+        dead = other.dead
         age = other.age
         maxLife = other.maxLife
         displayData = other.displayData

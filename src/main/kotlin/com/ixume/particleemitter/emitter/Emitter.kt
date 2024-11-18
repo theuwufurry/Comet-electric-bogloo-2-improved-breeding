@@ -106,7 +106,7 @@ class Emitter(
 
             val newPos = positionComponent.pos(emitterData, particle.data)
 
-            if (!newPos.keepAlive) {
+            if (particle.data.dead) {
                 die()
                 continue
             }
