@@ -1,4 +1,4 @@
-name: ParticleEmitter
+name: Comet
 version: '1.0-SNAPSHOT'
 main: gg.aquatic.particleemitter.ParticleEmitter
 api-version: '1.20'
