@@ -42,7 +42,7 @@ tasks {
 }
 
 tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
-    archiveFileName.set("ParticleEmitter-${project.version}.jar")
+    archiveFileName.set("Comet-${project.version}.jar")
     archiveClassifier.set("plugin")
     exclude("kotlin/**")
     exclude("org/**")
