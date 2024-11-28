@@ -1,24 +1,24 @@
 package gg.aquatic.particleemitter.particle
 
-import gg.aquatic.aquaticseries.lib.audience.AquaticAudience
 import gg.aquatic.aquaticseries.lib.util.mapPair
+import gg.aquatic.particleemitter.emitter.Emitter
 import gg.aquatic.particleemitter.particle.data.ComponentData
 import gg.aquatic.particleemitter.particle.data.EntityDataBuilder
-import gg.aquatic.waves.fake.entity.FakeEntity
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.type.EntityTypes
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
 import org.bukkit.Location
 import org.joml.Vector3d
 
 class Particle(
+    val emitter: Emitter,
     val location: Location,
     var origin: Vector3d,
-    var data: ParticleData,
-    audience: AquaticAudience
+    var data: ParticleData
 ) {
     fun tick() {
         data.age++
     }
 
+    /*
     val fakeEntity = FakeEntity(
         EntityTypes.TEXT_DISPLAY,
         location,
@@ -36,6 +36,12 @@ class Particle(
     }.apply {
         register()
     }
+     */
+
+    val particleEntity = ParticleEntity(
+        this,
+        location
+    )
 
     /*
     fun getAddPacket(): Pair<PacketWrapper<*>, PacketWrapper<*>> {
@@ -58,7 +64,14 @@ class Particle(
     }
      */
 
-    fun updateParticle() {
+    internal fun spawnPackets(): List<PacketWrapper<*>> {
+        return listOf(
+            particleEntity.spawnPacket,
+            particleEntity.allMetadataPacket
+        )
+    }
+
+    fun updateParticle(): List<PacketWrapper<*>> {
         val data = EntityDataBuilder.getDataFor(
             ComponentData(
                 data.sprite,
@@ -66,16 +79,24 @@ class Particle(
                 data.matrix
             )
         ).mapPair { it.index to it }
+
+        val packet = particleEntity.setData(data) ?: return listOf()
+
+        /*
         fakeEntity.updateEntity {
             entityData.clear()
             entityData += data
         }
+         */
+        return listOf(packet)
     }
-    fun updateLocation() {
+
+    fun updateLocation(): PacketWrapper<*>? {
         this.location.x = origin.x + data.relativePosition.x
         this.location.y = origin.y + data.relativePosition.y
         this.location.z = origin.z + data.relativePosition.z
-        fakeEntity.teleport(location)
+        return particleEntity.teleport(location)
+        //fakeEntity.teleport(location)
     }
 
     /*
