@@ -172,15 +172,19 @@ data class Emitter(
             }
             val distance = loadedChunkViewer.location.distanceSquared(location)
             if (viewers.contains(loadedChunkViewer)) {
-                if (distance > viewRange * viewRange) {
+                if (distance > viewRange * viewRange || !isInFOV(loadedChunkViewer)) {
                     removeViewer(loadedChunkViewer)
                 }
             } else {
-                if (distance <= viewRange * viewRange) {
+                if (distance <= viewRange * viewRange && isInFOV(loadedChunkViewer)) {
                     addViewer(loadedChunkViewer)
                 }
             }
         }
+    }
+
+    private fun isInFOV(player: Player): Boolean {
+        return true
     }
 
     private fun spawnParticles(): List<PacketWrapper<*>> {
