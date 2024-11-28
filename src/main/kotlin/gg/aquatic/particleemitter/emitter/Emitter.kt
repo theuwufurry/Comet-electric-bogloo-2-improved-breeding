@@ -11,6 +11,8 @@ import gg.aquatic.particleemitter.particle.lifetime.ParticleLifetimeComponent
 import gg.aquatic.particleemitter.particle.position.PositionComponent
 import gg.aquatic.particleemitter.particle.texture.SpriteComponent
 import gg.aquatic.particleemitter.particle.transformation.scale.ScaleComponent
+import gg.aquatic.waves.chunk.trackedByPlayers
+import gg.aquatic.waves.fake.FakeObjectHandler
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
 import gg.aquatic.waves.util.toUser
@@ -32,7 +34,8 @@ data class Emitter(
     val scaleComponent: ScaleComponent,
     var location: Location,
     var task: BukkitTask?,
-    val audience: AquaticAudience
+    val audience: AquaticAudience,
+    val viewRange: Int
 ) {
     private val emitterData: EmitterData = EmitterData(0.0)
     private val particles: MutableList<Particle> = mutableListOf()
@@ -41,9 +44,10 @@ data class Emitter(
     private var dead = false
 
     private var entityRemovePacket = WrapperPlayServerDestroyEntities()
-    val viewers = mutableSetOf<Player>()
+    private val viewers = mutableSetOf<Player>()
 
     fun tick() {
+        rangeTick()
         if (blocked) {
             return
         }
@@ -127,7 +131,7 @@ data class Emitter(
         blocked = false
     }
 
-    fun addViewer(player: Player) {
+    private fun addViewer(player: Player) {
         if (player in viewers) return
         val user = player.toUser()
         val packets = mutableListOf<PacketWrapper<*>>()
@@ -140,11 +144,43 @@ data class Emitter(
         viewers += player
     }
 
-    fun removeViewer(player: Player) {
+    private fun removeViewer(player: Player) {
         if (player !in viewers) return
         val user = player.toUser()
         user.sendPacket(entityRemovePacket)
         viewers -= player
+    }
+
+    private var rangeTick = 4
+    private fun rangeTick() {
+        rangeTick++
+        if (rangeTick % 4 == 0) {
+            rangeTick = 0
+        } else {
+            return
+        }
+
+        val loadedChunkViewers = location.chunk.trackedByPlayers().filter { viewers.contains(it) }
+        for (loadedChunkViewer in loadedChunkViewers.toSet()) {
+            if (!loadedChunkViewer.isOnline) {
+                viewers.remove(loadedChunkViewer)
+                continue
+            }
+            if (loadedChunkViewer.world != location.world) {
+                viewers.remove(loadedChunkViewer)
+                continue
+            }
+            val distance = loadedChunkViewer.location.distanceSquared(location)
+            if (viewers.contains(loadedChunkViewer)) {
+                if (distance > viewRange * viewRange) {
+                    removeViewer(loadedChunkViewer)
+                }
+            } else {
+                if (distance <= viewRange * viewRange) {
+                    addViewer(loadedChunkViewer)
+                }
+            }
+        }
     }
 
     private fun spawnParticles(): List<PacketWrapper<*>> {
