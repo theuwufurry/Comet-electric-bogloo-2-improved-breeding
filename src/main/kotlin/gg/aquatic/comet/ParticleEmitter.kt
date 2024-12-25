@@ -40,7 +40,7 @@ class ParticleEmitter : JavaPlugin() {
         AquaticBaseCommand(
             "comet", "Base command of Comet plugin", mutableListOf(), mutableMapOf(
                 "reload" to ReloadParticleScriptsCommand,
-                "play" to CustomParticleCommand,
+                "spawn" to CustomParticleCommand,
             ),
             listOf()
         ).register("comet")
