@@ -1,1 +1,1 @@
-rootProject.name = "ParticleEmitter"
+rootProject.name = "Comet"
