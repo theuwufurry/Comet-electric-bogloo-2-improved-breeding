@@ -45,60 +45,24 @@ private fun checkVersion(): Boolean {
 }
 
 class EntityDataBuilder {
-    //    private val level: Level = (Bukkit.getWorld("world") as CraftWorld).handle
-//    private val dataComponentType =
-//        BuiltInRegistries.DATA_COMPONENT_TYPE.get(
-//            ResourceLocation.tryBuild(
-//                "minecraft",
-//                "custom_model_data"
-//            )
-//        ) as DataComponentType<CustomModelData>
-//
-//    private val placeholderTextDisplay: TextDisplay = TextDisplay(EntityType.TEXT_DISPLAY, level)
-//    private val placeholderItemDisplay: ItemDisplay = ItemDisplay(EntityType.ITEM_DISPLAY, level)
-//
-//    init {
-//        placeholderTextDisplay.entityData.set(TextDisplay.DATA_BACKGROUND_COLOR_ID, 0)
-//
-//        placeholderTextDisplay.entityData.set(DATA_POS_ROT_INTERPOLATION_DURATION_ID, 2)
-//        placeholderItemDisplay.entityData.set(DATA_POS_ROT_INTERPOLATION_DURATION_ID, 2)
-//
-//
-//        placeholderTextDisplay.transformationInterpolationDuration = 2
-//        placeholderTextDisplay.transformationInterpolationDelay = -1
-//
-//        placeholderItemDisplay.transformationInterpolationDuration = 2
-//        placeholderItemDisplay.transformationInterpolationDelay = -1
-//    }
     private val key = Key.key("particlecreator", "default")
 
     fun getDataFor(
         entityData: EntityData,
         initial: Boolean
-    ): List<gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData> {//SynchedEntityData? {
+    ): List<gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData> {
         return genData(entityData, initial)
     }
 
     private fun genData(
         component: EntityData,
         initial: Boolean
-    ): List<gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData> {//SynchedEntityData? {
-//        val entity: Display
+    ): List<gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData> {
         val entityData: MutableList<gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData> =
             mutableListOf()
+
         when (component.displayData) {
             is SpriteData -> {
-//                entity = placeholderTextDisplay
-//                entity.text = Component.translatable(component.displayData.id).withColor(component.color and 0xFFFFFF)
-//                    .withStyle(
-//                        Style.EMPTY.withFont(
-//                            ResourceLocation(
-//                                "particlecreator",
-//                                "default"
-//                            )
-//                        )
-//                    )
-//
                 if (initial) {
                     entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                         23 + PACKET_OFFSET,
@@ -124,17 +88,11 @@ class EntityDataBuilder {
                     25 + PACKET_OFFSET,
                     EntityDataTypes.BYTE,
                     ((component.color ushr 24) + 26).coerceAtMost(255).toByte()
-//                    Component.translatable(component.displayData.id).color(TextColor.color(component.color and 0xFFFFFF)).font(key)
                 )
-
-//                entity.textOpacity = ((component.color ushr 24) + 26).coerceAtMost(255).toByte()
-//                entity.entityData.set(TextDisplay, component.color ushr 24)
             }
 
             is ModelData -> {
-//                entity = placeholderItemDisplay
                 val modelData = component.displayData
-//                entity.itemStack = ItemStack(BuiltInRegistries.ITEM[ResourceLocation.tryBuild("minecraft", modelData.item)])
 
                 val stack = ItemStack.builder().type(ItemTypes.getByName(modelData.item)).amount(1).build()
                 stack.setComponent(ComponentTypes.CUSTOM_MODEL_DATA, modelData.id)
@@ -144,33 +102,23 @@ class EntityDataBuilder {
                     EntityDataTypes.ITEMSTACK,
                     stack
                 )
-//                entity.itemStack.applyComponents(
-//                    DataComponentMap.builder().set(
-//                        dataComponentType, CustomModelData(modelData.id)
-//                    ).build()
-//                )
             }
 
             else -> {
-//                entity = placeholderTextDisplay
-//                entity.text = Component.literal((component.displayData as TextDisplayComponent).string).withColor(component.color and 0xFFFFFF)
                 entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                     22 + PACKET_OFFSET,
                     EntityDataTypes.ADV_COMPONENT,
                     Component.translatable((component.displayData as TextDisplayComponent).string)
                         .color(TextColor.color(component.color and 0xFFFFFF)).font(key)
                 )
-//                entity.textOpacity = ((component.color ushr 24) + 14).coerceAtMost(255).toByte()
                 entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                     25 + PACKET_OFFSET,
                     EntityDataTypes.BYTE,
                     ((component.color ushr 24) + 26).coerceAtMost(255).toByte()
-//                    Component.translatable(component.displayData.id).color(TextColor.color(component.color and 0xFFFFFF)).font(key)
                 )
             }
         }
 
-//        entity.billboardConstraints = component.billboardConstraints
         if (initial) {
             entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                 8,
@@ -182,11 +130,13 @@ class EntityDataBuilder {
                 EntityDataTypes.INT,
                 1
             )
-            entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
-                10,
-                EntityDataTypes.INT,
-                1
-            )
+            if (PACKET_OFFSET > 0) {
+                entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
+                    10,
+                    EntityDataTypes.INT,
+                    1
+                )
+            }
         }
 
         entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
@@ -221,10 +171,6 @@ class EntityDataBuilder {
             Quaternion4f(component.rotation.x, component.rotation.y, component.rotation.z, component.rotation.w)
         )
 
-//        entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
-//
-//        )
-//        entity.setTransformation(Transformation(component.matrix))
         return entityData
     }
 }
@@ -232,7 +178,6 @@ class EntityDataBuilder {
 data class EntityData(
     val displayData: DisplayData,
     val color: Int,
-//    val matrix: Matrix4f,
     val translation: Vector3f,
     val rotation: Quaternionf,
     val scale: Vector3f,
