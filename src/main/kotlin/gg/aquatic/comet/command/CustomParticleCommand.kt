@@ -52,6 +52,10 @@ object CustomParticleCommand : ICommand {
     }
 
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
-        return emptyList()
+        return when(args.size) {
+            1 -> ParticleJsonParser.jsonUnrealizedEmitters.keys.toList()
+            2 -> Bukkit.getWorlds().map { it.name }
+            else -> emptyList()
+        }
     }
 }
