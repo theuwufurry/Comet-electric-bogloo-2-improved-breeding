@@ -4,6 +4,7 @@ import gg.aquatic.comet.command.*
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.ResourcepackCreator
 import gg.aquatic.waves.command.AquaticBaseCommand
+import gg.aquatic.waves.command.register
 import org.bukkit.plugin.java.JavaPlugin
 import org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory
 
@@ -42,6 +43,6 @@ class ParticleEmitter : JavaPlugin() {
                 "play" to CustomParticleCommand,
             ),
             listOf()
-        )
+        ).register("comet")
     }
 }
