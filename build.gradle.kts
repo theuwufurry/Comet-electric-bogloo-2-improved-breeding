@@ -28,7 +28,7 @@ dependencies {
     compileOnly("org.openjdk.nashorn:nashorn-core:15.4")
 }
 
-val targetJavaVersion = 21
+val targetJavaVersion = 17
 kotlin {
     jvmToolchain(targetJavaVersion)
 }
