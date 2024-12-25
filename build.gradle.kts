@@ -47,10 +47,9 @@ tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
 }
 
 tasks.processResources {
-    val props = mapOf("version" to version)
-    inputs.properties(props)
-    filteringCharset = "UTF-8"
+    filteringCharset = Charsets.UTF_8.name()
     filesMatching("plugin.yml") {
-        expand(props)
+        expand(getProperties())
+        expand(mutableMapOf("version" to project.version))
     }
 }
