@@ -1,7 +1,6 @@
 plugins {
     kotlin("jvm") version "2.0.21"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
-//    id("io.papermc.paperweight.userdev") version "1.7.1"
+    id("io.github.goooler.shadow") version "8.1.8"
 }
 
 group = "gg.aquatic"
@@ -23,10 +22,6 @@ repositories {
 }
 
 dependencies {
-//    compileOnly("io.papermc.paper:paper-api:1.20.6-R0.1-SNAPSHOT")
-//    paperweight.paperDevBundle("1.20.6-R0.1-SNAPSHOT")
-//    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-
     compileOnly("org.spigotmc:spigot-api:1.19.4-R0.1-SNAPSHOT")
     compileOnly("gg.aquatic.waves:Waves:1.0.51:publish")
 
@@ -48,7 +43,7 @@ tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
 
     exclude("kotlin/**")
     exclude("org/**")
-//    relocate("kotlin", "gg.aquatic.waves.shadow.kotlin")
+    relocate("kotlin", "gg.aquatic.waves.shadow.kotlin")
 }
 
 tasks.processResources {

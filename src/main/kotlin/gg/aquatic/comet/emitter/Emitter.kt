@@ -200,9 +200,4 @@ class Emitter(
     private fun Quaternionf.applyEmitterRotation(): Quaternionf {
         return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(emitterRotation).mul(this) else this
     }
-
-//    fun matrixFromParts(scale: Vector3f, rotation: Matrix4f): Matrix4f {
-//        val matrix = Matrix4f()
-//        return (if (billboardConstraints == BillboardConstraints.FIXED) matrix.rotate(emitterRotation) else matrix).mul(rotation).scale(scale).translate(-0.0125f, 0f, 0f)
-//    }
 }
