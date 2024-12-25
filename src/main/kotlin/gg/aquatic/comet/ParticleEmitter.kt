@@ -3,6 +3,7 @@ package gg.aquatic.comet
 import gg.aquatic.comet.command.*
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.ResourcepackCreator
+import gg.aquatic.waves.command.AquaticBaseCommand
 import org.bukkit.plugin.java.JavaPlugin
 import org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory
 
@@ -31,10 +32,16 @@ class ParticleEmitter : JavaPlugin() {
 
         ResourcepackCreator.genPack()
 
-        CustomParticleCommand
         FireParticleSpawnCommand
         ExplosionParticleSpawnCommand
         BloodParticleSpawnCommand
-        ReloadParticleScriptsCommand
+
+        AquaticBaseCommand(
+            "comet", "Base command of Comet plugin", mutableListOf(), mutableMapOf(
+                "reload" to ReloadParticleScriptsCommand,
+                "play" to CustomParticleCommand,
+            ),
+            listOf()
+        )
     }
 }

@@ -8,8 +8,6 @@ depend:
   - Waves
 
 commands:
-  customparticle:
   fireparticle:
   explosionparticle:
   bloodparticle:
-  reloadparticles:
