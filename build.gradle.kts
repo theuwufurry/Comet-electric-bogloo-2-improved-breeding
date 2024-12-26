@@ -33,8 +33,11 @@ kotlin {
     jvmToolchain(targetJavaVersion)
 }
 
-tasks.build {
-    dependsOn("shadowJar")
+tasks {
+    compileJava {
+        options.encoding = Charsets.UTF_8.name()
+        options.release.set(targetJavaVersion)
+    }
 }
 
 tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
@@ -51,5 +54,9 @@ tasks.processResources {
     filesMatching("plugin.yml") {
         expand(getProperties())
         expand(mutableMapOf("version" to project.version))
+    }
+
+    processResources {
+        filteringCharset = Charsets.UTF_8.name()
     }
 }
