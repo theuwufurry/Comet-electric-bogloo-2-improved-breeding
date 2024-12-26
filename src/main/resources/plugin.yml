@@ -1,8 +1,13 @@
-name: ParticleEmitter
-version: '1.0-SNAPSHOT'
-main: gg.aquatic.particleemitter.ParticleEmitter
-api-version: '1.20'
+name: Comet
+version: '${project.version}'
+main: gg.aquatic.comet.ParticleEmitter
+api-version: '1.19'
+libraries:
+  - org.openjdk.nashorn:nashorn-core:15.4
+depend:
+  - Waves
 
 commands:
-  customparticle:
-  reloadparticles:
+  fireparticle:
+  explosionparticle:
+  bloodparticle:
