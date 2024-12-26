@@ -55,8 +55,4 @@ tasks.processResources {
         expand(getProperties())
         expand(mutableMapOf("version" to project.version))
     }
-
-    processResources {
-        filteringCharset = Charsets.UTF_8.name()
-    }
 }
