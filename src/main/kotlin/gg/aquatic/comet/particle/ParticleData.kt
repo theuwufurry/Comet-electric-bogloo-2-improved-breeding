@@ -17,7 +17,6 @@ data class ParticleData(
     var origin: Vector3d = Vector3d(),
     var relativePosition: Vector3d = Vector3d(),
     var oldRelativePosition: Vector3d = Vector3d(),
-//    var matrix: Matrix4f = Matrix4f(),
     var translation: Vector3f = Vector3f(),
     var rotation: Quaternionf = Quaternionf(),
     var scale: Vector3f = Vector3f(),

@@ -6,6 +6,7 @@ package gg.aquatic.comet.emitter
 //import net.minecraft.network.protocol.game.ClientboundBundlePacket
 //import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket
 //import net.minecraft.world.entity.Display.BillboardConstraints
+import gg.aquatic.comet.emitter.bundle.BundledEmitterComponent
 import gg.aquatic.comet.emitter.lifetime.EmitterLifetimeComponent
 import gg.aquatic.comet.emitter.rate.RateComponent
 import gg.aquatic.comet.emitter.recursive.RecursiveEmitterComponent
@@ -41,11 +42,14 @@ class Emitter(
     private val scaleComponent: ScaleComponent,
     private val rotationComponent: RotationComponent,
     private val recursiveEmitterComponent: RecursiveEmitterComponent?,
+    private val bundledEmitterComponent: BundledEmitterComponent?, //KEEP THIS AROUND! Might be needed for future variable stuff.
     private val billboardConstraints: BillboardConstraints,
-    private var location: Location,
+    location: Location,
     private val emitterData: EmitterData,
     private val unrealizedHolder: UnrealizedEmitter
 ) {
+    var location = location
+        private set
     //origin can change, rotation can change
     private val particles: MutableList<Particle> = mutableListOf()
     private val deadParticles: MutableList<Particle> = mutableListOf()
@@ -73,16 +77,7 @@ class Emitter(
 
         val world = location.world
         val dataPackets: MutableList<PacketWrapper<*>> = mutableListOf()
-//        val dataPackets: MutableList<Packet<in ClientGamePacketListener>> = mutableListOf()
 
-        //loop through particles, only connection to emitter is emitterData
-        //data packets can be done per thread
-        //so:
-        //call update on particles in object Ticker
-        //each component has its own list of compiled scripts
-        //number of compiled scripts per component should equal to thread count
-        //different compiled scripts means different myEmitterData and myParticleData
-        //ticker signals which thread it's on with simple index.
         for (particle in particles) {
             fun die() {
                 deadParticles += particle

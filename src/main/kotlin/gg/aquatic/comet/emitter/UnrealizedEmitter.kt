@@ -1,6 +1,7 @@
 package gg.aquatic.comet.emitter
 
 import gg.aquatic.comet.ParticleEmitter
+import gg.aquatic.comet.emitter.bundle.BundledEmitterComponent
 import gg.aquatic.comet.emitter.lifetime.EmitterLifetimeComponent
 import gg.aquatic.comet.emitter.rate.RateComponent
 import gg.aquatic.comet.emitter.recursive.RecursiveEmitterComponent
@@ -40,6 +41,7 @@ data class UnrealizedEmitter(
     val scaleComponent: ScaleComponent,
     val rotationComponent: RotationComponent,
     val recursiveEmitterComponent: RecursiveEmitterComponent?,
+    val bundledEmitterComponent: BundledEmitterComponent?,
     val billboardConstraints: BillboardConstraints,
 ) {
     private val emitters: MutableSet<Emitter> = HashSet()
@@ -69,6 +71,8 @@ data class UnrealizedEmitter(
     fun realize(location: Location): Emitter {
         val emitterData = EmitterData()
         emitterData.world = location.world
+        emitterData.location = location
+        bundledEmitterComponent?.init(emitterData)
         return Emitter(
             rateComponent,
             particleLifetimeComponent,
@@ -80,6 +84,7 @@ data class UnrealizedEmitter(
             scaleComponent,
             rotationComponent,
             recursiveEmitterComponent,
+            bundledEmitterComponent,
             billboardConstraints, location, emitterData, this
         ).also { emitters += it }
     }

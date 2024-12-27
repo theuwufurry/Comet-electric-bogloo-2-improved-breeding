@@ -14,7 +14,7 @@ import org.joml.Vector3d
 //async between sub emitters means data is being edited weirdly
 
 //add all unrealized emitters with unrealized recursive emitter components
-class RecursiveEmitterComponent(private val unrealizedEmitterID: String, private val myEmitterData: EmitterData) :
+class RecursiveEmitterComponent(private val unrealizedEmitterID: String) :
     PostInit {
     companion object : ComponentParser<RecursiveEmitterComponent> {
         init {
@@ -28,7 +28,7 @@ class RecursiveEmitterComponent(private val unrealizedEmitterID: String, private
             val unrealizedEmitterID = engine.compile(jsonObject.expression("emitter") ?: return null).eval() as String
 
             return RecursiveEmitterComponent(
-                unrealizedEmitterID, emitterData
+                unrealizedEmitterID
             )
         }
     }
@@ -36,19 +36,19 @@ class RecursiveEmitterComponent(private val unrealizedEmitterID: String, private
     private lateinit var unrealizedEmitter: UnrealizedEmitter
 
     override fun realize() {
-        unrealizedEmitter = ParticleJsonParser.jsonUnrealizedEmitters[unrealizedEmitterID]!!
+        unrealizedEmitter = ParticleJsonParser.jsonUnrealizedEmitters[unrealizedEmitterID] ?: throw NullPointerException("$unrealizedEmitterID is not a valid emitter ID!")
     }
 
-    fun updateEmitter(otherEmitterData: EmitterData, otherParticleData: ParticleData): Emitter {
-        myEmitterData.copyFrom(otherEmitterData)
+    fun updateEmitter(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
         if (otherParticleData.age == 0.0) {
             val v = Vector3d(otherParticleData.origin).add(otherParticleData.relativePosition)
-            otherParticleData.emitter = unrealizedEmitter.realize(Location(myEmitterData.world, v.x, v.y, v.z))
-            return otherParticleData.emitter!!
+            otherParticleData.emitter = unrealizedEmitter.realize(Location(otherEmitterData.world, v.x, v.y, v.z))
+//            return otherParticleData.emitter!!
+            return
         }
 
         val newPos = Vector3d(otherParticleData.origin).add(otherParticleData.relativePosition)
         otherParticleData.emitter!!.setPos(newPos.x, newPos.y, newPos.z)
-        return otherParticleData.emitter!!
+//        return otherParticleData.emitter!!
     }
 }

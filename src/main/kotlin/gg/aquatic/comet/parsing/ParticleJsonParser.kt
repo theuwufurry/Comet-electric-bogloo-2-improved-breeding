@@ -6,6 +6,7 @@ import com.google.gson.JsonParser
 import gg.aquatic.comet.ParticleEmitter
 import gg.aquatic.comet.emitter.EmitterTickersHolder
 import gg.aquatic.comet.emitter.UnrealizedEmitter
+import gg.aquatic.comet.emitter.bundle.BundledEmitterComponent
 import gg.aquatic.comet.emitter.lifetime.EmitterLifetimeComponent
 import gg.aquatic.comet.emitter.lifetime.TimedEmitterLifetimeComponent
 import gg.aquatic.comet.emitter.rate.RateComponent
@@ -69,6 +70,7 @@ object ParticleJsonParser {
     val shapeComponentParsers: MutableMap<String, ComponentParser<out ShapeComponent>> = mutableMapOf()
 
     lateinit var recursiveEmitterComponentParser: Pair<String, ComponentParser<RecursiveEmitterComponent>>
+    lateinit var bundledEmitterComponentParser: Pair<String, ComponentParser<BundledEmitterComponent>>
 
     fun init() {
         MacrosParser
@@ -90,8 +92,6 @@ object ParticleJsonParser {
 
         ConstantModelComponent
 
-        RecursiveEmitterComponent
-
         ExpressionPositionComponent
         MotionPositionComponent
 
@@ -100,6 +100,8 @@ object ParticleJsonParser {
         ExpressionRotationComponent
 
         RecursiveEmitterComponent
+
+        BundledEmitterComponent
     }
 
     lateinit var jsonUnrealizedEmitters: Map<String, UnrealizedEmitter>
@@ -146,7 +148,9 @@ object ParticleJsonParser {
         var scaleComponent: ScaleComponent? = null
         var rotationComponent: RotationComponent? = null
         var billboardConstraints: BillboardConstraints? = null
+
         var recursiveEmitterComponent: RecursiveEmitterComponent? = null
+        var bundledEmitterComponent: BundledEmitterComponent? = null
 
         for ((key, componentElement) in componentsObject.entrySet()) {
             if (key == "display_type") {
@@ -241,6 +245,10 @@ object ParticleJsonParser {
             if (key == recursiveEmitterComponentParser.first) {
                 recursiveEmitterComponent = recursiveEmitterComponentParser.second.parse(componentElement, macros)
             }
+
+            if (key == bundledEmitterComponentParser.first) {
+                bundledEmitterComponent = bundledEmitterComponentParser.second.parse(componentElement, macros)
+            }
         }
 
         if (rateComponent == null) println("Rate component null!")
@@ -265,6 +273,7 @@ object ParticleJsonParser {
             scaleComponent ?: return null,
             rotationComponent ?: return null,
             recursiveEmitterComponent,
+            bundledEmitterComponent,
             billboardConstraints ?: return null
         )
     }
@@ -272,6 +281,7 @@ object ParticleJsonParser {
     private fun postInit() {
         for ((_, unrealizedEmitter) in jsonUnrealizedEmitters) {
             unrealizedEmitter.recursiveEmitterComponent?.realize()
+            unrealizedEmitter.bundledEmitterComponent?.realize()
             (unrealizedEmitter.positionComponent as? PostInit)?.realize()
         }
     }
