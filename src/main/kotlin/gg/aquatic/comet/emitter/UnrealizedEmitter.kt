@@ -56,6 +56,7 @@ data class UnrealizedEmitter(
     }
 
     fun kill() {
+        emitters.forEach { it.kill() }
         tasks.cancel()
     }
 

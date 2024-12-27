@@ -128,13 +128,13 @@ class EntityDataBuilder {
             entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                 9,
                 EntityDataTypes.INT,
-                1
+                2
             )
             if (PACKET_OFFSET > 0) {
                 entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                     10,
                     EntityDataTypes.INT,
-                    1
+                    2
                 )
             }
         }

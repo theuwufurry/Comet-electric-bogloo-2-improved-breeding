@@ -14,16 +14,10 @@ class ParticleEmitter : JavaPlugin() {
     companion object {
         lateinit var INSTANCE: ParticleEmitter
         lateinit var scriptEngineFactory: NashornScriptEngineFactory
-
-//        lateinit var unsafe: Unsafe
     }
 
     override fun onEnable() {
         INSTANCE = this
-
-//        val field = Unsafe::class.java.getDeclaredField("theUnsafe")
-//        field.isAccessible = true
-//        unsafe = field.get("null") as Unsafe
 
         scriptEngineFactory = NashornScriptEngineFactory()
         ParticleJsonParser.init()
@@ -41,6 +35,7 @@ class ParticleEmitter : JavaPlugin() {
             "comet", "Base command of Comet plugin", mutableListOf(), mutableMapOf(
                 "reload" to ReloadParticleScriptsCommand,
                 "spawn" to CustomParticleCommand,
+                "clear" to ClearParticlesCommand
             ),
             listOf()
         ).register("comet")

@@ -21,6 +21,7 @@ import gg.aquatic.comet.particle.position.PositionComponent
 import gg.aquatic.comet.particle.transformation.rotation.RotationComponent
 import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.PacketEvents
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.manager.player.PlayerManager
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
 import org.bukkit.Location
@@ -132,10 +133,9 @@ class Emitter(
         val playerManager = PacketEvents.getAPI().playerManager
 
         particles.removeAll(deadParticles)
-        val ids = deadParticles.map { it.id }.toIntArray()
+        killParticles(deadParticles, playerManager)
         for (player in world!!.players) {
             val distanceSquared = player.eyeLocation.distanceSquared(location)
-            if (distanceSquared < MAX_UNVIEW_DISTANCE) playerManager.sendPacket(player, WrapperPlayServerDestroyEntities(*ids))
             if (distanceSquared < MAX_VIEW_DISTANCE)
             for (packet in dataPackets) {
                 playerManager.sendPacket(player, packet)
@@ -148,6 +148,14 @@ class Emitter(
 
         blocked = false
         return true
+    }
+
+    private fun killParticles(particlesToKill: List<Particle>, playerManager: PlayerManager = PacketEvents.getAPI().playerManager) {
+        val ids = particlesToKill.map { it.id }.toIntArray()
+        for (player in location.world!!.players) {
+            val distanceSquared = player.eyeLocation.distanceSquared(location)
+            if (distanceSquared < MAX_UNVIEW_DISTANCE) playerManager.sendPacket(player, WrapperPlayServerDestroyEntities(*ids))
+        }
     }
 
     private fun spawnParticles() {
@@ -190,6 +198,11 @@ class Emitter(
         location.x = x
         location.y = y
         location.z = z
+    }
+
+    fun kill() {
+        dead = true
+        killParticles(particles)
     }
 
     private fun Quaternionf.applyEmitterRotation(): Quaternionf {
