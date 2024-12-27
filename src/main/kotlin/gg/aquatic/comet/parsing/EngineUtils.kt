@@ -24,7 +24,7 @@ fun particleEngine(emitterData: EmitterData): Pair<Compilable, ParticleData> {
 }
 
 
-fun Compilable.compile(input: String, macros: Map<String, Macro>?): CompiledScript {
+fun Compilable.compile(input: String, macros: Map<String, Macro>?, tryAsSimpleString: Boolean = false): CompiledScript {
     var output = input
     if (macros != null) {
         for ((from, macro) in macros) {
@@ -35,5 +35,20 @@ fun Compilable.compile(input: String, macros: Map<String, Macro>?): CompiledScri
         }
     }
 
-    return compile(output)
+    val compiled = compile(output)
+    if (tryAsSimpleString) {
+        try {
+            compiled.eval()
+        } catch (ignored: Exception) {
+            val escapedCompiled = compile("\"" + output + "\"")
+            try {
+                escapedCompiled.eval()
+                return escapedCompiled
+            } catch (ignored: Exception) {
+                return compiled
+            }
+        }
+    }
+
+    return compiled
 }

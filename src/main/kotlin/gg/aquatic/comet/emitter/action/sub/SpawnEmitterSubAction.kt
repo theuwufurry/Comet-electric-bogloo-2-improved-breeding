@@ -21,7 +21,7 @@ class SpawnEmitterSubAction(
             val jsonObject = jsonElement.asJsonObject
             val emitterData = EmitterData()
             val engine = emitterEngine(emitterData)
-            val unrealizedEmitterID = engine.compile(jsonObject.expression("emitter") ?: return null).eval() as String
+            val unrealizedEmitterID = engine.compile(jsonObject.expression("emitter") ?: return null, macros, true).eval() as String
             val offsetMagnitude = jsonObject.getAsJsonPrimitive("offset")?.asNumber?.toFloat() ?: 0f
 
             return SpawnEmitterSubAction(unrealizedEmitterID, offsetMagnitude, emitterData)

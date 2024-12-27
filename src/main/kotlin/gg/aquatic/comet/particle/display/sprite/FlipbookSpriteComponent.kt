@@ -27,7 +27,7 @@ class FlipbookSpriteComponent(
             for (element in jsonObject.getAsJsonArray("sprites")) {
                 sprites += (element as JsonObject).getAsJsonPrimitive("index").asNumber.toDouble() to engine.compile(
                     element.expression("sprite") ?: return null,
-                    macros
+                    macros, true
                 )
             }
 

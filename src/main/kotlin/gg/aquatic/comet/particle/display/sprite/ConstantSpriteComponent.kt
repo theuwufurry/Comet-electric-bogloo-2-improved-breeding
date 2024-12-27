@@ -22,7 +22,7 @@ class ConstantSpriteComponent(private val sprite: CompiledScript, private val my
             val engine = emitterEngine(emitterData)
 
             return ConstantSpriteComponent(
-                engine.compile(jsonObject.expression("sprite") ?: return null, macros),
+                engine.compile(jsonObject.expression("sprite") ?: return null, macros, true),
                 emitterData
             )
         }

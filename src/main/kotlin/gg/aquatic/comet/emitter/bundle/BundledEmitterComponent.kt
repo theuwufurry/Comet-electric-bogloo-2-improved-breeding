@@ -3,11 +3,8 @@ package gg.aquatic.comet.emitter.bundle
 import com.google.gson.JsonElement
 import gg.aquatic.comet.emitter.EmitterData
 import gg.aquatic.comet.emitter.UnrealizedEmitter
-import gg.aquatic.comet.parsing.ComponentParser
-import gg.aquatic.comet.parsing.ParticleJsonParser
+import gg.aquatic.comet.parsing.*
 import gg.aquatic.comet.parsing.ParticleJsonParser.bundledEmitterComponentParser
-import gg.aquatic.comet.parsing.PostInit
-import gg.aquatic.comet.parsing.emitterEngine
 import gg.aquatic.comet.parsing.macro.Macro
 
 class BundledEmitterComponent(private val unrealizedEmitterIDs: List<String>) : PostInit {
@@ -25,7 +22,7 @@ class BundledEmitterComponent(private val unrealizedEmitterIDs: List<String>) : 
             val unrealizedEmitterIDs: MutableList<String> = mutableListOf()
             for (element in array) {
                 if (!(element.isJsonPrimitive && element.asJsonPrimitive.isString)) continue
-                val evaluatedID = engine.compile(element.asString).eval() as String
+                val evaluatedID = engine.compile(element.asString, macros, true).eval() as String
                 unrealizedEmitterIDs += evaluatedID
             }
 

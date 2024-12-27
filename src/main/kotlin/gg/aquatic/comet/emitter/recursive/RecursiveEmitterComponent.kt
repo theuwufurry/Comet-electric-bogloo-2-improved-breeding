@@ -25,7 +25,7 @@ class RecursiveEmitterComponent(private val unrealizedEmitterID: String) :
             val jsonObject = jsonElement.asJsonObject
             val emitterData = EmitterData()
             val engine = emitterEngine(emitterData)
-            val unrealizedEmitterID = engine.compile(jsonObject.expression("emitter") ?: return null).eval() as String
+            val unrealizedEmitterID = engine.compile(jsonObject.expression("emitter") ?: return null, macros, true).eval() as String
 
             return RecursiveEmitterComponent(
                 unrealizedEmitterID
