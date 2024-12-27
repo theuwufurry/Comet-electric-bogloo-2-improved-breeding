@@ -22,12 +22,15 @@ import gg.aquatic.comet.particle.transformation.rotation.RotationComponent
 import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.PacketEvents
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.manager.player.PlayerManager
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.packettype.PacketType.Play
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
 import org.bukkit.Location
+import org.bukkit.entity.Player
 import org.joml.Quaternionf
 import org.joml.Vector3d
 import org.joml.Vector3f
+import java.util.concurrent.atomic.AtomicInteger
 
 const val MAX_VIEW_DISTANCE = 100*100
 const val MAX_UNVIEW_DISTANCE = 200*200
@@ -59,9 +62,9 @@ class Emitter(
     private val emitterRotation =
         Quaternionf().rotateTo(Vector3f(0f, 0f, 1f), location.direction.normalize().toVector3f())
 
-    fun tick(): Boolean {
+    fun tick(): EmitterTickResult {
         if (blocked) {
-            return true
+            return EmitterTickResult(true)
         }
 
         blocked = true
@@ -73,7 +76,7 @@ class Emitter(
         }
 
         if (dead && particles.size == 0) {
-            return false
+            return EmitterTickResult(false)
         }
 
         val world = location.world
@@ -127,30 +130,41 @@ class Emitter(
                 particle.data.rotation = newRotation
             }
 
-            if (updateParticle) particle.updatePacket(unrealizedHolder.myEntityDataBuilder).let { dataPackets += it }
+            if (updateParticle) {
+                particle.updatePacket(unrealizedHolder.myEntityDataBuilder).let { dataPackets += it }
+            }
         }
 
         val playerManager = PacketEvents.getAPI().playerManager
 
         particles.removeAll(deadParticles)
-        killParticles(deadParticles, playerManager)
+        val rawDeadParticleIDs = deadParticles.map { it.id }.toMutableList()
+        val deadParticleIDs: MutableList<Pair<Player, MutableList<Int>>> = mutableListOf()
+//        killParticles(deadParticles, playerManager)
         for (player in world!!.players) {
             val distanceSquared = player.eyeLocation.distanceSquared(location)
-            if (distanceSquared < MAX_VIEW_DISTANCE)
-            for (packet in dataPackets) {
-                playerManager.sendPacket(player, packet)
+            if (distanceSquared <= MAX_VIEW_DISTANCE) {
+                for (packet in dataPackets) {
+                    playerManager.sendPacket(player, packet)
+                }
+            }
+
+            if (distanceSquared <= MAX_UNVIEW_DISTANCE) {
+                deadParticleIDs += player to rawDeadParticleIDs
             }
         }
+
 
         deadParticles.clear()
 
         if (!dead) spawnParticles()
 
         blocked = false
-        return true
+        return EmitterTickResult(true, deadParticleIDs)
     }
 
     private fun killParticles(particlesToKill: List<Particle>, playerManager: PlayerManager = PacketEvents.getAPI().playerManager) {
+        if (particlesToKill.isEmpty()) return
         val ids = particlesToKill.map { it.id }.toIntArray()
         for (player in location.world!!.players) {
             val distanceSquared = player.eyeLocation.distanceSquared(location)
@@ -203,9 +217,12 @@ class Emitter(
     fun kill() {
         dead = true
         killParticles(particles)
+        particles.clear()
     }
 
     private fun Quaternionf.applyEmitterRotation(): Quaternionf {
         return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(emitterRotation).mul(this) else this
     }
 }
+
+class EmitterTickResult(val alive: Boolean, val deadParticles: List<Pair<Player, MutableList<Int>>> = listOf())

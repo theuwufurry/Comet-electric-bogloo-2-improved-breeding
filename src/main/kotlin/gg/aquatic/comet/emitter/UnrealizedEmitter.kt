@@ -14,8 +14,11 @@ import gg.aquatic.comet.particle.lifetime.ParticleLifetimeComponent
 import gg.aquatic.comet.particle.position.PositionComponent
 import gg.aquatic.comet.particle.transformation.rotation.RotationComponent
 import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.PacketEvents
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
 import org.bukkit.Bukkit
 import org.bukkit.Location
+import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitTask
 
 object EmitterTickersHolder {
@@ -27,6 +30,12 @@ object EmitterTickersHolder {
         }
 
         unrealizedEmitters.clear()
+    }
+
+    fun killInstances() {
+        for (unrealizedEmitter in unrealizedEmitters) {
+            unrealizedEmitter.killInstances()
+        }
     }
 }
 
@@ -56,14 +65,34 @@ data class UnrealizedEmitter(
     }
 
     fun kill() {
-        emitters.forEach { it.kill() }
+        killInstances()
         tasks.cancel()
+    }
+
+    fun killInstances() {
+        emitters.forEach { it.kill() }
     }
 
     private fun tick() {
         val deadEmitters = HashSet<Emitter>()
+        val playerDeadParticleMap: MutableMap<Player, MutableList<Int>> = mutableMapOf()
         for (emitter in emitters) {
-            if (!emitter.tick()) deadEmitters += emitter
+            val result = emitter.tick()
+            if (!result.alive) deadEmitters += emitter
+            for ((player, ids) in result.deadParticles) {
+                val entry = playerDeadParticleMap[player]
+                if (entry == null) {
+                    playerDeadParticleMap[player] = ids
+                } else {
+                    entry.addAll(ids)
+                }
+            }
+        }
+
+        val playerManager = PacketEvents.getAPI().playerManager
+
+        for ((player, ids) in playerDeadParticleMap) {
+            playerManager.sendPacket(player, WrapperPlayServerDestroyEntities(*ids.toIntArray()))
         }
 
         emitters.removeAll(deadEmitters)

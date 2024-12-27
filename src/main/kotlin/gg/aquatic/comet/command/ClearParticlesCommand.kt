@@ -8,7 +8,7 @@ object ClearParticlesCommand : ICommand {
 
     override fun run(sender: CommandSender, args: Array<out String>) {
         if (!sender.hasPermission("comet.admin")) return
-        EmitterTickersHolder.kill()
+        EmitterTickersHolder.killInstances()
     }
 
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
