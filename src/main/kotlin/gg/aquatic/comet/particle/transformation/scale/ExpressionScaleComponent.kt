@@ -42,9 +42,9 @@ class ExpressionScaleComponent(
         myParticleData.copyFrom(otherParticleData)
 
         return Vector3f(
-            (xScale.eval() as Double).toFloat(),
-            (yScale.eval() as Double).toFloat(),
-            (zScale.eval() as Double).toFloat()
+            (xScale.eval() as Number).toFloat(),
+            (yScale.eval() as Number).toFloat(),
+            (zScale.eval() as Number).toFloat()
         )
     }
 }

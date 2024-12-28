@@ -45,7 +45,7 @@ class GradientColorComponent(
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
 
-        val interpolantResult = interpolantScript.eval() as Double
+        val interpolantResult = (interpolantScript.eval() as Number).toDouble()
         if (interpolantResult <= gradient.first().first) return (gradient.first().second.eval() as Color).argb()
         if (interpolantResult >= gradient.last().first) return (gradient.last().second.eval() as Color).argb()
 

@@ -30,6 +30,6 @@ class TimedEmitterLifetimeComponent(
 
     override fun keepAlive(otherEmitterData: EmitterData): Boolean {
         myEmitterData.copyFrom(otherEmitterData)
-        return (lifetimeScript.eval() as Double) <= 0
+        return (lifetimeScript.eval() as Number).toDouble() <= 0.0
     }
 }

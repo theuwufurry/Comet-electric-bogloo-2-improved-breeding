@@ -116,11 +116,11 @@ class MotionPositionComponent(
             )
         }
 
-        val dragCoefficient = dragScript.eval() as Double
+        val dragCoefficient = (dragScript.eval() as Number).toDouble()
         val acceleration = Vector3d(
-            accelerationScript.first.eval() as Double,
-            accelerationScript.second.eval() as Double,
-            accelerationScript.third.eval() as Double
+            (accelerationScript.first.eval() as Number).toDouble(),
+            (accelerationScript.second.eval() as Number).toDouble(),
+            (accelerationScript.third.eval() as Number).toDouble()
         ).add(otherParticleData.acceleration)
 
         otherParticleData.acceleration = Vector3d()
@@ -164,7 +164,7 @@ class MotionPositionComponent(
             val newPos = Vector3d(myParticleData.origin).add(rawNewPos)
             val block = blockAt(myEmitterData.world!!, currentPos)
 
-            val restitution = restitutionScript.eval() as Double
+            val restitution = (restitutionScript.eval() as Number).toDouble()
 
             val intersection = block.intersect(currentPos, velocity)
             if (intersection != null) {

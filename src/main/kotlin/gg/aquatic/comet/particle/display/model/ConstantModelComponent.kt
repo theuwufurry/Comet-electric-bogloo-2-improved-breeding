@@ -34,7 +34,7 @@ class ConstantModelComponent(
     override fun display(otherEmitterData: EmitterData, otherParticleData: ParticleData): DisplayData {
         myEmitterData.copyFrom(otherEmitterData)
         return if (otherParticleData.age == 0.0) {
-            ModelData(item.eval() as String, id.eval() as Int)
+            ModelData(item.eval() as String, (id.eval() as Number).toInt())
         } else {
             otherParticleData.displayData
         }

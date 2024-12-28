@@ -21,7 +21,7 @@ class RandomDirectionSubcomponent(
         if (myParticleData.age == 0.0) {
             val dir: Vector3d? = directionScript?.first?.dir(otherEmitterData, otherParticleData)
             val spread: Double? = directionScript?.second?.eval() as? Double
-            return randomVector(magnitudeScript?.let { it.eval() as Double } ?: 1.0, dir, spread)
+            return randomVector(magnitudeScript?.let { it.eval() as Number }?.toDouble() ?: 1.0, dir, spread)
         }
 
         return myParticleData.velocity

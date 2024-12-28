@@ -38,7 +38,7 @@ class ExpressionPositionComponent(
     override fun pos(otherEmitterData: EmitterData, otherParticleData: ParticleData): ComponentResult<Vector3d> {
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
-        val newPos = Vector3d(xOffset.eval() as Double, yOffset.eval() as Double, zOffset.eval() as Double)
+        val newPos = Vector3d((xOffset.eval() as Number).toDouble(), (yOffset.eval() as Number).toDouble(), (zOffset.eval() as Number).toDouble())
         return ComponentResult(newPos.rotate(myEmitterData.rotation))
     }
 }

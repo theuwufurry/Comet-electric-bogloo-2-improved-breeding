@@ -42,7 +42,7 @@ class FlipbookSpriteComponent(
     override fun display(otherEmitterData: EmitterData, otherParticleData: ParticleData): SpriteData {
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
-        val inputResult = inputScript.eval() as Double
+        val inputResult = (inputScript.eval() as Number).toDouble()
 
         var i = 0
         while (i + 1 < spriteScripts.size && inputResult >= spriteScripts[i + 1].first) i++

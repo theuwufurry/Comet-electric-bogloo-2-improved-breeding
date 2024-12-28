@@ -38,7 +38,7 @@ class ParticleLifetimeExpressionComponent(
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
         return lifetimeExpression?.run {
-            (eval() as Double) <= 0.0
+            (eval() as Number).toDouble() <= 0.0
         } ?: maxLife?.run {
             val evaluated = (eval() as Number).toInt()
             otherParticleData.maxLife = evaluated

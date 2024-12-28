@@ -15,7 +15,7 @@ class ExpressionDirectionSubcomponent(
     override fun dir(otherEmitterData: EmitterData, otherParticleData: ParticleData): Vector3d {
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
-        return Vector3d(xOffset.eval() as Double, yOffset.eval() as Double, zOffset.eval() as Double)
+        return Vector3d((xOffset.eval() as Number).toDouble(), (yOffset.eval() as Number).toDouble(), (zOffset.eval() as Number).toDouble())
     }
 }
 
