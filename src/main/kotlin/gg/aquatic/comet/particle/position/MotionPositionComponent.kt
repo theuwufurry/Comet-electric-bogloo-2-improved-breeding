@@ -12,10 +12,12 @@ import gg.aquatic.comet.particle.ParticleData
 import gg.aquatic.comet.particle.position.direction.DirectionSubcomponent
 import gg.aquatic.comet.particle.position.direction.ExpressionDirectionSubcomponent
 import gg.aquatic.comet.particle.position.direction.RandomDirectionSubcomponent
+import org.bukkit.Bukkit
 import org.bukkit.World
 import org.bukkit.block.Block
 import org.joml.Vector3d
 import org.joml.Vector3i
+import java.util.logging.Logger
 import javax.script.CompiledScript
 import kotlin.math.abs
 import kotlin.math.floor
@@ -59,14 +61,28 @@ class MotionPositionComponent(
                 val velocityObject = jsonObject.getAsJsonObject("random_velocity") ?: return null
                 val directionPair: Pair<DirectionSubcomponent, CompiledScript>? =
                     velocityObject.getAsJsonObject("bias")?.let l@{
-                        Pair(
-                            ExpressionDirectionSubcomponent(
-                                engine.compile(it.getAsJsonArray("direction")[0].expression() ?: return@l null, macros),
-                                engine.compile(it.getAsJsonArray("direction")[1].expression() ?: return@l null, macros),
-                                engine.compile(it.getAsJsonArray("direction")[2].expression() ?: return@l null, macros),
-                                particleData, emitterData
-                            ), engine.compile(it.getAsJsonPrimitive("spread").expression() ?: return@l null, macros)
-                        )
+                        if (!it.has("direction")) throw NullPointerException("bias in random_velocity missing direction!")
+                        val dirObject = it.get("direction")
+                        if (dirObject.isJsonArray) {
+                            Bukkit.getLogger().warning("Using outdated json array for 'direction', please switch it to 'x' 'y' 'z' format!")
+                            Pair(
+                                ExpressionDirectionSubcomponent(
+                                    engine.compile(it.getAsJsonArray("direction")[0].expression() ?: return@l null, macros),
+                                    engine.compile(it.getAsJsonArray("direction")[1].expression() ?: return@l null, macros),
+                                    engine.compile(it.getAsJsonArray("direction")[2].expression() ?: return@l null, macros),
+                                    particleData, emitterData
+                                ), engine.compile(it.getAsJsonPrimitive("spread").expression() ?: return@l null, macros)
+                            )
+                        } else {
+                            Pair(
+                                ExpressionDirectionSubcomponent(
+                                    engine.compile(dirObject.asJsonObject.getAsJsonPrimitive("x").expression() ?: return@l null, macros),
+                                    engine.compile(dirObject.asJsonObject.getAsJsonPrimitive("y").expression() ?: return@l null, macros),
+                                    engine.compile(dirObject.asJsonObject.getAsJsonPrimitive("z").expression() ?: return@l null, macros),
+                                    particleData, emitterData
+                                ), engine.compile(it.getAsJsonPrimitive("spread").expression() ?: return@l null, macros)
+                            )
+                        }
                     }
 
                 velocityComponent = RandomDirectionSubcomponent(
