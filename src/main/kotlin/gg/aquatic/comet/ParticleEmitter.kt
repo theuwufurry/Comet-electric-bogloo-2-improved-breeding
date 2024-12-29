@@ -27,10 +27,6 @@ class ParticleEmitter : JavaPlugin() {
 
         ResourcepackCreator.genPack()
 
-        FireParticleSpawnCommand
-        ExplosionParticleSpawnCommand
-        BloodParticleSpawnCommand
-
         AquaticBaseCommand(
             "comet", "Base command of Comet plugin", mutableListOf(), mutableMapOf(
                 "reload" to ReloadParticleScriptsCommand,

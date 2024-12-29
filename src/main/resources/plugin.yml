@@ -6,8 +6,3 @@ libraries:
   - org.openjdk.nashorn:nashorn-core:15.4
 depend:
   - Waves
-
-commands:
-  fireparticle:
-  explosionparticle:
-  bloodparticle:

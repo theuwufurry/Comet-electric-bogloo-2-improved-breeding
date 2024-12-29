@@ -59,7 +59,7 @@ data class UnrealizedEmitter(
 
     init {
         EmitterTickersHolder.unrealizedEmitters += this
-        tasks = Bukkit.getScheduler().runTaskTimer(ParticleEmitter.INSTANCE, Runnable {
+        tasks = Bukkit.getScheduler().runTaskTimerAsynchronously(ParticleEmitter.INSTANCE, Runnable {
             tick()
         }, 1, 1)
     }
