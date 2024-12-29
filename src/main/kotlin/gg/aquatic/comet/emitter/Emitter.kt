@@ -144,6 +144,17 @@ class Emitter(
         val rawDeadParticleIDs = deadParticles.map { it.id }.toMutableList()
         val deadParticleIDs: MutableList<Pair<Player, MutableList<Int>>> = mutableListOf()
 //        killParticles(deadParticles, playerManager)
+        val chunkViewers = location.chunk.trackedByPlayers()
+
+        val playersToRemove = HashSet<Player>()
+        for (currentViewer in currentViewers) {
+            if (currentViewer !in chunkViewers || !currentViewer.isOnline) {
+                playersToRemove += currentViewer
+            }
+        }
+        for (player in playersToRemove) {
+            currentViewers -= player
+        }
         for (player in location.chunk.trackedByPlayers()) {
             val distanceSquared = player.eyeLocation.distanceSquared(location)
             if (currentViewers.contains(player)) {
