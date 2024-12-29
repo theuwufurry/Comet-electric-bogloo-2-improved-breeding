@@ -14,8 +14,10 @@ import gg.aquatic.comet.particle.lifetime.ParticleLifetimeComponent
 import gg.aquatic.comet.particle.position.PositionComponent
 import gg.aquatic.comet.particle.transformation.rotation.RotationComponent
 import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.PacketEvents
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
+import gg.aquatic.waves.util.audience.AquaticAudience
+import gg.aquatic.waves.util.audience.GlobalAudience
+import gg.aquatic.waves.util.toUser
 import io.ktor.util.collections.*
 import org.bukkit.Bukkit
 import org.bukkit.Location
@@ -90,16 +92,14 @@ data class UnrealizedEmitter(
             }
         }
 
-        val playerManager = PacketEvents.getAPI().playerManager
-
         for ((player, ids) in playerDeadParticleMap) {
-            playerManager.sendPacket(player, WrapperPlayServerDestroyEntities(*ids.toIntArray()))
+            player.toUser().sendPacket(WrapperPlayServerDestroyEntities(*ids.toIntArray()))
         }
 
         emitters.removeAll(deadEmitters)
     }
 
-    fun realize(location: Location): Emitter {
+    fun realize(location: Location, audience: AquaticAudience = GlobalAudience()): Emitter {
         val emitterData = EmitterData()
         emitterData.world = location.world
         emitterData.location = location
@@ -116,7 +116,7 @@ data class UnrealizedEmitter(
             rotationComponent,
             recursiveEmitterComponent,
             bundledEmitterComponent,
-            billboardConstraints, location, emitterData, this
+            billboardConstraints, location, emitterData, this, audience
         ).also { emitters += it }
     }
 }

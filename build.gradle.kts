@@ -19,6 +19,7 @@ repositories {
     maven("https://oss.sonatype.org/content/groups/public/") {
         name = "sonatype"
     }
+    maven("https://mvn.lumine.io/repository/maven-public/")
 }
 
 dependencies {
@@ -26,6 +27,8 @@ dependencies {
     compileOnly("gg.aquatic.waves:Waves:1.1.3:publish")
 
     compileOnly("org.openjdk.nashorn:nashorn-core:15.4")
+
+    compileOnly("io.lumine:Mythic-Dist:5.6.1")
 }
 
 val targetJavaVersion = 17

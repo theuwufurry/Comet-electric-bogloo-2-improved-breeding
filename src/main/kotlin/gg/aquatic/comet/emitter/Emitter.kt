@@ -20,17 +20,18 @@ import gg.aquatic.comet.particle.lifetime.ParticleLifetimeComponent
 import gg.aquatic.comet.particle.position.PositionComponent
 import gg.aquatic.comet.particle.transformation.rotation.RotationComponent
 import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
+import gg.aquatic.waves.chunk.trackedByPlayers
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.PacketEvents
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.manager.player.PlayerManager
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.packettype.PacketType.Play
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
+import gg.aquatic.waves.util.audience.AquaticAudience
+import gg.aquatic.waves.util.toUser
 import org.bukkit.Location
 import org.bukkit.entity.Player
 import org.joml.Quaternionf
 import org.joml.Vector3d
 import org.joml.Vector3f
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.ConcurrentHashMap
 
 const val MAX_VIEW_DISTANCE = 100*100
 const val MAX_UNVIEW_DISTANCE = 200*200
@@ -50,7 +51,8 @@ class Emitter(
     private val billboardConstraints: BillboardConstraints,
     location: Location,
     private val emitterData: EmitterData,
-    private val unrealizedHolder: UnrealizedEmitter
+    private val unrealizedHolder: UnrealizedEmitter,
+    private val audience: AquaticAudience
 ) {
     var location = location
         private set
@@ -61,6 +63,8 @@ class Emitter(
     private var dead = false
     private val emitterRotation =
         Quaternionf().rotateTo(Vector3f(0f, 0f, 1f), location.direction.normalize().toVector3f())
+
+    val currentViewers = ConcurrentHashMap.newKeySet<Player>()
 
     fun tick(): EmitterTickResult {
         if (blocked) {
@@ -79,7 +83,6 @@ class Emitter(
             return EmitterTickResult(false)
         }
 
-        val world = location.world
         val dataPackets: MutableList<PacketWrapper<*>> = mutableListOf()
 
         for (particle in particles) {
@@ -141,16 +144,19 @@ class Emitter(
         val rawDeadParticleIDs = deadParticles.map { it.id }.toMutableList()
         val deadParticleIDs: MutableList<Pair<Player, MutableList<Int>>> = mutableListOf()
 //        killParticles(deadParticles, playerManager)
-        for (player in world!!.players) {
+        for (player in location.chunk.trackedByPlayers()) {
             val distanceSquared = player.eyeLocation.distanceSquared(location)
+            if (currentViewers.contains(player)) {
+                if (distanceSquared > MAX_VIEW_DISTANCE || !audience.canBeApplied(player)) {
+                    deadParticleIDs += player to rawDeadParticleIDs
+                    currentViewers -= player
+                }
+            }
+            if (!audience.canBeApplied(player)) continue
             if (distanceSquared <= MAX_VIEW_DISTANCE) {
                 for (packet in dataPackets) {
                     playerManager.sendPacket(player, packet)
                 }
-            }
-
-            if (distanceSquared <= MAX_UNVIEW_DISTANCE) {
-                deadParticleIDs += player to rawDeadParticleIDs
             }
         }
 
@@ -163,12 +169,12 @@ class Emitter(
         return EmitterTickResult(true, deadParticleIDs)
     }
 
-    private fun killParticles(particlesToKill: List<Particle>, playerManager: PlayerManager = PacketEvents.getAPI().playerManager) {
+    private fun killParticles(particlesToKill: List<Particle>) {
         if (particlesToKill.isEmpty()) return
         val ids = particlesToKill.map { it.id }.toIntArray()
         for (player in location.world!!.players) {
             val distanceSquared = player.eyeLocation.distanceSquared(location)
-            if (distanceSquared < MAX_UNVIEW_DISTANCE) playerManager.sendPacket(player, WrapperPlayServerDestroyEntities(*ids))
+            if (distanceSquared < MAX_UNVIEW_DISTANCE) player.toUser().sendPacket(WrapperPlayServerDestroyEntities(*ids))
         }
     }
 
@@ -196,13 +202,13 @@ class Emitter(
             particles += particle
         }
 
-        val playerManager = PacketEvents.getAPI().playerManager
-
-        for (player in location.world!!.players) {
+        for (player in location.chunk.trackedByPlayers()) {
+            if (!audience.canBeApplied(player)) continue
             val distanceSquared = player.eyeLocation.distanceSquared(location)
             if (distanceSquared < MAX_VIEW_DISTANCE) {
+                currentViewers += player
                 for (packet in bundle) {
-                    playerManager.sendPacket(player, packet)
+                    player.toUser().sendPacket(packet)
                 }
             }
         }
