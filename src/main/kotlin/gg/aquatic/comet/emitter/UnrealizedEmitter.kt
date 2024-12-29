@@ -16,6 +16,7 @@ import gg.aquatic.comet.particle.transformation.rotation.RotationComponent
 import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.PacketEvents
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
+import io.ktor.util.collections.*
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.entity.Player
@@ -53,7 +54,7 @@ data class UnrealizedEmitter(
     val bundledEmitterComponent: BundledEmitterComponent?,
     val billboardConstraints: BillboardConstraints,
 ) {
-    private val emitters: MutableSet<Emitter> = HashSet()
+    private val emitters: MutableSet<Emitter> = ConcurrentSet()
     private var tasks: BukkitTask
     val myEntityDataBuilder = EntityDataBuilder()
 
