@@ -156,6 +156,7 @@ class Emitter(
             currentViewers -= player
         }
         for (player in location.chunk.trackedByPlayers()) {
+            if (player in playersToRemove) continue
             val distanceSquared = player.eyeLocation.distanceSquared(location)
             if (currentViewers.contains(player)) {
                 if (distanceSquared > MAX_VIEW_DISTANCE || !audience.canBeApplied(player)) {
