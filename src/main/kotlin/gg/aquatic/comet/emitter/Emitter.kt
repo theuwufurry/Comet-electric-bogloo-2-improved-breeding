@@ -1,11 +1,5 @@
 package gg.aquatic.comet.emitter
 
-//import net.minecraft.world.entity.Display.BillboardConstraints
-//import net.minecraft.network.protocol.Packet
-//import net.minecraft.network.protocol.game.ClientGamePacketListener
-//import net.minecraft.network.protocol.game.ClientboundBundlePacket
-//import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket
-//import net.minecraft.world.entity.Display.BillboardConstraints
 import gg.aquatic.comet.emitter.bundle.BundledEmitterComponent
 import gg.aquatic.comet.emitter.lifetime.EmitterLifetimeComponent
 import gg.aquatic.comet.emitter.rate.RateComponent
@@ -33,9 +27,13 @@ import org.joml.Vector3d
 import org.joml.Vector3f
 import java.util.concurrent.ConcurrentHashMap
 
-const val MAX_VIEW_DISTANCE = 100*100
-const val MAX_UNVIEW_DISTANCE = 200*200
+const val MAX_VIEW_DISTANCE = 10 * 10
 
+/*
+take in component list
+    component list with preset fields for the stuff that's needed
+    mandatory components with preset hooks
+ */
 class Emitter(
     private val rateComponent: RateComponent,
     private val particleLifetimeComponent: ParticleLifetimeComponent,
@@ -56,6 +54,7 @@ class Emitter(
 ) {
     var location = location
         private set
+
     //origin can change, rotation can change
     private val particles: MutableList<Particle> = mutableListOf()
     private val deadParticles: MutableList<Particle> = mutableListOf()
@@ -143,7 +142,9 @@ class Emitter(
         particles.removeAll(deadParticles)
         val rawDeadParticleIDs = deadParticles.map { it.id }.toMutableList()
         val deadParticleIDs: MutableList<Pair<Player, MutableList<Int>>> = mutableListOf()
-//        killParticles(deadParticles, playerManager)
+        val particleIDs: MutableList<Int> by lazy {
+            particles.map { it.id }.toMutableList().also { it.addAll(rawDeadParticleIDs) }
+        }
         val chunkViewers = location.chunk.trackedByPlayers()
 
         val playersToRemove = HashSet<Player>()
@@ -160,18 +161,18 @@ class Emitter(
             val distanceSquared = player.eyeLocation.distanceSquared(location)
             if (currentViewers.contains(player)) {
                 if (distanceSquared > MAX_VIEW_DISTANCE || !audience.canBeApplied(player)) {
-                    deadParticleIDs += player to rawDeadParticleIDs
+                    deadParticleIDs += player to particleIDs
                     currentViewers -= player
                 }
             }
-            if (!audience.canBeApplied(player)) continue
+            if (!audience.canBeApplied(player) || player !in currentViewers) continue
             if (distanceSquared <= MAX_VIEW_DISTANCE) {
+                deadParticleIDs += player to rawDeadParticleIDs
                 for (packet in dataPackets) {
                     playerManager.sendPacket(player, packet)
                 }
             }
         }
-
 
         deadParticles.clear()
 
@@ -184,9 +185,8 @@ class Emitter(
     private fun killParticles(particlesToKill: List<Particle>) {
         if (particlesToKill.isEmpty()) return
         val ids = particlesToKill.map { it.id }.toIntArray()
-        for (player in location.world!!.players) {
-            val distanceSquared = player.eyeLocation.distanceSquared(location)
-            if (distanceSquared < MAX_UNVIEW_DISTANCE) player.toUser().sendPacket(WrapperPlayServerDestroyEntities(*ids))
+        for (player in currentViewers) {
+            player.toUser().sendPacket(WrapperPlayServerDestroyEntities(*ids))
         }
     }
 
