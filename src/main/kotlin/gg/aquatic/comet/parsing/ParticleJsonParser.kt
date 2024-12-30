@@ -251,30 +251,19 @@ object ParticleJsonParser {
             }
         }
 
-        if (rateComponent == null) println("Rate component null!")
-        if (particleLifetimeComponent == null) println("Particle lifetime null!")
-        if (displayComponent == null) println("Display null!")
-        if (shapeComponent == null) println("Shape null!")
-        if (colorComponent == null) println("Color null!")
-        if (emitterLifetimeComponent == null) println("Emitter life null!")
-        if (positionComponent == null) println("Position null!")
-        if (scaleComponent == null) println("Scale null!")
-        if (rotationComponent == null) println("Rotation null!")
-        if (billboardConstraints == null) println("Billboard null!")
-
         return UnrealizedEmitter(
-            rateComponent ?: return null,
-            particleLifetimeComponent ?: return null,
-            displayComponent ?: return null,
-            shapeComponent ?: return null,
-            colorComponent ?: return null,
-            emitterLifetimeComponent ?: return null,
-            positionComponent ?: return null,
-            scaleComponent ?: return null,
-            rotationComponent ?: return null,
+            rateComponent ?: RateComponent.default(),
+            particleLifetimeComponent ?: ParticleLifetimeComponent.default(),
+            displayComponent ?: DisplayComponent.default(),
+            shapeComponent ?: ShapeComponent.default(),
+            colorComponent ?: ColorComponent.default(),
+            emitterLifetimeComponent ?: EmitterLifetimeComponent.default(),
+            positionComponent ?: PositionComponent.default(),
+            scaleComponent ?: ScaleComponent.default(),
+            rotationComponent ?: RotationComponent.default(),
             recursiveEmitterComponent,
             bundledEmitterComponent,
-            billboardConstraints ?: return null
+            billboardConstraints ?: BillboardConstraints.CENTER
         )
     }
 
