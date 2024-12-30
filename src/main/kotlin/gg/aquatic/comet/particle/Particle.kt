@@ -43,7 +43,7 @@ open class Particle(var data: ParticleData) {
                 data.displayData,
                 data.color,
                 data.translation, data.rotation, data.scale,
-                data.billboardConstraints
+                data.billboardConstraints, data.interpolationDelay, data.interpolationDuration
             ), true
         )
 
@@ -57,7 +57,7 @@ open class Particle(var data: ParticleData) {
                 data.displayData,
                 data.color,
                 data.translation, data.rotation, data.scale,
-                data.billboardConstraints
+                data.billboardConstraints, data.interpolationDelay, data.interpolationDuration
             ), false
         ).let { WrapperPlayServerEntityMetadata(id, it) }
     }

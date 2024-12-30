@@ -9,7 +9,9 @@ data class EmitterData(
     var world: World? = null,
     var rotation: Quaterniond? = Quaterniond(),
     var random: Double = Math.random(),
-    var location: Location = Location(null, 0.0, 0.0, 0.0)
+    var location: Location = Location(null, 0.0, 0.0, 0.0),
+    var interpolationDelay: Int = -1,
+    var interpolationDuration: Int = 2
 ) {
     fun copyFrom(other: EmitterData) {
         age = other.age
@@ -17,5 +19,7 @@ data class EmitterData(
         rotation = other.rotation
         random = other.random
         location = other.location
+        interpolationDelay = other.interpolationDelay
+        interpolationDuration = other.interpolationDuration
     }
 }

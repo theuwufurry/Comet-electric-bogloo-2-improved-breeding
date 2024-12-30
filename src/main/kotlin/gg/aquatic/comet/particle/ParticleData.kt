@@ -24,7 +24,9 @@ data class ParticleData(
     var velocity: Vector3d = Vector3d(),
     var billboardConstraints: BillboardConstraints = BillboardConstraints.CENTER,
     var emitter: Emitter? = null,
-    var acceleration: Vector3d = Vector3d()
+    var acceleration: Vector3d = Vector3d(),
+    var interpolationDelay: Int = -1,
+    var interpolationDuration: Int = 2
 ) {
 
     fun copyFrom(other: ParticleData) {
@@ -44,5 +46,7 @@ data class ParticleData(
         velocity = other.velocity
         billboardConstraints = other.billboardConstraints
         acceleration = other.acceleration
+        interpolationDelay = other.interpolationDelay
+        interpolationDuration = other.interpolationDuration
     }
 }

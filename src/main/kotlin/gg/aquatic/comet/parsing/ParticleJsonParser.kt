@@ -10,6 +10,8 @@ import gg.aquatic.comet.emitter.bundle.BundledEmitterComponent
 import gg.aquatic.comet.emitter.lifetime.EmitterLifetimeComponent
 import gg.aquatic.comet.emitter.lifetime.TimedEmitterLifetimeComponent
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
+import gg.aquatic.comet.emitter.optimization.updatefrequency.IntervalUpdateFrequencyComponent
+import gg.aquatic.comet.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.emitter.rate.RateComponent
 import gg.aquatic.comet.emitter.rate.SteadyRateComponent
 import gg.aquatic.comet.emitter.recursive.RecursiveEmitterComponent
@@ -71,6 +73,7 @@ object ParticleJsonParser {
     val shapeComponentParsers: MutableMap<String, ComponentParser<out ShapeComponent>> = mutableMapOf()
 
     lateinit var distanceCullingParser: Pair<String, ComponentParser<DistanceCullingComponent>>
+    val updateFrequencyParsers: MutableMap<String, ComponentParser<out UpdateFrequencyComponent>> = mutableMapOf()
 
     lateinit var recursiveEmitterComponentParser: Pair<String, ComponentParser<RecursiveEmitterComponent>>
     lateinit var bundledEmitterComponentParser: Pair<String, ComponentParser<BundledEmitterComponent>>
@@ -103,6 +106,8 @@ object ParticleJsonParser {
         ExpressionRotationComponent
 
         DistanceCullingComponent
+
+        IntervalUpdateFrequencyComponent
 
         RecursiveEmitterComponent
 
@@ -153,6 +158,7 @@ object ParticleJsonParser {
         var scaleComponent: ScaleComponent? = null
         var rotationComponent: RotationComponent? = null
         var distanceCullingComponent: DistanceCullingComponent? = null
+        var updateFrequencyComponent: UpdateFrequencyComponent? = null
         var billboardConstraints: BillboardConstraints? = null
 
         var recursiveEmitterComponent: RecursiveEmitterComponent? = null
@@ -248,6 +254,13 @@ object ParticleJsonParser {
                 continue
             }
 
+            if (key in updateFrequencyParsers) {
+                val component = updateFrequencyParsers[key]!!.parse(componentElement, macros)
+                if (component != null) {
+                    updateFrequencyComponent = component
+                }
+            }
+
             if (key == distanceCullingParser.first) {
                 distanceCullingComponent = distanceCullingParser.second.parse(componentElement, macros)
             }
@@ -273,6 +286,7 @@ object ParticleJsonParser {
             rotationComponent ?: RotationComponent.default(),
             recursiveEmitterComponent,
             distanceCullingComponent ?: DistanceCullingComponent.default(),
+            updateFrequencyComponent ?: UpdateFrequencyComponent.default(),
             bundledEmitterComponent,
             billboardConstraints ?: BillboardConstraints.CENTER
         )

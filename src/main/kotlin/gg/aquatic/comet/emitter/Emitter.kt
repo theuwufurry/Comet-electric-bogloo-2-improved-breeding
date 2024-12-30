@@ -3,6 +3,7 @@ package gg.aquatic.comet.emitter
 import gg.aquatic.comet.emitter.bundle.BundledEmitterComponent
 import gg.aquatic.comet.emitter.lifetime.EmitterLifetimeComponent
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
+import gg.aquatic.comet.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.emitter.rate.RateComponent
 import gg.aquatic.comet.emitter.recursive.RecursiveEmitterComponent
 import gg.aquatic.comet.emitter.shape.ShapeComponent
@@ -46,6 +47,7 @@ class Emitter(
     private val recursiveEmitterComponent: RecursiveEmitterComponent?,
     private val bundledEmitterComponent: BundledEmitterComponent?, //KEEP THIS AROUND! Might be needed for future variable stuff.
     private val distanceCullingComponent: DistanceCullingComponent,
+    private val updateFrequencyComponent: UpdateFrequencyComponent,
     private val billboardConstraints: BillboardConstraints,
     location: Location,
     private val emitterData: EmitterData,
@@ -119,9 +121,13 @@ class Emitter(
                 continue
             }
 
+            val shouldUpdate = updateFrequencyComponent.shouldSendUpdate(emitterData, particle.data)
+
             if (newPos.data != particle.data.relativePosition) {
                 particle.data.relativePosition = newPos.data
-                particle.getMovementPacket().let { dataPackets += it }
+                if (shouldUpdate) {
+                    particle.getMovementPacket().let { dataPackets += it }
+                }
             }
 
             val newScale = scaleComponent.scale(emitterData, particle.data)
@@ -132,7 +138,7 @@ class Emitter(
                 particle.data.rotation = newRotation
             }
 
-            if (updateParticle) {
+            if (updateParticle && shouldUpdate) {
                 particle.updatePacket(unrealizedHolder.myEntityDataBuilder).let { dataPackets += it }
             }
         }
@@ -206,6 +212,8 @@ class Emitter(
             particleData.billboardConstraints = billboardConstraints
             particleData.scale = scale
             particleData.rotation = rotation.applyEmitterRotation()
+            particleData.interpolationDelay = emitterData.interpolationDelay
+            particleData.interpolationDuration = emitterData.interpolationDuration
             recursiveEmitterComponent?.run { updateEmitter(emitterData, particleData) }
             val particle = Particle(particleData)
             val packets = particle.getAddPacket(unrealizedHolder.myEntityDataBuilder)

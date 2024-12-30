@@ -119,22 +119,24 @@ class EntityDataBuilder {
             }
         }
 
+        entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
+            8,
+            EntityDataTypes.INT,
+            component.interpolationDelay
+        )
+
         if (initial) {
-            entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
-                8,
-                EntityDataTypes.INT,
-                -1
-            )
             entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                 9,
                 EntityDataTypes.INT,
-                2
+                component.interpolationDuration
             )
+
             if (PACKET_OFFSET > 0) {
                 entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                     10,
                     EntityDataTypes.INT,
-                    2
+                    component.interpolationDuration
                 )
             }
         }
@@ -181,7 +183,9 @@ data class EntityData(
     val translation: Vector3f,
     val rotation: Quaternionf,
     val scale: Vector3f,
-    val billboardConstraints: BillboardConstraints
+    val billboardConstraints: BillboardConstraints,
+    val interpolationDelay: Int,
+    val interpolationDuration: Int
 )
 
 enum class BillboardConstraints(val byte: Byte) {
