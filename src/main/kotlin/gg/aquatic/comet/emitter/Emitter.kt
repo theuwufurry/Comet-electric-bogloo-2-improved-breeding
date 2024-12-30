@@ -2,6 +2,7 @@ package gg.aquatic.comet.emitter
 
 import gg.aquatic.comet.emitter.bundle.BundledEmitterComponent
 import gg.aquatic.comet.emitter.lifetime.EmitterLifetimeComponent
+import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.emitter.rate.RateComponent
 import gg.aquatic.comet.emitter.recursive.RecursiveEmitterComponent
 import gg.aquatic.comet.emitter.shape.ShapeComponent
@@ -27,8 +28,6 @@ import org.joml.Vector3d
 import org.joml.Vector3f
 import java.util.concurrent.ConcurrentHashMap
 
-const val MAX_VIEW_DISTANCE = 10 * 10
-
 /*
 take in component list
     component list with preset fields for the stuff that's needed
@@ -46,6 +45,7 @@ class Emitter(
     private val rotationComponent: RotationComponent,
     private val recursiveEmitterComponent: RecursiveEmitterComponent?,
     private val bundledEmitterComponent: BundledEmitterComponent?, //KEEP THIS AROUND! Might be needed for future variable stuff.
+    private val distanceCullingComponent: DistanceCullingComponent,
     private val billboardConstraints: BillboardConstraints,
     location: Location,
     private val emitterData: EmitterData,
@@ -160,13 +160,13 @@ class Emitter(
             if (player in playersToRemove) continue
             val distanceSquared = player.eyeLocation.distanceSquared(location)
             if (currentViewers.contains(player)) {
-                if (distanceSquared > MAX_VIEW_DISTANCE || !audience.canBeApplied(player)) {
+                if (distanceSquared > distanceCullingComponent.viewDistance || !audience.canBeApplied(player)) {
                     deadParticleIDs += player to particleIDs
                     currentViewers -= player
                 }
             }
             if (!audience.canBeApplied(player) || player !in currentViewers) continue
-            if (distanceSquared <= MAX_VIEW_DISTANCE) {
+            if (distanceSquared <= distanceCullingComponent.viewDistance) {
                 deadParticleIDs += player to rawDeadParticleIDs
                 for (packet in dataPackets) {
                     playerManager.sendPacket(player, packet)
@@ -217,7 +217,7 @@ class Emitter(
         for (player in location.chunk.trackedByPlayers()) {
             if (!audience.canBeApplied(player)) continue
             val distanceSquared = player.eyeLocation.distanceSquared(location)
-            if (distanceSquared < MAX_VIEW_DISTANCE) {
+            if (distanceSquared < distanceCullingComponent.viewDistance) {
                 currentViewers += player
                 for (packet in bundle) {
                     player.toUser().sendPacket(packet)

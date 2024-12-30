@@ -3,6 +3,7 @@ package gg.aquatic.comet.emitter
 import gg.aquatic.comet.ParticleEmitter
 import gg.aquatic.comet.emitter.bundle.BundledEmitterComponent
 import gg.aquatic.comet.emitter.lifetime.EmitterLifetimeComponent
+import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.emitter.rate.RateComponent
 import gg.aquatic.comet.emitter.recursive.RecursiveEmitterComponent
 import gg.aquatic.comet.emitter.shape.ShapeComponent
@@ -53,6 +54,7 @@ data class UnrealizedEmitter(
     val scaleComponent: ScaleComponent,
     val rotationComponent: RotationComponent,
     val recursiveEmitterComponent: RecursiveEmitterComponent?,
+    val distanceCullingComponent: DistanceCullingComponent,
     val bundledEmitterComponent: BundledEmitterComponent?,
     val billboardConstraints: BillboardConstraints,
 ) {
@@ -116,6 +118,7 @@ data class UnrealizedEmitter(
             rotationComponent,
             recursiveEmitterComponent,
             bundledEmitterComponent,
+            distanceCullingComponent,
             billboardConstraints, location, emitterData, this, audience
         ).also { emitters += it }
     }

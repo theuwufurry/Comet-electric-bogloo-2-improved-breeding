@@ -9,6 +9,7 @@ import gg.aquatic.comet.emitter.UnrealizedEmitter
 import gg.aquatic.comet.emitter.bundle.BundledEmitterComponent
 import gg.aquatic.comet.emitter.lifetime.EmitterLifetimeComponent
 import gg.aquatic.comet.emitter.lifetime.TimedEmitterLifetimeComponent
+import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.emitter.rate.RateComponent
 import gg.aquatic.comet.emitter.rate.SteadyRateComponent
 import gg.aquatic.comet.emitter.recursive.RecursiveEmitterComponent
@@ -69,6 +70,8 @@ object ParticleJsonParser {
     val rateComponentParsers: MutableMap<String, ComponentParser<out RateComponent>> = mutableMapOf()
     val shapeComponentParsers: MutableMap<String, ComponentParser<out ShapeComponent>> = mutableMapOf()
 
+    lateinit var distanceCullingParser: Pair<String, ComponentParser<DistanceCullingComponent>>
+
     lateinit var recursiveEmitterComponentParser: Pair<String, ComponentParser<RecursiveEmitterComponent>>
     lateinit var bundledEmitterComponentParser: Pair<String, ComponentParser<BundledEmitterComponent>>
 
@@ -98,6 +101,8 @@ object ParticleJsonParser {
         ExpressionScaleComponent
 
         ExpressionRotationComponent
+
+        DistanceCullingComponent
 
         RecursiveEmitterComponent
 
@@ -147,6 +152,7 @@ object ParticleJsonParser {
         var positionComponent: PositionComponent? = null
         var scaleComponent: ScaleComponent? = null
         var rotationComponent: RotationComponent? = null
+        var distanceCullingComponent: DistanceCullingComponent? = null
         var billboardConstraints: BillboardConstraints? = null
 
         var recursiveEmitterComponent: RecursiveEmitterComponent? = null
@@ -242,6 +248,10 @@ object ParticleJsonParser {
                 continue
             }
 
+            if (key == distanceCullingParser.first) {
+                distanceCullingComponent = distanceCullingParser.second.parse(componentElement, macros)
+            }
+
             if (key == recursiveEmitterComponentParser.first) {
                 recursiveEmitterComponent = recursiveEmitterComponentParser.second.parse(componentElement, macros)
             }
@@ -262,6 +272,7 @@ object ParticleJsonParser {
             scaleComponent ?: ScaleComponent.default(),
             rotationComponent ?: RotationComponent.default(),
             recursiveEmitterComponent,
+            distanceCullingComponent ?: DistanceCullingComponent.default(),
             bundledEmitterComponent,
             billboardConstraints ?: BillboardConstraints.CENTER
         )
