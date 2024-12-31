@@ -26,6 +26,6 @@ class IntervalUpdateFrequencyComponent(private val interval: Int) : UpdateFreque
     }
 
     override fun shouldSendUpdate(otherEmitterData: EmitterData, otherParticleData: ParticleData): Boolean {
-        return (floor(otherParticleData.age).toInt() % interval == 0)
+        return floor(otherParticleData.age).toInt() == 1 || (floor(otherParticleData.age).toInt() % interval == 0)
     }
 }

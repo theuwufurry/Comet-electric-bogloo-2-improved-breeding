@@ -101,18 +101,17 @@ class Emitter(
                 continue
             }
 
-            val flags = UpdateFlags()
+            var updateParticle = false
 
             val newDisplay = displayComponent.display(emitterData, particle.data)
             if (newDisplay != particle.data.displayData) {
-                flags.display = true
+                updateParticle = true
                 particle.data.displayData = newDisplay
             }
 
             val newColor = colorComponent.color(emitterData, particle.data)
             if (newColor != particle.data.color) {
-                flags.display = true
-                flags.transparency = (newColor ushr 24) != (particle.data.color ushr 24)
+                updateParticle = true
                 particle.data.color = newColor
             }
 
@@ -135,17 +134,17 @@ class Emitter(
             val newScale = scaleComponent.scale(emitterData, particle.data)
             val newRotation = rotationComponent.rotation(emitterData, particle.data).applyEmitterRotation()
             if (particle.data.scale != newScale) {
-                flags.scale = true
+                updateParticle = true
                 particle.data.scale = newScale
             }
 
             if (particle.data.rotation != newRotation) {
-                flags.rotation = true
+                updateParticle = true
                 particle.data.rotation = newRotation
             }
 
-            if (flags.anyTrue() && shouldUpdate) {
-                particle.updatePacket(unrealizedHolder.myEntityDataBuilder, flags).let { dataPackets += it }
+            if (updateParticle && shouldUpdate) {
+                particle.updatePacket(unrealizedHolder.myEntityDataBuilder)?.let { dataPackets += it }
             }
         }
 

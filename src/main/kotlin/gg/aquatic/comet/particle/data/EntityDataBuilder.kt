@@ -10,6 +10,7 @@ import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.E
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.ItemStack
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.type.ItemTypes
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Quaternion4f
+import io.ktor.events.*
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
@@ -193,7 +194,21 @@ data class EntityData(
     val billboardConstraints: BillboardConstraints,
     val interpolationDelay: Int,
     val interpolationDuration: Int
-)
+) {
+    fun copy(): EntityData {
+        return EntityData(
+            displayData.copy(),
+            color,
+            transparency,
+            Vector3f(translation),
+            Quaternionf(rotation),
+            Vector3f(scale),
+            billboardConstraints,
+            interpolationDelay,
+            interpolationDuration
+        )
+    }
+}
 
 enum class BillboardConstraints(val byte: Byte) {
     FIXED((0).toByte()),

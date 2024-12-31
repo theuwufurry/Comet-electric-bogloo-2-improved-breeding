@@ -18,6 +18,13 @@ open class Particle(var data: ParticleData) {
     val id = ParticleIDProvider.id
     private val uuid = UUID.randomUUID()
 
+    private var previousEntityData = EntityData(
+        data.displayData,
+        data.color, data.color ushr 24,
+        data.translation, data.rotation, data.scale,
+        data.billboardConstraints, data.interpolationDelay, data.interpolationDuration
+    )
+
     open fun tick() {
         data.age++
     }
@@ -50,8 +57,17 @@ open class Particle(var data: ParticleData) {
         return listOf(packet, entityDataPacket)
     }
 
-    fun updatePacket(entityDataBuilder: EntityDataBuilder, flags: UpdateFlags): WrapperPlayServerEntityMetadata {
-        return entityDataBuilder.getDataFor(
+    fun updatePacket(entityDataBuilder: EntityDataBuilder): WrapperPlayServerEntityMetadata? {
+        val flags = UpdateFlags()
+        flags.display = (previousEntityData.displayData != data.displayData) || ((previousEntityData.color and 0xFFFFFF) != (data.color and 0xFFFFFF))
+        flags.transparency = previousEntityData.transparency != (data.color ushr 24)
+        flags.translation = previousEntityData.translation != data.translation
+        flags.rotation = previousEntityData.rotation != data.rotation
+        flags.scale = previousEntityData.scale != data.scale
+
+        if (!flags.anyTrue()) return null
+
+        val newData =
             EntityData(
                 data.displayData,
                 data.color,
@@ -60,7 +76,12 @@ open class Particle(var data: ParticleData) {
                 data.rotation,
                 data.scale,
                 data.billboardConstraints, data.interpolationDelay, data.interpolationDuration
-            ), flags, false
+            )
+
+        previousEntityData = newData.copy()
+
+        return entityDataBuilder.getDataFor(
+            newData, flags, false
         ).let { WrapperPlayServerEntityMetadata(id, it) }
     }
 
