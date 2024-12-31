@@ -9,6 +9,7 @@ import gg.aquatic.comet.emitter.recursive.RecursiveEmitterComponent
 import gg.aquatic.comet.emitter.shape.ShapeComponent
 import gg.aquatic.comet.particle.Particle
 import gg.aquatic.comet.particle.ParticleData
+import gg.aquatic.comet.particle.UpdateFlags
 import gg.aquatic.comet.particle.color.ColorComponent
 import gg.aquatic.comet.particle.data.BillboardConstraints
 import gg.aquatic.comet.particle.display.DisplayComponent
@@ -100,17 +101,18 @@ class Emitter(
                 continue
             }
 
-            var updateParticle = false
+            val flags = UpdateFlags()
 
             val newDisplay = displayComponent.display(emitterData, particle.data)
             if (newDisplay != particle.data.displayData) {
-                updateParticle = true
+                flags.display = true
                 particle.data.displayData = newDisplay
             }
 
             val newColor = colorComponent.color(emitterData, particle.data)
             if (newColor != particle.data.color) {
-                updateParticle = true
+                flags.display = true
+                flags.transparency = (newColor ushr 24) != (particle.data.color ushr 24)
                 particle.data.color = newColor
             }
 
@@ -132,14 +134,18 @@ class Emitter(
 
             val newScale = scaleComponent.scale(emitterData, particle.data)
             val newRotation = rotationComponent.rotation(emitterData, particle.data).applyEmitterRotation()
-            if (particle.data.scale != newScale || particle.data.rotation != newRotation) {
-                updateParticle = true
+            if (particle.data.scale != newScale) {
+                flags.scale = true
                 particle.data.scale = newScale
+            }
+
+            if (particle.data.rotation != newRotation) {
+                flags.rotation = true
                 particle.data.rotation = newRotation
             }
 
-            if (updateParticle && shouldUpdate) {
-                particle.updatePacket(unrealizedHolder.myEntityDataBuilder).let { dataPackets += it }
+            if (flags.anyTrue() && shouldUpdate) {
+                particle.updatePacket(unrealizedHolder.myEntityDataBuilder, flags).let { dataPackets += it }
             }
         }
 

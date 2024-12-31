@@ -19,7 +19,7 @@ class DistanceCullingComponent(val viewDistance: Float) {
         }
 
         fun default(): DistanceCullingComponent {
-            return DistanceCullingComponent(10f*10f)
+            return DistanceCullingComponent(64f*64f)
         }
     }
 }

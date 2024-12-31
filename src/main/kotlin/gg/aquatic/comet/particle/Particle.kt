@@ -15,7 +15,6 @@ import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.Wr
 import java.util.*
 
 open class Particle(var data: ParticleData) {
-
     val id = ParticleIDProvider.id
     private val uuid = UUID.randomUUID()
 
@@ -41,24 +40,27 @@ open class Particle(var data: ParticleData) {
         val data = entityDataBuilder.getDataFor(
             EntityData(
                 data.displayData,
-                data.color,
+                data.color, data.color ushr 24,
                 data.translation, data.rotation, data.scale,
                 data.billboardConstraints, data.interpolationDelay, data.interpolationDuration
-            ), true
+            ), UpdateFlags(true, true, true, true, true), true
         )
 
         val entityDataPacket: PacketWrapper<*> = WrapperPlayServerEntityMetadata(id, data)
         return listOf(packet, entityDataPacket)
     }
 
-    fun updatePacket(entityDataBuilder: EntityDataBuilder): WrapperPlayServerEntityMetadata {
+    fun updatePacket(entityDataBuilder: EntityDataBuilder, flags: UpdateFlags): WrapperPlayServerEntityMetadata {
         return entityDataBuilder.getDataFor(
             EntityData(
                 data.displayData,
                 data.color,
-                data.translation, data.rotation, data.scale,
+                data.color ushr 24,
+                data.translation,
+                data.rotation,
+                data.scale,
                 data.billboardConstraints, data.interpolationDelay, data.interpolationDuration
-            ), false
+            ), flags, false
         ).let { WrapperPlayServerEntityMetadata(id, it) }
     }
 
@@ -73,4 +75,14 @@ open class Particle(var data: ParticleData) {
             ), true
         )
     }
+}
+
+class UpdateFlags(
+    var display: Boolean = false,
+    var transparency: Boolean = false,
+    var translation: Boolean = false,
+    var rotation: Boolean = false,
+    var scale: Boolean = false
+) {
+    fun anyTrue() = display || transparency || translation || rotation || scale
 }

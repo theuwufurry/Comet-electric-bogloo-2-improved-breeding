@@ -23,6 +23,12 @@ interface DisplayComponent {
     }
 }
 
-interface DisplayData
+interface DisplayData {
+    fun copy(): DisplayData
+}
 
-data class TextDisplayComponent(val string: String) : DisplayData
+data class TextDisplayComponent(val string: String) : DisplayData {
+    override fun copy(): DisplayData {
+        return TextDisplayComponent(string)
+    }
+}

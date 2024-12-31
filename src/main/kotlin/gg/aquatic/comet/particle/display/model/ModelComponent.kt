@@ -9,4 +9,8 @@ interface ModelComponent : DisplayComponent {
     override fun display(otherEmitterData: EmitterData, otherParticleData: ParticleData): DisplayData
 }
 
-data class ModelData(val item: String, val id: Int) : DisplayData
+data class ModelData(val item: String, val id: Int) : DisplayData {
+    override fun copy(): DisplayData {
+        return ModelData(item, id)
+    }
+}

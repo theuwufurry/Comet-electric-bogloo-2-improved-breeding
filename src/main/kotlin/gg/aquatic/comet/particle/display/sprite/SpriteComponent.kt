@@ -9,4 +9,8 @@ interface SpriteComponent : DisplayComponent {
     override fun display(otherEmitterData: EmitterData, otherParticleData: ParticleData): DisplayData
 }
 
-data class SpriteData(val id: String) : DisplayData
+data class SpriteData(val id: String) : DisplayData {
+    override fun copy(): DisplayData {
+        return SpriteData(id)
+    }
+}
