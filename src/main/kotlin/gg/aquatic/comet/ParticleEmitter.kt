@@ -1,6 +1,9 @@
 package gg.aquatic.comet
 
 import gg.aquatic.comet.command.*
+import gg.aquatic.comet.hook.IHook
+import gg.aquatic.comet.hook.ModelEngineHook
+import gg.aquatic.comet.hook.mythicmobs.MythicMobsHook
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.ResourcepackCreator
 import gg.aquatic.waves.command.AquaticBaseCommand
@@ -35,5 +38,16 @@ class ParticleEmitter : JavaPlugin() {
             ),
             listOf()
         ).register("comet")
+    }
+
+    private fun initializeHooks() {
+        val hooks = mutableListOf<IHook>()
+        if (server.pluginManager.getPlugin("MythicMobs") != null) {
+            hooks += MythicMobsHook
+        }
+        if (server.pluginManager.getPlugin("ModelEngine") != null) {
+            hooks += ModelEngineHook
+        }
+        hooks.forEach { it.initialize() }
     }
 }
