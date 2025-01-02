@@ -11,6 +11,7 @@ import gg.aquatic.comet.emitter.lifetime.EmitterLifetimeComponent
 import gg.aquatic.comet.emitter.lifetime.TimedEmitterLifetimeComponent
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.IntervalUpdateFrequencyComponent
+import gg.aquatic.comet.emitter.optimization.updatefrequency.ManualUpdateFrequencyComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.emitter.rate.RateComponent
 import gg.aquatic.comet.emitter.rate.SteadyRateComponent
@@ -108,6 +109,7 @@ object ParticleJsonParser {
         DistanceCullingComponent
 
         IntervalUpdateFrequencyComponent
+        ManualUpdateFrequencyComponent
 
         RecursiveEmitterComponent
 

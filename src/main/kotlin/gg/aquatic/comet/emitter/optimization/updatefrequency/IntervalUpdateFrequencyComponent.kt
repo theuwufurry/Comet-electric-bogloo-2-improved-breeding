@@ -10,7 +10,7 @@ import kotlin.math.floor
 
 class IntervalUpdateFrequencyComponent(private val interval: Int) : UpdateFrequencyComponent {
     override val interpolationDelay: Int = -1
-    override val interpolationDuration: Int = interval
+    override val initialInterpolationDuration: Int = interval
 
     companion object : ComponentParser<IntervalUpdateFrequencyComponent> {
         init {
@@ -21,11 +21,12 @@ class IntervalUpdateFrequencyComponent(private val interval: Int) : UpdateFreque
             val jsonObject = jsonElement.asJsonObject
             if (!(jsonObject.has("interval") && jsonObject.get("interval").isJsonPrimitive)) return null
             val interval = jsonObject.get("interval").asJsonPrimitive.asNumber.toInt()
-            return IntervalUpdateFrequencyComponent(interval)
+            val offset = if (jsonObject.has("offset") && jsonObject.get("offset").isJsonPrimitive) jsonObject.get("offset").asJsonPrimitive.asInt else 0
+            return IntervalUpdateFrequencyComponent(interval + offset)
         }
     }
 
-    override fun shouldSendUpdate(otherEmitterData: EmitterData, otherParticleData: ParticleData): Boolean {
-        return floor(otherParticleData.age).toInt() == 1 || (floor(otherParticleData.age).toInt() % interval == 0)
+    override fun shouldSendUpdate(otherEmitterData: EmitterData, otherParticleData: ParticleData): UpdateFrequencyResult {
+        return UpdateFrequencyResult(floor(otherParticleData.age).toInt() == 1 || (floor(otherParticleData.age).toInt() % interval == 0), initialInterpolationDuration)
     }
 }

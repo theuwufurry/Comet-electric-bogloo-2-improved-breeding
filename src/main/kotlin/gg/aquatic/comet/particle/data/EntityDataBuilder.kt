@@ -10,7 +10,6 @@ import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.E
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.ItemStack
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.type.ItemTypes
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Quaternion4f
-import io.ktor.events.*
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
@@ -77,10 +76,11 @@ class EntityDataBuilder {
                 }
 
                 if (flags.transparency) {
+                    val transformedTransparency = component.transparency.coerceAtLeast(25)
                     entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                         25 + PACKET_OFFSET,
                         EntityDataTypes.BYTE,
-                        ((component.transparency) + 26).coerceAtMost(255).toByte()
+                        (transformedTransparency).toByte()
                     )
                 }
             }
@@ -111,6 +111,7 @@ class EntityDataBuilder {
                 }
 
                 if (flags.transparency) {
+                    println("literal transparency")
                     entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                         25 + PACKET_OFFSET,
                         EntityDataTypes.BYTE,
@@ -126,7 +127,7 @@ class EntityDataBuilder {
             component.interpolationDelay
         )
 
-        if (initial) {
+        if (initial || flags.interpolation) {
             entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                 9,
                 EntityDataTypes.INT,
@@ -140,7 +141,9 @@ class EntityDataBuilder {
                     component.interpolationDuration
                 )
             }
+        }
 
+        if (initial) {
             entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                 14 + PACKET_OFFSET,
                 EntityDataTypes.BYTE,
@@ -188,6 +191,7 @@ data class EntityData(
     val displayData: DisplayData,
     val color: Int,
     val transparency: Int,
+    val reserveTransparency: Int?,
     val translation: Vector3f,
     val rotation: Quaternionf,
     val scale: Vector3f,
@@ -200,6 +204,7 @@ data class EntityData(
             displayData.copy(),
             color,
             transparency,
+            reserveTransparency,
             Vector3f(translation),
             Quaternionf(rotation),
             Vector3f(scale),

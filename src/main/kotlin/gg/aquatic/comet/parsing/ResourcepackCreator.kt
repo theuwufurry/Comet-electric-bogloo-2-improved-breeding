@@ -180,7 +180,6 @@ object ResourcepackCreator {
             val width = bufferedImage.width
             val height = bufferedImage.height
             if (width % height != 0) {
-                println("height not multiple of width")
                 continue
             }
 

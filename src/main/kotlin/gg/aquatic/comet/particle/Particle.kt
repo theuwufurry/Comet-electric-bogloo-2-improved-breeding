@@ -20,7 +20,7 @@ open class Particle(var data: ParticleData) {
 
     private var previousEntityData = EntityData(
         data.displayData,
-        data.color, data.color ushr 24,
+        data.color, data.color ushr 24, null,
         data.translation, data.rotation, data.scale,
         data.billboardConstraints, data.interpolationDelay, data.interpolationDuration
     )
@@ -47,23 +47,69 @@ open class Particle(var data: ParticleData) {
         val data = entityDataBuilder.getDataFor(
             EntityData(
                 data.displayData,
-                data.color, data.color ushr 24,
+                data.color, data.color ushr 24, null,
                 data.translation, data.rotation, data.scale,
                 data.billboardConstraints, data.interpolationDelay, data.interpolationDuration
-            ), UpdateFlags(true, true, true, true, true), true
+            ), UpdateFlags(true, true, true, true, true, true), true
         )
 
         val entityDataPacket: PacketWrapper<*> = WrapperPlayServerEntityMetadata(id, data)
         return listOf(packet, entityDataPacket)
     }
 
-    fun updatePacket(entityDataBuilder: EntityDataBuilder): WrapperPlayServerEntityMetadata? {
+    fun updatePacket(entityDataBuilder: EntityDataBuilder, shouldUpdate: Boolean): WrapperPlayServerEntityMetadata? {
+        return if (shouldUpdate) handleFullUpdate(entityDataBuilder)
+        else if (data.interpolationDuration > 1 && previousEntityData.reserveTransparency != null) {
+            val interpolationDuration = data.interpolationDuration - 1
+            val flags = UpdateFlags(false, false, false, false, false, true)
+
+            val newData =
+                EntityData(
+                    data.displayData,
+                    data.color,
+                    previousEntityData.reserveTransparency!!, null,
+                    data.translation,
+                    data.rotation,
+                    data.scale,
+                    data.billboardConstraints, data.interpolationDelay, interpolationDuration
+                )
+
+            previousEntityData = newData.copy()
+
+            entityDataBuilder.getDataFor(
+                newData, flags, false
+            ).let { WrapperPlayServerEntityMetadata(id, it) }
+        } else null
+    }
+
+    private fun handleFullUpdate(entityDataBuilder: EntityDataBuilder): WrapperPlayServerEntityMetadata? {
         val flags = UpdateFlags()
-        flags.display = (previousEntityData.displayData != data.displayData) || ((previousEntityData.color and 0xFFFFFF) != (data.color and 0xFFFFFF))
-        flags.transparency = previousEntityData.transparency != (data.color ushr 24)
+        var transparency = data.color ushr 24
+        var interpolationDuration = data.interpolationDuration
+        flags.display =
+            (previousEntityData.displayData != data.displayData) || ((previousEntityData.color and 0xFFFFFF) != (data.color and 0xFFFFFF))
+        flags.transparency = previousEntityData.transparency != transparency
         flags.translation = previousEntityData.translation != data.translation
         flags.rotation = previousEntityData.rotation != data.rotation
         flags.scale = previousEntityData.scale != data.scale
+        flags.interpolation = previousEntityData.interpolationDuration != data.interpolationDuration
+
+        var reserveTransparency: Int? = null
+        if (interpolationDuration > 1) {
+            if (previousEntityData.reserveTransparency == null) {
+                if (previousEntityData.transparency > 127 && transparency <= 127) {
+                    flags.transparency = true
+                    reserveTransparency = transparency
+                    transparency = 127
+                    interpolationDuration = 0
+                    flags.interpolation = true
+                }
+            } else {
+                interpolationDuration--
+                transparency = previousEntityData.reserveTransparency!!
+                flags.interpolation = true
+            }
+        }
 
         if (!flags.anyTrue()) return null
 
@@ -71,11 +117,11 @@ open class Particle(var data: ParticleData) {
             EntityData(
                 data.displayData,
                 data.color,
-                data.color ushr 24,
+                transparency, reserveTransparency,
                 data.translation,
                 data.rotation,
                 data.scale,
-                data.billboardConstraints, data.interpolationDelay, data.interpolationDuration
+                data.billboardConstraints, data.interpolationDelay, interpolationDuration
             )
 
         previousEntityData = newData.copy()
@@ -103,7 +149,8 @@ class UpdateFlags(
     var transparency: Boolean = false,
     var translation: Boolean = false,
     var rotation: Boolean = false,
-    var scale: Boolean = false
+    var scale: Boolean = false,
+    var interpolation: Boolean = false
 ) {
-    fun anyTrue() = display || transparency || translation || rotation || scale
+    fun anyTrue() = display || transparency || translation || rotation || scale || interpolation
 }

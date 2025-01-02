@@ -46,8 +46,8 @@ class GradientColorComponent(
         myParticleData.copyFrom(otherParticleData)
 
         val interpolantResult = (interpolantScript.eval() as Number).toDouble()
-        if (interpolantResult <= gradient.first().first) return (gradient.first().second.eval() as Color).argb()
-        if (interpolantResult >= gradient.last().first) return (gradient.last().second.eval() as Color).argb()
+        if (interpolantResult <= gradient.first().first) return (gradient.first().second.eval() as Color).rgb
+        if (interpolantResult >= gradient.last().first) return (gradient.last().second.eval() as Color).rgb
 
         var (prevIndex, prevScript: CompiledScript) = gradient[0]
         for ((index, script) in gradient) {
@@ -55,17 +55,18 @@ class GradientColorComponent(
                 val interpolationFactor = (interpolantResult - prevIndex) / (index - prevIndex)
                 val prevColor = prevScript.eval() as Color
                 val endColor = script.eval() as Color
+                val interpolatedAlpha = (((endColor.alpha * interpolationFactor + prevColor.alpha * (1.0 - interpolationFactor)).toInt()) and 0xFF) shl 24
                 return (
-                        ((((endColor.alpha * interpolationFactor + prevColor.alpha * (1 - interpolationFactor)).toInt()) and 0xFF) shl 24) +
-                                ((((endColor.red * interpolationFactor + prevColor.red * (1 - interpolationFactor)).toInt()) and 0xFF) shl 16) +
-                                ((((endColor.green * interpolationFactor + prevColor.green * (1 - interpolationFactor)).toInt()) and 0xFF) shl 8) +
-                                (((endColor.blue * interpolationFactor + prevColor.blue * (1 - interpolationFactor)).toInt()) and 0xFF))
+                        interpolatedAlpha +
+                                ((((endColor.red * interpolationFactor + prevColor.red * (1.0 - interpolationFactor)).toInt()) and 0xFF) shl 16) +
+                                ((((endColor.green * interpolationFactor + prevColor.green * (1.0 - interpolationFactor)).toInt()) and 0xFF) shl 8) +
+                                (((endColor.blue * interpolationFactor + prevColor.blue * (1.0 - interpolationFactor)).toInt()) and 0xFF))
             }
 
             prevIndex = index
             prevScript = script
         }
 
-        return (gradient.last().second.eval() as Color).argb()
+        return (gradient.last().second.eval() as Color).rgb
     }
 }

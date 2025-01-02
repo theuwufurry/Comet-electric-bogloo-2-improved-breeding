@@ -9,7 +9,6 @@ import gg.aquatic.comet.emitter.recursive.RecursiveEmitterComponent
 import gg.aquatic.comet.emitter.shape.ShapeComponent
 import gg.aquatic.comet.particle.Particle
 import gg.aquatic.comet.particle.ParticleData
-import gg.aquatic.comet.particle.UpdateFlags
 import gg.aquatic.comet.particle.color.ColorComponent
 import gg.aquatic.comet.particle.data.BillboardConstraints
 import gg.aquatic.comet.particle.display.DisplayComponent
@@ -101,17 +100,13 @@ class Emitter(
                 continue
             }
 
-            var updateParticle = false
-
             val newDisplay = displayComponent.display(emitterData, particle.data)
             if (newDisplay != particle.data.displayData) {
-                updateParticle = true
                 particle.data.displayData = newDisplay
             }
 
             val newColor = colorComponent.color(emitterData, particle.data)
             if (newColor != particle.data.color) {
-                updateParticle = true
                 particle.data.color = newColor
             }
 
@@ -123,10 +118,13 @@ class Emitter(
             }
 
             val shouldUpdate = updateFrequencyComponent.shouldSendUpdate(emitterData, particle.data)
+            if (shouldUpdate.interpolationDuration != null) {
+                particle.data.interpolationDuration = shouldUpdate.interpolationDuration
+            }
 
             if (newPos.data != particle.data.relativePosition) {
                 particle.data.relativePosition = newPos.data
-                if (shouldUpdate) {
+                if (shouldUpdate.shouldUpdate) {
                     particle.getMovementPacket().let { dataPackets += it }
                 }
             }
@@ -134,18 +132,14 @@ class Emitter(
             val newScale = scaleComponent.scale(emitterData, particle.data)
             val newRotation = rotationComponent.rotation(emitterData, particle.data).applyEmitterRotation()
             if (particle.data.scale != newScale) {
-                updateParticle = true
                 particle.data.scale = newScale
             }
 
             if (particle.data.rotation != newRotation) {
-                updateParticle = true
                 particle.data.rotation = newRotation
             }
 
-            if (updateParticle && shouldUpdate) {
-                particle.updatePacket(unrealizedHolder.myEntityDataBuilder)?.let { dataPackets += it }
-            }
+            particle.updatePacket(unrealizedHolder.myEntityDataBuilder, shouldUpdate.shouldUpdate)?.let { dataPackets += it }
         }
 
         val playerManager = PacketEvents.getAPI().playerManager
@@ -213,12 +207,13 @@ class Emitter(
                 Vector3d(location.x + spawnOffset.x, location.y + spawnOffset.y, location.z + spawnOffset.z)
             particleLifetimeComponent.keepAlive(emitterData, particleData)
             particleData.displayData = displayComponent.display(emitterData, particleData)
-            particleData.color = colorComponent.color(emitterData, particleData)
+            val color = colorComponent.color(emitterData, particleData)
+            particleData.color = color
             particleData.billboardConstraints = billboardConstraints
             particleData.scale = scale
             particleData.rotation = rotation.applyEmitterRotation()
-            particleData.interpolationDelay = emitterData.interpolationDelay
-            particleData.interpolationDuration = emitterData.interpolationDuration
+            particleData.interpolationDelay = updateFrequencyComponent.interpolationDelay
+            particleData.interpolationDuration = updateFrequencyComponent.initialInterpolationDuration
             recursiveEmitterComponent?.run { updateEmitter(emitterData, particleData) }
             val particle = Particle(particleData)
             val packets = particle.getAddPacket(unrealizedHolder.myEntityDataBuilder)

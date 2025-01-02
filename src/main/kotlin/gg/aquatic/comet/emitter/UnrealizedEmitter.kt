@@ -107,8 +107,6 @@ data class UnrealizedEmitter(
         val emitterData = EmitterData()
         emitterData.world = location.world
         emitterData.location = location
-        emitterData.interpolationDelay = updateFrequencyComponent.interpolationDelay
-        emitterData.interpolationDuration = updateFrequencyComponent.interpolationDuration
         bundledEmitterComponent?.init(emitterData)
         return Emitter(
             rateComponent,

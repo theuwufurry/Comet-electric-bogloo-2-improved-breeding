@@ -35,7 +35,7 @@ class ConstantColorComponent(
         return if (otherParticleData.age == 0.0) {
             myEmitterData.copyFrom(otherEmitterData)
             myParticleData.copyFrom(otherParticleData)
-            return (colorScript.eval() as Color).argb()
+            return (colorScript.eval() as Color).rgb
         } else {
             otherParticleData.color
         }

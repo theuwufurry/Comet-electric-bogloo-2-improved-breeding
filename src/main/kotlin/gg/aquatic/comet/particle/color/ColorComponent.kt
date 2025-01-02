@@ -30,7 +30,3 @@ interface ColorComponent {
         }
     }
 }
-
-fun Color.argb(): Int {
-    return rgb + (alpha shl 24)
-}
