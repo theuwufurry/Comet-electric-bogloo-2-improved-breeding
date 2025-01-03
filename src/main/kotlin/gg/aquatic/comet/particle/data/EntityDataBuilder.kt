@@ -111,7 +111,6 @@ class EntityDataBuilder {
                 }
 
                 if (flags.transparency) {
-                    println("literal transparency")
                     entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                         25 + PACKET_OFFSET,
                         EntityDataTypes.BYTE,
