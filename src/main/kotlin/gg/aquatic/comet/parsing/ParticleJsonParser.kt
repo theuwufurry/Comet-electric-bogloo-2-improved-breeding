@@ -14,6 +14,7 @@ import gg.aquatic.comet.emitter.optimization.updatefrequency.IntervalUpdateFrequ
 import gg.aquatic.comet.emitter.optimization.updatefrequency.ManualUpdateFrequencyComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.emitter.rate.InstantRateComponent
+import gg.aquatic.comet.emitter.rate.ManualRateComponent
 import gg.aquatic.comet.emitter.rate.RateComponent
 import gg.aquatic.comet.emitter.rate.SteadyRateComponent
 import gg.aquatic.comet.emitter.recursive.RecursiveEmitterComponent
@@ -87,6 +88,7 @@ object ParticleJsonParser {
 
         SteadyRateComponent
         InstantRateComponent
+        ManualRateComponent
 
         PointShapeComponent
 
