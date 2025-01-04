@@ -33,10 +33,7 @@ import gg.aquatic.comet.particle.display.sprite.ExpressionSpriteComponent
 import gg.aquatic.comet.particle.display.sprite.FlipbookSpriteComponent
 import gg.aquatic.comet.particle.lifetime.ParticleLifetimeComponent
 import gg.aquatic.comet.particle.lifetime.ParticleLifetimeExpressionComponent
-import gg.aquatic.comet.particle.position.AttractorPositionComponent
-import gg.aquatic.comet.particle.position.ExpressionPositionComponent
-import gg.aquatic.comet.particle.position.MotionPositionComponent
-import gg.aquatic.comet.particle.position.PositionComponent
+import gg.aquatic.comet.particle.position.*
 import gg.aquatic.comet.particle.transformation.rotation.ExpressionRotationComponent
 import gg.aquatic.comet.particle.transformation.rotation.RotationComponent
 import gg.aquatic.comet.particle.transformation.scale.ExpressionScaleComponent
@@ -107,6 +104,7 @@ object ParticleJsonParser {
         ExpressionPositionComponent
         MotionPositionComponent
         AttractorPositionComponent
+        SpherePositionComponent
 
         ExpressionScaleComponent
 

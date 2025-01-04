@@ -17,6 +17,22 @@ class ExpressionPositionComponent(
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData
 ) : PositionComponent {
+    private val oldOutputMap: MutableMap<UUID, Vector3d> = mutableMapOf()
+
+    override fun pos(otherEmitterData: EmitterData, otherParticleData: ParticleData): ComponentResult<Vector3d> {
+        myEmitterData.copyFrom(otherEmitterData)
+        myParticleData.copyFrom(otherParticleData)
+        val oldResult = oldOutputMap.getOrPut(otherParticleData.id) { Vector3d() }
+        val newResult = Vector3d(
+            (xOffset.eval() as Number).toDouble(),
+            (yOffset.eval() as Number).toDouble(),
+            (zOffset.eval() as Number).toDouble()
+        )
+        oldOutputMap[otherParticleData.id] = newResult
+        val newPos = Vector3d(otherParticleData.relativePosition).add(Vector3d(newResult).sub(oldResult))
+        return ComponentResult(newPos.rotate(myEmitterData.rotation))
+    }
+
     companion object : ComponentParser<ExpressionPositionComponent> {
         init {
             ParticleJsonParser.positionComponentParsers += "expression_position" to this
@@ -34,21 +50,5 @@ class ExpressionPositionComponent(
                 emitterData, particleData
             )
         }
-    }
-
-    private val oldOutputMap: MutableMap<UUID, Vector3d> = mutableMapOf()
-
-    override fun pos(otherEmitterData: EmitterData, otherParticleData: ParticleData): ComponentResult<Vector3d> {
-        myEmitterData.copyFrom(otherEmitterData)
-        myParticleData.copyFrom(otherParticleData)
-        val oldResult = oldOutputMap.getOrPut(otherParticleData.id) { Vector3d() }
-        val newResult = Vector3d(
-            (xOffset.eval() as Number).toDouble(),
-            (yOffset.eval() as Number).toDouble(),
-            (zOffset.eval() as Number).toDouble()
-        )
-        oldOutputMap[otherParticleData.id] = newResult
-        val newPos = Vector3d(otherParticleData.relativePosition).add(Vector3d(newResult).sub(oldResult))
-        return ComponentResult(newPos.rotate(myEmitterData.rotation))
     }
 }
