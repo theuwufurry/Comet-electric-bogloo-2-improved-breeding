@@ -19,7 +19,7 @@ class InstantRateComponent(private val amount: CompiledScript, private val offse
             val engine = emitterEngine(emitterData)
             return InstantRateComponent(
                 engine.compile(jsonObject.expression("amount") ?: return null, macros),
-                engine.compile(jsonObject.expression("offset") ?: return null, macros),
+                engine.compile(jsonObject.expression("offset") ?: "0", macros),
                 emitterData
             )
         }
