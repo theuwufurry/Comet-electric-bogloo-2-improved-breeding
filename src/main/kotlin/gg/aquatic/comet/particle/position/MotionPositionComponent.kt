@@ -17,7 +17,7 @@ import org.bukkit.World
 import org.bukkit.block.Block
 import org.joml.Vector3d
 import org.joml.Vector3i
-import java.util.logging.Logger
+import java.util.UUID
 import javax.script.CompiledScript
 import kotlin.math.abs
 import kotlin.math.floor
@@ -120,6 +120,8 @@ class MotionPositionComponent(
         onCollisionAction?.subActions?.filterIsInstance<PostInit>()?.forEach { it.realize() }
     }
 
+    private val oldPositionMap: MutableMap<UUID, Vector3d> = mutableMapOf()
+
     override fun pos(
         otherEmitterData: EmitterData,
         otherParticleData: ParticleData
@@ -141,12 +143,13 @@ class MotionPositionComponent(
 
         otherParticleData.acceleration = Vector3d()
 
-        val velocity = Vector3d(otherParticleData.relativePosition).sub(otherParticleData.oldRelativePosition)
+        val oldPos = oldPositionMap.getOrPut(otherParticleData.id) { Vector3d() }
+        val velocity = Vector3d(otherParticleData.relativePosition).sub(oldPos)
 
         velocity.mul(1.0 - dragCoefficient)
         acceleration.mul(1.0 - dragCoefficient)
 
-        otherParticleData.oldRelativePosition = Vector3d(otherParticleData.relativePosition)
+        oldPositionMap[otherParticleData.id] = Vector3d(otherParticleData.relativePosition)
 
         val newPos = Vector3d(otherParticleData.relativePosition).add(velocity).add(acceleration)
         val correction = fixCollisions(newPos, otherParticleData.acceleration)

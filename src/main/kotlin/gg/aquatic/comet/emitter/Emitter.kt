@@ -41,7 +41,7 @@ class Emitter(
     private val displayComponent: DisplayComponent,
     private val colorComponent: ColorComponent,
     private val emitterLifetimeComponent: EmitterLifetimeComponent,
-    private val positionComponent: PositionComponent,
+    private val positionComponents: List<PositionComponent>,
     private val scaleComponent: ScaleComponent,
     private val rotationComponent: RotationComponent,
     private val recursiveEmitterComponent: RecursiveEmitterComponent?,
@@ -110,7 +110,10 @@ class Emitter(
                 particle.data.color = newColor
             }
 
-            val newPos = positionComponent.pos(emitterData, particle.data)
+            val initialPos = Vector3d(particle.data.relativePosition)
+            for (positionComponent in positionComponents) {
+                particle.data.relativePosition = positionComponent.pos(emitterData, particle.data).data
+            }
 
             if (particle.data.dead) {
                 die()
@@ -122,8 +125,7 @@ class Emitter(
                 particle.data.interpolationDuration = shouldUpdate.interpolationDuration
             }
 
-            if (newPos.data != particle.data.relativePosition) {
-                particle.data.relativePosition = newPos.data
+            if (initialPos != particle.data.relativePosition) {
                 if (shouldUpdate.shouldUpdate) {
                     particle.getMovementPacket().let { dataPackets += it }
                 }
@@ -202,7 +204,10 @@ class Emitter(
             val spawnOffset = shapeComponent.offset(emitterData, particleData)
             val scale = scaleComponent.scale(emitterData, particleData)
             val rotation = rotationComponent.rotation(emitterData, particleData)
-            particleData.relativePosition = positionComponent.pos(emitterData, particleData).data
+            for (positionComponent in positionComponents) {
+                particleData.relativePosition = positionComponent.pos(emitterData, particleData).data
+            }
+
             particleData.origin =
                 Vector3d(location.x + spawnOffset.x, location.y + spawnOffset.y, location.z + spawnOffset.z)
             particleLifetimeComponent.keepAlive(emitterData, particleData)

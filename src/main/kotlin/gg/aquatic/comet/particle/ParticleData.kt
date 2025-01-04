@@ -7,8 +7,10 @@ import gg.aquatic.comet.particle.display.sprite.SpriteData
 import org.joml.Quaternionf
 import org.joml.Vector3d
 import org.joml.Vector3f
+import java.util.UUID
 
 data class ParticleData(
+    var id: UUID = UUID.randomUUID(),
     var dead: Boolean = false,
     var age: Double = 0.0,
     var maxLife: Int = 0,
@@ -16,7 +18,6 @@ data class ParticleData(
     var color: Int = 0,
     var origin: Vector3d = Vector3d(),
     var relativePosition: Vector3d = Vector3d(),
-    var oldRelativePosition: Vector3d = Vector3d(),
     var translation: Vector3f = Vector3f(),
     var rotation: Quaternionf = Quaternionf(),
     var scale: Vector3f = Vector3f(),
@@ -30,6 +31,7 @@ data class ParticleData(
 ) {
 
     fun copyFrom(other: ParticleData) {
+        id = other.id
         dead = other.dead
         age = other.age
         maxLife = other.maxLife
@@ -37,8 +39,6 @@ data class ParticleData(
         color = other.color
         origin = other.origin
         relativePosition = other.relativePosition
-        oldRelativePosition = other.oldRelativePosition
-//        matrix = other.matrix
         translation = other.translation
         rotation = other.rotation
         scale = other.scale

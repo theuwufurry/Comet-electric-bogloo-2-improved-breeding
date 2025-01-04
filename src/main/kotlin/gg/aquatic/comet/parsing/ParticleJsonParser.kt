@@ -160,7 +160,7 @@ object ParticleJsonParser {
         var displayComponent: DisplayComponent? = null
         var colorComponent: ColorComponent? = null
         var emitterLifetimeComponent: EmitterLifetimeComponent? = null
-        var positionComponent: PositionComponent? = null
+        var positionComponents: MutableList<PositionComponent> = mutableListOf()
         var scaleComponent: ScaleComponent? = null
         var rotationComponent: RotationComponent? = null
         var distanceCullingComponent: DistanceCullingComponent? = null
@@ -236,7 +236,8 @@ object ParticleJsonParser {
             if (key in positionComponentParsers) {
                 val component = positionComponentParsers[key]!!.parse(componentElement, macros)
                 if (component != null) {
-                    positionComponent = component
+                    positionComponents += component
+//                    positionComponent = component
                 }
 
                 continue
@@ -287,7 +288,8 @@ object ParticleJsonParser {
             shapeComponent ?: ShapeComponent.default(),
             colorComponent ?: ColorComponent.default(),
             emitterLifetimeComponent ?: EmitterLifetimeComponent.default(),
-            positionComponent ?: PositionComponent.default(),
+            if (positionComponents.isEmpty()) listOf(PositionComponent.default()) else positionComponents,
+//            positionComponent ?: PositionComponent.default(),
             scaleComponent ?: ScaleComponent.default(),
             rotationComponent ?: RotationComponent.default(),
             recursiveEmitterComponent,
@@ -302,7 +304,8 @@ object ParticleJsonParser {
         for ((_, unrealizedEmitter) in jsonUnrealizedEmitters) {
             unrealizedEmitter.recursiveEmitterComponent?.realize()
             unrealizedEmitter.bundledEmitterComponent?.realize()
-            (unrealizedEmitter.positionComponent as? PostInit)?.realize()
+            unrealizedEmitter.positionComponents.forEach { (it as? PostInit)?.realize() }
+//            (unrealizedEmitter.positionComponent as? PostInit)?.realize()
         }
     }
 }
