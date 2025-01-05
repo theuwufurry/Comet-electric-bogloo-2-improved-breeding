@@ -1,13 +1,13 @@
 package gg.aquatic.comet.particle.position
 
 import com.google.gson.JsonElement
-import gg.aquatic.comet.emitter.ComponentResult
 import gg.aquatic.comet.emitter.EmitterData
 import gg.aquatic.comet.emitter.UnrealizedEmitter
 import gg.aquatic.comet.emitter.action.Action
 import gg.aquatic.comet.emitter.action.ActionContext
 import gg.aquatic.comet.parsing.*
 import gg.aquatic.comet.parsing.macro.Macro
+import gg.aquatic.comet.particle.ParticleComponent
 import gg.aquatic.comet.particle.ParticleData
 import gg.aquatic.comet.particle.position.direction.DirectionSubcomponent
 import gg.aquatic.comet.particle.position.direction.ExpressionDirectionSubcomponent
@@ -17,7 +17,7 @@ import org.bukkit.World
 import org.bukkit.block.Block
 import org.joml.Vector3d
 import org.joml.Vector3i
-import java.util.UUID
+import java.util.*
 import javax.script.CompiledScript
 import kotlin.math.abs
 import kotlin.math.floor
@@ -33,7 +33,7 @@ class MotionPositionComponent(
     private val onCollisionEmitterID: String?,
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData
-) : PositionComponent, PostInit {
+) : ParticleComponent, PositionComponent, PostInit {
     private var unrealizedEmitter: UnrealizedEmitter? = null
 
     override fun realize() {
@@ -43,17 +43,21 @@ class MotionPositionComponent(
 
     private val oldPositionMap: MutableMap<UUID, Vector3d> = mutableMapOf()
 
-    override fun pos(
+    override fun execute(
         otherEmitterData: EmitterData,
         otherParticleData: ParticleData
-    ): ComponentResult<Vector3d> {
+    ) {
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
         if (otherParticleData.age == 0.0) {
             oldPositionMap[otherParticleData.id] = Vector3d(otherParticleData.relativePosition)
-            return ComponentResult(
-                Vector3d(otherParticleData.relativePosition).add(initialVelocityComponent.dir(otherEmitterData, otherParticleData).rotate(myEmitterData.rotation))
+            otherParticleData.relativePosition = Vector3d(otherParticleData.relativePosition).add(
+                initialVelocityComponent.dir(
+                    otherEmitterData,
+                    otherParticleData
+                ).rotate(myEmitterData.rotation)
             )
+            return
         }
 
         val dragCoefficient = (dragScript.eval() as Number).toDouble()
@@ -87,11 +91,11 @@ class MotionPositionComponent(
                         correction.direction
                     )
                 )
-                return ComponentResult(Vector3d(newPos))
+                otherParticleData.relativePosition = Vector3d(newPos)
             }
         }
 
-        return ComponentResult(Vector3d(newPos))
+        otherParticleData.relativePosition = Vector3d(newPos)
     }
 
     private fun onCollision(context: ActionContext) {
@@ -318,9 +322,9 @@ class MotionPositionComponent(
         return closestResult
     }
 
-    companion object : ComponentParser<MotionPositionComponent> {
+    companion object : BaseComponentParser {
         init {
-            ParticleJsonParser.positionComponentParsers += "motion_position" to this
+            ParticleJsonParser.componentParsers += "motion_position" to this
         }
 
         override fun parse(
@@ -348,21 +352,40 @@ class MotionPositionComponent(
                         if (!it.has("direction")) throw NullPointerException("bias in random_velocity missing direction!")
                         val dirObject = it.get("direction")
                         if (dirObject.isJsonArray) {
-                            Bukkit.getLogger().warning("Using outdated json array for 'direction', please switch it to 'x' 'y' 'z' format!")
+                            Bukkit.getLogger()
+                                .warning("Using outdated json array for 'direction', please switch it to 'x' 'y' 'z' format!")
                             Pair(
                                 ExpressionDirectionSubcomponent(
-                                    engine.compile(it.getAsJsonArray("direction")[0].expression() ?: return@l null, macros),
-                                    engine.compile(it.getAsJsonArray("direction")[1].expression() ?: return@l null, macros),
-                                    engine.compile(it.getAsJsonArray("direction")[2].expression() ?: return@l null, macros),
+                                    engine.compile(
+                                        it.getAsJsonArray("direction")[0].expression() ?: return@l null,
+                                        macros
+                                    ),
+                                    engine.compile(
+                                        it.getAsJsonArray("direction")[1].expression() ?: return@l null,
+                                        macros
+                                    ),
+                                    engine.compile(
+                                        it.getAsJsonArray("direction")[2].expression() ?: return@l null,
+                                        macros
+                                    ),
                                     particleData, emitterData
                                 ), engine.compile(it.getAsJsonPrimitive("spread").expression() ?: return@l null, macros)
                             )
                         } else {
                             Pair(
                                 ExpressionDirectionSubcomponent(
-                                    engine.compile(dirObject.asJsonObject.getAsJsonPrimitive("x").expression() ?: return@l null, macros),
-                                    engine.compile(dirObject.asJsonObject.getAsJsonPrimitive("y").expression() ?: return@l null, macros),
-                                    engine.compile(dirObject.asJsonObject.getAsJsonPrimitive("z").expression() ?: return@l null, macros),
+                                    engine.compile(
+                                        dirObject.asJsonObject.getAsJsonPrimitive("x").expression() ?: return@l null,
+                                        macros
+                                    ),
+                                    engine.compile(
+                                        dirObject.asJsonObject.getAsJsonPrimitive("y").expression() ?: return@l null,
+                                        macros
+                                    ),
+                                    engine.compile(
+                                        dirObject.asJsonObject.getAsJsonPrimitive("z").expression() ?: return@l null,
+                                        macros
+                                    ),
                                     particleData, emitterData
                                 ), engine.compile(it.getAsJsonPrimitive("spread").expression() ?: return@l null, macros)
                             )
@@ -383,14 +406,14 @@ class MotionPositionComponent(
                 engine.compile(accelerationObject.expression("z") ?: return null, macros)
             )
 
-            val action = jsonObject.getAsJsonArray("on_collision")?.let { Action.parse(it, macros) }
+            val actions = jsonObject.getAsJsonArray("on_collision")?.let { Action.parse(it, macros) }
 
             return MotionPositionComponent(
                 velocityComponent ?: return null,
                 accelerationScript,
                 engine.compile(jsonObject.expression("drag") ?: return null, macros),
                 jsonObject.expression("restitution")?.let { engine.compile(it, macros) },
-                action,
+                actions,
                 jsonObject.expression("on_collision_emitter"),
                 emitterData, particleData
             )

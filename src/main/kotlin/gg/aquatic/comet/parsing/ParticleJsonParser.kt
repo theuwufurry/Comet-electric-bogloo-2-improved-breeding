@@ -3,6 +3,7 @@ package gg.aquatic.comet.parsing
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import gg.aquatic.comet.Component
 import gg.aquatic.comet.ParticleEmitter
 import gg.aquatic.comet.emitter.EmitterTickersHolder
 import gg.aquatic.comet.emitter.UnrealizedEmitter
@@ -57,28 +58,20 @@ fun JsonElement.expression(): String? {
 
 interface ComponentParser<T> {
     fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): T?
-//    fun parseProvider(jsonElement: JsonElement, macros: Map<String, Macro>?): ComponentProvider<T>?
+}
+
+interface BaseComponentParser {
+    fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component?
 }
 
 object ParticleJsonParser {
-    val particleLifetimeComponentParsers: MutableMap<String, ComponentParser<out ParticleLifetimeComponent>> =
-        mutableMapOf()
-    val displayComponentParsers: MutableMap<String, ComponentParser<out DisplayComponent>> = mutableMapOf()
-    val colorComponentParsers: MutableMap<String, ComponentParser<out ColorComponent>> = mutableMapOf()
-    val positionComponentParsers: MutableMap<String, ComponentParser<out PositionComponent>> = mutableMapOf()
-    val scaleComponentParsers: MutableMap<String, ComponentParser<out ScaleComponent>> = mutableMapOf()
-    val rotationComponentParsers: MutableMap<String, ComponentParser<out RotationComponent>> = mutableMapOf()
+    val componentParsers: MutableMap<String, BaseComponentParser> = mutableMapOf()
 
-    val emitterLifetimeComponentParsers: MutableMap<String, ComponentParser<out EmitterLifetimeComponent>> =
-        mutableMapOf()
     val rateComponentParsers: MutableMap<String, ComponentParser<out RateComponent>> = mutableMapOf()
     val shapeComponentParsers: MutableMap<String, ComponentParser<out ShapeComponent>> = mutableMapOf()
 
     lateinit var distanceCullingParser: Pair<String, ComponentParser<DistanceCullingComponent>>
     val updateFrequencyParsers: MutableMap<String, ComponentParser<out UpdateFrequencyComponent>> = mutableMapOf()
-
-    lateinit var recursiveEmitterComponentParser: Pair<String, ComponentParser<RecursiveEmitterComponent>>
-    lateinit var bundledEmitterComponentParser: Pair<String, ComponentParser<BundledEmitterComponent>>
 
     fun init() {
         MacrosParser
@@ -156,23 +149,25 @@ object ParticleJsonParser {
 
         val componentsObject: JsonObject = rootObject.getAsJsonObject("components") ?: return null
 
+        val components: MutableList<Component> = mutableListOf()
         var rateComponent: RateComponent? = null
-        var particleLifetimeComponent: ParticleLifetimeComponent? = null
         var shapeComponent: ShapeComponent? = null
-        var displayComponent: DisplayComponent? = null
-        var colorComponent: ColorComponent? = null
-        var emitterLifetimeComponent: EmitterLifetimeComponent? = null
-        var positionComponents: MutableList<PositionComponent> = mutableListOf()
-        var scaleComponent: ScaleComponent? = null
-        var rotationComponent: RotationComponent? = null
         var distanceCullingComponent: DistanceCullingComponent? = null
         var updateFrequencyComponent: UpdateFrequencyComponent? = null
         var billboardConstraints: BillboardConstraints? = null
 
-        var recursiveEmitterComponent: RecursiveEmitterComponent? = null
         var bundledEmitterComponent: BundledEmitterComponent? = null
 
         for ((key, componentElement) in componentsObject.entrySet()) {
+            if (key in componentParsers) {
+                val component = componentParsers[key]!!.parse(componentElement, macros)
+                if (component != null) {
+                    components += component
+
+                    continue
+                }
+            }
+
             if (key == "display_type") {
                 billboardConstraints = when (componentElement.asString) {
                     "fixed" -> BillboardConstraints.FIXED
@@ -190,74 +185,10 @@ object ParticleJsonParser {
                 continue
             }
 
-            if (key in emitterLifetimeComponentParsers) {
-                val component = emitterLifetimeComponentParsers[key]!!.parse(componentElement, macros)
-                if (component != null) {
-                    emitterLifetimeComponent = component
-                }
-
-                continue
-            }
-
             if (key in shapeComponentParsers) {
                 val component = shapeComponentParsers[key]!!.parse(componentElement, macros)
                 if (component != null) {
                     shapeComponent = component
-                }
-
-                continue
-            }
-
-            if (key in particleLifetimeComponentParsers) {
-                val component = particleLifetimeComponentParsers[key]!!.parse(componentElement, macros)
-                if (component != null) {
-                    particleLifetimeComponent = component
-                }
-
-                continue
-            }
-
-            if (key in colorComponentParsers) {
-                val component = colorComponentParsers[key]!!.parse(componentElement, macros)
-                if (component != null) {
-                    colorComponent = component
-                }
-
-                continue
-            }
-
-            if (key in displayComponentParsers) {
-                val component = displayComponentParsers[key]!!.parse(componentElement, macros)
-                if (component != null) {
-                    displayComponent = component
-                }
-
-                continue
-            }
-
-            if (key in positionComponentParsers) {
-                val component = positionComponentParsers[key]!!.parse(componentElement, macros)
-                if (component != null) {
-                    positionComponents += component
-//                    positionComponent = component
-                }
-
-                continue
-            }
-
-            if (key in scaleComponentParsers) {
-                val component = scaleComponentParsers[key]!!.parse(componentElement, macros)
-                if (component != null) {
-                    scaleComponent = component
-                }
-
-                continue
-            }
-
-            if (key in rotationComponentParsers) {
-                val component = rotationComponentParsers[key]!!.parse(componentElement, macros)
-                if (component != null) {
-                    rotationComponent = component
                 }
 
                 continue
@@ -273,42 +204,34 @@ object ParticleJsonParser {
             if (key == distanceCullingParser.first) {
                 distanceCullingComponent = distanceCullingParser.second.parse(componentElement, macros)
             }
-
-            if (key == recursiveEmitterComponentParser.first) {
-                recursiveEmitterComponent = recursiveEmitterComponentParser.second.parse(componentElement, macros)
-            }
-
-            if (key == bundledEmitterComponentParser.first) {
-                bundledEmitterComponent = bundledEmitterComponentParser.second.parse(componentElement, macros)
-            }
         }
 
+        ensureNecessaryComponents(components)
+
         return UnrealizedEmitter(
+            components,
             rateComponent ?: RateComponent.default(),
-            particleLifetimeComponent ?: ParticleLifetimeComponent.default(),
-            displayComponent ?: DisplayComponent.default(),
             shapeComponent ?: ShapeComponent.default(),
-            colorComponent ?: ColorComponent.default(),
-            emitterLifetimeComponent ?: EmitterLifetimeComponent.default(),
-            if (positionComponents.isEmpty()) listOf(PositionComponent.default()) else positionComponents,
-//            positionComponent ?: PositionComponent.default(),
-            scaleComponent ?: ScaleComponent.default(),
-            rotationComponent ?: RotationComponent.default(),
-            recursiveEmitterComponent,
             distanceCullingComponent ?: DistanceCullingComponent.default(),
             updateFrequencyComponent ?: UpdateFrequencyComponent.default(),
-            bundledEmitterComponent,
             billboardConstraints ?: BillboardConstraints.CENTER
         )
     }
 
+    private fun ensureNecessaryComponents(components: MutableList<Component>) {
+        if (components.none { it is ScaleComponent }) components += ScaleComponent.default()
+        if (components.none { it is RotationComponent }) components += RotationComponent.default()
+        if (components.none { it is PositionComponent }) components += PositionComponent.default()
+        if (components.none { it is ColorComponent }) components += ColorComponent.default()
+        if (components.none { it is ParticleLifetimeComponent }) components += ParticleLifetimeComponent.default()
+        if (components.none { it is EmitterLifetimeComponent }) components += EmitterLifetimeComponent.default()
+        if (components.none { it is DisplayComponent }) components += DisplayComponent.default()
+    }
+
     private fun postInit() {
         for ((_, unrealizedEmitter) in jsonUnrealizedEmitters) {
-            unrealizedEmitter.recursiveEmitterComponent?.realize()
-            unrealizedEmitter.bundledEmitterComponent?.realize()
-            unrealizedEmitter.positionComponents.forEach { (it as? PostInit)?.realize() }
-//            (unrealizedEmitter.positionComponent as? PostInit)?.realize()
+//            unrealizedEmitter.positionComponents.forEach { (it as? PostInit)?.realize() }
+            unrealizedEmitter.components.forEach { (it as? PostInit)?.realize() }
         }
     }
 }
-

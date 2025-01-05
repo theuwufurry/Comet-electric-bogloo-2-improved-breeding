@@ -4,7 +4,7 @@ import com.google.gson.JsonElement
 import gg.aquatic.comet.emitter.EmitterData
 import gg.aquatic.comet.parsing.*
 import gg.aquatic.comet.parsing.macro.Macro
-import java.util.TreeMap
+import java.util.*
 import javax.script.CompiledScript
 
 class ManualRateComponent(private val spawningMap: Map<Int, CompiledScript>, private val myEmitterData: EmitterData) :
@@ -14,7 +14,7 @@ class ManualRateComponent(private val spawningMap: Map<Int, CompiledScript>, pri
             ParticleJsonParser.rateComponentParsers += "emitter_rate_manual" to this
         }
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ManualRateComponent? {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ManualRateComponent {
             val jsonObject = jsonElement.asJsonObject
             val emitterData = EmitterData()
             val engine = emitterEngine(emitterData)

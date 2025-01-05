@@ -1,16 +1,16 @@
 package gg.aquatic.comet.emitter.bundle
 
 import com.google.gson.JsonElement
+import gg.aquatic.comet.emitter.EmitterComponent
 import gg.aquatic.comet.emitter.EmitterData
 import gg.aquatic.comet.emitter.UnrealizedEmitter
 import gg.aquatic.comet.parsing.*
-import gg.aquatic.comet.parsing.ParticleJsonParser.bundledEmitterComponentParser
 import gg.aquatic.comet.parsing.macro.Macro
 
-class BundledEmitterComponent(private val unrealizedEmitterIDs: List<String>) : PostInit {
-    companion object : ComponentParser<BundledEmitterComponent> {
+class BundledEmitterComponent(private val unrealizedEmitterIDs: List<String>) : EmitterComponent, PostInit {
+    companion object : BaseComponentParser {
         init {
-            bundledEmitterComponentParser = "bundled_emitters" to BundledEmitterComponent
+            ParticleJsonParser.componentParsers += "bundled_emitters" to BundledEmitterComponent
         }
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): BundledEmitterComponent? {
@@ -41,9 +41,11 @@ class BundledEmitterComponent(private val unrealizedEmitterIDs: List<String>) : 
         }
     }
 
-    fun init(otherEmitterData: EmitterData) {
+    override fun init(otherEmitterData: EmitterData) {
         for (unrealizedEmitter in unrealizedEmitters) {
             unrealizedEmitter.realize(otherEmitterData.location)
         }
     }
+
+    override fun execute(otherEmitterData: EmitterData) {}
 }

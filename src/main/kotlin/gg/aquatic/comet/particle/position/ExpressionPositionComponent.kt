@@ -1,10 +1,10 @@
 package gg.aquatic.comet.particle.position
 
 import com.google.gson.JsonElement
-import gg.aquatic.comet.emitter.ComponentResult
 import gg.aquatic.comet.emitter.EmitterData
 import gg.aquatic.comet.parsing.*
 import gg.aquatic.comet.parsing.macro.Macro
+import gg.aquatic.comet.particle.ParticleComponent
 import gg.aquatic.comet.particle.ParticleData
 import org.joml.Vector3d
 import java.util.*
@@ -16,10 +16,10 @@ class ExpressionPositionComponent(
     private val zOffset: CompiledScript,
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData
-) : PositionComponent {
+) : ParticleComponent, PositionComponent {
     private val oldOutputMap: MutableMap<UUID, Vector3d> = mutableMapOf()
 
-    override fun pos(otherEmitterData: EmitterData, otherParticleData: ParticleData): ComponentResult<Vector3d> {
+    override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
         val oldResult = oldOutputMap.getOrPut(otherParticleData.id) { Vector3d() }
@@ -30,12 +30,12 @@ class ExpressionPositionComponent(
         )
         oldOutputMap[otherParticleData.id] = newResult
         val newPos = Vector3d(otherParticleData.relativePosition).add(Vector3d(newResult).sub(oldResult))
-        return ComponentResult(newPos.rotate(myEmitterData.rotation))
+        otherParticleData.relativePosition = newPos.rotate(myEmitterData.rotation)
     }
 
-    companion object : ComponentParser<ExpressionPositionComponent> {
+    companion object : BaseComponentParser {
         init {
-            ParticleJsonParser.positionComponentParsers += "expression_position" to this
+            ParticleJsonParser.componentParsers += "expression_position" to this
         }
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ExpressionPositionComponent? {

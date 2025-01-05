@@ -4,6 +4,7 @@ import com.google.gson.JsonElement
 import gg.aquatic.comet.emitter.EmitterData
 import gg.aquatic.comet.parsing.*
 import gg.aquatic.comet.parsing.macro.Macro
+import gg.aquatic.comet.particle.ParticleComponent
 import gg.aquatic.comet.particle.ParticleData
 import org.joml.Quaternionf
 import javax.script.CompiledScript
@@ -14,10 +15,10 @@ class ExpressionRotationComponent(
     private val zRot: CompiledScript,
     private val myParticleData: ParticleData,
     private val myEmitterData: EmitterData
-) : RotationComponent {
-    companion object : ComponentParser<ExpressionRotationComponent> {
+) : ParticleComponent, RotationComponent {
+    companion object : BaseComponentParser {
         init {
-            ParticleJsonParser.rotationComponentParsers += "expression_rotation" to this
+            ParticleJsonParser.componentParsers += "expression_rotation" to this
         }
 
         override fun parse(
@@ -37,13 +38,15 @@ class ExpressionRotationComponent(
         }
     }
 
-    override fun rotation(otherEmitterData: EmitterData, otherParticleData: ParticleData): Quaternionf {
+    override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
 
-        return Quaternionf()
-            .rotateX((xRot.eval() as Number).toFloat())
-            .rotateY((yRot.eval() as Number).toFloat())
-            .rotateZ((zRot.eval() as Number).toFloat())
+        otherParticleData.rotation = otherEmitterData.emitter!!.applyEmitterRotation(
+            Quaternionf()
+                .rotateX((xRot.eval() as Number).toFloat())
+                .rotateY((yRot.eval() as Number).toFloat())
+                .rotateZ((zRot.eval() as Number).toFloat())
+        )
     }
 }

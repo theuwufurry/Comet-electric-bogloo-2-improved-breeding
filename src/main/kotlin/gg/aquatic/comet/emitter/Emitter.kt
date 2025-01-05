@@ -1,21 +1,14 @@
 package gg.aquatic.comet.emitter
 
-import gg.aquatic.comet.emitter.bundle.BundledEmitterComponent
-import gg.aquatic.comet.emitter.lifetime.EmitterLifetimeComponent
+import gg.aquatic.comet.Component
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.emitter.rate.RateComponent
-import gg.aquatic.comet.emitter.recursive.RecursiveEmitterComponent
 import gg.aquatic.comet.emitter.shape.ShapeComponent
 import gg.aquatic.comet.particle.Particle
+import gg.aquatic.comet.particle.ParticleComponent
 import gg.aquatic.comet.particle.ParticleData
-import gg.aquatic.comet.particle.color.ColorComponent
 import gg.aquatic.comet.particle.data.BillboardConstraints
-import gg.aquatic.comet.particle.display.DisplayComponent
-import gg.aquatic.comet.particle.lifetime.ParticleLifetimeComponent
-import gg.aquatic.comet.particle.position.PositionComponent
-import gg.aquatic.comet.particle.transformation.rotation.RotationComponent
-import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
 import gg.aquatic.waves.chunk.trackedByPlayers
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.PacketEvents
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
@@ -35,17 +28,9 @@ take in component list
     mandatory components with preset hooks
  */
 class Emitter(
+    private val components: List<Component>,
     private val rateComponent: RateComponent,
-    private val particleLifetimeComponent: ParticleLifetimeComponent,
-    private val shapeComponent: ShapeComponent,
-    private val displayComponent: DisplayComponent,
-    private val colorComponent: ColorComponent,
-    private val emitterLifetimeComponent: EmitterLifetimeComponent,
-    private val positionComponents: List<PositionComponent>,
-    private val scaleComponent: ScaleComponent,
-    private val rotationComponent: RotationComponent,
-    private val recursiveEmitterComponent: RecursiveEmitterComponent?,
-    private val bundledEmitterComponent: BundledEmitterComponent?, //KEEP THIS AROUND! Might be needed for future variable stuff.
+    private val shapeComponent: ShapeComponent, //DEPRECATED
     private val distanceCullingComponent: DistanceCullingComponent,
     private val updateFrequencyComponent: UpdateFrequencyComponent,
     private val billboardConstraints: BillboardConstraints,
@@ -54,6 +39,9 @@ class Emitter(
     private val unrealizedHolder: UnrealizedEmitter,
     private val audience: AquaticAudience
 ) {
+    private val emitterComponents: List<EmitterComponent> = components.filterIsInstance<EmitterComponent>()
+    private val particleComponents: List<ParticleComponent> = components.filterIsInstance<ParticleComponent>()
+
     var location = location
         private set
 
@@ -65,21 +53,23 @@ class Emitter(
     private val emitterRotation =
         Quaternionf().rotateTo(Vector3f(0f, 0f, 1f), location.direction.normalize().toVector3f())
 
-    val currentViewers = ConcurrentHashMap.newKeySet<Player>()
+    private val currentViewers = ConcurrentHashMap.newKeySet<Player>()
+
+    init {
+        emitterData.emitter = this
+        emitterComponents.forEach { it.init(emitterData) }
+    }
 
     fun tick(): EmitterTickResult {
-        if (blocked) {
-            println("blocked!")
-            return EmitterTickResult(true)
-        }
+        if (blocked) return EmitterTickResult(true)
 
         blocked = true
 
         emitterData.age++
 
-        if (!dead && !emitterLifetimeComponent.keepAlive(emitterData)) {
-            dead = true
-        }
+        emitterComponents.forEach { it.execute(emitterData) }
+
+        if (emitterData.dead) dead = true
 
         if (dead && particles.size == 0) {
             return EmitterTickResult(false)
@@ -94,36 +84,18 @@ class Emitter(
             }
 
             particle.tick()
-            recursiveEmitterComponent?.updateEmitter(emitterData, particle.data)
-
-            if (!particleLifetimeComponent.keepAlive(emitterData, particle.data)) {
-                die()
-                continue
-            }
-
-            val newDisplay = displayComponent.display(emitterData, particle.data)
-            if (newDisplay != particle.data.displayData) {
-                particle.data.displayData = newDisplay
-            }
-
-            val newColor = colorComponent.color(emitterData, particle.data)
-            if (newColor != particle.data.color) {
-                particle.data.color = newColor
-            }
 
             val initialPos = Vector3d(particle.data.relativePosition)
-            for (positionComponent in positionComponents) {
-                particle.data.relativePosition = positionComponent.pos(emitterData, particle.data).data
+            val shouldUpdate = updateFrequencyComponent.shouldSendUpdate(emitterData, particle.data)
+            if (shouldUpdate.interpolationDuration != null) {
+                particle.data.interpolationDuration = shouldUpdate.interpolationDuration
             }
+
+            particleComponents.forEach { it.execute(emitterData, particle.data) }
 
             if (particle.data.dead) {
                 die()
                 continue
-            }
-
-            val shouldUpdate = updateFrequencyComponent.shouldSendUpdate(emitterData, particle.data)
-            if (shouldUpdate.interpolationDuration != null) {
-                particle.data.interpolationDuration = shouldUpdate.interpolationDuration
             }
 
             if (initialPos != particle.data.relativePosition) {
@@ -132,17 +104,8 @@ class Emitter(
                 }
             }
 
-            val newScale = scaleComponent.scale(emitterData, particle.data)
-            val newRotation = rotationComponent.rotation(emitterData, particle.data).applyEmitterRotation()
-            if (particle.data.scale != newScale) {
-                particle.data.scale = newScale
-            }
-
-            if (particle.data.rotation != newRotation) {
-                particle.data.rotation = newRotation
-            }
-
-            particle.updatePacket(unrealizedHolder.myEntityDataBuilder, shouldUpdate.shouldUpdate)?.let { dataPackets += it }
+            particle.updatePacket(unrealizedHolder.myEntityDataBuilder, shouldUpdate.shouldUpdate)
+                ?.let { dataPackets += it }
         }
 
         val playerManager = PacketEvents.getAPI().playerManager
@@ -203,24 +166,15 @@ class Emitter(
         repeat(rateComponent.toEmit(emitterData)) {
             val particleData = ParticleData()
             val spawnOffset = shapeComponent.offset(emitterData, particleData)
-            val scale = scaleComponent.scale(emitterData, particleData)
-            val rotation = rotationComponent.rotation(emitterData, particleData)
-            for (positionComponent in positionComponents) {
-                particleData.relativePosition = positionComponent.pos(emitterData, particleData).data
-            }
 
             particleData.origin =
                 Vector3d(location.x + spawnOffset.x, location.y + spawnOffset.y, location.z + spawnOffset.z)
-            particleLifetimeComponent.keepAlive(emitterData, particleData)
-            particleData.displayData = displayComponent.display(emitterData, particleData)
-            val color = colorComponent.color(emitterData, particleData)
-            particleData.color = color
             particleData.billboardConstraints = billboardConstraints
-            particleData.scale = scale
-            particleData.rotation = rotation.applyEmitterRotation()
             particleData.interpolationDelay = updateFrequencyComponent.interpolationDelay
             particleData.interpolationDuration = updateFrequencyComponent.initialInterpolationDuration
-            recursiveEmitterComponent?.run { updateEmitter(emitterData, particleData) }
+
+            particleComponents.forEach { it.execute(emitterData, particleData) }
+
             val particle = Particle(particleData)
             val packets = particle.getAddPacket(unrealizedHolder.myEntityDataBuilder)
             bundle.addAll(packets)
@@ -252,8 +206,8 @@ class Emitter(
         particles.clear()
     }
 
-    private fun Quaternionf.applyEmitterRotation(): Quaternionf {
-        return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(emitterRotation).mul(this) else this
+    fun applyEmitterRotation(input: Quaternionf): Quaternionf {
+        return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(emitterRotation).mul(input) else input
     }
 }
 

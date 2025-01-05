@@ -4,6 +4,7 @@ import com.google.gson.JsonElement
 import gg.aquatic.comet.emitter.EmitterData
 import gg.aquatic.comet.parsing.*
 import gg.aquatic.comet.parsing.macro.Macro
+import gg.aquatic.comet.particle.ParticleComponent
 import gg.aquatic.comet.particle.ParticleData
 import org.joml.Quaternionf
 import org.joml.Vector3f
@@ -16,10 +17,10 @@ class DirectionRotationComponent(
     private val angleScript: CompiledScript,
     private val myParticleData: ParticleData,
     private val myEmitterData: EmitterData
-) : RotationComponent {
-    companion object : ComponentParser<DirectionRotationComponent> {
+) : ParticleComponent, RotationComponent {
+    companion object : BaseComponentParser {
         init {
-            ParticleJsonParser.rotationComponentParsers += "direction_rotation" to this
+            ParticleJsonParser.componentParsers += "direction_rotation" to this
         }
 
         override fun parse(
@@ -40,7 +41,7 @@ class DirectionRotationComponent(
         }
     }
 
-    override fun rotation(otherEmitterData: EmitterData, otherParticleData: ParticleData): Quaternionf {
+    override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
         val dir = Vector3f(
@@ -49,8 +50,10 @@ class DirectionRotationComponent(
             (axisZScript.eval() as Number).toFloat(),
         ).normalize()
 
-        return Quaternionf()
-            .rotateTo(Vector3f(0f, 0f, 1f), dir)
-            .rotateZ((angleScript.eval() as Number).toFloat())
+        otherParticleData.rotation = otherEmitterData.emitter!!.applyEmitterRotation(
+            Quaternionf()
+                .rotateTo(Vector3f(0f, 0f, 1f), dir)
+                .rotateZ((angleScript.eval() as Number).toFloat())
+        )
     }
 }

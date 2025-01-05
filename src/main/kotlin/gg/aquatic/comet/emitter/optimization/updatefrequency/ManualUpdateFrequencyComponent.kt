@@ -7,9 +7,11 @@ import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.macro.Macro
 import gg.aquatic.comet.particle.ParticleData
 
-class ManualUpdateFrequencyComponent(private val updateTimes: List<Int>, private val durationOffset: Int) : UpdateFrequencyComponent {
+class ManualUpdateFrequencyComponent(private val updateTimes: List<Int>, private val durationOffset: Int) :
+    UpdateFrequencyComponent {
     override val interpolationDelay: Int = -1
-    override val initialInterpolationDuration: Int = if (updateTimes.size > 1) updateTimes[1] - updateTimes[0] + durationOffset else 1
+    override val initialInterpolationDuration: Int =
+        if (updateTimes.size > 1) updateTimes[1] - updateTimes[0] + durationOffset else 1
 
     companion object : ComponentParser<ManualUpdateFrequencyComponent> {
         init {
@@ -20,7 +22,8 @@ class ManualUpdateFrequencyComponent(private val updateTimes: List<Int>, private
             val jsonObject = jsonElement.asJsonObject
             if (!(jsonObject.has("times") && jsonObject.get("times").isJsonArray)) return null
             val timesObject = jsonObject.getAsJsonArray("times")
-            val offset = if (jsonObject.has("offset") && jsonObject.get("offset").isJsonPrimitive) jsonObject.get("offset").asJsonPrimitive.asInt else 0
+            val offset =
+                if (jsonObject.has("offset") && jsonObject.get("offset").isJsonPrimitive) jsonObject.get("offset").asJsonPrimitive.asInt else 0
             return ManualUpdateFrequencyComponent(timesObject.filter { it.isJsonPrimitive }.map { it.asInt }, offset)
         }
     }
@@ -32,6 +35,9 @@ class ManualUpdateFrequencyComponent(private val updateTimes: List<Int>, private
         val age = otherParticleData.age.toInt()
         val index = updateTimes.indexOf(age)
         if (index == -1) return UpdateFrequencyResult(false, null)
-        return UpdateFrequencyResult(true, if (index >= updateTimes.size - 1) 1 + durationOffset else updateTimes[index + 1] - updateTimes[index] + durationOffset)
+        return UpdateFrequencyResult(
+            true,
+            if (index >= updateTimes.size - 1) 1 + durationOffset else updateTimes[index + 1] - updateTimes[index] + durationOffset
+        )
     }
 }

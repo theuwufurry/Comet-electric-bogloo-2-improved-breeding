@@ -21,12 +21,19 @@ class IntervalUpdateFrequencyComponent(private val interval: Int) : UpdateFreque
             val jsonObject = jsonElement.asJsonObject
             if (!(jsonObject.has("interval") && jsonObject.get("interval").isJsonPrimitive)) return null
             val interval = jsonObject.get("interval").asJsonPrimitive.asNumber.toInt()
-            val offset = if (jsonObject.has("offset") && jsonObject.get("offset").isJsonPrimitive) jsonObject.get("offset").asJsonPrimitive.asInt else 0
+            val offset =
+                if (jsonObject.has("offset") && jsonObject.get("offset").isJsonPrimitive) jsonObject.get("offset").asJsonPrimitive.asInt else 0
             return IntervalUpdateFrequencyComponent(interval + offset)
         }
     }
 
-    override fun shouldSendUpdate(otherEmitterData: EmitterData, otherParticleData: ParticleData): UpdateFrequencyResult {
-        return UpdateFrequencyResult(floor(otherParticleData.age).toInt() == 1 || (floor(otherParticleData.age).toInt() % interval == 0), initialInterpolationDuration)
+    override fun shouldSendUpdate(
+        otherEmitterData: EmitterData,
+        otherParticleData: ParticleData
+    ): UpdateFrequencyResult {
+        return UpdateFrequencyResult(
+            floor(otherParticleData.age).toInt() == 1 || (floor(otherParticleData.age).toInt() % interval == 0),
+            initialInterpolationDuration
+        )
     }
 }

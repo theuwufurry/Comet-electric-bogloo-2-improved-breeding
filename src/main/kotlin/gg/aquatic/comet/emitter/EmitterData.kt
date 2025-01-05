@@ -7,6 +7,8 @@ import java.util.*
 
 data class EmitterData(
     var id: UUID = UUID.randomUUID(),
+    var dead: Boolean = false,
+    var emitter: Emitter? = null,
     var age: Double = 0.0,
     var world: World? = null,
     var rotation: Quaterniond? = Quaterniond(),
@@ -18,6 +20,8 @@ data class EmitterData(
 ) {
     fun copyFrom(other: EmitterData) {
         id = other.id
+        dead = other.dead
+        emitter = other.emitter
         age = other.age
         world = other.world
         rotation = other.rotation

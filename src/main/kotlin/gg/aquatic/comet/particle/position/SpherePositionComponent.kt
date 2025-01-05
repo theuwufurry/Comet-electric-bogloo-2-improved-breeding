@@ -1,10 +1,10 @@
 package gg.aquatic.comet.particle.position
 
 import com.google.gson.JsonElement
-import gg.aquatic.comet.emitter.ComponentResult
 import gg.aquatic.comet.emitter.EmitterData
 import gg.aquatic.comet.parsing.*
 import gg.aquatic.comet.parsing.macro.Macro
+import gg.aquatic.comet.particle.ParticleComponent
 import gg.aquatic.comet.particle.ParticleData
 import org.joml.Vector3d
 import javax.script.CompiledScript
@@ -13,11 +13,11 @@ class SpherePositionComponent(
     private val radiusScript: CompiledScript,
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData
-) : PositionComponent {
-    override fun pos(otherEmitterData: EmitterData, otherParticleData: ParticleData): ComponentResult<Vector3d> {
+) : ParticleComponent, PositionComponent {
+    override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
-        return if (otherParticleData.age == 0.0) {
+        otherParticleData.relativePosition = if (otherParticleData.age == 0.0) {
             val radius = (radiusScript.eval() as Number).toDouble()
             val radiusSquared = radius * radius
             var sphereOffset = randomVector(radius)
@@ -25,17 +25,21 @@ class SpherePositionComponent(
                 sphereOffset = randomVector(radius)
             }
 
-            ComponentResult(Vector3d(otherParticleData.relativePosition).add(sphereOffset))
-        } else ComponentResult(otherParticleData.relativePosition)
+            Vector3d(otherParticleData.relativePosition).add(sphereOffset)
+        } else otherParticleData.relativePosition
     }
 
     private fun randomVector(radius: Double): Vector3d {
-        return Vector3d(Math.random() * 2.0 * radius - radius, Math.random() * 2.0 * radius - radius, Math.random() * 2.0 * radius - radius)
+        return Vector3d(
+            Math.random() * 2.0 * radius - radius,
+            Math.random() * 2.0 * radius - radius,
+            Math.random() * 2.0 * radius - radius
+        )
     }
 
-    companion object : ComponentParser<SpherePositionComponent> {
+    companion object : BaseComponentParser {
         init {
-            ParticleJsonParser.positionComponentParsers += "sphere_position" to this
+            ParticleJsonParser.componentParsers += "sphere_position" to this
         }
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): SpherePositionComponent {

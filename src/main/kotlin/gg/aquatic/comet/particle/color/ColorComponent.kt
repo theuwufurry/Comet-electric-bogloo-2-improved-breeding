@@ -1,11 +1,8 @@
 package gg.aquatic.comet.particle.color
 
+import gg.aquatic.comet.Component
 import gg.aquatic.comet.emitter.EmitterData
-import gg.aquatic.comet.parsing.compile
-import gg.aquatic.comet.parsing.expression
 import gg.aquatic.comet.parsing.particleEngine
-import gg.aquatic.comet.particle.ParticleData
-import java.awt.Color
 
 fun String.addDependency(): String {
     if (contains("Color")) {
@@ -16,10 +13,8 @@ fun String.addDependency(): String {
 }
 
 interface ColorComponent {
-    fun color(otherEmitterData: EmitterData, otherParticleData: ParticleData): Int
-
     companion object {
-        fun default(): ColorComponent {
+        fun default(): Component {
             val emitterData = EmitterData()
             val (engine, particleData) = particleEngine(emitterData)
 

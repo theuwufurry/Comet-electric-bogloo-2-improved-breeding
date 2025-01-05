@@ -4,6 +4,7 @@ import com.google.gson.JsonElement
 import gg.aquatic.comet.emitter.EmitterData
 import gg.aquatic.comet.parsing.*
 import gg.aquatic.comet.parsing.macro.Macro
+import gg.aquatic.comet.particle.ParticleComponent
 import gg.aquatic.comet.particle.ParticleData
 import org.joml.Vector3f
 import javax.script.CompiledScript
@@ -14,10 +15,10 @@ class ExpressionScaleComponent(
     private val zScale: CompiledScript,
     private val myParticleData: ParticleData,
     private val myEmitterData: EmitterData
-) : ScaleComponent {
-    companion object : ComponentParser<ExpressionScaleComponent> {
+) : ParticleComponent, ScaleComponent {
+    companion object : BaseComponentParser, ScaleComponent {
         init {
-            ParticleJsonParser.scaleComponentParsers += "expression_scale" to this
+            ParticleJsonParser.componentParsers += "expression_scale" to this
         }
 
         override fun parse(
@@ -37,11 +38,11 @@ class ExpressionScaleComponent(
         }
     }
 
-    override fun scale(otherEmitterData: EmitterData, otherParticleData: ParticleData): Vector3f {
+    override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
 
-        return Vector3f(
+        otherParticleData.scale = Vector3f(
             (xScale.eval() as Number).toFloat(),
             (yScale.eval() as Number).toFloat(),
             (zScale.eval() as Number).toFloat()

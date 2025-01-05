@@ -150,17 +150,17 @@ class EntityDataBuilder {
             )
         }
 
-        if (flags.translation) {
-            entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
-                10 + PACKET_OFFSET,
-                EntityDataTypes.VECTOR3F,
-                gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3f(
-                    component.translation.x,
-                    component.translation.y,
-                    component.translation.z
-                )
-            )
-        }
+//        if (flags.translation) {
+//            entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
+//                10 + PACKET_OFFSET,
+//                EntityDataTypes.VECTOR3F,
+//                gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3f(
+//                    component.translation.x,
+//                    component.translation.y,
+//                    component.translation.z
+//                )
+//            )
+//        }
 
         if (flags.scale) {
             entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
@@ -179,6 +179,20 @@ class EntityDataBuilder {
                 12 + PACKET_OFFSET,
                 EntityDataTypes.QUATERNION,
                 Quaternion4f(component.rotation.x, component.rotation.y, component.rotation.z, component.rotation.w)
+            )
+        }
+
+        if (flags.rotation || flags.scale) {
+            val offset = Vector3f(-0.0125f, 0f, 0f)
+            offset.mul(component.scale).rotate(component.rotation)
+            entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
+                10 + PACKET_OFFSET,
+                EntityDataTypes.VECTOR3F,
+                gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3f(
+                    component.translation.x + offset.x,
+                    component.translation.y + offset.y,
+                    component.translation.z + offset.y
+                )
             )
         }
 

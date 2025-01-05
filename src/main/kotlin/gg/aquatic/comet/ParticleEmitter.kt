@@ -1,6 +1,8 @@
 package gg.aquatic.comet
 
-import gg.aquatic.comet.command.*
+import gg.aquatic.comet.command.ClearParticlesCommand
+import gg.aquatic.comet.command.CustomParticleCommand
+import gg.aquatic.comet.command.ReloadParticleScriptsCommand
 import gg.aquatic.comet.hook.IHook
 import gg.aquatic.comet.hook.ModelEngineHook
 import gg.aquatic.comet.hook.mythicmobs.MythicMobsHook

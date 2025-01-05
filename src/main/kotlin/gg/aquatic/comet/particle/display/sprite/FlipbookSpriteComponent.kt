@@ -5,6 +5,7 @@ import com.google.gson.JsonObject
 import gg.aquatic.comet.emitter.EmitterData
 import gg.aquatic.comet.parsing.*
 import gg.aquatic.comet.parsing.macro.Macro
+import gg.aquatic.comet.particle.ParticleComponent
 import gg.aquatic.comet.particle.ParticleData
 import javax.script.CompiledScript
 
@@ -12,10 +13,10 @@ class FlipbookSpriteComponent(
     private val inputScript: CompiledScript,
     private val spriteScripts: List<Pair<Double, CompiledScript>>,
     private val myParticleData: ParticleData, private val myEmitterData: EmitterData
-) : SpriteComponent {
-    companion object : ComponentParser<FlipbookSpriteComponent> {
+) : ParticleComponent, SpriteComponent {
+    companion object : BaseComponentParser {
         init {
-            ParticleJsonParser.displayComponentParsers += "flipbook_sprite" to this
+            ParticleJsonParser.componentParsers += "flipbook_sprite" to this
         }
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): FlipbookSpriteComponent? {
@@ -39,13 +40,13 @@ class FlipbookSpriteComponent(
         }
     }
 
-    override fun display(otherEmitterData: EmitterData, otherParticleData: ParticleData): SpriteData {
+    override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
         val inputResult = (inputScript.eval() as Number).toDouble()
 
         var i = 0
         while (i + 1 < spriteScripts.size && inputResult >= spriteScripts[i + 1].first) i++
-        return SpriteData(spriteScripts[i].second.eval() as String)
+        otherParticleData.displayData = SpriteData(spriteScripts[i].second.eval() as String)
     }
 }

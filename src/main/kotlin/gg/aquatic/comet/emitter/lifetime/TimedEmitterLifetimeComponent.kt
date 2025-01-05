@@ -1,6 +1,7 @@
 package gg.aquatic.comet.emitter.lifetime
 
 import com.google.gson.JsonElement
+import gg.aquatic.comet.emitter.EmitterComponent
 import gg.aquatic.comet.emitter.EmitterData
 import gg.aquatic.comet.parsing.*
 import gg.aquatic.comet.parsing.macro.Macro
@@ -9,10 +10,10 @@ import javax.script.CompiledScript
 class TimedEmitterLifetimeComponent(
     private val lifetimeScript: CompiledScript,
     private val myEmitterData: EmitterData
-) : EmitterLifetimeComponent {
-    companion object : ComponentParser<TimedEmitterLifetimeComponent> {
+) : EmitterComponent, EmitterLifetimeComponent {
+    companion object : BaseComponentParser {
         init {
-            ParticleJsonParser.emitterLifetimeComponentParsers += "timed_emitter_lifetime" to this
+            ParticleJsonParser.componentParsers += "timed_emitter_lifetime" to this
         }
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): TimedEmitterLifetimeComponent? {
@@ -27,9 +28,10 @@ class TimedEmitterLifetimeComponent(
         }
     }
 
+    override fun init(otherEmitterData: EmitterData) {}
 
-    override fun keepAlive(otherEmitterData: EmitterData): Boolean {
+    override fun execute(otherEmitterData: EmitterData) {
         myEmitterData.copyFrom(otherEmitterData)
-        return (lifetimeScript.eval() as Number).toDouble() <= 0.0
+        otherEmitterData.dead = !((lifetimeScript.eval() as Number).toDouble() <= 0.0)
     }
 }

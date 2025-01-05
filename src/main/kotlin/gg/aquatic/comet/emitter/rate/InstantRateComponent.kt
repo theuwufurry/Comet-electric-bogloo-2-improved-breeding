@@ -6,7 +6,11 @@ import gg.aquatic.comet.parsing.*
 import gg.aquatic.comet.parsing.macro.Macro
 import javax.script.CompiledScript
 
-class InstantRateComponent(private val amount: CompiledScript, private val offset: CompiledScript?, private val myEmitterData: EmitterData) :
+class InstantRateComponent(
+    private val amount: CompiledScript,
+    private val offset: CompiledScript?,
+    private val myEmitterData: EmitterData
+) :
     RateComponent {
     companion object : ComponentParser<InstantRateComponent> {
         init {

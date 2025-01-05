@@ -1,10 +1,12 @@
 package gg.aquatic.comet.particle.position
 
 import com.google.gson.JsonElement
-import gg.aquatic.comet.emitter.ComponentResult
 import gg.aquatic.comet.emitter.EmitterData
+import gg.aquatic.comet.emitter.action.Action
+import gg.aquatic.comet.emitter.action.ActionContext
 import gg.aquatic.comet.parsing.*
 import gg.aquatic.comet.parsing.macro.Macro
+import gg.aquatic.comet.particle.ParticleComponent
 import gg.aquatic.comet.particle.ParticleData
 import org.joml.Vector3d
 import java.util.*
@@ -15,22 +17,32 @@ class AttractorPositionComponent(
     private val attractorScripts: List<Attractor>,
     private val factor: CompiledScript,
     private val type: String,
+    private val onHitAction: Action?,
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData
-) : PositionComponent {
+) : ParticleComponent, PositionComponent, PostInit {
     class Attractor(
         val x: CompiledScript,
         val y: CompiledScript,
         val z: CompiledScript,
-        val mass: CompiledScript
+        val mass: CompiledScript,
+        val radius: CompiledScript?
     )
 
-    private class EvaluatedAttractor(val pos: Vector3d, val mass: Double)
-    private class EmitterAttractorData(val evaluatedAttractors: List<EvaluatedAttractor>, val evaluatedFactor: Double, val age: Double)
+    override fun realize() {
+        onHitAction?.subActions?.filterIsInstance<PostInit>()?.forEach { it.realize() }
+    }
+
+    private class EvaluatedAttractor(val pos: Vector3d, val mass: Double, val radius: Double?)
+    private class EmitterAttractorData(
+        val evaluatedAttractors: List<EvaluatedAttractor>,
+        val evaluatedFactor: Double,
+        val age: Double
+    )
 
     private val emitterAttractorMap: MutableMap<UUID, EmitterAttractorData> = mutableMapOf()
 
-    override fun pos(otherEmitterData: EmitterData, otherParticleData: ParticleData): ComponentResult<Vector3d> {
+    override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
         val savedData = emitterAttractorMap[otherEmitterData.id]
@@ -43,7 +55,7 @@ class AttractorPositionComponent(
                             (script.x.eval() as Number).toDouble(),
                             (script.y.eval() as Number).toDouble(),
                             (script.z.eval() as Number).toDouble(),
-                        ), (script.mass.eval() as Number).toDouble()
+                        ), (script.mass.eval() as Number).toDouble(), (script.radius?.eval() as? Number)?.toDouble()
                     )
                 }
 
@@ -60,9 +72,23 @@ class AttractorPositionComponent(
                     val delta = Vector3d(attractor.pos).sub(otherParticleData.relativePosition)
                     val length = delta.length()
                     if (length < 0.00001) continue
+
                     val distanceSquared = attractor.pos.distanceSquared(otherParticleData.relativePosition)
-                    val totalFactor = min(factor * attractor.mass / distanceSquared, length)
-                    velocity.add(delta.normalize(totalFactor))
+                    val totalFactor = factor * attractor.mass / distanceSquared
+                    attractor.radius?.let {
+                        if (totalFactor >= length - it) {
+                            onHit(
+                                ActionContext(
+                                    otherParticleData,
+                                    otherEmitterData,
+                                    otherParticleData.relativePosition,
+                                    Vector3d()
+                                )
+                            )
+                        }
+                    }
+
+                    velocity.add(delta.normalize(min(totalFactor, length)))
                 }
             }
 
@@ -71,9 +97,23 @@ class AttractorPositionComponent(
                     val delta = Vector3d(attractor.pos).sub(otherParticleData.relativePosition)
                     val length = delta.length()
                     if (length < 0.00001) continue
+
                     val distance = attractor.pos.distance(otherParticleData.relativePosition)
-                    val totalFactor = min(factor * attractor.mass / distance, length)
-                    velocity.add(delta.normalize(totalFactor))
+                    val totalFactor = factor * attractor.mass / distance
+                    attractor.radius?.let {
+                        if (totalFactor >= length - it) {
+                            onHit(
+                                ActionContext(
+                                    otherParticleData,
+                                    otherEmitterData,
+                                    otherParticleData.relativePosition,
+                                    Vector3d()
+                                )
+                            )
+                        }
+                    }
+
+                    velocity.add(delta.normalize(min(totalFactor, length)))
                 }
             }
 
@@ -82,18 +122,37 @@ class AttractorPositionComponent(
                     val delta = Vector3d(attractor.pos).sub(otherParticleData.relativePosition)
                     val length = delta.length()
                     if (length < 0.00001) continue
-                    val totalFactor = min(attractor.mass, length)
-                    velocity.add(delta.normalize(totalFactor))
+
+                    val totalFactor = attractor.mass
+                    attractor.radius?.let {
+                        if (totalFactor >= length - it) {
+                            onHit(
+                                ActionContext(
+                                    otherParticleData,
+                                    otherEmitterData,
+                                    otherParticleData.relativePosition,
+                                    Vector3d()
+                                )
+                            )
+                        }
+                    }
+
+                    velocity.add(delta.normalize(min(totalFactor, length)))
                 }
             }
         }
 
-        return ComponentResult(Vector3d(otherParticleData.relativePosition).add(velocity))
+        otherParticleData.relativePosition.add(velocity)
+        return
     }
 
-    companion object : ComponentParser<AttractorPositionComponent> {
+    private fun onHit(context: ActionContext) {
+        onHitAction?.execute(context)
+    }
+
+    companion object : BaseComponentParser {
         init {
-            ParticleJsonParser.positionComponentParsers += "attractor_position" to this
+            ParticleJsonParser.componentParsers += "attractor_position" to this
         }
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): AttractorPositionComponent? {
@@ -109,13 +168,17 @@ class AttractorPositionComponent(
                     engine.compile(attractorObject.expression("y") ?: return null, macros),
                     engine.compile(attractorObject.expression("z") ?: return null, macros),
                     engine.compile(attractorObject.expression("mass") ?: "1", macros),
+                    attractorObject.expression("radius")?.let { engine.compile(it, macros) },
                 )
             }
+
+            val actions = jsonObject.getAsJsonArray("on_hit_attractor")?.let { Action.parse(it, macros) }
 
             return AttractorPositionComponent(
                 attractorScripts,
                 engine.compile(jsonObject.expression("factor") ?: "1", macros),
                 jsonObject.getAsJsonPrimitive("type")?.asString ?: "gravity_linear",
+                actions,
                 emitterData, particleData
             )
         }

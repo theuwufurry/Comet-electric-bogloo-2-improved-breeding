@@ -1,12 +1,11 @@
 package gg.aquatic.comet.emitter.recursive
 
 import com.google.gson.JsonElement
-import gg.aquatic.comet.emitter.Emitter
 import gg.aquatic.comet.emitter.EmitterData
 import gg.aquatic.comet.emitter.UnrealizedEmitter
 import gg.aquatic.comet.parsing.*
-import gg.aquatic.comet.parsing.ParticleJsonParser.recursiveEmitterComponentParser
 import gg.aquatic.comet.parsing.macro.Macro
+import gg.aquatic.comet.particle.ParticleComponent
 import gg.aquatic.comet.particle.ParticleData
 import org.bukkit.Location
 import org.joml.Vector3d
@@ -15,17 +14,18 @@ import org.joml.Vector3d
 
 //add all unrealized emitters with unrealized recursive emitter components
 class RecursiveEmitterComponent(private val unrealizedEmitterID: String) :
-    PostInit {
-    companion object : ComponentParser<RecursiveEmitterComponent> {
+    ParticleComponent, PostInit {
+    companion object : BaseComponentParser {
         init {
-            recursiveEmitterComponentParser = "sub_emitter" to RecursiveEmitterComponent
+            ParticleJsonParser.componentParsers += "sub_emitter" to RecursiveEmitterComponent
         }
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): RecursiveEmitterComponent? {
             val jsonObject = jsonElement.asJsonObject
             val emitterData = EmitterData()
             val engine = emitterEngine(emitterData)
-            val unrealizedEmitterID = engine.compile(jsonObject.expression("emitter") ?: return null, macros, true).eval() as String
+            val unrealizedEmitterID =
+                engine.compile(jsonObject.expression("emitter") ?: return null, macros, true).eval() as String
 
             return RecursiveEmitterComponent(
                 unrealizedEmitterID
@@ -36,10 +36,11 @@ class RecursiveEmitterComponent(private val unrealizedEmitterID: String) :
     private lateinit var unrealizedEmitter: UnrealizedEmitter
 
     override fun realize() {
-        unrealizedEmitter = ParticleJsonParser.jsonUnrealizedEmitters[unrealizedEmitterID] ?: throw NullPointerException("$unrealizedEmitterID is not a valid emitter ID!")
+        unrealizedEmitter = ParticleJsonParser.jsonUnrealizedEmitters[unrealizedEmitterID]
+            ?: throw NullPointerException("$unrealizedEmitterID is not a valid emitter ID!")
     }
 
-    fun updateEmitter(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
+    override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
         if (otherParticleData.age == 0.0) {
             val v = Vector3d(otherParticleData.origin).add(otherParticleData.relativePosition)
             otherParticleData.emitter = unrealizedEmitter.realize(Location(otherEmitterData.world, v.x, v.y, v.z))

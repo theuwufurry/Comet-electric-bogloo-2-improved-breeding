@@ -1,14 +1,13 @@
 package gg.aquatic.comet.emitter.lifetime
 
+import gg.aquatic.comet.Component
 import gg.aquatic.comet.emitter.EmitterData
 import gg.aquatic.comet.parsing.compile
 import gg.aquatic.comet.parsing.emitterEngine
 
 interface EmitterLifetimeComponent {
-    fun keepAlive(otherEmitterData: EmitterData): Boolean
-
     companion object {
-        fun default(): EmitterLifetimeComponent {
+        fun default(): Component {
             val emitterData = EmitterData()
             val engine = emitterEngine(emitterData)
             return TimedEmitterLifetimeComponent(

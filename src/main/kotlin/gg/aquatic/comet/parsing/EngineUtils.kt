@@ -35,20 +35,35 @@ fun Compilable.compile(input: String, macros: Map<String, Macro>?, tryAsSimpleSt
         }
     }
 
-    val compiled = compile(output)
+    val compiled = compileOrNull(output)
     if (tryAsSimpleString) {
         try {
-            compiled.eval()
+            if (compiled == null) {
+                val escapedCompiled = compile("\"" + output + "\"")
+                escapedCompiled?.eval()
+                return escapedCompiled
+
+            } else {
+                compiled.eval()
+            }
         } catch (ignored: Exception) {
             val escapedCompiled = compile("\"" + output + "\"")
             try {
                 escapedCompiled.eval()
                 return escapedCompiled
             } catch (ignored: Exception) {
-                return compiled
+                return compiled!!
             }
         }
     }
 
-    return compiled
+    return compiled!!
+}
+
+fun Compilable.compileOrNull(script: String): CompiledScript? {
+    return try {
+        compile(script)
+    } catch (ignored: Exception) {
+        null
+    }
 }

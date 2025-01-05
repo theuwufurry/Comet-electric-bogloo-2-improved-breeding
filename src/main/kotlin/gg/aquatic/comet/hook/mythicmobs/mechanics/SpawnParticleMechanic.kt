@@ -16,7 +16,7 @@ class SpawnParticleMechanic(
 ) : ITargetedLocationSkill {
 
     private val audience = loader.config.getAudience("audience", "CASTER")
-    private val emitterId = loader.config.getPlaceholderString(arrayOf("emitter", "e"),"")
+    private val emitterId = loader.config.getPlaceholderString(arrayOf("emitter", "e"), "")
 
     override fun castAtLocation(skillMeta: SkillMetadata, aLocation: AbstractLocation): SkillResult {
         val audience = this.audience.get(skillMeta, skillMeta.trigger)

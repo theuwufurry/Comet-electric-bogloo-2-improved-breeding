@@ -1,21 +1,13 @@
 package gg.aquatic.comet.emitter
 
+import gg.aquatic.comet.Component
 import gg.aquatic.comet.ParticleEmitter
-import gg.aquatic.comet.emitter.bundle.BundledEmitterComponent
-import gg.aquatic.comet.emitter.lifetime.EmitterLifetimeComponent
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.emitter.rate.RateComponent
-import gg.aquatic.comet.emitter.recursive.RecursiveEmitterComponent
 import gg.aquatic.comet.emitter.shape.ShapeComponent
-import gg.aquatic.comet.particle.color.ColorComponent
 import gg.aquatic.comet.particle.data.BillboardConstraints
 import gg.aquatic.comet.particle.data.EntityDataBuilder
-import gg.aquatic.comet.particle.display.DisplayComponent
-import gg.aquatic.comet.particle.lifetime.ParticleLifetimeComponent
-import gg.aquatic.comet.particle.position.PositionComponent
-import gg.aquatic.comet.particle.transformation.rotation.RotationComponent
-import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
 import gg.aquatic.waves.util.audience.AquaticAudience
 import gg.aquatic.waves.util.audience.GlobalAudience
@@ -45,19 +37,11 @@ object EmitterTickersHolder {
 }
 
 data class UnrealizedEmitter(
+    val components: List<Component>,
     val rateComponent: RateComponent,
-    val particleLifetimeComponent: ParticleLifetimeComponent,
-    val displayComponent: DisplayComponent,
     val shapeComponent: ShapeComponent,
-    val colorComponent: ColorComponent,
-    val emitterLifetimeComponent: EmitterLifetimeComponent,
-    val positionComponents: List<PositionComponent>,
-    val scaleComponent: ScaleComponent,
-    val rotationComponent: RotationComponent,
-    val recursiveEmitterComponent: RecursiveEmitterComponent?,
     val distanceCullingComponent: DistanceCullingComponent,
     val updateFrequencyComponent: UpdateFrequencyComponent,
-    val bundledEmitterComponent: BundledEmitterComponent?,
     val billboardConstraints: BillboardConstraints,
 ) {
     private val emitters: MutableSet<Emitter> = ConcurrentSet()
@@ -107,22 +91,15 @@ data class UnrealizedEmitter(
         val emitterData = EmitterData()
         emitterData.world = location.world
         emitterData.location = location
-        bundledEmitterComponent?.init(emitterData)
         return Emitter(
+            components,
             rateComponent,
-            particleLifetimeComponent,
             shapeComponent,
-            displayComponent,
-            colorComponent,
-            emitterLifetimeComponent,
-            positionComponents,
-            scaleComponent,
-            rotationComponent,
-            recursiveEmitterComponent,
-            bundledEmitterComponent,
             distanceCullingComponent,
             updateFrequencyComponent,
             billboardConstraints, location, emitterData, this, audience
-        ).also { emitters += it }
+        ).also {
+            emitters += it
+        }
     }
 }

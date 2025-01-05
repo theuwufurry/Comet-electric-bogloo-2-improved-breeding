@@ -7,7 +7,7 @@ import gg.aquatic.comet.particle.display.sprite.SpriteData
 import org.joml.Quaternionf
 import org.joml.Vector3d
 import org.joml.Vector3f
-import java.util.UUID
+import java.util.*
 
 data class ParticleData(
     var id: UUID = UUID.randomUUID(),

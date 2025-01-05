@@ -1,24 +1,25 @@
 package gg.aquatic.comet.particle.display.model
 
 import com.google.gson.JsonElement
+import gg.aquatic.comet.Component
 import gg.aquatic.comet.emitter.EmitterData
 import gg.aquatic.comet.parsing.*
 import gg.aquatic.comet.parsing.macro.Macro
+import gg.aquatic.comet.particle.ParticleComponent
 import gg.aquatic.comet.particle.ParticleData
-import gg.aquatic.comet.particle.display.DisplayData
 import javax.script.CompiledScript
 
 class ConstantModelComponent(
     private val item: CompiledScript,
     private val id: CompiledScript,
     private val myEmitterData: EmitterData
-) : ModelComponent {
-    companion object : ComponentParser<ConstantModelComponent> {
+) : ParticleComponent, ModelComponent {
+    companion object : BaseComponentParser {
         init {
-            ParticleJsonParser.displayComponentParsers += "constant_model" to this
+            ParticleJsonParser.componentParsers += "constant_model" to this
         }
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ConstantModelComponent? {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component? {
             val jsonObject = jsonElement.asJsonObject
             val emitterData = EmitterData()
             val engine = emitterEngine(emitterData)
@@ -31,9 +32,9 @@ class ConstantModelComponent(
         }
     }
 
-    override fun display(otherEmitterData: EmitterData, otherParticleData: ParticleData): DisplayData {
+    override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
         myEmitterData.copyFrom(otherEmitterData)
-        return if (otherParticleData.age == 0.0) {
+        otherParticleData.displayData = if (otherParticleData.age == 0.0) {
             ModelData(item.eval() as String, (id.eval() as Number).toInt())
         } else {
             otherParticleData.displayData
