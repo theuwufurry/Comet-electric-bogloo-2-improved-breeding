@@ -22,11 +22,6 @@ import org.joml.Vector3d
 import org.joml.Vector3f
 import java.util.concurrent.ConcurrentHashMap
 
-/*
-take in component list
-    component list with preset fields for the stuff that's needed
-    mandatory components with preset hooks
- */
 class Emitter(
     private val components: List<Component>,
     private val rateComponent: RateComponent,

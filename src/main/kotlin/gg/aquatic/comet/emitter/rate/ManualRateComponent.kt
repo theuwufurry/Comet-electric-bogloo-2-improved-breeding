@@ -10,6 +10,8 @@ import javax.script.CompiledScript
 class ManualRateComponent(private val spawningMap: Map<Int, CompiledScript>, private val myEmitterData: EmitterData) :
     RateComponent {
     companion object : ComponentParser<ManualRateComponent> {
+        private val timesInput = Regex("^\\d+\\.\\.\\d+$")
+
         init {
             ParticleJsonParser.rateComponentParsers += "emitter_rate_manual" to this
         }
@@ -20,9 +22,22 @@ class ManualRateComponent(private val spawningMap: Map<Int, CompiledScript>, pri
             val engine = emitterEngine(emitterData)
             val spawningMap: MutableMap<Int, CompiledScript> = TreeMap()
             for ((timeString, _) in jsonObject.entrySet()) {
-                val time = timeString.toIntOrNull() ?: continue
-                val amountScript = engine.compile(jsonObject.expression(timeString) ?: continue, macros)
-                spawningMap[time] = amountScript
+                timeString.toIntOrNull()?.let l@{
+                    val amountScript = engine.compile(jsonObject.expression(timeString) ?: return@l, macros)
+                    spawningMap[it] = amountScript
+                } ?: run l@{
+                    if (!timesInput.matches(timeString)) return@l
+
+                    val parts = timeString.split("..")
+
+                    val start = parts[0].toInt()
+                    val finish = parts[1].toInt()
+
+                    val amountScript = engine.compile(jsonObject.expression(timeString) ?: return@l, macros)
+                    for (time in start..finish) {
+                        spawningMap[time] = amountScript
+                    }
+                }
             }
 
             return ManualRateComponent(
