@@ -50,8 +50,9 @@ class MotionPositionComponent(
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
         if (otherParticleData.age == 0.0) {
+            oldPositionMap[otherParticleData.id] = Vector3d(otherParticleData.relativePosition)
             return ComponentResult(
-                initialVelocityComponent.dir(otherEmitterData, otherParticleData).rotate(myEmitterData.rotation)
+                Vector3d(otherParticleData.relativePosition).add(initialVelocityComponent.dir(otherEmitterData, otherParticleData).rotate(myEmitterData.rotation))
             )
         }
 
@@ -64,7 +65,7 @@ class MotionPositionComponent(
 
         otherParticleData.acceleration = Vector3d()
 
-        val oldPos = oldPositionMap.getOrPut(otherParticleData.id) { Vector3d() }
+        val oldPos = oldPositionMap[otherParticleData.id]
         val velocity = Vector3d(otherParticleData.relativePosition).sub(oldPos)
 
         velocity.mul(1.0 - dragCoefficient)
@@ -388,7 +389,7 @@ class MotionPositionComponent(
                 velocityComponent ?: return null,
                 accelerationScript,
                 engine.compile(jsonObject.expression("drag") ?: return null, macros),
-                engine.compile(jsonObject.expression("restitution") ?: return null, macros),
+                jsonObject.expression("restitution")?.let { engine.compile(it, macros) },
                 action,
                 jsonObject.expression("on_collision_emitter"),
                 emitterData, particleData

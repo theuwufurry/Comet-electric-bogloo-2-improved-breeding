@@ -8,7 +8,6 @@ import gg.aquatic.comet.parsing.macro.Macro
 import gg.aquatic.comet.particle.ParticleData
 import org.joml.Vector3d
 import javax.script.CompiledScript
-import kotlin.math.pow
 
 class SpherePositionComponent(
     private val radiusScript: CompiledScript,
