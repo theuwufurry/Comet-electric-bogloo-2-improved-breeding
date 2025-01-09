@@ -5,7 +5,7 @@ import gg.aquatic.comet.emitter.action.sub.ParticleDieSubAction
 import gg.aquatic.comet.emitter.action.sub.SpawnEmitterSubAction
 import gg.aquatic.comet.parsing.ComponentParser
 import gg.aquatic.comet.parsing.macro.Macro
-import gg.aquatic.comet.particle.variable.JavascriptSubAction
+import gg.aquatic.comet.emitter.action.sub.JavascriptSubAction
 
 class Action(
     val subActions: List<SubAction>

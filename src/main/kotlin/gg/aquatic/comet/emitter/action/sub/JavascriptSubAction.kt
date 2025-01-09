@@ -1,4 +1,4 @@
-package gg.aquatic.comet.particle.variable
+package gg.aquatic.comet.emitter.action.sub
 
 import com.google.gson.JsonElement
 import gg.aquatic.comet.emitter.EmitterData

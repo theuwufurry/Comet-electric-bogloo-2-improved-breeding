@@ -8,7 +8,6 @@ import gg.aquatic.comet.ParticleEmitter
 import gg.aquatic.comet.emitter.EmitterTickersHolder
 import gg.aquatic.comet.emitter.UnrealizedEmitter
 import gg.aquatic.comet.emitter.action.event.EmitterInitComponent
-import gg.aquatic.comet.emitter.bundle.BundledEmitterComponent
 import gg.aquatic.comet.emitter.lifetime.EmitterLifetimeComponent
 import gg.aquatic.comet.emitter.lifetime.TimedEmitterLifetimeComponent
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
@@ -41,7 +40,6 @@ import gg.aquatic.comet.particle.transformation.rotation.ExpressionRotationCompo
 import gg.aquatic.comet.particle.transformation.rotation.RotationComponent
 import gg.aquatic.comet.particle.transformation.scale.ExpressionScaleComponent
 import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
-import gg.aquatic.comet.particle.variable.JavascriptSubAction
 import gg.aquatic.comet.particle.variable.RandomsInitializerComponent
 import java.io.FileReader
 
@@ -115,8 +113,6 @@ object ParticleJsonParser {
 
         RecursiveEmitterComponent
 
-        BundledEmitterComponent
-
         EmitterInitComponent
         RandomsInitializerComponent
     }
@@ -161,8 +157,6 @@ object ParticleJsonParser {
         var distanceCullingComponent: DistanceCullingComponent? = null
         var updateFrequencyComponent: UpdateFrequencyComponent? = null
         var billboardConstraints: BillboardConstraints? = null
-
-        var bundledEmitterComponent: BundledEmitterComponent? = null
 
         for ((key, componentElement) in componentsObject.entrySet()) {
             if (key in componentParsers) {
