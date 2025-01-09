@@ -12,6 +12,7 @@ import javax.script.ScriptContext
 fun emitterEngine(emitterData: EmitterData): Compilable {
     val engine = ParticleEmitter.scriptEngineFactory.scriptEngine
     engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("emitter" to emitterData)
+    engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("emitter_variable" to emitterData.variable)
     return engine as Compilable
 }
 
@@ -19,7 +20,9 @@ fun particleEngine(emitterData: EmitterData): Pair<Compilable, ParticleData> {
     val engine = ParticleEmitter.scriptEngineFactory.scriptEngine
     val particleData = ParticleData()
     engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("emitter" to emitterData)
+    engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("emitter_variable" to emitterData.variable)
     engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("particle" to particleData)
+    engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("particle_variable" to particleData.variable)
     return Pair(engine as Compilable, particleData)
 }
 

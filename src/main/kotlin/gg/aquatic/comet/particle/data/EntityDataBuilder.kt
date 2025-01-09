@@ -105,8 +105,8 @@ class EntityDataBuilder {
                     entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                         22 + PACKET_OFFSET,
                         EntityDataTypes.ADV_COMPONENT,
-                        Component.translatable((component.displayData as TextDisplayComponent).string)
-                            .color(TextColor.color(component.color and 0xFFFFFF)).font(key)
+                        Component.text((component.displayData as TextDisplayComponent).string)
+                            .color(TextColor.color(component.color and 0xFFFFFF))
                     )
                 }
 

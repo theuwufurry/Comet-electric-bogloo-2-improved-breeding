@@ -8,9 +8,21 @@ import gg.aquatic.comet.parsing.macro.Macro
 import javax.script.CompiledScript
 
 class TimedEmitterLifetimeComponent(
-    private val lifetimeScript: CompiledScript,
+    private val lifetimeScript: CompiledScript?,
+    private val maxLifeScript: CompiledScript?,
     private val myEmitterData: EmitterData
 ) : EmitterComponent, EmitterLifetimeComponent {
+    override fun init(otherEmitterData: EmitterData) {}
+
+    override fun execute(otherEmitterData: EmitterData) {
+        myEmitterData.copyFrom(otherEmitterData)
+//        otherEmitterData.dead = !((lifetimeScript.eval() as Number).toDouble() <= 0.0)
+        otherEmitterData.dead = !(lifetimeScript?.run {
+            (eval() as Number).toDouble() <= 0.0
+        } ?: maxLifeScript?.run {
+            otherEmitterData.age <= (eval() as Number).toDouble()
+        } ?: false)
+    }
     companion object : BaseComponentParser {
         init {
             ParticleJsonParser.componentParsers += "timed_emitter_lifetime" to this
@@ -21,17 +33,10 @@ class TimedEmitterLifetimeComponent(
             val emitterData = EmitterData()
             val engine = emitterEngine(emitterData)
             return TimedEmitterLifetimeComponent(
-                engine.compile(
-                    jsonObject.expression("expiration_expression") ?: return null, macros
-                ), emitterData
+                jsonObject.expression("expiration_expression")?.let { engine.compile(it, macros) },
+                jsonObject.expression("max_lifetime")?.let { engine.compile(it, macros) },
+                emitterData
             )
         }
-    }
-
-    override fun init(otherEmitterData: EmitterData) {}
-
-    override fun execute(otherEmitterData: EmitterData) {
-        myEmitterData.copyFrom(otherEmitterData)
-        otherEmitterData.dead = !((lifetimeScript.eval() as Number).toDouble() <= 0.0)
     }
 }

@@ -40,6 +40,7 @@ import gg.aquatic.comet.particle.transformation.rotation.ExpressionRotationCompo
 import gg.aquatic.comet.particle.transformation.rotation.RotationComponent
 import gg.aquatic.comet.particle.transformation.scale.ExpressionScaleComponent
 import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
+import gg.aquatic.comet.particle.variable.RandomsInitializerComponent
 import java.io.FileReader
 
 fun JsonObject.expression(field: String): String? {
@@ -113,6 +114,8 @@ object ParticleJsonParser {
         RecursiveEmitterComponent
 
         BundledEmitterComponent
+
+        RandomsInitializerComponent
     }
 
     lateinit var jsonUnrealizedEmitters: Map<String, UnrealizedEmitter>
