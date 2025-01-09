@@ -18,11 +18,11 @@ import gg.aquatic.comet.emitter.rate.InstantRateComponent
 import gg.aquatic.comet.emitter.rate.ManualRateComponent
 import gg.aquatic.comet.emitter.rate.RateComponent
 import gg.aquatic.comet.emitter.rate.SteadyRateComponent
-import gg.aquatic.comet.emitter.recursive.RecursiveEmitterComponent
 import gg.aquatic.comet.emitter.shape.PointShapeComponent
 import gg.aquatic.comet.emitter.shape.ShapeComponent
 import gg.aquatic.comet.parsing.macro.Macro
 import gg.aquatic.comet.parsing.macro.MacrosParser
+import gg.aquatic.comet.particle.ParticleInitComponent
 import gg.aquatic.comet.particle.color.ColorComponent
 import gg.aquatic.comet.particle.color.ConstantColorComponent
 import gg.aquatic.comet.particle.color.GradientColorComponent
@@ -111,8 +111,7 @@ object ParticleJsonParser {
         IntervalUpdateFrequencyComponent
         ManualUpdateFrequencyComponent
 
-        RecursiveEmitterComponent
-
+        ParticleInitComponent
         EmitterInitComponent
         RandomsInitializerComponent
     }

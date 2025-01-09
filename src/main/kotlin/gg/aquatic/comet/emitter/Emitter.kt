@@ -23,6 +23,7 @@ import org.joml.Vector3f
 import java.util.concurrent.ConcurrentHashMap
 
 class Emitter(
+    private val parent: Parent? = null,
     private val components: List<Component>,
     private val rateComponent: RateComponent,
     private val shapeComponent: ShapeComponent, //DEPRECATED
@@ -33,7 +34,7 @@ class Emitter(
     private val emitterData: EmitterData,
     private val unrealizedHolder: UnrealizedEmitter,
     private val audience: AquaticAudience
-) {
+) : Parent {
     private val emitterComponents: List<EmitterComponent> = components.filterIsInstance<EmitterComponent>()
     private val particleComponents: List<ParticleComponent> = components.filterIsInstance<ParticleComponent>()
 
@@ -62,6 +63,7 @@ class Emitter(
 
         emitterData.age++
 
+        parent?.location()?.let { setPos(it) }
         emitterComponents.forEach { it.execute(emitterData) }
 
         if (emitterData.dead) dead = true
@@ -160,6 +162,8 @@ class Emitter(
         val bundle: MutableList<PacketWrapper<*>> = mutableListOf()
         repeat(rateComponent.toEmit(emitterData)) {
             val particleData = ParticleData()
+            val particle = Particle(particleData)
+            particleData.particle = particle
             val spawnOffset = shapeComponent.offset(emitterData, particleData)
 
             particleData.origin =
@@ -170,7 +174,8 @@ class Emitter(
 
             particleComponents.forEach { it.execute(emitterData, particleData) }
 
-            val particle = Particle(particleData)
+            particle.init()
+
             val packets = particle.getAddPacket(unrealizedHolder.myEntityDataBuilder)
             bundle.addAll(packets)
 
@@ -189,10 +194,18 @@ class Emitter(
         }
     }
 
+    fun setPos(pos: Vector3d) {
+        setPos(pos.x, pos.y, pos.z)
+    }
+
     fun setPos(x: Double, y: Double, z: Double) {
         location.x = x
         location.y = y
         location.z = z
+    }
+
+    override fun location(): Vector3d {
+        return location.toVector().toVector3d()
     }
 
     fun kill() {

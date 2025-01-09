@@ -11,6 +11,7 @@ import java.util.*
 
 data class ParticleData(
     var id: UUID = UUID.randomUUID(),
+    var particle: Particle? = null,
     var dead: Boolean = false,
     var age: Double = 0.0,
     var maxLife: Int = 0,
@@ -31,6 +32,7 @@ data class ParticleData(
 
     fun copyFrom(other: ParticleData) {
         id = other.id
+        particle = other.particle
         dead = other.dead
         age = other.age
         maxLife = other.maxLife

@@ -1,6 +1,7 @@
 package gg.aquatic.comet.particle
 
 import gg.aquatic.comet.ParticleIDProvider
+import gg.aquatic.comet.emitter.Parent
 import gg.aquatic.comet.particle.data.EntityData
 import gg.aquatic.comet.particle.data.EntityDataBuilder
 import gg.aquatic.comet.particle.display.TextDisplayComponent
@@ -14,18 +15,22 @@ import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.Wr
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity
 import java.util.*
 
-open class Particle(var data: ParticleData) {
+open class Particle(var data: ParticleData) : Parent {
     val id = ParticleIDProvider.id
     private val uuid = UUID.randomUUID()
 
-    private var previousEntityData = EntityData(
-        data.displayData,
-        data.color, data.color ushr 24, null,
-        data.translation, data.rotation, data.scale,
-        data.billboardConstraints, data.interpolationDelay, data.interpolationDuration
-    )
+    private lateinit var previousEntityData: EntityData
 
-    open fun tick() {
+    fun init() {
+        previousEntityData = EntityData(
+            data.displayData,
+            data.color, data.color ushr 24, null,
+            data.translation, data.rotation, data.scale,
+            data.billboardConstraints, data.interpolationDelay, data.interpolationDuration
+        )
+    }
+
+    fun tick() {
         data.age++
     }
 
@@ -140,6 +145,14 @@ open class Particle(var data: ParticleData) {
                     data.origin.z + data.relativePosition.z
                 ), 0f, 0f
             ), true
+        )
+    }
+
+    override fun location(): org.joml.Vector3d {
+        return org.joml.Vector3d(
+            data.origin.x + data.relativePosition.x,
+            data.origin.y + data.relativePosition.y,
+            data.origin.z + data.relativePosition.z
         )
     }
 }

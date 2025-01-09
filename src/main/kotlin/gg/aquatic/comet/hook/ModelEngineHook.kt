@@ -31,9 +31,8 @@ object ModelEngineHook : IHook {
             val emitter = ParticleJsonParser.jsonUnrealizedEmitters[emitterId] ?: return
 
             property.model.getBone(bone).ifPresent { modelBone ->
-                emitter.realize(modelBone.location)
+                emitter.realize(null, modelBone.location)
             }
-
         }
     }
 }

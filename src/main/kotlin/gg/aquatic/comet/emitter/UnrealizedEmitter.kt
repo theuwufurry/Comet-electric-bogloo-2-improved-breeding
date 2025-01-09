@@ -87,11 +87,12 @@ data class UnrealizedEmitter(
         emitters.removeAll(deadEmitters)
     }
 
-    fun realize(location: Location, audience: AquaticAudience = GlobalAudience()): Emitter {
+    fun realize(parent: Parent? = null, location: Location, audience: AquaticAudience = GlobalAudience()): Emitter {
         val emitterData = EmitterData()
         emitterData.world = location.world
         emitterData.location = location
         return Emitter(
+            parent,
             components,
             rateComponent,
             shapeComponent,

@@ -54,7 +54,7 @@ object CustomParticleCommand : ICommand {
             return
         }
         val location = Location(world, x, y, z, yaw, 0f)
-        emitter.realize(location)
+        emitter.realize(null, location)
     }
 
     private fun handlePos(input: String, origin: Double): Double? {

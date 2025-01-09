@@ -27,7 +27,7 @@ class SpawnParticleMechanic(
         val location = BukkitAdapter.adapt(aLocation)
 
         val emitter = ParticleJsonParser.jsonUnrealizedEmitters[emitterId.get()]
-        emitter?.realize(location, aquaticAudience)
+        emitter?.realize(null, location, aquaticAudience)
 
         return SkillResult.SUCCESS
     }
