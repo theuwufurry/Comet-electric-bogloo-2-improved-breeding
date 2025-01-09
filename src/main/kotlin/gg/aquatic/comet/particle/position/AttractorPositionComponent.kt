@@ -79,8 +79,8 @@ class AttractorPositionComponent(
                         if (totalFactor >= length - it) {
                             onHit(
                                 ActionContext(
-                                    otherParticleData,
                                     otherEmitterData,
+                                    otherParticleData,
                                     otherParticleData.relativePosition,
                                     Vector3d()
                                 )
@@ -104,8 +104,8 @@ class AttractorPositionComponent(
                         if (totalFactor >= length - it) {
                             onHit(
                                 ActionContext(
-                                    otherParticleData,
                                     otherEmitterData,
+                                    otherParticleData,
                                     otherParticleData.relativePosition,
                                     Vector3d()
                                 )
@@ -128,8 +128,8 @@ class AttractorPositionComponent(
                         if (totalFactor >= length - it) {
                             onHit(
                                 ActionContext(
-                                    otherParticleData,
                                     otherEmitterData,
+                                    otherParticleData,
                                     otherParticleData.relativePosition,
                                     Vector3d()
                                 )

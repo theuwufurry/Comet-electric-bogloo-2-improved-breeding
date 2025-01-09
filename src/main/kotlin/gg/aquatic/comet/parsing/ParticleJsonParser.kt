@@ -7,6 +7,7 @@ import gg.aquatic.comet.Component
 import gg.aquatic.comet.ParticleEmitter
 import gg.aquatic.comet.emitter.EmitterTickersHolder
 import gg.aquatic.comet.emitter.UnrealizedEmitter
+import gg.aquatic.comet.emitter.action.event.EmitterInitComponent
 import gg.aquatic.comet.emitter.bundle.BundledEmitterComponent
 import gg.aquatic.comet.emitter.lifetime.EmitterLifetimeComponent
 import gg.aquatic.comet.emitter.lifetime.TimedEmitterLifetimeComponent
@@ -40,8 +41,7 @@ import gg.aquatic.comet.particle.transformation.rotation.ExpressionRotationCompo
 import gg.aquatic.comet.particle.transformation.rotation.RotationComponent
 import gg.aquatic.comet.particle.transformation.scale.ExpressionScaleComponent
 import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
-import gg.aquatic.comet.particle.variable.EmitterVariableInitializationComponent
-import gg.aquatic.comet.particle.variable.ParticleVariableInitializationComponent
+import gg.aquatic.comet.particle.variable.JavascriptSubAction
 import gg.aquatic.comet.particle.variable.RandomsInitializerComponent
 import java.io.FileReader
 
@@ -117,9 +117,8 @@ object ParticleJsonParser {
 
         BundledEmitterComponent
 
+        EmitterInitComponent
         RandomsInitializerComponent
-        EmitterVariableInitializationComponent
-        ParticleVariableInitializationComponent
     }
 
     lateinit var jsonUnrealizedEmitters: Map<String, UnrealizedEmitter>

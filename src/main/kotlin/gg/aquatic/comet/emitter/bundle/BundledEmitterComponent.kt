@@ -8,6 +8,23 @@ import gg.aquatic.comet.parsing.*
 import gg.aquatic.comet.parsing.macro.Macro
 
 class BundledEmitterComponent(private val unrealizedEmitterIDs: List<String>) : EmitterComponent, PostInit {
+    private lateinit var unrealizedEmitters: List<UnrealizedEmitter>
+
+    override fun realize() {
+        unrealizedEmitters = unrealizedEmitterIDs.map {
+            ParticleJsonParser.jsonUnrealizedEmitters[it]
+                ?: throw NullPointerException("$it is not a valid emitter ID!")
+        }
+    }
+
+    override fun init(otherEmitterData: EmitterData) {
+        for (unrealizedEmitter in unrealizedEmitters) {
+            unrealizedEmitter.realize(otherEmitterData.location)
+        }
+    }
+
+    override fun execute(otherEmitterData: EmitterData) {}
+
     companion object : BaseComponentParser {
         init {
             ParticleJsonParser.componentParsers += "bundled_emitters" to BundledEmitterComponent
@@ -31,21 +48,4 @@ class BundledEmitterComponent(private val unrealizedEmitterIDs: List<String>) : 
             )
         }
     }
-
-    private lateinit var unrealizedEmitters: List<UnrealizedEmitter>
-
-    override fun realize() {
-        unrealizedEmitters = unrealizedEmitterIDs.map {
-            ParticleJsonParser.jsonUnrealizedEmitters[it]
-                ?: throw NullPointerException("$it is not a valid emitter ID!")
-        }
-    }
-
-    override fun init(otherEmitterData: EmitterData) {
-        for (unrealizedEmitter in unrealizedEmitters) {
-            unrealizedEmitter.realize(otherEmitterData.location)
-        }
-    }
-
-    override fun execute(otherEmitterData: EmitterData) {}
 }

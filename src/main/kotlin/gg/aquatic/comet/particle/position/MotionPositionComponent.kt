@@ -85,8 +85,8 @@ class MotionPositionComponent(
             if (velocity.lengthSquared() > 0.01) {
                 onCollision(
                     ActionContext(
-                        otherParticleData,
                         otherEmitterData,
+                        otherParticleData,
                         Vector3d(newPos).add(otherParticleData.origin),
                         correction.direction
                     )
