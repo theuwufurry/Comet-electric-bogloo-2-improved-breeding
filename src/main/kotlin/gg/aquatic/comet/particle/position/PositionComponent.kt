@@ -4,6 +4,7 @@ import gg.aquatic.comet.Component
 import gg.aquatic.comet.emitter.EmitterData
 import gg.aquatic.comet.parsing.compile
 import gg.aquatic.comet.parsing.particleEngine
+import gg.aquatic.comet.particle.position.initial.InitialExpressionPositionComponent
 
 interface PositionComponent {
     companion object {
@@ -11,7 +12,7 @@ interface PositionComponent {
             val emitterData = EmitterData()
             val (engine, particleData) = particleEngine(emitterData)
 
-            return ExpressionPositionComponent(
+            return InitialExpressionPositionComponent(
                 engine.compile("0", null),
                 engine.compile("0", null),
                 engine.compile("0", null),

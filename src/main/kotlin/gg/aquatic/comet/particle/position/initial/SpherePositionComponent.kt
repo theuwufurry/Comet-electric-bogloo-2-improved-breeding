@@ -1,4 +1,4 @@
-package gg.aquatic.comet.particle.position
+package gg.aquatic.comet.particle.position.initial
 
 import com.google.gson.JsonElement
 import gg.aquatic.comet.emitter.EmitterData
@@ -6,6 +6,7 @@ import gg.aquatic.comet.parsing.*
 import gg.aquatic.comet.parsing.macro.Macro
 import gg.aquatic.comet.particle.ParticleComponent
 import gg.aquatic.comet.particle.ParticleData
+import gg.aquatic.comet.particle.position.PositionComponent
 import org.joml.Vector3d
 import javax.script.CompiledScript
 

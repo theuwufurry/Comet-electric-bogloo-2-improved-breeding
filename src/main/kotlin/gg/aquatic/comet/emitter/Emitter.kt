@@ -4,7 +4,6 @@ import gg.aquatic.comet.Component
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.emitter.rate.RateComponent
-import gg.aquatic.comet.emitter.shape.ShapeComponent
 import gg.aquatic.comet.particle.Particle
 import gg.aquatic.comet.particle.ParticleComponent
 import gg.aquatic.comet.particle.ParticleData
@@ -26,7 +25,6 @@ class Emitter(
     private val parent: Parent? = null,
     private val components: List<Component>,
     private val rateComponent: RateComponent,
-    private val shapeComponent: ShapeComponent, //DEPRECATED
     private val distanceCullingComponent: DistanceCullingComponent,
     private val updateFrequencyComponent: UpdateFrequencyComponent,
     private val billboardConstraints: BillboardConstraints,
@@ -164,10 +162,7 @@ class Emitter(
             val particleData = ParticleData()
             val particle = Particle(particleData)
             particleData.particle = particle
-            val spawnOffset = shapeComponent.offset(emitterData, particleData)
-
-            particleData.origin =
-                Vector3d(location.x + spawnOffset.x, location.y + spawnOffset.y, location.z + spawnOffset.z)
+            particleData.origin = location.toVector().toVector3d()
             particleData.billboardConstraints = billboardConstraints
             particleData.interpolationDelay = updateFrequencyComponent.interpolationDelay
             particleData.interpolationDuration = updateFrequencyComponent.initialInterpolationDuration

@@ -18,8 +18,6 @@ import gg.aquatic.comet.emitter.rate.InstantRateComponent
 import gg.aquatic.comet.emitter.rate.ManualRateComponent
 import gg.aquatic.comet.emitter.rate.RateComponent
 import gg.aquatic.comet.emitter.rate.SteadyRateComponent
-import gg.aquatic.comet.emitter.shape.PointShapeComponent
-import gg.aquatic.comet.emitter.shape.ShapeComponent
 import gg.aquatic.comet.parsing.macro.Macro
 import gg.aquatic.comet.parsing.macro.MacrosParser
 import gg.aquatic.comet.particle.ParticleInitComponent
@@ -35,6 +33,8 @@ import gg.aquatic.comet.particle.display.sprite.FlipbookSpriteComponent
 import gg.aquatic.comet.particle.lifetime.ParticleLifetimeComponent
 import gg.aquatic.comet.particle.lifetime.ParticleLifetimeExpressionComponent
 import gg.aquatic.comet.particle.position.*
+import gg.aquatic.comet.particle.position.initial.InitialExpressionPositionComponent
+import gg.aquatic.comet.particle.position.initial.SpherePositionComponent
 import gg.aquatic.comet.particle.transformation.rotation.DirectionRotationComponent
 import gg.aquatic.comet.particle.transformation.rotation.ExpressionRotationComponent
 import gg.aquatic.comet.particle.transformation.rotation.RotationComponent
@@ -69,7 +69,6 @@ object ParticleJsonParser {
     val componentParsers: MutableMap<String, BaseComponentParser> = mutableMapOf()
 
     val rateComponentParsers: MutableMap<String, ComponentParser<out RateComponent>> = mutableMapOf()
-    val shapeComponentParsers: MutableMap<String, ComponentParser<out ShapeComponent>> = mutableMapOf()
 
     lateinit var distanceCullingParser: Pair<String, ComponentParser<DistanceCullingComponent>>
     val updateFrequencyParsers: MutableMap<String, ComponentParser<out UpdateFrequencyComponent>> = mutableMapOf()
@@ -83,8 +82,6 @@ object ParticleJsonParser {
         InstantRateComponent
         ManualRateComponent
 
-        PointShapeComponent
-
         ConstantColorComponent
         GradientColorComponent
 
@@ -96,6 +93,7 @@ object ParticleJsonParser {
 
         ConstantModelComponent
 
+        InitialExpressionPositionComponent
         ExpressionPositionComponent
         MotionPositionComponent
         AttractorPositionComponent
@@ -152,7 +150,6 @@ object ParticleJsonParser {
 
         val components: MutableList<Component> = mutableListOf()
         var rateComponent: RateComponent? = null
-        var shapeComponent: ShapeComponent? = null
         var distanceCullingComponent: DistanceCullingComponent? = null
         var updateFrequencyComponent: UpdateFrequencyComponent? = null
         var billboardConstraints: BillboardConstraints? = null
@@ -184,15 +181,6 @@ object ParticleJsonParser {
                 continue
             }
 
-            if (key in shapeComponentParsers) {
-                val component = shapeComponentParsers[key]!!.parse(componentElement, macros)
-                if (component != null) {
-                    shapeComponent = component
-                }
-
-                continue
-            }
-
             if (key in updateFrequencyParsers) {
                 val component = updateFrequencyParsers[key]!!.parse(componentElement, macros)
                 if (component != null) {
@@ -210,7 +198,6 @@ object ParticleJsonParser {
         return UnrealizedEmitter(
             components,
             rateComponent ?: RateComponent.default(),
-            shapeComponent ?: ShapeComponent.default(),
             distanceCullingComponent ?: DistanceCullingComponent.default(),
             updateFrequencyComponent ?: UpdateFrequencyComponent.default(),
             billboardConstraints ?: BillboardConstraints.CENTER
@@ -229,7 +216,6 @@ object ParticleJsonParser {
 
     private fun postInit() {
         for ((_, unrealizedEmitter) in jsonUnrealizedEmitters) {
-//            unrealizedEmitter.positionComponents.forEach { (it as? PostInit)?.realize() }
             unrealizedEmitter.components.forEach { (it as? PostInit)?.realize() }
         }
     }

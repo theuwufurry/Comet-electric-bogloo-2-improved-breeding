@@ -5,7 +5,6 @@ import gg.aquatic.comet.ParticleEmitter
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.emitter.rate.RateComponent
-import gg.aquatic.comet.emitter.shape.ShapeComponent
 import gg.aquatic.comet.particle.data.BillboardConstraints
 import gg.aquatic.comet.particle.data.EntityDataBuilder
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
@@ -39,7 +38,6 @@ object EmitterTickersHolder {
 data class UnrealizedEmitter(
     val components: List<Component>,
     val rateComponent: RateComponent,
-    val shapeComponent: ShapeComponent,
     val distanceCullingComponent: DistanceCullingComponent,
     val updateFrequencyComponent: UpdateFrequencyComponent,
     val billboardConstraints: BillboardConstraints,
@@ -95,7 +93,6 @@ data class UnrealizedEmitter(
             parent,
             components,
             rateComponent,
-            shapeComponent,
             distanceCullingComponent,
             updateFrequencyComponent,
             billboardConstraints, location, emitterData, this, audience
