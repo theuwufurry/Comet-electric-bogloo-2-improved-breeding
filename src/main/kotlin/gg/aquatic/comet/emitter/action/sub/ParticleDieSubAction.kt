@@ -7,6 +7,14 @@ import gg.aquatic.comet.parsing.ComponentParser
 import gg.aquatic.comet.parsing.macro.Macro
 
 class ParticleDieSubAction : SubAction {
+    override fun execute(context: ActionContext) {
+        if (context.otherParticleData == null) {
+            throw NullPointerException("Emitter")
+        }
+
+        context.otherParticleData.dead = true
+    }
+
     companion object : ComponentParser<ParticleDieSubAction> {
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ParticleDieSubAction? {
             if (jsonElement.isJsonPrimitive && jsonElement.asString == "particle_die") {
@@ -15,13 +23,5 @@ class ParticleDieSubAction : SubAction {
 
             return null
         }
-    }
-
-    override fun execute(context: ActionContext) {
-        if (context.otherParticleData == null) {
-            throw NullPointerException("Calling Particle Death SubAction on Emitter!")
-        }
-
-        context.otherParticleData.dead = true
     }
 }

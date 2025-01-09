@@ -1,6 +1,7 @@
 package gg.aquatic.comet.emitter.action
 
 import com.google.gson.JsonArray
+import gg.aquatic.comet.emitter.action.sub.EmitterDieSubAction
 import gg.aquatic.comet.emitter.action.sub.ParticleDieSubAction
 import gg.aquatic.comet.emitter.action.sub.SpawnEmitterSubAction
 import gg.aquatic.comet.parsing.ComponentParser
@@ -14,6 +15,7 @@ class Action(
         private val subActionParsers: List<ComponentParser<out SubAction>> = listOf(
             SpawnEmitterSubAction,
             ParticleDieSubAction,
+            EmitterDieSubAction,
             JavascriptSubAction
         )
 
