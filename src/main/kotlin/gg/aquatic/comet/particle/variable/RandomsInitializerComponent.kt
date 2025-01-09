@@ -10,12 +10,6 @@ import gg.aquatic.comet.parsing.macro.Macro
 import gg.aquatic.comet.particle.ParticleComponent
 import gg.aquatic.comet.particle.ParticleData
 
-/*
-"randoms": {
-    "emitter": 5
-    "particle" 3
-}
- */
 class RandomsInitializerComponent(private val emitterRandoms: Int, private val particleRandoms: Int): EmitterComponent, ParticleComponent {
     override fun init(otherEmitterData: EmitterData) {
         for (i in 1..emitterRandoms) {
