@@ -29,6 +29,8 @@ class ParticleLifetimeExpressionComponent(
         } ?: false)
     }
 
+    override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
+
     companion object : BaseComponentParser {
         init {
             ParticleJsonParser.componentParsers += "particle_lifetime_expression" to this

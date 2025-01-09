@@ -33,6 +33,8 @@ class ExpressionPositionComponent(
         otherParticleData.relativePosition = newPos.rotate(myEmitterData.rotation)
     }
 
+    override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
+
     companion object : BaseComponentParser {
         init {
             ParticleJsonParser.componentParsers += "expression_position" to this

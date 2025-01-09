@@ -7,7 +7,10 @@ import gg.aquatic.comet.Component
 import gg.aquatic.comet.ParticleEmitter
 import gg.aquatic.comet.emitter.EmitterTickersHolder
 import gg.aquatic.comet.emitter.UnrealizedEmitter
+import gg.aquatic.comet.emitter.action.event.EmitterDeathComponent
 import gg.aquatic.comet.emitter.action.event.EmitterInitComponent
+import gg.aquatic.comet.emitter.action.event.EmitterTickComponent
+import gg.aquatic.comet.emitter.action.event.EmitterTimelineComponent
 import gg.aquatic.comet.emitter.lifetime.EmitterLifetimeComponent
 import gg.aquatic.comet.emitter.lifetime.TimedEmitterLifetimeComponent
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
@@ -20,7 +23,9 @@ import gg.aquatic.comet.emitter.rate.RateComponent
 import gg.aquatic.comet.emitter.rate.SteadyRateComponent
 import gg.aquatic.comet.parsing.macro.Macro
 import gg.aquatic.comet.parsing.macro.MacrosParser
-import gg.aquatic.comet.particle.ParticleInitComponent
+import gg.aquatic.comet.particle.action.event.ParticleDeathComponent
+import gg.aquatic.comet.particle.action.event.ParticleInitComponent
+import gg.aquatic.comet.particle.action.event.ParticleTimelineComponent
 import gg.aquatic.comet.particle.color.ColorComponent
 import gg.aquatic.comet.particle.color.ConstantColorComponent
 import gg.aquatic.comet.particle.color.GradientColorComponent
@@ -112,6 +117,13 @@ object ParticleJsonParser {
         ParticleInitComponent
         EmitterInitComponent
         RandomsInitializerComponent
+
+        EmitterTickComponent
+        EmitterTimelineComponent
+        ParticleTimelineComponent
+
+        EmitterDeathComponent
+        ParticleDeathComponent
     }
 
     lateinit var jsonUnrealizedEmitters: Map<String, UnrealizedEmitter>

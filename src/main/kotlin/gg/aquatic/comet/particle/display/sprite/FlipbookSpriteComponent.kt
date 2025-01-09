@@ -49,4 +49,6 @@ class FlipbookSpriteComponent(
         while (i + 1 < spriteScripts.size && inputResult >= spriteScripts[i + 1].first) i++
         otherParticleData.displayData = SpriteData(spriteScripts[i].second.eval() as String)
     }
+
+    override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
 }

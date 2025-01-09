@@ -1,4 +1,4 @@
-package gg.aquatic.comet.particle
+package gg.aquatic.comet.particle.action.event
 
 import com.google.gson.JsonElement
 import gg.aquatic.comet.Component
@@ -9,6 +9,8 @@ import gg.aquatic.comet.parsing.BaseComponentParser
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.PostInit
 import gg.aquatic.comet.parsing.macro.Macro
+import gg.aquatic.comet.particle.ParticleComponent
+import gg.aquatic.comet.particle.ParticleData
 import org.joml.Vector3d
 
 class ParticleInitComponent(
@@ -29,6 +31,8 @@ class ParticleInitComponent(
             )
         }
     }
+
+    override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
 
     companion object : BaseComponentParser {
         init {

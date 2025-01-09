@@ -35,4 +35,6 @@ class ExpressionSpriteComponent(
         myParticleData.copyFrom(otherParticleData)
         otherParticleData.displayData = SpriteData(sprite.eval() as String)
     }
+
+    override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
 }

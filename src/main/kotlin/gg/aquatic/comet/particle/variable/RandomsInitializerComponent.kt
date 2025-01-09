@@ -30,6 +30,11 @@ class RandomsInitializerComponent(private val emitterRandoms: Int, private val p
         }
     }
 
+    override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
+
+    override fun die(otherEmitterData: EmitterData) {}
+
+
     companion object : BaseComponentParser {
         init {
             ParticleJsonParser.componentParsers += "randoms" to this

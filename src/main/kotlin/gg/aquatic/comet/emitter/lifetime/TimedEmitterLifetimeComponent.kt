@@ -23,6 +23,9 @@ class TimedEmitterLifetimeComponent(
             otherEmitterData.age <= (eval() as Number).toDouble()
         } ?: false)
     }
+
+    override fun die(otherEmitterData: EmitterData) {}
+
     companion object : BaseComponentParser {
         init {
             ParticleJsonParser.componentParsers += "timed_emitter_lifetime" to this

@@ -146,6 +146,8 @@ class AttractorPositionComponent(
         return
     }
 
+    override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
+
     private fun onHit(context: ActionContext) {
         onHitAction?.execute(context)
     }

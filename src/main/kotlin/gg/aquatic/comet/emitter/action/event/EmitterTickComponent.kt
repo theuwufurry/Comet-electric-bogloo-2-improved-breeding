@@ -12,18 +12,19 @@ import gg.aquatic.comet.parsing.PostInit
 import gg.aquatic.comet.parsing.macro.Macro
 import org.joml.Vector3d
 
-class EmitterInitComponent(
+class EmitterTickComponent(
     private val action: Action
 ) : EmitterComponent, PostInit {
-    override fun init(otherEmitterData: EmitterData) {
-        action.execute(ActionContext(
-            otherEmitterData, null,
-            otherEmitterData.location.toVector().toVector3d(),
-            Vector3d()
-        ))
-    }
+    override fun init(otherEmitterData: EmitterData) {}
 
     override fun execute(otherEmitterData: EmitterData) {
+        action.execute(
+            ActionContext(
+                otherEmitterData, null,
+                otherEmitterData.location.toVector().toVector3d(),
+                Vector3d()
+            )
+        )
     }
 
     override fun die(otherEmitterData: EmitterData) {}
@@ -34,7 +35,7 @@ class EmitterInitComponent(
 
     companion object : BaseComponentParser {
         init {
-            ParticleJsonParser.componentParsers += "on_emitter_init" to this
+            ParticleJsonParser.componentParsers += "on_emitter_tick" to this
         }
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {

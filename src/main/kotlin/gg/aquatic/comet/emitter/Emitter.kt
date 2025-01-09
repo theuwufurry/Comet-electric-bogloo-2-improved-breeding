@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 class Emitter(
     private val parent: Parent? = null,
-    private val components: List<Component>,
+    components: List<Component>,
     private val rateComponent: RateComponent,
     private val distanceCullingComponent: DistanceCullingComponent,
     private val updateFrequencyComponent: UpdateFrequencyComponent,
@@ -64,7 +64,10 @@ class Emitter(
         parent?.location()?.let { setPos(it) }
         emitterComponents.forEach { it.execute(emitterData) }
 
-        if (emitterData.dead) dead = true
+        if (emitterData.dead) {
+            dead = true
+            emitterComponents.forEach { it.die(emitterData) }
+        }
 
         if (dead && particles.size == 0) {
             return EmitterTickResult(false)
@@ -89,6 +92,7 @@ class Emitter(
             particleComponents.forEach { it.execute(emitterData, particle.data) }
 
             if (particle.data.dead) {
+                particleComponents.forEach { it.die(emitterData, particle.data) }
                 die()
                 continue
             }

@@ -56,4 +56,6 @@ class DirectionRotationComponent(
                 .rotateZ((angleScript.eval() as Number).toFloat())
         )
     }
+
+    override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
 }

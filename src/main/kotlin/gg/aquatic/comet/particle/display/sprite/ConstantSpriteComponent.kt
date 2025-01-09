@@ -41,4 +41,6 @@ class ConstantSpriteComponent(private val sprite: CompiledScript, private val my
             otherParticleData.displayData
         }
     }
+
+    override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
 }

@@ -29,6 +29,8 @@ class InitialExpressionPositionComponent(
         }
     }
 
+    override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
+
     companion object : BaseComponentParser {
         init {
             ParticleJsonParser.componentParsers += "initial_expression_position" to this

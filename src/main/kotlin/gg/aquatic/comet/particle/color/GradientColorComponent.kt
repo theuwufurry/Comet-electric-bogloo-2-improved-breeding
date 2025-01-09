@@ -78,4 +78,6 @@ class GradientColorComponent(
 
         otherParticleData.color = (gradient.last().second.eval() as Color).rgb
     }
+
+    override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
 }

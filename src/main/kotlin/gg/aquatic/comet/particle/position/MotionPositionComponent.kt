@@ -98,6 +98,8 @@ class MotionPositionComponent(
         otherParticleData.relativePosition = Vector3d(newPos)
     }
 
+    override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
+
     private fun onCollision(context: ActionContext) {
         onCollisionAction?.execute(context)
     }

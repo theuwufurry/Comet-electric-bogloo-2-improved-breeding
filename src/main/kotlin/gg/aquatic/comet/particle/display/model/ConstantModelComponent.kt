@@ -40,4 +40,6 @@ class ConstantModelComponent(
             otherParticleData.displayData
         }
     }
+
+    override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
 }

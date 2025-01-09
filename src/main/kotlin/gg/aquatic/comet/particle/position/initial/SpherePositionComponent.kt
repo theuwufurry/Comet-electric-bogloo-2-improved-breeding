@@ -38,6 +38,8 @@ class SpherePositionComponent(
         )
     }
 
+    override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
+
     companion object : BaseComponentParser {
         init {
             ParticleJsonParser.componentParsers += "sphere_position" to this

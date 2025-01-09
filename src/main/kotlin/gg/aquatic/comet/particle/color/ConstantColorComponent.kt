@@ -40,4 +40,6 @@ class ConstantColorComponent(
             otherParticleData.color
         }
     }
+
+    override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
 }
