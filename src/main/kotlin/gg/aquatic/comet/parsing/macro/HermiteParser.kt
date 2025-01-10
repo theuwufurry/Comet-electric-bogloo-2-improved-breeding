@@ -17,8 +17,12 @@ object HermiteParser : MacroParser {
             points += Vector2d(x[i].asNumber.toDouble(), y[i].asNumber.toDouble())
         }
 
+        val slopes: MutableList<Double>? = if (jsonObject.has("slopes")) {
+            jsonObject.getAsJsonArray("slopes").asList().map { it.asDouble }.toMutableList()
+        } else null
+
         val input: String = jsonObject.getAsJsonPrimitive("input")?.asString ?: return null
-        return Macro("$name.eval($input)", Pair(name, HermiteEvaluator.fromPoints(points) ?: return null))
+        return Macro("$name.eval($input)", Pair(name, HermiteEvaluator.fromPoints(points, slopes) ?: return null))
     }
 }
 
@@ -29,17 +33,35 @@ class HermiteEvaluator private constructor(
     private val polynomials: List<List<Double>>,
     private val domains: List<Double>
 ) {
+    fun eval(input: Double): Double {
+        var i = 0
+        if (input > domains[0]) {
+            while (input > domains[i + 1] && i + 2 < domains.size) i++
+        }
+
+        val coefficients = polynomials[i]
+        val transformedInput = (input - domains[i]) / (domains[i + 1] - domains[i])
+        val result =
+            coefficients[0] + coefficients[1] * transformedInput + coefficients[2] * transformedInput.pow(2.0) + coefficients[3] * transformedInput.pow(
+                3.0
+            )
+
+        return result
+    }
+
     companion object {
-        fun fromPoints(points: List<Vector2d>): HermiteEvaluator? {
+        fun fromPoints(points: List<Vector2d>, inputSlopes: List<Double>?): HermiteEvaluator? {
             if (points.size < 2) return null
-            val slopes: MutableList<Double> = mutableListOf()
-            slopes += (points[1].y - points[0].y) / (points[1].x - points[0].x)
+            val slopes: MutableList<Double> =
+                inputSlopes?.validateSlopes(points)?.toMutableList() ?: mutableListOf<Double>().apply {
+                    add((points[1].y - points[0].y) / (points[1].x - points[0].x))
 
-            for (i in 1 until points.size - 1) {
-                slopes += ((points[i].y - points[i - 1].y) / (points[i].x - points[i - 1].x) + (points[i + 1].y - points[i].y) / (points[i + 1].x - points[i].x)) / 2.0
-            }
+                    for (i in 1 until points.size - 1) {
+                        add(((points[i].y - points[i - 1].y) / (points[i].x - points[i - 1].x) + (points[i + 1].y - points[i].y) / (points[i + 1].x - points[i].x)) / 2.0)
+                    }
 
-            slopes += (points[points.size - 1].y - points[points.size - 2].y) / (points[points.size - 1].x - points[points.size - 2].x)
+                    add((points[points.size - 1].y - points[points.size - 2].y) / (points[points.size - 1].x - points[points.size - 2].x))
+                }
 
             val polynomials: MutableList<MutableList<Double>> = mutableListOf()
 
@@ -56,21 +78,10 @@ class HermiteEvaluator private constructor(
 
             return HermiteEvaluator(polynomials, domains)
         }
-    }
 
-    fun eval(input: Double): Double {
-        var i = 0
-        if (input > domains[0]) {
-            while (input > domains[i + 1] && i + 2 < domains.size) i++
+        private fun List<Double>?.validateSlopes(points: List<Vector2d>): List<Double>? {
+            this ?: return null
+            return if (points.size != size) null else this
         }
-
-        val coefficients = polynomials[i]
-        val transformedInput = (input - domains[i]) / (domains[i + 1] - domains[i])
-        val result =
-            coefficients[0] + coefficients[1] * transformedInput + coefficients[2] * transformedInput.pow(2.0) + coefficients[3] * transformedInput.pow(
-                3.0
-            )
-
-        return result
     }
 }

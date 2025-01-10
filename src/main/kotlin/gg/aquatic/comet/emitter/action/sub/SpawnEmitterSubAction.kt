@@ -25,7 +25,6 @@ class SpawnEmitterSubAction(
     private val unrealizedEmitterIDs: List<String>,
     private val space: EmitterSpace,
     private val magnitude: Float,
-    private val myEmitterData: EmitterData
 ) : SubAction, PostInit {
     private lateinit var unrealizedEmitters: List<UnrealizedEmitter>
 
@@ -41,7 +40,6 @@ class SpawnEmitterSubAction(
             throw NullPointerException("Cannot use Spawn Emitter SubAction in this event!")
         }
 
-        myEmitterData.copyFrom(context.otherEmitterData)
         val parent = when (space) {
             EmitterSpace.PARENT_EMITTER -> context.otherEmitterData.emitter!!
             EmitterSpace.PARENT_PARTICLE -> context.otherParticleData?.particle
@@ -86,7 +84,7 @@ class SpawnEmitterSubAction(
                 else -> EmitterSpace.WORLD
             }
 
-            return SpawnEmitterSubAction(unrealizedEmitterIDs, space, offsetMagnitude, emitterData)
+            return SpawnEmitterSubAction(unrealizedEmitterIDs, space, offsetMagnitude)
         }
     }
 }

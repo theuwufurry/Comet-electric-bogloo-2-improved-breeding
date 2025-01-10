@@ -3,10 +3,11 @@ package gg.aquatic.comet.parsing.macro
 import com.google.gson.JsonObject
 
 object MacrosParser {
-    val macroParsers: MutableMap<String, MacroParser> = mutableMapOf()
+    private val macroParsers: MutableMap<String, MacroParser> = mutableMapOf()
 
     init {
         macroParsers += "hermite" to HermiteParser
+        macroParsers += "linear" to LinearParser
     }
 
     fun parseMacros(jsonObject: JsonObject): Map<String, Macro> {
