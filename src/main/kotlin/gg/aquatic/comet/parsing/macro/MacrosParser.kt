@@ -7,6 +7,7 @@ object MacrosParser {
 
     init {
         macroParsers += "hermite" to HermiteParser
+        macroParsers += "catmull" to CatmullParser
         macroParsers += "linear" to LinearParser
     }
 
