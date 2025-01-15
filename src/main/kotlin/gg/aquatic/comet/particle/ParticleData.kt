@@ -29,6 +29,8 @@ data class ParticleData(
     var interpolationDelay: Int = -1,
     var interpolationDuration: Int = 2
 ) {
+    val pos: Vector3d
+        get() = Vector3d(origin).add(relativePosition)
 
     fun copyFrom(other: ParticleData) {
         id = other.id
