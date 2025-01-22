@@ -25,6 +25,7 @@ import gg.aquatic.comet.parsing.macro.Macro
 import gg.aquatic.comet.parsing.macro.MacrosParser
 import gg.aquatic.comet.particle.action.event.ParticleDeathComponent
 import gg.aquatic.comet.particle.action.event.ParticleInitComponent
+import gg.aquatic.comet.particle.action.event.ParticleTickComponent
 import gg.aquatic.comet.particle.action.event.ParticleTimelineComponent
 import gg.aquatic.comet.particle.color.ColorComponent
 import gg.aquatic.comet.particle.color.ConstantColorComponent
@@ -115,6 +116,7 @@ object ParticleJsonParser {
         ManualUpdateFrequencyComponent
 
         ParticleInitComponent
+        ParticleTickComponent
         EmitterInitComponent
         RandomsInitializerComponent
 

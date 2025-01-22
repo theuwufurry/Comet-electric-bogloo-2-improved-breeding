@@ -24,7 +24,7 @@ class ParticleTickComponent(
         action.execute(
             ActionContext(
                 otherEmitterData, otherParticleData,
-                otherEmitterData.location.toVector().toVector3d(),
+                Vector3d(otherParticleData.origin).add(otherParticleData.relativePosition),
                 Vector3d()
             )
         )
@@ -38,7 +38,7 @@ class ParticleTickComponent(
         }
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {
-            return ParticleInitComponent(Action.parse(jsonElement.asJsonArray, macros))
+            return ParticleTickComponent(Action.parse(jsonElement.asJsonArray, macros))
         }
     }
 }

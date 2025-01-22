@@ -55,7 +55,9 @@ class Emitter(
     }
 
     fun tick(): EmitterTickResult {
-        if (blocked) return EmitterTickResult(true)
+        if (blocked) {
+            return EmitterTickResult(true)
+        }
 
         blocked = true
 
@@ -191,6 +193,13 @@ class Emitter(
                 }
             }
         }
+    }
+
+    fun players(): List<Player> {
+        val maxDistance = distanceCullingComponent.viewDistance
+        return location.chunk.trackedByPlayers()
+            .filter { audience.canBeApplied(it) }
+            .filter { it.eyeLocation.distanceSquared(location) < maxDistance }
     }
 
     fun setPos(pos: Vector3d) {

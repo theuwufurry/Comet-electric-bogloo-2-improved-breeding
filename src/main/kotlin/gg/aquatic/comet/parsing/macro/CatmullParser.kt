@@ -108,9 +108,6 @@ class CatmullEvaluator private constructor(
                 it += inputTimes.last() + (inputTimes.last() - inputTimes[inputTimes.size - 2])
             }
 
-            println("altered points: $alteredPoints")
-            println("altered times: $alteredTimes")
-
             return CatmullEvaluator(alteredPoints, alteredTimes)
         }
     }

@@ -28,7 +28,7 @@ class ParticleDeathComponent(
         action.execute(
             ActionContext(
                 otherEmitterData, otherParticleData,
-                otherEmitterData.location.toVector().toVector3d(),
+                Vector3d(otherParticleData.origin).add(otherParticleData.relativePosition),
                 Vector3d()
             )
         )
@@ -40,7 +40,7 @@ class ParticleDeathComponent(
         }
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {
-            return EmitterInitComponent(Action.parse(jsonElement.asJsonArray, macros))
+            return ParticleDeathComponent(Action.parse(jsonElement.asJsonArray, macros))
         }
     }
 }

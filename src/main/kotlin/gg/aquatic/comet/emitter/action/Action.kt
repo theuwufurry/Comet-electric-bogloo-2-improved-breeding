@@ -8,6 +8,7 @@ import gg.aquatic.comet.parsing.ComponentParser
 import gg.aquatic.comet.parsing.macro.Macro
 import gg.aquatic.comet.emitter.action.sub.JavascriptSubAction
 import gg.aquatic.comet.particle.action.ParticleCommandSubAction
+import gg.aquatic.comet.particle.action.ParticleVanillaSpawnSubAction
 
 class Action(
     val subActions: List<SubAction>
@@ -18,7 +19,8 @@ class Action(
             ParticleDieSubAction,
             EmitterDieSubAction,
             JavascriptSubAction,
-            ParticleCommandSubAction
+            ParticleCommandSubAction,
+            ParticleVanillaSpawnSubAction
         )
 
         fun parse(jsonArray: JsonArray, macros: Map<String, Macro>?): Action {

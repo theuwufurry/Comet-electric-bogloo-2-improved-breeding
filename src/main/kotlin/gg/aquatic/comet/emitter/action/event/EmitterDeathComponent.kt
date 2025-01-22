@@ -39,7 +39,7 @@ class EmitterDeathComponent(
         }
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {
-            return EmitterInitComponent(Action.parse(jsonElement.asJsonArray, macros))
+            return EmitterDeathComponent(Action.parse(jsonElement.asJsonArray, macros))
         }
     }
 }

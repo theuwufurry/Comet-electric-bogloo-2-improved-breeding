@@ -39,7 +39,7 @@ class EmitterTickComponent(
         }
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {
-            return EmitterInitComponent(Action.parse(jsonElement.asJsonArray, macros))
+            return EmitterTickComponent(Action.parse(jsonElement.asJsonArray, macros))
         }
     }
 }
