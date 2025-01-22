@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "gg.aquatic"
-version = "1.1.1"
+version = "1.1.2"
 
 repositories {
     mavenCentral()
@@ -24,7 +24,7 @@ repositories {
 
 dependencies {
     compileOnly("org.spigotmc:spigot-api:1.19.4-R0.1-SNAPSHOT")
-    compileOnly("gg.aquatic.waves:Waves:1.1.3:publish")
+    compileOnly("gg.aquatic.waves:Waves:1.1.9:publish")
 
     compileOnly("org.openjdk.nashorn:nashorn-core:15.4")
 
