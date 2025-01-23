@@ -42,6 +42,8 @@ class ParticleEmitter : JavaPlugin() {
             ),
             listOf()
         ).register("comet")
+
+        initializeHooks()
     }
 
     private fun initializeHooks() {
