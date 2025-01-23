@@ -10,6 +10,7 @@ import gg.aquatic.comet.particle.ParticleComponent
 import gg.aquatic.comet.particle.ParticleData
 import org.joml.Vector3d
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import javax.script.CompiledScript
 import kotlin.math.min
 
@@ -40,7 +41,7 @@ class AttractorPositionComponent(
         val age: Double
     )
 
-    private val emitterAttractorMap: MutableMap<UUID, EmitterAttractorData> = mutableMapOf()
+    private val emitterAttractorMap: MutableMap<UUID, EmitterAttractorData> = ConcurrentHashMap()
 
     override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
         myEmitterData.copyFrom(otherEmitterData)

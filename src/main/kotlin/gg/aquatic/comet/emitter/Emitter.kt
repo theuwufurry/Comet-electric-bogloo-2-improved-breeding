@@ -125,9 +125,11 @@ class Emitter(
                 playersToRemove += currentViewer
             }
         }
+
         for (player in playersToRemove) {
             currentViewers -= player
         }
+
         for (player in location.chunk.trackedByPlayers()) {
             if (player in playersToRemove) continue
             val distanceSquared = player.eyeLocation.distanceSquared(location)
@@ -137,7 +139,9 @@ class Emitter(
                     currentViewers -= player
                 }
             }
+
             if (!audience.canBeApplied(player) || player !in currentViewers) continue
+
             if (distanceSquared <= distanceCullingComponent.viewDistance) {
                 deadParticleIDs += player to rawDeadParticleIDs
                 for (packet in dataPackets) {

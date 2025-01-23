@@ -8,6 +8,7 @@ import gg.aquatic.comet.particle.ParticleComponent
 import gg.aquatic.comet.particle.ParticleData
 import org.joml.Vector3d
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import javax.script.CompiledScript
 
 class ExpressionPositionComponent(
@@ -17,7 +18,7 @@ class ExpressionPositionComponent(
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData
 ) : ParticleComponent, PositionComponent {
-    private val oldOutputMap: MutableMap<UUID, Vector3d> = mutableMapOf()
+    private val oldOutputMap: MutableMap<UUID, Vector3d> = ConcurrentHashMap()
 
     override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
         myEmitterData.copyFrom(otherEmitterData)

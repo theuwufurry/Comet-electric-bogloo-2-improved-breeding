@@ -18,6 +18,7 @@ import org.bukkit.block.Block
 import org.joml.Vector3d
 import org.joml.Vector3i
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import javax.script.CompiledScript
 import kotlin.math.abs
 import kotlin.math.floor
@@ -41,7 +42,7 @@ class MotionPositionComponent(
         onCollisionAction?.subActions?.filterIsInstance<PostInit>()?.forEach { it.realize() }
     }
 
-    private val oldPositionMap: MutableMap<UUID, Vector3d> = mutableMapOf()
+    private val oldPositionMap: MutableMap<UUID, Vector3d> = ConcurrentHashMap()
 
     override fun execute(
         otherEmitterData: EmitterData,
