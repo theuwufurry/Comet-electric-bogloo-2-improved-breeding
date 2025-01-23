@@ -2,7 +2,7 @@ package gg.aquatic.comet.emitter.action.sub
 
 import com.google.gson.JsonElement
 import gg.aquatic.comet.emitter.EmitterData
-import gg.aquatic.comet.emitter.EmitterSpace
+import gg.aquatic.comet.emitter.parent.EmitterSpace
 import gg.aquatic.comet.emitter.UnrealizedEmitter
 import gg.aquatic.comet.emitter.action.ActionContext
 import gg.aquatic.comet.emitter.action.SubAction

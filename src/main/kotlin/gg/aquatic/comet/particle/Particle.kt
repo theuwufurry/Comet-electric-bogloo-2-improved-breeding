@@ -1,7 +1,7 @@
 package gg.aquatic.comet.particle
 
 import gg.aquatic.comet.ParticleIDProvider
-import gg.aquatic.comet.emitter.Parent
+import gg.aquatic.comet.emitter.parent.Parent
 import gg.aquatic.comet.particle.data.EntityData
 import gg.aquatic.comet.particle.data.EntityDataBuilder
 import gg.aquatic.comet.particle.display.TextDisplayComponent

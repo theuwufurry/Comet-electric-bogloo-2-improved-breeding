@@ -1,4 +1,4 @@
-package gg.aquatic.comet.emitter
+package gg.aquatic.comet.emitter.parent
 
 import org.joml.Vector3d
 

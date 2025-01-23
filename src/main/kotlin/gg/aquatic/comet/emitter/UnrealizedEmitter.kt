@@ -4,6 +4,7 @@ import gg.aquatic.comet.Component
 import gg.aquatic.comet.ParticleEmitter
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.UpdateFrequencyComponent
+import gg.aquatic.comet.emitter.parent.Parent
 import gg.aquatic.comet.emitter.rate.RateComponent
 import gg.aquatic.comet.particle.data.BillboardConstraints
 import gg.aquatic.comet.particle.data.EntityDataBuilder
