@@ -11,6 +11,4 @@ object MythicMobsHook : IHook {
 
         CustomComponentRegistry(ParticleEmitter.INSTANCE, componentPackages)
     }
-
-
 }

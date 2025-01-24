@@ -47,6 +47,9 @@ import gg.aquatic.comet.particle.transformation.rotation.RotationComponent
 import gg.aquatic.comet.particle.transformation.scale.ExpressionScaleComponent
 import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
 import gg.aquatic.comet.particle.variable.RandomsInitializerComponent
+import okhttp3.internal.readFieldOrNull
+import org.joml.Vector3d
+import org.joml.Vector3f
 import java.io.FileReader
 
 fun JsonObject.expression(field: String): String? {
@@ -233,4 +236,33 @@ object ParticleJsonParser {
             unrealizedEmitter.components.forEach { (it as? PostInit)?.realize() }
         }
     }
+}
+
+fun JsonElement.asStringOrNull(): String? {
+    return if (isJsonPrimitive && asJsonPrimitive.isString) asString else null
+}
+
+fun JsonElement.asBooleanOrNull(): Boolean? {
+    return if (isJsonPrimitive && asJsonPrimitive.isBoolean) asBoolean else null
+}
+
+fun JsonElement.asNumberOrNull(): Number? {
+    return if (isJsonPrimitive && asJsonPrimitive.isNumber) asNumber else null
+}
+
+fun JsonElement.asVector3dWithDefaultValues(def: Vector3d = Vector3d()): Vector3d? {
+    val obj = if (isJsonObject) asJsonObject else return null
+    return Vector3d(
+        obj["x"]?.asNumberOrNull()?.toDouble() ?: def.x,
+        obj["y"]?.asNumberOrNull()?.toDouble() ?: def.y,
+        obj["z"]?.asNumberOrNull()?.toDouble() ?: def.z,
+    )
+}
+fun JsonElement.asVector3fWithDefaultValues(def: Vector3f = Vector3f()): Vector3f? {
+    val obj = if (isJsonObject) asJsonObject else return null
+    return Vector3f(
+        obj["x"]?.asNumberOrNull()?.toFloat() ?: def.x,
+        obj["y"]?.asNumberOrNull()?.toFloat() ?: def.y,
+        obj["z"]?.asNumberOrNull()?.toFloat() ?: def.z,
+    )
 }
