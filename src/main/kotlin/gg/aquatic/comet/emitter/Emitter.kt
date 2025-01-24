@@ -17,6 +17,7 @@ import gg.aquatic.waves.util.audience.AquaticAudience
 import gg.aquatic.waves.util.toUser
 import org.bukkit.Location
 import org.bukkit.entity.Player
+import org.joml.Quaterniond
 import org.joml.Quaternionf
 import org.joml.Vector3d
 import org.joml.Vector3f
@@ -45,13 +46,14 @@ class Emitter(
     private val deadParticles: MutableList<Particle> = mutableListOf()
     private var blocked = false
     private var dead = false
-    private val emitterRotation =
-        Quaternionf().rotateTo(Vector3f(0f, 0f, 1f), location.direction.normalize().toVector3f())
+    private val emitterRotation: Quaterniond =
+        Quaterniond().rotateTo(Vector3d(0.0, 0.0, 1.0), location.direction.normalize().toVector3d())
 
     private val currentViewers = ConcurrentHashMap.newKeySet<Player>()
 
     init {
         emitterData.emitter = this
+        emitterData.rotation = emitterRotation
         emitterComponents.forEach { it.init(emitterData) }
     }
 
