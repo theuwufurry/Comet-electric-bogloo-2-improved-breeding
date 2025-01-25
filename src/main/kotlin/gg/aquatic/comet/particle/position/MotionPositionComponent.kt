@@ -27,8 +27,8 @@ import kotlin.math.sign
 
 class MotionPositionComponent(
     private val initialVelocityComponent: DirectionSubcomponent,
-    private val accelerationScript: Triple<CompiledScript, CompiledScript, CompiledScript>,
-    private val dragScript: CompiledScript,
+    private val accelerationScript: Triple<CompiledScript, CompiledScript, CompiledScript>?,
+    private val dragScript: CompiledScript?,
     private val restitutionScript: CompiledScript?,
     private val onCollisionAction: Action?,
     private val onCollisionEmitterID: String?,
@@ -61,12 +61,12 @@ class MotionPositionComponent(
             return
         }
 
-        val dragCoefficient = (dragScript.eval() as Number).toDouble()
-        val acceleration = Vector3d(
-            (accelerationScript.first.eval() as Number).toDouble(),
-            (accelerationScript.second.eval() as Number).toDouble(),
-            (accelerationScript.third.eval() as Number).toDouble()
-        ).add(otherParticleData.acceleration)
+        val dragCoefficient = (dragScript?.eval() as? Number)?.toDouble() ?: 0.0
+        val acceleration = (accelerationScript?.let {Vector3d(
+            (it.first.eval() as Number).toDouble(),
+            (it.second.eval() as Number).toDouble(),
+            (it.third.eval() as Number).toDouble()
+        ) } ?: Vector3d()).add(otherParticleData.acceleration)
 
         otherParticleData.acceleration = Vector3d()
 
@@ -402,11 +402,11 @@ class MotionPositionComponent(
                 )
             }
 
-            val accelerationObject = jsonObject.getAsJsonObject("acceleration") ?: return null
+            val accelerationObject = if (jsonObject.has("acceleration")) jsonObject.getAsJsonObject("acceleration") else null
             val accelerationScript: Triple<CompiledScript, CompiledScript, CompiledScript> = Triple(
-                engine.compile(accelerationObject.expression("x") ?: return null, macros),
-                engine.compile(accelerationObject.expression("y") ?: return null, macros),
-                engine.compile(accelerationObject.expression("z") ?: return null, macros)
+                engine.compile(accelerationObject?.expression("x") ?: "0", macros),
+                engine.compile(accelerationObject?.expression("y") ?: "0", macros),
+                engine.compile(accelerationObject?.expression("z") ?: "0", macros)
             )
 
             val actions = jsonObject.getAsJsonArray("on_collision")?.let { Action.parse(it, macros) }
@@ -414,7 +414,7 @@ class MotionPositionComponent(
             return MotionPositionComponent(
                 velocityComponent ?: return null,
                 accelerationScript,
-                engine.compile(jsonObject.expression("drag") ?: return null, macros),
+                jsonObject.expression("drag")?.let { engine.compile(it, macros) },
                 jsonObject.expression("restitution")?.let { engine.compile(it, macros) },
                 actions,
                 jsonObject.expression("on_collision_emitter"),
