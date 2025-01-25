@@ -29,9 +29,9 @@ class ExpressionPositionComponent(
             (yOffset.eval() as Number).toDouble(),
             (zOffset.eval() as Number).toDouble()
         )
-        oldOutputMap[otherParticleData.id] = newResult
+        oldOutputMap[otherParticleData.id] = newResult.rotate(myEmitterData.rotation)
         val newPos = Vector3d(otherParticleData.relativePosition).add(Vector3d(newResult).sub(oldResult))
-        otherParticleData.relativePosition = newPos.rotate(myEmitterData.rotation)
+        otherParticleData.relativePosition = newPos
     }
 
     override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
