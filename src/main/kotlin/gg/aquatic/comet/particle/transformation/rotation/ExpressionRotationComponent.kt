@@ -7,12 +7,9 @@ import gg.aquatic.comet.parsing.macro.Macro
 import gg.aquatic.comet.particle.ParticleComponent
 import gg.aquatic.comet.particle.ParticleData
 import org.joml.Quaternionf
-import javax.script.CompiledScript
 
 class ExpressionRotationComponent(
-    private val xRot: CompiledScript,
-    private val yRot: CompiledScript,
-    private val zRot: CompiledScript,
+    private val rotations: List<Quaternionf.() -> Unit>,
     private val myParticleData: ParticleData,
     private val myEmitterData: EmitterData
 ) : ParticleComponent, RotationComponent {
@@ -29,10 +26,35 @@ class ExpressionRotationComponent(
             val emitterData = EmitterData()
             val (engine, particleData) = particleEngine(emitterData)
 
+            val rotations: MutableList<Quaternionf.() -> Unit> = mutableListOf()
+
+            for ((id, element) in jsonObject.entrySet()) {
+                when (id) {
+                    "x" -> {
+                        val compiledScript = engine.compile(jsonObject.expression("x") ?: return null, macros)
+                        rotations += {
+                            rotateX((compiledScript.eval() as Number).toFloat())
+                        }
+                    }
+
+                    "y" -> {
+                        val compiledScript = engine.compile(jsonObject.expression("y") ?: return null, macros)
+                        rotations += {
+                            rotateY((compiledScript.eval() as Number).toFloat())
+                        }
+                    }
+
+                    "z" -> {
+                        val compiledScript = engine.compile(jsonObject.expression("z") ?: return null, macros)
+                        rotations += {
+                            rotateZ((compiledScript.eval() as Number).toFloat())
+                        }
+                    }
+                }
+            }
+
             return ExpressionRotationComponent(
-                engine.compile(jsonObject.expression("x") ?: return null, macros),
-                engine.compile(jsonObject.expression("y") ?: return null, macros),
-                engine.compile(jsonObject.expression("z") ?: return null, macros),
+                rotations,
                 particleData, emitterData
             )
         }
@@ -42,12 +64,13 @@ class ExpressionRotationComponent(
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
 
-        otherParticleData.rotation = otherEmitterData.emitter!!.applyEmitterRotation(
-            Quaternionf()
-                .rotateX((xRot.eval() as Number).toFloat())
-                .rotateY((yRot.eval() as Number).toFloat())
-                .rotateZ((zRot.eval() as Number).toFloat())
-        )
+        val identity = Quaternionf()
+
+        for (rotation in rotations) {
+            identity.rotation()
+        }
+
+        otherParticleData.rotation = otherEmitterData.emitter!!.applyEmitterRotation(identity)
     }
 
     override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}

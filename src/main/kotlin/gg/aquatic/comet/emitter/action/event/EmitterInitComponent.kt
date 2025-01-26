@@ -16,11 +16,13 @@ class EmitterInitComponent(
     private val action: Action
 ) : EmitterComponent, PostInit {
     override fun init(otherEmitterData: EmitterData) {
-        action.execute(ActionContext(
-            otherEmitterData, null,
-            otherEmitterData.location.toVector().toVector3d(),
-            Vector3d()
-        ))
+        action.execute(
+            ActionContext(
+                otherEmitterData, null,
+                otherEmitterData.location.toVector().toVector3d(),
+                Vector3d()
+            )
+        )
     }
 
     override fun execute(otherEmitterData: EmitterData) {

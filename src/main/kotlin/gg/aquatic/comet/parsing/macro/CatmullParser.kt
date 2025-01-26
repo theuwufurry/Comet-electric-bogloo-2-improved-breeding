@@ -51,49 +51,49 @@ class CatmullEvaluator private constructor(
             height == 0 -> points[index]
             height <= LAGRANGE_DEGREE -> {
                 (
-                    spline(
-                        height - 1,
-                        index - 1,
-                        time
-                    )
-                ) * (
-                    ((lagrangeTime(index) - time) / (lagrangeTime(index) - lagrangeTime(index - height)))
-                ) + (
-                    (
                         spline(
                             height - 1,
-                            index,
+                            index - 1,
                             time
                         )
-                    ) * ((time - lagrangeTime(index - height)) / (lagrangeTime(index) - lagrangeTime(index - height)))
-                )
+                        ) * (
+                        ((lagrangeTime(index) - time) / (lagrangeTime(index) - lagrangeTime(index - height)))
+                        ) + (
+                        (
+                                spline(
+                                    height - 1,
+                                    index,
+                                    time
+                                )
+                                ) * ((time - lagrangeTime(index - height)) / (lagrangeTime(index) - lagrangeTime(index - height)))
+                        )
             }
 
             else -> {
                 (
-                    spline(
-                        height - 1,
-                        index - 1,
-                        time
-                    )
-                ) * (
-                    (bsplineTime(B_SPLINE_DEGREE + LAGRANGE_DEGREE + 1 + index - height) - time) / (bsplineTime(
-                        B_SPLINE_DEGREE + LAGRANGE_DEGREE + 1 + index - height
-                    ) - bsplineTime(index))
-                ) + (
-                    (spline(height - 1, index, time)) * (
-                        (time - bsplineTime(index)) / (bsplineTime(B_SPLINE_DEGREE + LAGRANGE_DEGREE + 1 + index - height) - bsplineTime(
-                            index
-                        ))
-                    )
-                )
+                        spline(
+                            height - 1,
+                            index - 1,
+                            time
+                        )
+                        ) * (
+                        (bsplineTime(B_SPLINE_DEGREE + LAGRANGE_DEGREE + 1 + index - height) - time) / (bsplineTime(
+                            B_SPLINE_DEGREE + LAGRANGE_DEGREE + 1 + index - height
+                        ) - bsplineTime(index))
+                        ) + (
+                        (spline(height - 1, index, time)) * (
+                                (time - bsplineTime(index)) / (bsplineTime(B_SPLINE_DEGREE + LAGRANGE_DEGREE + 1 + index - height) - bsplineTime(
+                                    index
+                                ))
+                                )
+                        )
             }
         }
     }
 
     companion object {
         private const val EPSILON = 0.0001
-        fun fromPoints(points: List<Double>, inputTimes: List<Double>): CatmullEvaluator? {
+        fun fromPoints(points: List<Double>, inputTimes: List<Double>): CatmullEvaluator {
             require(points.size == inputTimes.size)
             val alteredPoints: MutableList<Double> = mutableListOf<Double>().also {
                 it += points.first()

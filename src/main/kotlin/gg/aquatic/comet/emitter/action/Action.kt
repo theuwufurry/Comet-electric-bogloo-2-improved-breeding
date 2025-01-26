@@ -2,12 +2,12 @@ package gg.aquatic.comet.emitter.action
 
 import com.google.gson.JsonArray
 import gg.aquatic.comet.emitter.action.sub.EmitterDieSubAction
-import gg.aquatic.comet.particle.action.ParticleDieSubAction
+import gg.aquatic.comet.emitter.action.sub.JavascriptSubAction
 import gg.aquatic.comet.emitter.action.sub.SpawnEmitterSubAction
 import gg.aquatic.comet.parsing.ComponentParser
 import gg.aquatic.comet.parsing.macro.Macro
-import gg.aquatic.comet.emitter.action.sub.JavascriptSubAction
 import gg.aquatic.comet.particle.action.ParticleCommandSubAction
+import gg.aquatic.comet.particle.action.ParticleDieSubAction
 import gg.aquatic.comet.particle.action.ParticleVanillaSpawnSubAction
 
 class Action(

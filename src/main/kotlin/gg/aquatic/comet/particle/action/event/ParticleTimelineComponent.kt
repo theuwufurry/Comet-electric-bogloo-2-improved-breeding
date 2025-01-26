@@ -41,7 +41,8 @@ class ParticleTimelineComponent(
         }
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {
-            val jsonObject = if (jsonElement.isJsonObject) jsonElement.asJsonObject else throw MalformedJsonException("Malformed particle timeline component.")
+            val jsonObject =
+                if (jsonElement.isJsonObject) jsonElement.asJsonObject else throw MalformedJsonException("Malformed particle timeline component.")
 
             val map: MutableMap<Int, Action> = mutableMapOf()
 

@@ -20,7 +20,6 @@ import org.bukkit.entity.Player
 import org.joml.Quaterniond
 import org.joml.Quaternionf
 import org.joml.Vector3d
-import org.joml.Vector3f
 import java.util.concurrent.ConcurrentHashMap
 
 class Emitter(

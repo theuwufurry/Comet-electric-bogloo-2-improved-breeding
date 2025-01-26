@@ -6,8 +6,6 @@ import gg.aquatic.comet.hook.ModelEngineHook
 import gg.aquatic.comet.hook.mythicmobs.MythicMobsHook
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.ResourcepackCreator
-import gg.aquatic.comet.parsing.macro.Catmull
-import gg.aquatic.comet.parsing.macro.CatmullEvaluator
 import gg.aquatic.waves.command.AquaticBaseCommand
 import gg.aquatic.waves.command.register
 import org.bukkit.plugin.java.JavaPlugin

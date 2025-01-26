@@ -38,7 +38,10 @@ import gg.aquatic.comet.particle.display.sprite.ExpressionSpriteComponent
 import gg.aquatic.comet.particle.display.sprite.FlipbookSpriteComponent
 import gg.aquatic.comet.particle.lifetime.ParticleLifetimeComponent
 import gg.aquatic.comet.particle.lifetime.ParticleLifetimeExpressionComponent
-import gg.aquatic.comet.particle.position.*
+import gg.aquatic.comet.particle.position.AttractorPositionComponent
+import gg.aquatic.comet.particle.position.ExpressionPositionComponent
+import gg.aquatic.comet.particle.position.MotionPositionComponent
+import gg.aquatic.comet.particle.position.PositionComponent
 import gg.aquatic.comet.particle.position.initial.InitialExpressionPositionComponent
 import gg.aquatic.comet.particle.position.initial.SpherePositionComponent
 import gg.aquatic.comet.particle.transformation.rotation.DirectionRotationComponent
@@ -47,7 +50,6 @@ import gg.aquatic.comet.particle.transformation.rotation.RotationComponent
 import gg.aquatic.comet.particle.transformation.scale.ExpressionScaleComponent
 import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
 import gg.aquatic.comet.particle.variable.RandomsInitializerComponent
-import okhttp3.internal.readFieldOrNull
 import org.joml.Vector3d
 import org.joml.Vector3f
 import java.io.FileReader
@@ -258,6 +260,7 @@ fun JsonElement.asVector3dWithDefaultValues(def: Vector3d = Vector3d()): Vector3
         obj["z"]?.asNumberOrNull()?.toDouble() ?: def.z,
     )
 }
+
 fun JsonElement.asVector3fWithDefaultValues(def: Vector3f = Vector3f()): Vector3f? {
     val obj = if (isJsonObject) asJsonObject else return null
     return Vector3f(

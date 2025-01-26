@@ -2,11 +2,9 @@ package gg.aquatic.comet.particle.action.event
 
 import com.google.gson.JsonElement
 import gg.aquatic.comet.Component
-import gg.aquatic.comet.emitter.EmitterComponent
 import gg.aquatic.comet.emitter.EmitterData
 import gg.aquatic.comet.emitter.action.Action
 import gg.aquatic.comet.emitter.action.ActionContext
-import gg.aquatic.comet.emitter.action.event.EmitterInitComponent
 import gg.aquatic.comet.parsing.BaseComponentParser
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.PostInit

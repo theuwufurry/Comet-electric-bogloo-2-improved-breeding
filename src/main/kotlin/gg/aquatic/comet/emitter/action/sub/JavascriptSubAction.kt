@@ -4,8 +4,11 @@ import com.google.gson.JsonElement
 import gg.aquatic.comet.emitter.EmitterData
 import gg.aquatic.comet.emitter.action.ActionContext
 import gg.aquatic.comet.emitter.action.SubAction
-import gg.aquatic.comet.parsing.*
+import gg.aquatic.comet.parsing.ComponentParser
+import gg.aquatic.comet.parsing.compile
+import gg.aquatic.comet.parsing.emitterEngine
 import gg.aquatic.comet.parsing.macro.Macro
+import gg.aquatic.comet.parsing.particleEngine
 import gg.aquatic.comet.particle.ParticleData
 import javax.script.CompiledScript
 

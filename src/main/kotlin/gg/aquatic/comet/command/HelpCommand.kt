@@ -5,7 +5,8 @@ import org.bukkit.command.CommandSender
 
 object HelpCommand : ICommand {
     override fun run(sender: CommandSender, args: Array<out String>) {
-        sender.sendMessage("""
+        sender.sendMessage(
+            """
             /comet spawn <id> <world> <x> <y> <z> <yaw>
                 Spawn an effect. This supports relative positions (using ~)
             /comet at <entity> <id>
@@ -15,7 +16,8 @@ object HelpCommand : ICommand {
                 Reload configurations
             /comet clear
                 Clear particle effects
-        """.trimIndent())
+        """.trimIndent()
+        )
     }
 
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {

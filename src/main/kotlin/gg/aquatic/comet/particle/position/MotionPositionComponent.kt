@@ -62,11 +62,13 @@ class MotionPositionComponent(
         }
 
         val dragCoefficient = (dragScript?.eval() as? Number)?.toDouble() ?: 0.0
-        val acceleration = (accelerationScript?.let {Vector3d(
-            (it.first.eval() as Number).toDouble(),
-            (it.second.eval() as Number).toDouble(),
-            (it.third.eval() as Number).toDouble()
-        ) } ?: Vector3d()).add(otherParticleData.acceleration)
+        val acceleration = (accelerationScript?.let {
+            Vector3d(
+                (it.first.eval() as Number).toDouble(),
+                (it.second.eval() as Number).toDouble(),
+                (it.third.eval() as Number).toDouble()
+            )
+        } ?: Vector3d()).add(otherParticleData.acceleration)
 
         otherParticleData.acceleration = Vector3d()
 
@@ -402,7 +404,8 @@ class MotionPositionComponent(
                 )
             }
 
-            val accelerationObject = if (jsonObject.has("acceleration")) jsonObject.getAsJsonObject("acceleration") else null
+            val accelerationObject =
+                if (jsonObject.has("acceleration")) jsonObject.getAsJsonObject("acceleration") else null
             val accelerationScript: Triple<CompiledScript, CompiledScript, CompiledScript> = Triple(
                 engine.compile(accelerationObject?.expression("x") ?: "0", macros),
                 engine.compile(accelerationObject?.expression("y") ?: "0", macros),

@@ -36,7 +36,6 @@ class ParticleVanillaSpawnSubAction(
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ParticleVanillaSpawnSubAction? {
             val obj = if (jsonElement.isJsonObject) jsonElement.asJsonObject else return null
             val particle = CompiledVanillaParticle.parse(obj["vanilla_particle"] ?: return null, macros)
-                ?: throw MalformedJsonException("Unable to parse particle!")
             return ParticleVanillaSpawnSubAction(particle)
         }
     }
@@ -111,7 +110,7 @@ class CompiledVanillaParticle(
 interface CompiledData<T : ParticleData> {
     fun realize(otherEmitterData: EmitterData, otherParticleData: gg.aquatic.comet.particle.ParticleData): T
 
-    class EmptyDustData : CompiledData<ParticleData>{
+    class EmptyDustData : CompiledData<ParticleData> {
         override fun realize(
             otherEmitterData: EmitterData,
             otherParticleData: gg.aquatic.comet.particle.ParticleData
@@ -126,7 +125,10 @@ interface CompiledData<T : ParticleData> {
         private val myEmitterData: EmitterData,
         private val myParticleData: gg.aquatic.comet.particle.ParticleData
     ) : CompiledData<ParticleDustData> {
-        override fun realize(otherEmitterData: EmitterData, otherParticleData: gg.aquatic.comet.particle.ParticleData): ParticleDustData {
+        override fun realize(
+            otherEmitterData: EmitterData,
+            otherParticleData: gg.aquatic.comet.particle.ParticleData
+        ): ParticleDustData {
             myEmitterData.copyFrom(otherEmitterData)
             myParticleData.copyFrom(otherParticleData)
             val color = (colorScript.eval() as Color)
@@ -144,7 +146,8 @@ fun parseParticleDustData(jsonElement: JsonElement, macros: Map<String, Macro>?)
     val emitterData = EmitterData()
     val (engine, particleData) = particleEngine(emitterData)
 
-    val colorScript = engine.compile(obj.expression("color")?.addDependency() ?: "new Color(255, 255, 255)".addDependency(), macros)
+    val colorScript =
+        engine.compile(obj.expression("color")?.addDependency() ?: "new Color(255, 255, 255)".addDependency(), macros)
     val scaleScript = engine.compile(obj.expression("scale") ?: "1", macros)
 
     return CompiledData.CompiledDustData(

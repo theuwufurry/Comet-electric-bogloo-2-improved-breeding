@@ -31,7 +31,7 @@ class TimedEmitterLifetimeComponent(
             ParticleJsonParser.componentParsers += "timed_emitter_lifetime" to this
         }
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): TimedEmitterLifetimeComponent? {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): TimedEmitterLifetimeComponent {
             val jsonObject = jsonElement.asJsonObject
             val emitterData = EmitterData()
             val engine = emitterEngine(emitterData)

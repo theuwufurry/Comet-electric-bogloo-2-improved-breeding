@@ -13,7 +13,7 @@ interface EmitterLifetimeComponent {
             return TimedEmitterLifetimeComponent(
                 engine.compile(
                     "emitter.age - 100.0", null
-                ), null,emitterData
+                ), null, emitterData
             )
         }
     }

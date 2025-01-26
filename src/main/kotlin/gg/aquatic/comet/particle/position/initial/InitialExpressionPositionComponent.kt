@@ -21,11 +21,13 @@ class InitialExpressionPositionComponent(
         if (otherParticleData.age == 0.0) {
             myEmitterData.copyFrom(otherEmitterData)
             myParticleData.copyFrom(otherParticleData)
-            otherParticleData.relativePosition.add(Vector3d(
-                (xOffset.eval() as Number).toDouble(),
-                (yOffset.eval() as Number).toDouble(),
-                (zOffset.eval() as Number).toDouble()
-            ).rotate(otherEmitterData.rotation))
+            otherParticleData.relativePosition.add(
+                Vector3d(
+                    (xOffset.eval() as Number).toDouble(),
+                    (yOffset.eval() as Number).toDouble(),
+                    (zOffset.eval() as Number).toDouble()
+                ).rotate(otherEmitterData.rotation)
+            )
         }
     }
 
