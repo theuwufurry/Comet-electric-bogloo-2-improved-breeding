@@ -55,3 +55,8 @@ class ParticleEmitter : JavaPlugin() {
         hooks.forEach { it.initialize() }
     }
 }
+
+fun <T> T.applyIf(condition: Boolean, action: T.() -> Unit): T {
+    if (condition) action()
+    return this
+}

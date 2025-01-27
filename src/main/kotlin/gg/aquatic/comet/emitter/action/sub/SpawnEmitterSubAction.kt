@@ -1,6 +1,7 @@
 package gg.aquatic.comet.emitter.action.sub
 
 import com.google.gson.JsonElement
+import gg.aquatic.comet.applyIf
 import gg.aquatic.comet.emitter.EmitterData
 import gg.aquatic.comet.emitter.UnrealizedEmitter
 import gg.aquatic.comet.emitter.action.ActionContext
@@ -47,14 +48,15 @@ class SpawnEmitterSubAction(
         }
 
         for (unrealizedEmitter in unrealizedEmitters) {
+            val location = Location(
+                context.otherEmitterData.world,
+                context.pos.x + context.dir.x * Math.random() * magnitude,
+                context.pos.y + context.dir.y * Math.random() * magnitude,
+                context.pos.z + context.dir.z * Math.random() * magnitude
+            ).applyIf(parent != null) { setDirection(Vector(context.dir.x, context.dir.y, context.dir.z)) }
             unrealizedEmitter.realize(
                 parent,
-                Location(
-                    context.otherEmitterData.world,
-                    context.pos.x + context.dir.x * Math.random() * magnitude,
-                    context.pos.y + context.dir.y * Math.random() * magnitude,
-                    context.pos.z + context.dir.z * Math.random() * magnitude
-                ).setDirection(Vector(context.dir.x, context.dir.y, context.dir.z))
+                location
             )
         }
     }

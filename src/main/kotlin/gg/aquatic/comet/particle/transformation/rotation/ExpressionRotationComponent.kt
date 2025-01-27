@@ -28,7 +28,7 @@ class ExpressionRotationComponent(
 
             val rotations: MutableList<Quaternionf.() -> Unit> = mutableListOf()
 
-            for ((id, element) in jsonObject.entrySet()) {
+            for ((id, _) in jsonObject.entrySet()) {
                 when (id) {
                     "x" -> {
                         val compiledScript = engine.compile(jsonObject.expression("x") ?: return null, macros)
