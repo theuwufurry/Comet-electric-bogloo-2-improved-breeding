@@ -1,7 +1,8 @@
 package gg.aquatic.comet
 
+import java.util.concurrent.atomic.AtomicInteger
+
 object ParticleIDProvider {
-    var id: Int = 0
-        get() = field--
-        private set
+    private val atomic = AtomicInteger()
+    fun id(): Int = atomic.decrementAndGet()
 }

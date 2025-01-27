@@ -9,6 +9,8 @@ import gg.aquatic.comet.particle.Particle
 import gg.aquatic.comet.particle.ParticleComponent
 import gg.aquatic.comet.particle.ParticleData
 import gg.aquatic.comet.particle.data.BillboardConstraints
+import gg.aquatic.comet.particle.data.EntityDataBuilder
+import gg.aquatic.comet.particle.display.sprite.SpriteData
 import gg.aquatic.waves.chunk.trackedByPlayers
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.PacketEvents
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
@@ -93,6 +95,8 @@ class Emitter(
                 particle.data.interpolationDuration = shouldUpdate.interpolationDuration
             }
 
+            val d = (particle.data.displayData as SpriteData).id
+
             particleComponents.forEach { it.execute(emitterData, particle.data) }
 
             if (particle.data.dead) {
@@ -107,7 +111,7 @@ class Emitter(
                 }
             }
 
-            particle.updatePacket(unrealizedHolder.myEntityDataBuilder, shouldUpdate.shouldUpdate)
+            particle.updatePacket(EntityDataBuilder, shouldUpdate.shouldUpdate)
                 ?.let { dataPackets += it }
         }
 
@@ -183,7 +187,7 @@ class Emitter(
 
             particle.init()
 
-            val packets = particle.getAddPacket(unrealizedHolder.myEntityDataBuilder)
+            val packets = particle.getAddPacket()
             bundle.addAll(packets)
 
             particles += particle

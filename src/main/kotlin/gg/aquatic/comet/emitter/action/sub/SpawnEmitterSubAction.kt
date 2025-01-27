@@ -53,7 +53,7 @@ class SpawnEmitterSubAction(
                 context.pos.x + context.dir.x * Math.random() * magnitude,
                 context.pos.y + context.dir.y * Math.random() * magnitude,
                 context.pos.z + context.dir.z * Math.random() * magnitude
-            ).applyIf(parent != null) { setDirection(Vector(context.dir.x, context.dir.y, context.dir.z)) }
+            ).applyIf(parent != null) { direction = Vector(context.dir.x, context.dir.y, context.dir.z) }
             unrealizedEmitter.realize(
                 parent,
                 location

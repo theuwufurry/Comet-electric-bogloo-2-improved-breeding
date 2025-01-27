@@ -31,7 +31,7 @@ private fun checkVersion(): Boolean {
     return (major > 1) || (major == 1 && minor > 20) || (major == 1 && minor == 20 && patch >= 2)
 }
 
-class EntityDataBuilder {
+object EntityDataBuilder {
     private val key = Key.key("particlecreator", "default")
 
     fun getDataFor(

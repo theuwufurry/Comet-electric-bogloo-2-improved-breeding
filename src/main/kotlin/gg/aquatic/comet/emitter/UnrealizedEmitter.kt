@@ -45,7 +45,6 @@ data class UnrealizedEmitter(
 ) {
     private val emitters: MutableSet<Emitter> = ConcurrentSet()
     private var tasks: BukkitTask
-    val myEntityDataBuilder = EntityDataBuilder()
 
     init {
         EmitterTickersHolder.unrealizedEmitters += this

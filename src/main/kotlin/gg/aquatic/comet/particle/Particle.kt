@@ -16,7 +16,7 @@ import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.Wr
 import java.util.*
 
 open class Particle(var data: ParticleData) : Parent {
-    val id = ParticleIDProvider.id
+    val id = ParticleIDProvider.id()
     private val uuid = UUID.randomUUID()
 
     private lateinit var previousEntityData: EntityData
@@ -34,7 +34,7 @@ open class Particle(var data: ParticleData) : Parent {
         data.age++
     }
 
-    fun getAddPacket(entityDataBuilder: EntityDataBuilder): List<PacketWrapper<*>> {
+    fun getAddPacket(): List<PacketWrapper<*>> {
         val packet = WrapperPlayServerSpawnEntity(
             id,
             Optional.of(uuid),
@@ -49,7 +49,7 @@ open class Particle(var data: ParticleData) : Parent {
             Optional.of(Vector3d())
         )
 
-        val data = entityDataBuilder.getDataFor(
+        val data = EntityDataBuilder.getDataFor(
             EntityData(
                 data.displayData,
                 data.color, data.color ushr 24, null,
@@ -91,8 +91,8 @@ open class Particle(var data: ParticleData) : Parent {
         val flags = UpdateFlags()
         var transparency = data.color ushr 24
         var interpolationDuration = data.interpolationDuration
-        flags.display =
-            (previousEntityData.displayData != data.displayData) || ((previousEntityData.color and 0xFFFFFF) != (data.color and 0xFFFFFF))
+        flags.display = (previousEntityData.displayData != data.displayData)
+                || ((previousEntityData.color and 0xFFFFFF) != (data.color and 0xFFFFFF))
         flags.transparency = previousEntityData.transparency != transparency
         flags.translation = previousEntityData.translation != data.translation
         flags.rotation = previousEntityData.rotation != data.rotation
