@@ -50,13 +50,14 @@ class MotionPositionComponent(
     ) {
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
+
         if (otherParticleData.age == 0.0) {
             oldPositionMap[otherParticleData.id] = Vector3d(otherParticleData.relativePosition)
             otherParticleData.relativePosition = Vector3d(otherParticleData.relativePosition).add(
                 initialVelocityComponent.dir(
                     otherEmitterData,
                     otherParticleData
-                ).rotate(myEmitterData.rotation)
+                ).mul(otherEmitterData.emitter!!.environmentData.size).rotate(myEmitterData.rotation)
             )
             return
         }
@@ -67,7 +68,7 @@ class MotionPositionComponent(
                 (it.first.eval() as Number).toDouble(),
                 (it.second.eval() as Number).toDouble(),
                 (it.third.eval() as Number).toDouble()
-            )
+            ).mul(otherEmitterData.emitter!!.environmentData.size)
         } ?: Vector3d()).add(otherParticleData.acceleration)
 
         otherParticleData.acceleration = Vector3d()

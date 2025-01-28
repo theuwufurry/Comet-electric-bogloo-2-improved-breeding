@@ -25,9 +25,9 @@ class ExpressionPositionComponent(
         myParticleData.copyFrom(otherParticleData)
         val oldResult = oldOutputMap.getOrPut(otherParticleData.id) { Vector3d() }
         val newResult = Vector3d(
-            (xOffset.eval() as Number).toDouble(),
-            (yOffset.eval() as Number).toDouble(),
-            (zOffset.eval() as Number).toDouble()
+            (xOffset.eval() as Number).toDouble() * otherEmitterData.emitter!!.environmentData.size,
+            (yOffset.eval() as Number).toDouble() * otherEmitterData.emitter!!.environmentData.size,
+            (zOffset.eval() as Number).toDouble() * otherEmitterData.emitter!!.environmentData.size
         )
         oldOutputMap[otherParticleData.id] = newResult.rotate(myEmitterData.rotation)
         val newPos = Vector3d(otherParticleData.relativePosition).add(Vector3d(newResult).sub(oldResult))

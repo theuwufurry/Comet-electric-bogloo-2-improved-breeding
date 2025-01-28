@@ -43,9 +43,9 @@ class ExpressionScaleComponent(
         myParticleData.copyFrom(otherParticleData)
 
         otherParticleData.scale = Vector3f(
-            (xScale.eval() as Number).toFloat(),
-            (yScale.eval() as Number).toFloat(),
-            (zScale.eval() as Number).toFloat()
+            (xScale.eval() as Number).toFloat() * otherEmitterData.emitter!!.environmentData.size.toFloat(),
+            (yScale.eval() as Number).toFloat() * otherEmitterData.emitter!!.environmentData.size.toFloat(),
+            (zScale.eval() as Number).toFloat() * otherEmitterData.emitter!!.environmentData.size.toFloat()
         )
     }
 

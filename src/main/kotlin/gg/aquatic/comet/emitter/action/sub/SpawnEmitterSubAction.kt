@@ -56,7 +56,8 @@ class SpawnEmitterSubAction(
             ).applyIf(parent != null) { direction = Vector(context.dir.x, context.dir.y, context.dir.z) }
             unrealizedEmitter.realize(
                 parent,
-                location
+                location,
+                context.otherEmitterData.emitter!!.environmentData
             )
         }
     }
