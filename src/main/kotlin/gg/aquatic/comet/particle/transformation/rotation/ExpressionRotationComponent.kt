@@ -50,6 +50,27 @@ class ExpressionRotationComponent(
                             rotateZ((compiledScript.eval() as Number).toFloat())
                         }
                     }
+
+                    "x_local" -> {
+                        val compiledScript = engine.compile(jsonObject.expression("x_local") ?: return null, macros)
+                        rotations += {
+                            rotateLocalX((compiledScript.eval() as Number).toFloat())
+                        }
+                    }
+
+                    "y_local" -> {
+                        val compiledScript = engine.compile(jsonObject.expression("y_local") ?: return null, macros)
+                        rotations += {
+                            rotateLocalY((compiledScript.eval() as Number).toFloat())
+                        }
+                    }
+
+                    "z_local" -> {
+                        val compiledScript = engine.compile(jsonObject.expression("z_local") ?: return null, macros)
+                        rotations += {
+                            rotateLocalZ((compiledScript.eval() as Number).toFloat())
+                        }
+                    }
                 }
             }
 
