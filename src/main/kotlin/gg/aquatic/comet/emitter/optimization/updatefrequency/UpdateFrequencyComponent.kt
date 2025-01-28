@@ -10,7 +10,7 @@ interface UpdateFrequencyComponent {
 
     companion object {
         fun default(): UpdateFrequencyComponent {
-            return IntervalUpdateFrequencyComponent(1)
+            return IntervalUpdateFrequencyComponent(1, 0)
         }
     }
 }

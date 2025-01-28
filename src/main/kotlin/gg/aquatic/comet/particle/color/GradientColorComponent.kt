@@ -9,6 +9,7 @@ import gg.aquatic.comet.particle.ParticleComponent
 import gg.aquatic.comet.particle.ParticleData
 import java.awt.Color
 import javax.script.CompiledScript
+import kotlin.math.roundToInt
 
 class GradientColorComponent(
     private val interpolantScript: CompiledScript,
@@ -66,9 +67,9 @@ class GradientColorComponent(
                     (((endColor.alpha * interpolationFactor + prevColor.alpha * (1.0 - interpolationFactor)).toInt()) and 0xFF) shl 24
                 otherParticleData.color = (
                         interpolatedAlpha +
-                                ((((endColor.red * interpolationFactor + prevColor.red * (1.0 - interpolationFactor)).toInt()) and 0xFF) shl 16) +
-                                ((((endColor.green * interpolationFactor + prevColor.green * (1.0 - interpolationFactor)).toInt()) and 0xFF) shl 8) +
-                                (((endColor.blue * interpolationFactor + prevColor.blue * (1.0 - interpolationFactor)).toInt()) and 0xFF))
+                                ((((endColor.red * interpolationFactor + prevColor.red * (1.0 - interpolationFactor)).roundToInt()) and 0xFF) shl 16) +
+                                ((((endColor.green * interpolationFactor + prevColor.green * (1.0 - interpolationFactor)).roundToInt()) and 0xFF) shl 8) +
+                                (((endColor.blue * interpolationFactor + prevColor.blue * (1.0 - interpolationFactor)).roundToInt()) and 0xFF))
                 return
             }
 
