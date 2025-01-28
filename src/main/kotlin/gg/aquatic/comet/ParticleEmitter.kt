@@ -42,6 +42,16 @@ class ParticleEmitter : JavaPlugin() {
         ).register("comet")
 
         initializeHooks()
+
+        println("""
+   (                          )  
+   )\           )      (   ( /(  
+ (((_)   (     (      ))\  )\()) 
+ )\___   )\    )\  ' /((_)(_))/  
+((/ __| ((_) _((_)) (_))  | |_   
+ | (__ / _ \| '  \()/ -_) |  _|  
+  \___|\___/|_|_|_| \___|  \__|  
+        """.trimIndent())
     }
 
     private fun initializeHooks() {
