@@ -8,9 +8,9 @@ import gg.aquatic.comet.parsing.macro.Macro
 import gg.aquatic.comet.particle.ParticleData
 import kotlin.math.floor
 
-class IntervalUpdateFrequencyComponent(private val interval: Int) : UpdateFrequencyComponent {
+class IntervalUpdateFrequencyComponent(private val interval: Int, offset: Int) : UpdateFrequencyComponent {
     override val interpolationDelay: Int = -1
-    override val initialInterpolationDuration: Int = interval
+    override val initialInterpolationDuration: Int = interval + offset
 
     companion object : ComponentParser<IntervalUpdateFrequencyComponent> {
         init {
@@ -23,7 +23,7 @@ class IntervalUpdateFrequencyComponent(private val interval: Int) : UpdateFreque
             val interval = jsonObject.get("interval").asJsonPrimitive.asNumber.toInt()
             val offset =
                 if (jsonObject.has("offset") && jsonObject.get("offset").isJsonPrimitive) jsonObject.get("offset").asJsonPrimitive.asInt else 0
-            return IntervalUpdateFrequencyComponent(interval + offset)
+            return IntervalUpdateFrequencyComponent(interval, offset)
         }
     }
 

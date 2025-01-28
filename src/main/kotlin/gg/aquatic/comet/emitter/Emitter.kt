@@ -10,7 +10,6 @@ import gg.aquatic.comet.particle.ParticleComponent
 import gg.aquatic.comet.particle.ParticleData
 import gg.aquatic.comet.particle.data.BillboardConstraints
 import gg.aquatic.comet.particle.data.EntityDataBuilder
-import gg.aquatic.comet.particle.display.sprite.SpriteData
 import gg.aquatic.waves.chunk.trackedByPlayers
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.PacketEvents
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
@@ -34,6 +33,7 @@ class Emitter(
     location: Location,
     private val emitterData: EmitterData,
     private val unrealizedHolder: UnrealizedEmitter,
+    val environmentData: EnvironmentData,
     private val audience: AquaticAudience
 ) : Parent {
     private val emitterComponents: List<EmitterComponent> = components.filterIsInstance<EmitterComponent>()
@@ -94,8 +94,6 @@ class Emitter(
             if (shouldUpdate.interpolationDuration != null) {
                 particle.data.interpolationDuration = shouldUpdate.interpolationDuration
             }
-
-            val d = (particle.data.displayData as SpriteData).id
 
             particleComponents.forEach { it.execute(emitterData, particle.data) }
 

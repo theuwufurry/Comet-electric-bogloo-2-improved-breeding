@@ -93,7 +93,7 @@ class CatmullEvaluator private constructor(
 
     companion object {
         private const val EPSILON = 0.0001
-        fun fromPoints(points: List<Double>, inputTimes: List<Double>): CatmullEvaluator? {
+        fun fromPoints(points: List<Double>, inputTimes: List<Double>): CatmullEvaluator {
             require(points.size == inputTimes.size)
             val alteredPoints: MutableList<Double> = mutableListOf<Double>().also {
                 it += points.first()

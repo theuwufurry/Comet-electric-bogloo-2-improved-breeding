@@ -43,7 +43,8 @@ class ParticleEmitter : JavaPlugin() {
 
         initializeHooks()
 
-        println("""
+        println(
+            """
    (                          )  
    )\           )      (   ( /(  
  (((_)   (     (      ))\  )\()) 
@@ -51,7 +52,8 @@ class ParticleEmitter : JavaPlugin() {
 ((/ __| ((_) _((_)) (_))  | |_   
  | (__ / _ \| '  \()/ -_) |  _|  
   \___|\___/|_|_|_| \___|  \__|  
-        """.trimIndent())
+        """.trimIndent()
+        )
     }
 
     private fun initializeHooks() {

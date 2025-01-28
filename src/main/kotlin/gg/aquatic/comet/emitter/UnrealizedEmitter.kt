@@ -7,7 +7,6 @@ import gg.aquatic.comet.emitter.optimization.updatefrequency.UpdateFrequencyComp
 import gg.aquatic.comet.emitter.parent.Parent
 import gg.aquatic.comet.emitter.rate.RateComponent
 import gg.aquatic.comet.particle.data.BillboardConstraints
-import gg.aquatic.comet.particle.data.EntityDataBuilder
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
 import gg.aquatic.waves.util.audience.AquaticAudience
 import gg.aquatic.waves.util.audience.GlobalAudience
@@ -85,7 +84,7 @@ data class UnrealizedEmitter(
         emitters.removeAll(deadEmitters)
     }
 
-    fun realize(parent: Parent? = null, location: Location, audience: AquaticAudience = GlobalAudience()): Emitter {
+    fun realize(parent: Parent? = null, location: Location, environmentData: EnvironmentData = EnvironmentData(), audience: AquaticAudience = GlobalAudience()): Emitter {
         val emitterData = EmitterData()
         emitterData.world = location.world
         emitterData.location = location
@@ -95,7 +94,7 @@ data class UnrealizedEmitter(
             rateComponent,
             distanceCullingComponent,
             updateFrequencyComponent,
-            billboardConstraints, location, emitterData, this, audience
+            billboardConstraints, location, emitterData, this, environmentData, audience
         ).also {
             emitters += it
         }

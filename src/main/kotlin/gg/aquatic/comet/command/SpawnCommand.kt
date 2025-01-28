@@ -1,6 +1,9 @@
 package gg.aquatic.comet.command
 
+import com.google.gson.JsonParser
+import gg.aquatic.comet.emitter.EnvironmentData
 import gg.aquatic.comet.parsing.ParticleJsonParser
+import gg.aquatic.comet.parsing.asNumberOrNull
 import gg.aquatic.waves.command.ICommand
 import org.bukkit.Bukkit
 import org.bukkit.Location
@@ -12,7 +15,7 @@ object SpawnCommand : ICommand {
     override fun run(sender: CommandSender, args: Array<out String>) {
         // comet spawn <id> <world> <x> <y> <z> <yaw>
         if (args.size < 6) {
-            sender.sendMessage("Usage: /comet spawn <id> <world> <x> <y> <z> [yaw]")
+            sender.sendMessage("Usage: /comet spawn <id> <world> <x> <y> <z> {data}")
             return
         }
 
@@ -50,14 +53,10 @@ object SpawnCommand : ICommand {
             return
         }
 
-        val yaw = if (args.size > 6) args[6].toFloatOrNull() else 0f
-        if (yaw == null) {
-            sender.sendMessage("Invalid yaw: ${args[6]}")
-            return
-        }
+        val data = (if (args.size > 6) args[6] else "{}").parseEnvironmentData()
 
-        val location = Location(world, x, y, z, yaw, 0f)
-        emitter.realize(null, location)
+        val location = Location(world, x, y, z, 0f, 0f)
+        emitter.realize(null, location, data)
     }
 
     private fun handlePos(input: String, origin: Double): Double? {
@@ -75,4 +74,10 @@ object SpawnCommand : ICommand {
             else -> emptyList()
         }
     }
+}
+
+fun String.parseEnvironmentData(): EnvironmentData {
+    val root = JsonParser.parseString(this).asJsonObject
+    val size = root["size"]?.asNumberOrNull()?.toDouble() ?: 1.0
+    return EnvironmentData(size)
 }
