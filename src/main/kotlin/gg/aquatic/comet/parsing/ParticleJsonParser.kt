@@ -52,6 +52,7 @@ import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
 import gg.aquatic.comet.particle.variable.RandomsInitializerComponent
 import org.joml.Vector3d
 import org.joml.Vector3f
+import java.io.File
 import java.io.FileReader
 
 fun JsonObject.expression(field: String): String? {
@@ -140,13 +141,14 @@ object ParticleJsonParser {
         val dataFolder = ParticleEmitter.INSTANCE.dataFolder
         if (!dataFolder.exists()) return
 
+        val effectsFolder = File(dataFolder.path + "/effects/")
+        val effects = recursivelyFindJsons(effectsFolder)
+
         val unrealizedEmitters: MutableMap<String, UnrealizedEmitter> = mutableMapOf()
 
         EmitterTickersHolder.kill()
 
-        for (file in dataFolder.listFiles()!!) {
-            if (file.extension != "json") continue
-
+        for (file in effects) {
             val rootObject = JsonParser.parseReader(FileReader(file)).asJsonObject
 
             val emitter = parseComponents(rootObject)
@@ -160,6 +162,20 @@ object ParticleJsonParser {
         jsonUnrealizedEmitters = unrealizedEmitters
 
         postInit()
+    }
+
+    private fun recursivelyFindJsons(dir: File): Set<File> {
+        val files: MutableSet<File> = mutableSetOf()
+        for (file in dir.listFiles()!!) {
+            if (file.isDirectory) {
+                files += recursivelyFindJsons(file)
+                continue
+            }
+
+            if (file.extension == "json") files += file
+        }
+
+        return files
     }
 
     private fun parseComponents(rootObject: JsonObject): UnrealizedEmitter? {

@@ -53,10 +53,10 @@ class AttractorPositionComponent(
                 for (script in attractorScripts) {
                     currentEvaluatedAttractors += EvaluatedAttractor(
                         Vector3d(
-                            (script.x.eval() as Number).toDouble(),
-                            (script.y.eval() as Number).toDouble(),
-                            (script.z.eval() as Number).toDouble(),
-                        ), (script.mass.eval() as Number).toDouble(), (script.radius?.eval() as? Number)?.toDouble()
+                            (script.x.eval() as Number).toDouble() * otherEmitterData.emitter!!.environmentData.size,
+                            (script.y.eval() as Number).toDouble() * otherEmitterData.emitter!!.environmentData.size,
+                            (script.z.eval() as Number).toDouble() * otherEmitterData.emitter!!.environmentData.size,
+                        ), (script.mass.eval() as Number).toDouble(), (script.radius?.eval() as? Number)?.toDouble()?.let { it * otherEmitterData.emitter!!.environmentData.size }
                     )
                 }
 
@@ -143,7 +143,7 @@ class AttractorPositionComponent(
             }
         }
 
-        otherParticleData.relativePosition.add(velocity)
+        otherParticleData.relativePosition.add(velocity.mul(otherEmitterData.emitter!!.environmentData.size))
         return
     }
 
