@@ -45,8 +45,18 @@ class FlipbookSpriteComponent(
         myParticleData.copyFrom(otherParticleData)
         val inputResult = (inputScript.eval() as Number).toDouble()
 
+        if (inputResult >= spriteScripts.last().first) {
+            otherParticleData.displayData = SpriteData(spriteScripts.last().second.eval() as String)
+            return
+        }
+
+        if (inputResult <= spriteScripts.first().first) {
+            otherParticleData.displayData = SpriteData(spriteScripts.first().second.eval() as String)
+            return
+        }
+
         var i = 0
-        while (i + 1 < spriteScripts.size && inputResult >= spriteScripts[i + 1].first) i++
+        while (i + 1 < spriteScripts.size && inputResult > spriteScripts[i + 1].first) i++
         otherParticleData.displayData = SpriteData(spriteScripts[i].second.eval() as String)
     }
 

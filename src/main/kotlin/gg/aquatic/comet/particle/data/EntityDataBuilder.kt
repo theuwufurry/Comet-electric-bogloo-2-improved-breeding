@@ -183,7 +183,7 @@ object EntityDataBuilder {
         }
 
         if (flags.rotation || flags.scale) {
-            val offset = Vector3f(-0.0125f, 0f, 0f)
+            val offset = if (component.billboardConstraints == BillboardConstraints.CENTER) Vector3f(-0.0125f, 0f, 0f) else Vector3f()
             offset.mul(component.scale).rotate(component.rotation)
             entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                 10 + PACKET_OFFSET,
