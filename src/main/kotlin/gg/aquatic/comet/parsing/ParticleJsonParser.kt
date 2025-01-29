@@ -12,6 +12,7 @@ import gg.aquatic.comet.emitter.action.event.EmitterInitComponent
 import gg.aquatic.comet.emitter.action.event.EmitterTickComponent
 import gg.aquatic.comet.emitter.action.event.EmitterTimelineComponent
 import gg.aquatic.comet.emitter.lifetime.EmitterLifetimeComponent
+import gg.aquatic.comet.emitter.lifetime.InfiniteEmitterLifetimeComponent
 import gg.aquatic.comet.emitter.lifetime.TimedEmitterLifetimeComponent
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.IntervalUpdateFrequencyComponent
@@ -47,6 +48,7 @@ import gg.aquatic.comet.particle.position.initial.SpherePositionComponent
 import gg.aquatic.comet.particle.transformation.rotation.DirectionRotationComponent
 import gg.aquatic.comet.particle.transformation.rotation.ExpressionRotationComponent
 import gg.aquatic.comet.particle.transformation.rotation.RotationComponent
+import gg.aquatic.comet.particle.transformation.rotation.VelocityRotationComponent
 import gg.aquatic.comet.particle.transformation.scale.ExpressionScaleComponent
 import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
 import gg.aquatic.comet.particle.variable.RandomsInitializerComponent
@@ -89,6 +91,7 @@ object ParticleJsonParser {
         MacrosParser
 
         TimedEmitterLifetimeComponent
+        InfiniteEmitterLifetimeComponent
 
         SteadyRateComponent
         InstantRateComponent
@@ -115,6 +118,7 @@ object ParticleJsonParser {
 
         ExpressionRotationComponent
         DirectionRotationComponent
+        VelocityRotationComponent
 
         DistanceCullingComponent
 

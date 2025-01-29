@@ -210,7 +210,7 @@ data class EntityData(
     val scale: Vector3f,
     val billboardConstraints: BillboardConstraints,
     val interpolationDelay: Int,
-    val interpolationDuration: Int
+    val interpolationDuration: Int,
 ) {
     fun copy(): EntityData {
         return EntityData(
@@ -223,7 +223,7 @@ data class EntityData(
             Vector3f(scale),
             billboardConstraints,
             interpolationDelay,
-            interpolationDuration
+            interpolationDuration,
         )
     }
 }

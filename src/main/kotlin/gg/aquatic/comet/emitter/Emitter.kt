@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap
 class Emitter(
     private val parent: Parent? = null,
     components: List<Component>,
-    private val rateComponent: RateComponent,
+    val rateComponent: RateComponent,
     private val distanceCullingComponent: DistanceCullingComponent,
     private val updateFrequencyComponent: UpdateFrequencyComponent,
     private val billboardConstraints: BillboardConstraints,

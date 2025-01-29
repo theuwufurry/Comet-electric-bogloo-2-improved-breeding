@@ -42,7 +42,7 @@ class MotionPositionComponent(
         onCollisionAction?.subActions?.filterIsInstance<PostInit>()?.forEach { it.realize() }
     }
 
-    private val oldPositionMap: MutableMap<UUID, Vector3d> = ConcurrentHashMap()
+    val oldPositionMap: MutableMap<UUID, Vector3d> = ConcurrentHashMap()
 
     override fun execute(
         otherEmitterData: EmitterData,

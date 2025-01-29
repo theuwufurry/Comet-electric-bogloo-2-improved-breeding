@@ -93,7 +93,6 @@ open class Particle(var data: ParticleData) : Parent {
         var interpolationDuration = data.interpolationDuration
         flags.display = (previousEntityData.displayData != data.displayData)
                 || ((previousEntityData.color and 0xFFFFFF) != (data.color and 0xFFFFFF))
-
         flags.transparency = previousEntityData.transparency != transparency
         flags.translation = previousEntityData.translation != data.translation
         flags.rotation = previousEntityData.rotation != data.rotation
