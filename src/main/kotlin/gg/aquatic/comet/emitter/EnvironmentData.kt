@@ -18,7 +18,6 @@ fun String.parseEnvironmentData(): EnvironmentData {
         if (!(element.isJsonPrimitive && element.asJsonPrimitive.isString)) continue
         val color = element.asString?.toRGBA() ?: continue
 
-        println("color: $color")
         data += key to color
     }
 

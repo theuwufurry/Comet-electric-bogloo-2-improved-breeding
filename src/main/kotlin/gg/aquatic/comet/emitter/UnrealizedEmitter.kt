@@ -17,7 +17,6 @@ import org.bukkit.Location
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitTask
 import org.joml.Vector3d
-import kotlin.system.measureTimeMillis
 
 object EmitterTickersHolder {
     val unrealizedEmitters: MutableList<UnrealizedEmitter> = mutableListOf()
@@ -65,32 +64,26 @@ data class UnrealizedEmitter(
     }
 
     private fun tick() {
-        val time = measureTimeMillis {
-            val deadEmitters = HashSet<Emitter>()
-            val playerDeadParticleMap: MutableMap<Player, MutableList<Int>> = mutableMapOf()
-            for (emitter in emitters) {
-                val result = emitter.tick()
-                if (!result.alive) deadEmitters += emitter
-                for ((player, ids) in result.deadParticles) {
-                    val entry = playerDeadParticleMap[player]
-                    if (entry == null) {
-                        playerDeadParticleMap[player] = ids
-                    } else {
-                        entry.addAll(ids)
-                    }
+        val deadEmitters = HashSet<Emitter>()
+        val playerDeadParticleMap: MutableMap<Player, MutableList<Int>> = mutableMapOf()
+        for (emitter in emitters) {
+            val result = emitter.tick()
+            if (!result.alive) deadEmitters += emitter
+            for ((player, ids) in result.deadParticles) {
+                val entry = playerDeadParticleMap[player]
+                if (entry == null) {
+                    playerDeadParticleMap[player] = ids
+                } else {
+                    entry.addAll(ids)
                 }
             }
-
-            for ((player, ids) in playerDeadParticleMap) {
-                player.toUser().sendPacket(WrapperPlayServerDestroyEntities(*ids.toIntArray()))
-            }
-
-            emitters.removeAll(deadEmitters)
         }
 
-        if (time > 0) {
-            println("time: $time")
+        for ((player, ids) in playerDeadParticleMap) {
+            player.toUser().sendPacket(WrapperPlayServerDestroyEntities(*ids.toIntArray()))
         }
+
+        emitters.removeAll(deadEmitters)
     }
 
     fun realize(
