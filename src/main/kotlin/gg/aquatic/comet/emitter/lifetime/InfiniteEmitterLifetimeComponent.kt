@@ -3,7 +3,8 @@ package gg.aquatic.comet.emitter.lifetime
 import com.google.gson.JsonElement
 import gg.aquatic.comet.emitter.EmitterComponent
 import gg.aquatic.comet.emitter.EmitterData
-import gg.aquatic.comet.parsing.*
+import gg.aquatic.comet.parsing.BaseComponentParser
+import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.macro.Macro
 
 class InfiniteEmitterLifetimeComponent : EmitterComponent, EmitterLifetimeComponent {

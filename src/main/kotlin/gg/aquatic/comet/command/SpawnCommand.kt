@@ -55,17 +55,18 @@ object SpawnCommand : ICommand {
 
         val (yaw, pitch, data) = when (args.size) {
             7 -> {
-                Triple(0f , 0f, args[6].parseEnvironmentData())
+                Triple(0f, 0f, args[6].parseEnvironmentData())
             }
+
             in 8..9 -> {
                 val yaw = args[6].toFloatOrNull()
-                if (yaw == null)  {
+                if (yaw == null) {
                     sender.sendMessage("Invalid yaw: ${args[6]}")
                     return
                 }
 
                 val pitch = args[7].toFloatOrNull()
-                if (pitch == null)  {
+                if (pitch == null) {
                     sender.sendMessage("Invalid pitch: ${args[6]}")
                     return
                 }
@@ -73,6 +74,7 @@ object SpawnCommand : ICommand {
                 val data = (if (args.size == 9) args[8] else "{}").parseEnvironmentData()
                 Triple(yaw, pitch, data)
             }
+
             else -> {
                 Triple(0f, 0f, "{}".parseEnvironmentData())
             }

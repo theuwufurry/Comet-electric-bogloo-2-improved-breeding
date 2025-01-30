@@ -2,6 +2,7 @@ package gg.aquatic.comet.particle
 
 import gg.aquatic.comet.ParticleIDProvider
 import gg.aquatic.comet.emitter.parent.Parent
+import gg.aquatic.comet.emitter.parent.Pose
 import gg.aquatic.comet.particle.data.EntityData
 import gg.aquatic.comet.particle.data.EntityDataBuilder
 import gg.aquatic.comet.particle.display.TextDisplayComponent
@@ -148,11 +149,14 @@ open class Particle(var data: ParticleData) : Parent {
         )
     }
 
-    override fun location(): org.joml.Vector3d {
-        return org.joml.Vector3d(
-            data.origin.x + data.relativePosition.x,
-            data.origin.y + data.relativePosition.y,
-            data.origin.z + data.relativePosition.z
+    override fun pose(): Pose {
+        return Pose(
+            org.joml.Vector3d(
+                data.origin.x + data.relativePosition.x,
+                data.origin.y + data.relativePosition.y,
+                data.origin.z + data.relativePosition.z
+            ),
+            org.joml.Vector3d()
         )
     }
 }

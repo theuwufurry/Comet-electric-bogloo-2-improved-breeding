@@ -1,5 +1,6 @@
 package gg.aquatic.comet.emitter.parent
 
+import org.bukkit.Location
 import org.joml.Vector3d
 
 enum class EmitterSpace {
@@ -9,5 +10,17 @@ enum class EmitterSpace {
 }
 
 interface Parent {
-    fun location(): Vector3d
+    fun pose(): Pose
+}
+
+data class Pose(
+    val pos: Vector3d,
+    val dir: Vector3d
+)
+
+fun Location.pose(): Pose {
+    return Pose(
+        toVector().toVector3d(),
+        direction.toVector3d()
+    )
 }

@@ -25,7 +25,7 @@ class ParticleVanillaSpawnSubAction(
 ) : SubAction {
     override fun execute(context: ActionContext) {
         val playerManager = PacketEvents.getAPI().playerManager
-        context.pos ?: return
+        context.pose ?: return
 
         val particlePacket = compiledVanillaParticleData.realize(context) ?: return
 
@@ -90,15 +90,15 @@ class CompiledVanillaParticle(
             else -> Particle(type as ParticleType<ParticleData>, data)
         }
 
-        context.pos!!
+        context.pose!!
 
         return WrapperPlayServerParticle(
             particle,
             longDistance,
             Vector3d(
-                context.pos.x,
-                context.pos.y,
-                context.pos.z
+                context.pose.pos.x,
+                context.pose.pos.y,
+                context.pose.pos.z
             ),
             offset,
             maxSpeed,

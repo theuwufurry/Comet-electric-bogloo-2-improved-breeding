@@ -37,7 +37,7 @@ class SpawnEmitterSubAction(
     }
 
     override fun execute(context: ActionContext) {
-        if (context.pos == null || context.dir == null) {
+        if (context.pose == null) {
             throw NullPointerException("Cannot use Spawn Emitter SubAction in this event!")
         }
 
@@ -50,10 +50,10 @@ class SpawnEmitterSubAction(
         for (unrealizedEmitter in unrealizedEmitters) {
             val location = Location(
                 context.otherEmitterData.world,
-                context.pos.x + context.dir.x * Math.random() * magnitude,
-                context.pos.y + context.dir.y * Math.random() * magnitude,
-                context.pos.z + context.dir.z * Math.random() * magnitude
-            ).applyIf(parent != null) { direction = Vector(context.dir.x, context.dir.y, context.dir.z) }
+                context.pose.pos.x + context.pose.dir.x * Math.random() * magnitude,
+                context.pose.pos.y + context.pose.dir.y * Math.random() * magnitude,
+                context.pose.pos.z + context.pose.dir.z * Math.random() * magnitude
+            ).applyIf(parent != null) { direction = Vector(context.pose.dir.x, context.pose.dir.y, context.pose.dir.z) }
             unrealizedEmitter.realize(
                 parent,
                 location,

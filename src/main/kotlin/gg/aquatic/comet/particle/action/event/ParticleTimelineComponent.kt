@@ -12,7 +12,6 @@ import gg.aquatic.comet.parsing.PostInit
 import gg.aquatic.comet.parsing.macro.Macro
 import gg.aquatic.comet.particle.ParticleComponent
 import gg.aquatic.comet.particle.ParticleData
-import org.joml.Vector3d
 
 class ParticleTimelineComponent(
     private val actionMap: Map<Int, Action>
@@ -21,8 +20,7 @@ class ParticleTimelineComponent(
         actionMap[otherParticleData.age.toInt()]?.execute(
             ActionContext(
                 otherEmitterData, otherParticleData,
-                otherEmitterData.location.toVector().toVector3d(),
-                Vector3d()
+                otherParticleData.particle!!.pose()
             )
         )
     }

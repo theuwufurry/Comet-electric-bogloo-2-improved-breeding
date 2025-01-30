@@ -12,7 +12,7 @@ object CatmullParser : MacroParser {
         val values = jsonObject.getAsJsonArray("y").map { it.asDouble }
 
         val input: String = jsonObject.getAsJsonPrimitive("input")?.asString ?: return null
-        return Macro("$name.eval($input)", Pair(name, CatmullEvaluator.fromPoints(values, times) ?: return null))
+        return Macro("$name.eval($input)", Pair(name, CatmullEvaluator.fromPoints(values, times)))
     }
 }
 

@@ -56,7 +56,10 @@ class AttractorPositionComponent(
                             (script.x.eval() as Number).toDouble() * otherEmitterData.emitter!!.environmentData.size,
                             (script.y.eval() as Number).toDouble() * otherEmitterData.emitter!!.environmentData.size,
                             (script.z.eval() as Number).toDouble() * otherEmitterData.emitter!!.environmentData.size,
-                        ), (script.mass.eval() as Number).toDouble(), (script.radius?.eval() as? Number)?.toDouble()?.let { it * otherEmitterData.emitter!!.environmentData.size }
+                        ),
+                        (script.mass.eval() as Number).toDouble(),
+                        (script.radius?.eval() as? Number)?.toDouble()
+                            ?.let { it * otherEmitterData.emitter!!.environmentData.size }
                     )
                 }
 
@@ -82,8 +85,7 @@ class AttractorPositionComponent(
                                 ActionContext(
                                     otherEmitterData,
                                     otherParticleData,
-                                    otherParticleData.relativePosition,
-                                    Vector3d()
+                                    otherParticleData.particle!!.pose()
                                 )
                             )
                         }
@@ -107,8 +109,7 @@ class AttractorPositionComponent(
                                 ActionContext(
                                     otherEmitterData,
                                     otherParticleData,
-                                    otherParticleData.relativePosition,
-                                    Vector3d()
+                                    otherParticleData.particle!!.pose()
                                 )
                             )
                         }
@@ -131,8 +132,7 @@ class AttractorPositionComponent(
                                 ActionContext(
                                     otherEmitterData,
                                     otherParticleData,
-                                    otherParticleData.relativePosition,
-                                    Vector3d()
+                                    otherParticleData.particle!!.pose()
                                 )
                             )
                         }

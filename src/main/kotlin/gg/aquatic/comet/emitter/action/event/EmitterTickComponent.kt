@@ -10,7 +10,6 @@ import gg.aquatic.comet.parsing.BaseComponentParser
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.PostInit
 import gg.aquatic.comet.parsing.macro.Macro
-import org.joml.Vector3d
 
 class EmitterTickComponent(
     private val action: Action
@@ -21,8 +20,7 @@ class EmitterTickComponent(
         action.execute(
             ActionContext(
                 otherEmitterData, null,
-                otherEmitterData.location.toVector().toVector3d(),
-                Vector3d()
+                otherEmitterData.emitter!!.pose()
             )
         )
     }

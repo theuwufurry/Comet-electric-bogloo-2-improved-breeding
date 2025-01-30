@@ -30,7 +30,8 @@ class SpawnParticleMechanic(
         emitter?.realize(
             parent = null,
             location = location,
-            audience = aquaticAudience)
+            audience = aquaticAudience
+        )
 
         return SkillResult.SUCCESS
     }

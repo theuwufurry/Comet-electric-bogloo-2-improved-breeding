@@ -49,7 +49,7 @@ class VelocityRotationComponent : ParticleComponent, RotationComponent {
             ParticleJsonParser.componentParsers += "velocity_rotation" to this
         }
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component? {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {
             return VelocityRotationComponent()
         }
     }

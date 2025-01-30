@@ -5,6 +5,7 @@ import gg.aquatic.comet.emitter.EmitterData
 import gg.aquatic.comet.emitter.UnrealizedEmitter
 import gg.aquatic.comet.emitter.action.Action
 import gg.aquatic.comet.emitter.action.ActionContext
+import gg.aquatic.comet.emitter.parent.Pose
 import gg.aquatic.comet.parsing.*
 import gg.aquatic.comet.parsing.macro.Macro
 import gg.aquatic.comet.particle.ParticleComponent
@@ -91,8 +92,10 @@ class MotionPositionComponent(
                     ActionContext(
                         otherEmitterData,
                         otherParticleData,
-                        Vector3d(newPos).add(otherParticleData.origin),
-                        correction.direction
+                        Pose(
+                            Vector3d(newPos).add(otherParticleData.origin),
+                            correction.direction
+                        )
                     )
                 )
                 otherParticleData.relativePosition = Vector3d(newPos)

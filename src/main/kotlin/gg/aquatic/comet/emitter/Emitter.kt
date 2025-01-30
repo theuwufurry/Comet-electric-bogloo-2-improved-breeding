@@ -4,6 +4,8 @@ import gg.aquatic.comet.Component
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.emitter.parent.Parent
+import gg.aquatic.comet.emitter.parent.Pose
+import gg.aquatic.comet.emitter.parent.pose
 import gg.aquatic.comet.emitter.rate.RateComponent
 import gg.aquatic.comet.particle.Particle
 import gg.aquatic.comet.particle.ParticleComponent
@@ -68,7 +70,7 @@ class Emitter(
 
         emitterData.age++
 
-        parent?.location()?.let { setPos(it) }
+        parent?.pose()?.let { setPose(it) }
         emitterComponents.forEach { it.execute(emitterData) }
 
         if (emitterData.dead) {
@@ -211,18 +213,18 @@ class Emitter(
             .filter { it.eyeLocation.distanceSquared(location) < maxDistance }
     }
 
-    fun setPos(pos: Vector3d) {
-        setPos(pos.x, pos.y, pos.z)
+    fun setPose(pose: Pose) {
+        location.x = pose.pos.x
+        location.y = pose.pos.y
+        location.z = pose.pos.z
+
+        location.direction.x = pose.dir.x
+        location.direction.y = pose.dir.y
+        location.direction.z = pose.dir.z
     }
 
-    fun setPos(x: Double, y: Double, z: Double) {
-        location.x = x
-        location.y = y
-        location.z = z
-    }
-
-    override fun location(): Vector3d {
-        return location.toVector().toVector3d()
+    override fun pose(): Pose {
+        return location.pose()
     }
 
     fun kill() {
