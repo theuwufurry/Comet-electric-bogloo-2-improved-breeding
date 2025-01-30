@@ -55,7 +55,7 @@ object SpawnCommand : ICommand {
             return
         }
 
-        val (yaw, pitch, data) = when (args.size) {
+        val (yaw, pitch, data) = try { when (args.size) {
             7 -> {
                 Triple(0f, 0f, args[6].parseEnvironmentData())
             }
@@ -80,6 +80,9 @@ object SpawnCommand : ICommand {
             else -> {
                 Triple(0f, 0f, "{}".parseEnvironmentData())
             }
+        } } catch (ignored: Exception) {
+            sender.sendMessage("Invalid data!")
+            return
         }
 
         val location = Location(world, x, y, z, yaw, pitch)

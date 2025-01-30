@@ -1,6 +1,7 @@
 package gg.aquatic.comet.command
 
 import gg.aquatic.comet.emitter.parent.EntityParent
+import gg.aquatic.comet.emitter.parseEnvironmentData
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.waves.command.ICommand
 import org.bukkit.Bukkit
@@ -20,10 +21,15 @@ object AtCommand : ICommand {
             return
         }
 
+        val data = try { (if (args.size > 3) args[3] else "{}").parseEnvironmentData() } catch (ignored: Exception) {
+            sender.sendMessage("Invalid data!")
+            return
+        }
+
         val entities = Bukkit.selectEntities(sender, args[1])
         for (entity in entities) {
             val asParent = EntityParent(entity)
-            emitter.realize(asParent, entity.location)
+            emitter.realize(asParent, entity.location, data)
         }
     }
 
