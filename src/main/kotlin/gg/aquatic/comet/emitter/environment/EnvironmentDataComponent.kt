@@ -1,6 +1,7 @@
 package gg.aquatic.comet.emitter.environment
 
 import com.google.gson.JsonElement
+import com.google.gson.JsonPrimitive
 import gg.aquatic.comet.Component
 import gg.aquatic.comet.emitter.EmitterComponent
 import gg.aquatic.comet.emitter.EmitterData
@@ -30,14 +31,22 @@ class EnvironmentDataComponent(
         }
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component? {
-            val jsonObject = jsonElement.asJsonObjectOrNull() ?: return null
+            val root = jsonElement.asJsonObjectOrNull() ?: return null
             val data: MutableMap<String, Any> = mutableMapOf()
 
-            for ((key, element) in jsonObject.entrySet()) {
-                if (!(element.isJsonPrimitive && element.asJsonPrimitive.isString)) continue
-                val color = element.asString?.toRGBA() ?: continue
+            for ((key, element) in root.entrySet()) {
+                if (!tryParseAsColor(key, element, data)) {
+                    if (!element.isJsonPrimitive) continue
+                    element as JsonPrimitive
 
-                data += key to color
+                    if (element.isString) {
+                        data += key to element.asString
+                    }
+
+                    if (element.isNumber) {
+                        data += key to element.asNumber
+                    }
+                }
             }
 
             return EnvironmentDataComponent(data)

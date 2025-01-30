@@ -1,6 +1,8 @@
 package gg.aquatic.comet.emitter.environment
 
+import com.google.gson.JsonElement
 import com.google.gson.JsonParser
+import com.google.gson.JsonPrimitive
 import gg.aquatic.comet.parsing.asNumberOrNull
 import java.awt.Color
 
@@ -15,13 +17,29 @@ fun String.parseEnvironmentData(): EnvironmentData {
     val data: MutableMap<String, Any> = mutableMapOf()
 
     for ((key, element) in root.entrySet()) {
-        if (!(element.isJsonPrimitive && element.asJsonPrimitive.isString)) continue
-        val color = element.asString?.toRGBA() ?: continue
+        if (!tryParseAsColor(key, element, data)) {
+            if (!element.isJsonPrimitive) continue
+            element as JsonPrimitive
 
-        data += key to color
+            if (element.isString) {
+                data += key to element.asString
+            }
+
+            if (element.isNumber) {
+                data += key to element.asNumber
+            }
+        }
     }
 
     return EnvironmentData(size, data)
+}
+
+fun tryParseAsColor(key: String, element: JsonElement, data: MutableMap<String, Any>): Boolean {
+    if (!(element.isJsonPrimitive && element.asJsonPrimitive.isString)) return false
+    val color = element.asString?.toRGBA() ?: return false
+
+    data += key to color
+    return true
 }
 
 fun String.toRGBA(): Color? {
