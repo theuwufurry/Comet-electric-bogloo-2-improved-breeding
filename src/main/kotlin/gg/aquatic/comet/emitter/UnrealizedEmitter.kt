@@ -17,6 +17,7 @@ import org.bukkit.Location
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitTask
 import org.joml.Vector3d
+import kotlin.system.measureTimeMillis
 
 object EmitterTickersHolder {
     val unrealizedEmitters: MutableList<UnrealizedEmitter> = mutableListOf()
@@ -64,26 +65,32 @@ data class UnrealizedEmitter(
     }
 
     private fun tick() {
-        val deadEmitters = HashSet<Emitter>()
-        val playerDeadParticleMap: MutableMap<Player, MutableList<Int>> = mutableMapOf()
-        for (emitter in emitters) {
-            val result = emitter.tick()
-            if (!result.alive) deadEmitters += emitter
-            for ((player, ids) in result.deadParticles) {
-                val entry = playerDeadParticleMap[player]
-                if (entry == null) {
-                    playerDeadParticleMap[player] = ids
-                } else {
-                    entry.addAll(ids)
+        val time = measureTimeMillis {
+            val deadEmitters = HashSet<Emitter>()
+            val playerDeadParticleMap: MutableMap<Player, MutableList<Int>> = mutableMapOf()
+            for (emitter in emitters) {
+                val result = emitter.tick()
+                if (!result.alive) deadEmitters += emitter
+                for ((player, ids) in result.deadParticles) {
+                    val entry = playerDeadParticleMap[player]
+                    if (entry == null) {
+                        playerDeadParticleMap[player] = ids
+                    } else {
+                        entry.addAll(ids)
+                    }
                 }
             }
+
+            for ((player, ids) in playerDeadParticleMap) {
+                player.toUser().sendPacket(WrapperPlayServerDestroyEntities(*ids.toIntArray()))
+            }
+
+            emitters.removeAll(deadEmitters)
         }
 
-        for ((player, ids) in playerDeadParticleMap) {
-            player.toUser().sendPacket(WrapperPlayServerDestroyEntities(*ids.toIntArray()))
+        if (time > 0) {
+            println("time: $time")
         }
-
-        emitters.removeAll(deadEmitters)
     }
 
     fun realize(
@@ -95,6 +102,7 @@ data class UnrealizedEmitter(
         val emitterData = EmitterData()
         emitterData.world = location.world
         emitterData.location = location
+        emitterData.variable.putAll(environmentData.data)
         return Emitter(
             parent,
             components,

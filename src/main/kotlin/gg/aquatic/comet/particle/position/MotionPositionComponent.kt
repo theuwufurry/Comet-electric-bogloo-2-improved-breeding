@@ -58,7 +58,7 @@ class MotionPositionComponent(
                 initialVelocityComponent.dir(
                     otherEmitterData,
                     otherParticleData
-                ).mul(otherEmitterData.emitter!!.environmentData.size).rotate(myEmitterData.rotation)
+                ).mul(otherEmitterData.emitter!!.environmentData.size).rotate(myEmitterData.emitter!!.emitterRotation)
             )
             return
         }

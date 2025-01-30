@@ -26,7 +26,7 @@ class InitialExpressionPositionComponent(
                     (xOffset.eval() as Number).toDouble(),
                     (yOffset.eval() as Number).toDouble(),
                     (zOffset.eval() as Number).toDouble()
-                ).rotate(otherEmitterData.rotation)
+                ).rotate(otherEmitterData.emitter!!.emitterRotation)
             )
         }
     }

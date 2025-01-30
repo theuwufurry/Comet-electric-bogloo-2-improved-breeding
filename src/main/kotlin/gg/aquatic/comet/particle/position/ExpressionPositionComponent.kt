@@ -29,7 +29,7 @@ class ExpressionPositionComponent(
             (yOffset.eval() as Number).toDouble() * otherEmitterData.emitter!!.environmentData.size,
             (zOffset.eval() as Number).toDouble() * otherEmitterData.emitter!!.environmentData.size
         )
-        oldOutputMap[otherParticleData.id] = newResult.rotate(myEmitterData.rotation)
+        oldOutputMap[otherParticleData.id] = newResult.rotate(myEmitterData.emitter!!.emitterRotation)
         val newPos = Vector3d(otherParticleData.relativePosition).add(Vector3d(newResult).sub(oldResult))
         otherParticleData.relativePosition = newPos
     }

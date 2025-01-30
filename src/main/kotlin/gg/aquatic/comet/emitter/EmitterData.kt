@@ -11,7 +11,6 @@ data class EmitterData(
     var emitter: Emitter? = null,
     var age: Double = 0.0,
     var world: World? = null,
-    var rotation: Quaterniond? = Quaterniond(),
     var location: Location = Location(null, 0.0, 0.0, 0.0)
 ) {
     fun copyFrom(other: EmitterData) {
@@ -20,7 +19,6 @@ data class EmitterData(
         emitter = other.emitter
         age = other.age
         world = other.world
-        rotation = other.rotation
         location = other.location
 
         variable.clear()

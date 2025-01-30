@@ -20,6 +20,7 @@ import gg.aquatic.waves.util.audience.AquaticAudience
 import gg.aquatic.waves.util.toUser
 import org.bukkit.Location
 import org.bukkit.entity.Player
+import org.bukkit.util.Vector
 import org.joml.Quaterniond
 import org.joml.Quaternionf
 import org.joml.Vector3d
@@ -50,14 +51,16 @@ class Emitter(
     private val deadParticles: MutableList<Particle> = mutableListOf()
     private var blocked = false
     private var dead = false
-    private val emitterRotation: Quaterniond =
-        Quaterniond().rotateTo(forwardVector, location.direction.normalize().toVector3d())
+    var emitterRotation: Quaterniond = calculateEmitterRotation()
+
+    fun calculateEmitterRotation(): Quaterniond {
+        return Quaterniond().rotateTo(forwardVector, pose().dir)
+    }
 
     private val currentViewers = ConcurrentHashMap.newKeySet<Player>()
 
     init {
         emitterData.emitter = this
-        emitterData.rotation = emitterRotation
         emitterComponents.forEach { it.init(emitterData) }
     }
 
@@ -71,6 +74,7 @@ class Emitter(
         emitterData.age++
 
         parent?.pose()?.let { setPose(it) }
+        emitterRotation = calculateEmitterRotation()
         emitterComponents.forEach { it.execute(emitterData) }
 
         if (emitterData.dead) {
@@ -218,9 +222,11 @@ class Emitter(
         location.y = pose.pos.y
         location.z = pose.pos.z
 
-        location.direction.x = pose.dir.x
-        location.direction.y = pose.dir.y
-        location.direction.z = pose.dir.z
+        location.direction = Vector(
+            pose.dir.x,
+            pose.dir.y,
+            pose.dir.z
+        )
     }
 
     override fun pose(): Pose {

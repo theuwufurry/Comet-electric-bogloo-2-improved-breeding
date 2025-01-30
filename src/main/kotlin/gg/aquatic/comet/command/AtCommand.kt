@@ -10,7 +10,7 @@ object AtCommand : ICommand {
     override fun run(sender: CommandSender, args: Array<out String>) {
         //comet at <entity> <id>
         if (args.size < 3) {
-            sender.sendMessage("Usage: /comet at <entity> <id>")
+            sender.sendMessage("Usage: /comet at <entity> <id> {data}")
             return
         }
 
