@@ -11,6 +11,7 @@ import gg.aquatic.comet.emitter.action.event.EmitterDeathComponent
 import gg.aquatic.comet.emitter.action.event.EmitterInitComponent
 import gg.aquatic.comet.emitter.action.event.EmitterTickComponent
 import gg.aquatic.comet.emitter.action.event.EmitterTimelineComponent
+import gg.aquatic.comet.emitter.environment.EnvironmentDataComponent
 import gg.aquatic.comet.emitter.lifetime.EmitterLifetimeComponent
 import gg.aquatic.comet.emitter.lifetime.InfiniteEmitterLifetimeComponent
 import gg.aquatic.comet.emitter.lifetime.TimedEmitterLifetimeComponent
@@ -89,6 +90,8 @@ object ParticleJsonParser {
 
     fun init() {
         MacrosParser
+
+        EnvironmentDataComponent
 
         TimedEmitterLifetimeComponent
         InfiniteEmitterLifetimeComponent
@@ -269,6 +272,10 @@ object ParticleJsonParser {
             unrealizedEmitter.components.forEach { (it as? PostInit)?.realize() }
         }
     }
+}
+
+fun JsonElement.asJsonObjectOrNull(): JsonObject? {
+    return if (isJsonObject) asJsonObject else null
 }
 
 fun JsonElement.asStringOrNull(): String? {

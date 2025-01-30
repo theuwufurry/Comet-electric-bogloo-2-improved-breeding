@@ -1,4 +1,4 @@
-package gg.aquatic.comet.emitter
+package gg.aquatic.comet.emitter.environment
 
 import com.google.gson.JsonParser
 import gg.aquatic.comet.parsing.asNumberOrNull

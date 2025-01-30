@@ -1,17 +1,13 @@
 package gg.aquatic.comet.command
 
-import com.google.gson.JsonParser
-import gg.aquatic.comet.emitter.EnvironmentData
-import gg.aquatic.comet.emitter.parseEnvironmentData
+import gg.aquatic.comet.emitter.environment.parseEnvironmentData
 import gg.aquatic.comet.parsing.ParticleJsonParser
-import gg.aquatic.comet.parsing.asNumberOrNull
 import gg.aquatic.waves.command.ICommand
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Entity
 import org.joml.Vector3d
-import java.awt.Color
 
 object SpawnCommand : ICommand {
     override fun run(sender: CommandSender, args: Array<out String>) {
