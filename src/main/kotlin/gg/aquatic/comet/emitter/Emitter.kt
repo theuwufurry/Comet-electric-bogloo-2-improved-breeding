@@ -33,6 +33,7 @@ class Emitter(
     location: Location,
     private val emitterData: EmitterData,
     private val unrealizedHolder: UnrealizedEmitter,
+    val forwardVector: Vector3d,
     val environmentData: EnvironmentData,
     private val audience: AquaticAudience
 ) : Parent {
@@ -48,7 +49,7 @@ class Emitter(
     private var blocked = false
     private var dead = false
     private val emitterRotation: Quaterniond =
-        Quaterniond().rotateTo(Vector3d(0.0, 0.0, 1.0), location.direction.normalize().toVector3d())
+        Quaterniond().rotateTo(forwardVector, location.direction.normalize().toVector3d())
 
     private val currentViewers = ConcurrentHashMap.newKeySet<Player>()
 

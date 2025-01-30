@@ -16,6 +16,7 @@ import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitTask
+import org.joml.Vector3d
 
 object EmitterTickersHolder {
     val unrealizedEmitters: MutableList<UnrealizedEmitter> = mutableListOf()
@@ -41,6 +42,7 @@ data class UnrealizedEmitter(
     val distanceCullingComponent: DistanceCullingComponent,
     val updateFrequencyComponent: UpdateFrequencyComponent,
     val billboardConstraints: BillboardConstraints,
+    val forwardVector: Vector3d,
 ) {
     private val emitters: MutableSet<Emitter> = ConcurrentSet()
     private var tasks: BukkitTask
@@ -94,7 +96,7 @@ data class UnrealizedEmitter(
             rateComponent,
             distanceCullingComponent,
             updateFrequencyComponent,
-            billboardConstraints, location, emitterData, this, environmentData, audience
+            billboardConstraints, location, emitterData, this, forwardVector, environmentData, audience
         ).also {
             emitters += it
         }

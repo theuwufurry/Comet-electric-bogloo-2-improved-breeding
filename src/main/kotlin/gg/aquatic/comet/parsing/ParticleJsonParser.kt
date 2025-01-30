@@ -192,6 +192,7 @@ object ParticleJsonParser {
         var distanceCullingComponent: DistanceCullingComponent? = null
         var updateFrequencyComponent: UpdateFrequencyComponent? = null
         var billboardConstraints: BillboardConstraints? = null
+        var forwardVector = Vector3d(0.0, 0.0, 1.0)
 
         for ((key, componentElement) in componentsObject.entrySet()) {
             if (key in componentParsers) {
@@ -209,6 +210,15 @@ object ParticleJsonParser {
                     "center" -> BillboardConstraints.CENTER
                     else -> BillboardConstraints.CENTER
                 }
+            }
+
+            if (key == "forward_vector") {
+                val obj = componentElement.asJsonObject
+                forwardVector = Vector3d(
+                    obj["x"].asNumber.toDouble(),
+                    obj["y"].asNumber.toDouble(),
+                    obj["z"].asNumber.toDouble(),
+                ).normalize()
             }
 
             if (key in rateComponentParsers) {
@@ -239,7 +249,8 @@ object ParticleJsonParser {
             rateComponent ?: RateComponent.default(),
             distanceCullingComponent ?: DistanceCullingComponent.default(),
             updateFrequencyComponent ?: UpdateFrequencyComponent.default(),
-            billboardConstraints ?: BillboardConstraints.CENTER
+            billboardConstraints ?: BillboardConstraints.CENTER,
+            forwardVector
         )
     }
 

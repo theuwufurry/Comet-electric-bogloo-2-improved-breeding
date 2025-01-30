@@ -15,7 +15,7 @@ object SpawnCommand : ICommand {
     override fun run(sender: CommandSender, args: Array<out String>) {
         // comet spawn <id> <world> <x> <y> <z> <yaw>
         if (args.size < 6) {
-            sender.sendMessage("Usage: /comet spawn <id> <world> <x> <y> <z> {data}")
+            sender.sendMessage("Usage: /comet spawn <id> <world> <x> <y> <z> <yaw> <pitch> {data}")
             return
         }
 
@@ -53,9 +53,32 @@ object SpawnCommand : ICommand {
             return
         }
 
-        val data = (if (args.size > 6) args[6] else "{}").parseEnvironmentData()
+        val (yaw, pitch, data) = when (args.size) {
+            7 -> {
+                Triple(0f , 0f, args[6].parseEnvironmentData())
+            }
+            in 8..9 -> {
+                val yaw = args[6].toFloatOrNull()
+                if (yaw == null)  {
+                    sender.sendMessage("Invalid yaw: ${args[6]}")
+                    return
+                }
 
-        val location = Location(world, x, y, z, 0f, 0f)
+                val pitch = args[7].toFloatOrNull()
+                if (pitch == null)  {
+                    sender.sendMessage("Invalid pitch: ${args[6]}")
+                    return
+                }
+
+                val data = (if (args.size == 9) args[8] else "{}").parseEnvironmentData()
+                Triple(yaw, pitch, data)
+            }
+            else -> {
+                Triple(0f, 0f, "{}".parseEnvironmentData())
+            }
+        }
+
+        val location = Location(world, x, y, z, yaw, pitch)
         emitter.realize(null, location, data)
     }
 
@@ -79,5 +102,6 @@ object SpawnCommand : ICommand {
 fun String.parseEnvironmentData(): EnvironmentData {
     val root = JsonParser.parseString(this).asJsonObject
     val size = root["size"]?.asNumberOrNull()?.toDouble() ?: 1.0
+
     return EnvironmentData(size)
 }
