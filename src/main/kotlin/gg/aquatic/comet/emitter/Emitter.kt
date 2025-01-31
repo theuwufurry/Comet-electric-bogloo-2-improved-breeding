@@ -25,6 +25,7 @@ import org.bukkit.util.Vector
 import org.joml.Quaterniond
 import org.joml.Quaternionf
 import org.joml.Vector3d
+import org.joml.Vector3f
 import java.util.concurrent.ConcurrentHashMap
 
 class Emitter(
@@ -246,3 +247,7 @@ class Emitter(
 }
 
 class EmitterTickResult(val alive: Boolean, val deadParticles: List<Pair<Player, MutableList<Int>>> = listOf())
+
+fun Vector3d.toVector3f(): Vector3f {
+    return Vector3f(x.toFloat(), y.toFloat(), z.toFloat())
+}
