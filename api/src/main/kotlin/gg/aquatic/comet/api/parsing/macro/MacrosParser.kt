@@ -1,15 +1,9 @@
 package gg.aquatic.comet.api.parsing.macro
 
 import com.google.gson.JsonObject
+import gg.aquatic.comet.api.macroParsers
 
 object MacrosParser {
-    val macroParsers: MutableMap<String, MacroParser> = mutableMapOf()
-
-    init {
-        macroParsers += "hermite" to HermiteParser
-        macroParsers += "catmull" to CatmullParser
-        macroParsers += "linear" to LinearParser
-    }
 
     fun parseMacros(jsonObject: JsonObject): Map<String, Macro> {
         return jsonObject.asMap().mapNotNull { (name, obj) ->

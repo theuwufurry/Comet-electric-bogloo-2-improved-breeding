@@ -1,6 +1,8 @@
-package gg.aquatic.comet.api.parsing.macro
+package gg.aquatic.comet.particle.macro
 
 import com.google.gson.JsonObject
+import gg.aquatic.comet.api.parsing.macro.Macro
+import gg.aquatic.comet.api.parsing.macro.MacroParser
 import org.joml.Vector2d
 
 object LinearParser : MacroParser {

@@ -1,7 +1,11 @@
 package gg.aquatic.comet
 
 import gg.aquatic.comet.api.AbstractParticleEmitter
+import gg.aquatic.comet.api.macroParsers
 import gg.aquatic.comet.api.parsing.ResourcepackCreator
+import gg.aquatic.comet.particle.macro.CatmullParser
+import gg.aquatic.comet.particle.macro.HermiteParser
+import gg.aquatic.comet.particle.macro.LinearParser
 import gg.aquatic.comet.command.*
 import gg.aquatic.comet.hook.IHook
 import gg.aquatic.comet.hook.ModelEngineHook
@@ -19,6 +23,9 @@ class ParticleEmitter : AbstractParticleEmitter() {
         INSTANCE = this
 
         scriptEngineFactory = NashornScriptEngineFactory()
+
+        initializeMacros()
+
         ParticleJsonParser.init()
 
         ParticleJsonParser.parseJsons()
@@ -61,6 +68,12 @@ class ParticleEmitter : AbstractParticleEmitter() {
             hooks += ModelEngineHook
         }
         hooks.forEach { it.initialize() }
+    }
+
+    private fun initializeMacros() {
+        macroParsers += "hermite" to HermiteParser
+        macroParsers += "catmull" to CatmullParser
+        macroParsers += "linear" to LinearParser
     }
 }
 

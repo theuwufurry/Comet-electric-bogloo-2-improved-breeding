@@ -1,8 +1,10 @@
-package gg.aquatic.comet.api.parsing.macro
+package gg.aquatic.comet.particle.macro
 
 import com.google.gson.JsonObject
-import gg.aquatic.comet.api.parsing.macro.Catmull.Companion.B_SPLINE_DEGREE
-import gg.aquatic.comet.api.parsing.macro.Catmull.Companion.LAGRANGE_DEGREE
+import gg.aquatic.comet.api.parsing.macro.Macro
+import gg.aquatic.comet.api.parsing.macro.MacroParser
+import gg.aquatic.comet.particle.macro.Catmull.Companion.B_SPLINE_DEGREE
+import gg.aquatic.comet.particle.macro.Catmull.Companion.LAGRANGE_DEGREE
 import org.joml.Vector3d
 import kotlin.math.pow
 
