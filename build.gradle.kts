@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm") version "2.0.21"
     id("io.github.goooler.shadow") version "8.1.8"
+    id("co.uzzu.dotenv.gradle") version "2.0.0"
 }
 
 group = "gg.aquatic"
