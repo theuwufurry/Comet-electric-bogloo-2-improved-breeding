@@ -1,13 +1,14 @@
 package gg.aquatic.comet.emitter.lifetime
 
 import com.google.gson.JsonElement
-import gg.aquatic.comet.emitter.EmitterComponent
-import gg.aquatic.comet.emitter.EmitterData
-import gg.aquatic.comet.parsing.BaseComponentParser
+import gg.aquatic.comet.api.emitter.EmitterComponent
+import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.parsing.BaseComponentParser
+import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.parsing.ParticleJsonParser
-import gg.aquatic.comet.parsing.macro.Macro
 
-class InfiniteEmitterLifetimeComponent : EmitterComponent, EmitterLifetimeComponent {
+class InfiniteEmitterLifetimeComponent : EmitterComponent,
+    EmitterLifetimeComponent {
     override fun init(otherEmitterData: EmitterData) {
     }
 

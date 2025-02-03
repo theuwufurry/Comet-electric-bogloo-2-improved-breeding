@@ -1,13 +1,18 @@
 package gg.aquatic.comet.particle.position
 
 import com.google.gson.JsonElement
-import gg.aquatic.comet.emitter.EmitterData
+import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.emitter.action.ActionContext
+import gg.aquatic.comet.api.parsing.BaseComponentParser
+import gg.aquatic.comet.api.parsing.PostInit
+import gg.aquatic.comet.api.parsing.compile
+import gg.aquatic.comet.api.parsing.macro.Macro
+import gg.aquatic.comet.api.parsing.particleEngine
+import gg.aquatic.comet.api.particle.ParticleComponent
+import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.emitter.action.Action
-import gg.aquatic.comet.emitter.action.ActionContext
-import gg.aquatic.comet.parsing.*
-import gg.aquatic.comet.parsing.macro.Macro
-import gg.aquatic.comet.particle.ParticleComponent
-import gg.aquatic.comet.particle.ParticleData
+import gg.aquatic.comet.parsing.ParticleJsonParser
+import gg.aquatic.comet.parsing.expression
 import org.joml.Vector3d
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -85,7 +90,7 @@ class AttractorPositionComponent(
                                 ActionContext(
                                     otherEmitterData,
                                     otherParticleData,
-                                    otherParticleData.particle!!.pose()
+                                    otherParticleData.particle!!.pose
                                 )
                             )
                         }
@@ -109,7 +114,7 @@ class AttractorPositionComponent(
                                 ActionContext(
                                     otherEmitterData,
                                     otherParticleData,
-                                    otherParticleData.particle!!.pose()
+                                    otherParticleData.particle!!.pose
                                 )
                             )
                         }
@@ -132,7 +137,7 @@ class AttractorPositionComponent(
                                 ActionContext(
                                     otherEmitterData,
                                     otherParticleData,
-                                    otherParticleData.particle!!.pose()
+                                    otherParticleData.particle!!.pose
                                 )
                             )
                         }

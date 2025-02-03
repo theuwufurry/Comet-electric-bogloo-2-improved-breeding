@@ -1,23 +1,19 @@
 package gg.aquatic.comet
 
+import gg.aquatic.comet.api.AbstractParticleEmitter
+import gg.aquatic.comet.api.parsing.ResourcepackCreator
 import gg.aquatic.comet.command.*
 import gg.aquatic.comet.hook.IHook
 import gg.aquatic.comet.hook.ModelEngineHook
 import gg.aquatic.comet.hook.mythicmobs.MythicMobsHook
 import gg.aquatic.comet.parsing.ParticleJsonParser
-import gg.aquatic.comet.parsing.ResourcepackCreator
 import gg.aquatic.waves.command.AquaticBaseCommand
 import gg.aquatic.waves.command.register
-import org.bukkit.plugin.java.JavaPlugin
 import org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory
 
 //val debugDust: Particle.DustOptions = Particle.DustOptions(Color.fromRGB(255, 255, 255), 0.6F)
 
-class ParticleEmitter : JavaPlugin() {
-    companion object {
-        lateinit var INSTANCE: ParticleEmitter
-        lateinit var scriptEngineFactory: NashornScriptEngineFactory
-    }
+class ParticleEmitter : AbstractParticleEmitter() {
 
     override fun onEnable() {
         INSTANCE = this

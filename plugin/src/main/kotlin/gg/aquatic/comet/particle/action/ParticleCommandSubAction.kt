@@ -1,16 +1,16 @@
 package gg.aquatic.comet.particle.action
 
 import com.google.gson.JsonElement
-import gg.aquatic.comet.ParticleEmitter
-import gg.aquatic.comet.emitter.EmitterData
-import gg.aquatic.comet.emitter.action.ActionContext
-import gg.aquatic.comet.emitter.action.SubAction
-import gg.aquatic.comet.parsing.ComponentParser
-import gg.aquatic.comet.parsing.compile
+import gg.aquatic.comet.api.AbstractParticleEmitter
+import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.emitter.action.ActionContext
+import gg.aquatic.comet.api.emitter.action.SubAction
+import gg.aquatic.comet.api.parsing.ComponentParser
+import gg.aquatic.comet.api.parsing.compile
+import gg.aquatic.comet.api.parsing.macro.Macro
+import gg.aquatic.comet.api.parsing.particleEngine
+import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.parsing.expression
-import gg.aquatic.comet.parsing.macro.Macro
-import gg.aquatic.comet.parsing.particleEngine
-import gg.aquatic.comet.particle.ParticleData
 import org.bukkit.Bukkit
 import javax.script.CompiledScript
 
@@ -25,7 +25,7 @@ class ParticleCommandSubAction(
 
         val commandString = commandScript.eval() as? String ?: return
 
-        Bukkit.getScheduler().runTask(ParticleEmitter.INSTANCE, Runnable {
+        Bukkit.getScheduler().runTask(AbstractParticleEmitter.INSTANCE, Runnable {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), commandString)
         })
     }

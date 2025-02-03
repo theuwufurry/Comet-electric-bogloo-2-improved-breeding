@@ -1,18 +1,21 @@
 package gg.aquatic.comet.emitter.action
 
 import com.google.gson.JsonArray
+import gg.aquatic.comet.api.emitter.action.AbstractAction
+import gg.aquatic.comet.api.emitter.action.ActionContext
+import gg.aquatic.comet.api.emitter.action.SubAction
+import gg.aquatic.comet.api.parsing.ComponentParser
+import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.emitter.action.sub.EmitterDieSubAction
 import gg.aquatic.comet.emitter.action.sub.JavascriptSubAction
 import gg.aquatic.comet.emitter.action.sub.SpawnEmitterSubAction
-import gg.aquatic.comet.parsing.ComponentParser
-import gg.aquatic.comet.parsing.macro.Macro
 import gg.aquatic.comet.particle.action.ParticleCommandSubAction
 import gg.aquatic.comet.particle.action.ParticleDieSubAction
 import gg.aquatic.comet.particle.action.ParticleVanillaSpawnSubAction
 
 class Action(
-    val subActions: List<SubAction>
-) {
+    override val subActions: List<SubAction>
+): AbstractAction() {
     companion object {
         private val subActionParsers: MutableList<ComponentParser<out SubAction>> = mutableListOf(
             SpawnEmitterSubAction,
@@ -38,11 +41,7 @@ class Action(
         }
     }
 
-    fun execute(context: ActionContext) {
+    override fun execute(context: ActionContext) {
         subActions.forEach { it.execute(context) }
     }
-}
-
-interface SubAction {
-    fun execute(context: ActionContext)
 }

@@ -3,18 +3,21 @@ package gg.aquatic.comet.parsing
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import gg.aquatic.comet.Component
-import gg.aquatic.comet.ParticleEmitter
-import gg.aquatic.comet.emitter.EmitterTickersHolder
-import gg.aquatic.comet.emitter.UnrealizedEmitter
+import gg.aquatic.comet.api.AbstractParticleEmitter
+import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.emitter.EmitterTickersHolder
+import gg.aquatic.comet.api.parsing.*
 import gg.aquatic.comet.emitter.action.event.EmitterDeathComponent
 import gg.aquatic.comet.emitter.action.event.EmitterInitComponent
 import gg.aquatic.comet.emitter.action.event.EmitterTickComponent
 import gg.aquatic.comet.emitter.action.event.EmitterTimelineComponent
+import gg.aquatic.comet.api.parsing.macro.*
+import gg.aquatic.comet.api.particle.data.BillboardConstraints
+import gg.aquatic.comet.api.particle.display.DisplayComponent
+import gg.aquatic.comet.emitter.UnrealizedEmitter
 import gg.aquatic.comet.emitter.environment.EnvironmentDataComponent
-import gg.aquatic.comet.emitter.lifetime.EmitterLifetimeComponent
-import gg.aquatic.comet.emitter.lifetime.InfiniteEmitterLifetimeComponent
-import gg.aquatic.comet.emitter.lifetime.TimedEmitterLifetimeComponent
+import gg.aquatic.comet.emitter.lifetime.*
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.IntervalUpdateFrequencyComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.ManualUpdateFrequencyComponent
@@ -23,8 +26,6 @@ import gg.aquatic.comet.emitter.rate.InstantRateComponent
 import gg.aquatic.comet.emitter.rate.ManualRateComponent
 import gg.aquatic.comet.emitter.rate.RateComponent
 import gg.aquatic.comet.emitter.rate.SteadyRateComponent
-import gg.aquatic.comet.parsing.macro.Macro
-import gg.aquatic.comet.parsing.macro.MacrosParser
 import gg.aquatic.comet.particle.action.event.ParticleDeathComponent
 import gg.aquatic.comet.particle.action.event.ParticleInitComponent
 import gg.aquatic.comet.particle.action.event.ParticleTickComponent
@@ -32,8 +33,6 @@ import gg.aquatic.comet.particle.action.event.ParticleTimelineComponent
 import gg.aquatic.comet.particle.color.ColorComponent
 import gg.aquatic.comet.particle.color.ConstantColorComponent
 import gg.aquatic.comet.particle.color.GradientColorComponent
-import gg.aquatic.comet.particle.data.BillboardConstraints
-import gg.aquatic.comet.particle.display.DisplayComponent
 import gg.aquatic.comet.particle.display.model.ConstantModelComponent
 import gg.aquatic.comet.particle.display.sprite.ConstantSpriteComponent
 import gg.aquatic.comet.particle.display.sprite.ExpressionSpriteComponent
@@ -54,7 +53,6 @@ import gg.aquatic.comet.particle.transformation.scale.ExpressionScaleComponent
 import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
 import gg.aquatic.comet.particle.variable.RandomsInitializerComponent
 import org.joml.Vector3d
-import org.joml.Vector3f
 import java.io.File
 import java.io.FileReader
 
@@ -72,16 +70,8 @@ fun JsonElement.expression(): String? {
     return ((if (asPrimitive.isNumber) asPrimitive.asNumber.toString() else asPrimitive.asString))
 }
 
-interface ComponentParser<T> {
-    fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): T?
-}
-
-interface BaseComponentParser {
-    fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component?
-}
-
-object ParticleJsonParser {
-    val componentParsers: MutableMap<String, BaseComponentParser> = mutableMapOf()
+object ParticleJsonParser: AbstractParticleJsonParser() {
+    override val componentParsers: MutableMap<String, BaseComponentParser> = mutableMapOf()
 
     val rateComponentParsers: MutableMap<String, ComponentParser<out RateComponent>> = mutableMapOf()
 
@@ -144,8 +134,8 @@ object ParticleJsonParser {
     lateinit var jsonUnrealizedEmitters: Map<String, UnrealizedEmitter>
         private set
 
-    fun parseJsons() {
-        val dataFolder = ParticleEmitter.INSTANCE.dataFolder
+    override fun parseJsons() {
+        val dataFolder = AbstractParticleEmitter.INSTANCE.dataFolder
         if (!dataFolder.exists()) return
 
         val effectsFolder = File(dataFolder.path + "/effects/")
@@ -162,7 +152,7 @@ object ParticleJsonParser {
             emitter?.run {
                 unrealizedEmitters += file.nameWithoutExtension to emitter
             } ?: run {
-                ParticleEmitter.INSTANCE.logger.warning("""Field "components" is null in ${file.name}!""")
+                AbstractParticleEmitter.INSTANCE.logger.warning("""Field "components" is null in ${file.name}!""")
             }
         }
 
@@ -258,13 +248,14 @@ object ParticleJsonParser {
     }
 
     private fun ensureNecessaryComponents(components: MutableList<Component>) {
+        ConstantSpriteComponent
         if (components.none { it is ScaleComponent }) components += ScaleComponent.default()
         if (components.none { it is RotationComponent }) components += RotationComponent.default()
         if (components.none { it is PositionComponent }) components += PositionComponent.default()
         if (components.none { it is ColorComponent }) components += ColorComponent.default()
         if (components.none { it is ParticleLifetimeComponent }) components += ParticleLifetimeComponent.default()
         if (components.none { it is EmitterLifetimeComponent }) components += EmitterLifetimeComponent.default()
-        if (components.none { it is DisplayComponent }) components += DisplayComponent.default()
+        if (components.none { it is DisplayComponent }) components += ConstantSpriteComponent.default()
     }
 
     private fun postInit() {
@@ -272,38 +263,4 @@ object ParticleJsonParser {
             unrealizedEmitter.components.forEach { (it as? PostInit)?.realize() }
         }
     }
-}
-
-fun JsonElement.asJsonObjectOrNull(): JsonObject? {
-    return if (isJsonObject) asJsonObject else null
-}
-
-fun JsonElement.asStringOrNull(): String? {
-    return if (isJsonPrimitive && asJsonPrimitive.isString) asString else null
-}
-
-fun JsonElement.asBooleanOrNull(): Boolean? {
-    return if (isJsonPrimitive && asJsonPrimitive.isBoolean) asBoolean else null
-}
-
-fun JsonElement.asNumberOrNull(): Number? {
-    return if (isJsonPrimitive && asJsonPrimitive.isNumber) asNumber else null
-}
-
-fun JsonElement.asVector3dWithDefaultValues(def: Vector3d = Vector3d()): Vector3d? {
-    val obj = if (isJsonObject) asJsonObject else return null
-    return Vector3d(
-        obj["x"]?.asNumberOrNull()?.toDouble() ?: def.x,
-        obj["y"]?.asNumberOrNull()?.toDouble() ?: def.y,
-        obj["z"]?.asNumberOrNull()?.toDouble() ?: def.z,
-    )
-}
-
-fun JsonElement.asVector3fWithDefaultValues(def: Vector3f = Vector3f()): Vector3f? {
-    val obj = if (isJsonObject) asJsonObject else return null
-    return Vector3f(
-        obj["x"]?.asNumberOrNull()?.toFloat() ?: def.x,
-        obj["y"]?.asNumberOrNull()?.toFloat() ?: def.y,
-        obj["z"]?.asNumberOrNull()?.toFloat() ?: def.z,
-    )
 }

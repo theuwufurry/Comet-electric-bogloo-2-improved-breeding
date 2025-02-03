@@ -1,16 +1,16 @@
 package gg.aquatic.comet.particle.action.event
 
 import com.google.gson.JsonElement
-import gg.aquatic.comet.Component
-import gg.aquatic.comet.emitter.EmitterData
+import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.emitter.action.ActionContext
+import gg.aquatic.comet.api.parsing.BaseComponentParser
+import gg.aquatic.comet.api.parsing.PostInit
+import gg.aquatic.comet.api.parsing.macro.Macro
+import gg.aquatic.comet.api.particle.ParticleComponent
+import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.emitter.action.Action
-import gg.aquatic.comet.emitter.action.ActionContext
-import gg.aquatic.comet.parsing.BaseComponentParser
 import gg.aquatic.comet.parsing.ParticleJsonParser
-import gg.aquatic.comet.parsing.PostInit
-import gg.aquatic.comet.parsing.macro.Macro
-import gg.aquatic.comet.particle.ParticleComponent
-import gg.aquatic.comet.particle.ParticleData
 
 class ParticleDeathComponent(
     private val action: Action
@@ -25,7 +25,7 @@ class ParticleDeathComponent(
         action.execute(
             ActionContext(
                 otherEmitterData, otherParticleData,
-                otherParticleData.particle!!.pose()
+                otherParticleData.particle!!.pose
             )
         )
     }

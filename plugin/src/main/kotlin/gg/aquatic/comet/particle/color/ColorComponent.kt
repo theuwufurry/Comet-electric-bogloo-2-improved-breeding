@@ -1,8 +1,9 @@
 package gg.aquatic.comet.particle.color
 
-import gg.aquatic.comet.Component
-import gg.aquatic.comet.emitter.EmitterData
-import gg.aquatic.comet.parsing.particleEngine
+import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.parsing.particleEngine
+
 
 fun String.addDependency(): String {
     if (contains("Color")) {

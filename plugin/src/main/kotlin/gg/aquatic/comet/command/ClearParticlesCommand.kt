@@ -1,6 +1,6 @@
 package gg.aquatic.comet.command
 
-import gg.aquatic.comet.emitter.EmitterTickersHolder
+import gg.aquatic.comet.api.emitter.EmitterTickersHolder
 import gg.aquatic.waves.command.ICommand
 import org.bukkit.command.CommandSender
 

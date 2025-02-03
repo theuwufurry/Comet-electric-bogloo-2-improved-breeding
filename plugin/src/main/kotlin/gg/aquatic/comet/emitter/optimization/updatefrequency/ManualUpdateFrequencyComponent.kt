@@ -1,11 +1,11 @@
 package gg.aquatic.comet.emitter.optimization.updatefrequency
 
 import com.google.gson.JsonElement
-import gg.aquatic.comet.emitter.EmitterData
-import gg.aquatic.comet.parsing.ComponentParser
+import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.parsing.ComponentParser
+import gg.aquatic.comet.api.parsing.macro.Macro
+import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.parsing.ParticleJsonParser
-import gg.aquatic.comet.parsing.macro.Macro
-import gg.aquatic.comet.particle.ParticleData
 
 class ManualUpdateFrequencyComponent(private val updateTimes: List<Int>, private val durationOffset: Int) :
     UpdateFrequencyComponent {

@@ -3,13 +3,9 @@ package gg.aquatic.comet.emitter.environment
 import com.google.gson.JsonElement
 import com.google.gson.JsonParser
 import com.google.gson.JsonPrimitive
-import gg.aquatic.comet.parsing.asNumberOrNull
+import gg.aquatic.comet.api.emitter.environment.EnvironmentData
+import gg.aquatic.comet.api.parsing.asNumberOrNull
 import java.awt.Color
-
-class EnvironmentData(
-    val size: Double = 1.0,
-    val data: MutableMap<String, Any> = mutableMapOf()
-)
 
 fun String.parseEnvironmentData(): EnvironmentData {
     val root = JsonParser.parseString(this).asJsonObject

@@ -1,10 +1,12 @@
 package gg.aquatic.comet.particle.data
 
-import gg.aquatic.comet.particle.UpdateFlags
-import gg.aquatic.comet.particle.display.DisplayData
-import gg.aquatic.comet.particle.display.TextDisplayComponent
-import gg.aquatic.comet.particle.display.model.ModelData
-import gg.aquatic.comet.particle.display.sprite.SpriteData
+import gg.aquatic.comet.api.particle.UpdateFlags
+import gg.aquatic.comet.api.particle.data.AbstractEntityDataBuilder
+import gg.aquatic.comet.api.particle.data.BillboardConstraints
+import gg.aquatic.comet.api.particle.data.EntityData
+import gg.aquatic.comet.api.particle.display.TextDisplayComponent
+import gg.aquatic.comet.api.particle.display.model.ModelData
+import gg.aquatic.comet.api.particle.display.sprite.SpriteData
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.component.ComponentTypes
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityDataTypes
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.ItemStack
@@ -14,7 +16,6 @@ import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
 import org.bukkit.Bukkit
-import org.joml.Quaternionf
 import org.joml.Vector3f
 
 val PACKET_OFFSET = if (checkVersion()) 1 else 0
@@ -31,10 +32,10 @@ private fun checkVersion(): Boolean {
     return (major > 1) || (major == 1 && minor > 20) || (major == 1 && minor == 20 && patch >= 2)
 }
 
-object EntityDataBuilder {
+object EntityDataBuilder: AbstractEntityDataBuilder() {
     private val key = Key.key("particlecreator", "default")
 
-    fun getDataFor(
+    override fun getDataFor(
         entityData: EntityData,
         flags: UpdateFlags,
         initial: Boolean
@@ -50,7 +51,7 @@ object EntityDataBuilder {
         val entityData: MutableList<gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData> =
             mutableListOf()
 
-        when (component.displayData) {
+        when (val displayData = component.displayData) {
             is SpriteData -> {
                 if (initial) {
                     entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
@@ -70,7 +71,7 @@ object EntityDataBuilder {
                     entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                         22 + PACKET_OFFSET,
                         EntityDataTypes.ADV_COMPONENT,
-                        Component.translatable(component.displayData.id)
+                        Component.translatable(displayData.id)
                             .color(TextColor.color(component.color and 0xFFFFFF)).font(key)
                     )
                 }
@@ -87,10 +88,9 @@ object EntityDataBuilder {
 
             is ModelData -> {
                 if (flags.display) {
-                    val modelData = component.displayData
 
-                    val stack = ItemStack.builder().type(ItemTypes.getByName(modelData.item)).amount(1).build()
-                    stack.setComponent(ComponentTypes.CUSTOM_MODEL_DATA, modelData.id)
+                    val stack = ItemStack.builder().type(ItemTypes.getByName(displayData.item)).amount(1).build()
+                    stack.setComponent(ComponentTypes.CUSTOM_MODEL_DATA, displayData.id)
 
                     entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                         22 + PACKET_OFFSET,
@@ -202,39 +202,4 @@ object EntityDataBuilder {
 
         return entityData
     }
-}
-
-data class EntityData(
-    val displayData: DisplayData,
-    val color: Int,
-    val transparency: Int,
-    val reserveTransparency: Int?,
-    val translation: Vector3f,
-    val rotation: Quaternionf,
-    val scale: Vector3f,
-    val billboardConstraints: BillboardConstraints,
-    val interpolationDelay: Int,
-    val interpolationDuration: Int,
-) {
-    fun copy(): EntityData {
-        return EntityData(
-            displayData.copy(),
-            color,
-            transparency,
-            reserveTransparency,
-            Vector3f(translation),
-            Quaternionf(rotation),
-            Vector3f(scale),
-            billboardConstraints,
-            interpolationDelay,
-            interpolationDuration,
-        )
-    }
-}
-
-enum class BillboardConstraints(val byte: Byte) {
-    FIXED((0).toByte()),
-    VERTICAL((1).toByte()),
-    HORIZONTAL((2).toByte()),
-    CENTER((3).toByte())
 }

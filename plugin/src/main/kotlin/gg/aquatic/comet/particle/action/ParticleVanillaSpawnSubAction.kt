@@ -2,11 +2,12 @@ package gg.aquatic.comet.particle.action
 
 import com.google.gson.JsonElement
 import com.google.gson.stream.MalformedJsonException
-import gg.aquatic.comet.emitter.EmitterData
-import gg.aquatic.comet.emitter.action.ActionContext
-import gg.aquatic.comet.emitter.action.SubAction
-import gg.aquatic.comet.parsing.*
-import gg.aquatic.comet.parsing.macro.Macro
+import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.emitter.action.ActionContext
+import gg.aquatic.comet.api.emitter.action.SubAction
+import gg.aquatic.comet.api.parsing.*
+import gg.aquatic.comet.api.parsing.macro.Macro
+import gg.aquatic.comet.parsing.expression
 import gg.aquatic.comet.particle.color.addDependency
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.PacketEvents
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.particle.Particle
@@ -29,7 +30,7 @@ class ParticleVanillaSpawnSubAction(
 
         val particlePacket = compiledVanillaParticleData.realize(context) ?: return
 
-        context.otherEmitterData.emitter!!.players().forEach { playerManager.sendPacket(it, particlePacket) }
+        context.otherEmitterData.emitter!!.players.forEach { playerManager.sendPacket(it, particlePacket) }
     }
 
     companion object : ComponentParser<ParticleVanillaSpawnSubAction> {
@@ -90,15 +91,15 @@ class CompiledVanillaParticle(
             else -> Particle(type as ParticleType<ParticleData>, data)
         }
 
-        context.pose!!
+        val pose = context.pose!!
 
         return WrapperPlayServerParticle(
             particle,
             longDistance,
             Vector3d(
-                context.pose.pos.x,
-                context.pose.pos.y,
-                context.pose.pos.z
+                pose.pos.x,
+                pose.pos.y,
+                pose.pos.z
             ),
             offset,
             maxSpeed,
@@ -108,12 +109,12 @@ class CompiledVanillaParticle(
 }
 
 interface CompiledData<T : ParticleData> {
-    fun realize(otherEmitterData: EmitterData, otherParticleData: gg.aquatic.comet.particle.ParticleData): T
+    fun realize(otherEmitterData: EmitterData, otherParticleData: gg.aquatic.comet.api.particle.ParticleData): T
 
     class EmptyDustData : CompiledData<ParticleData> {
         override fun realize(
             otherEmitterData: EmitterData,
-            otherParticleData: gg.aquatic.comet.particle.ParticleData
+            otherParticleData: gg.aquatic.comet.api.particle.ParticleData
         ): ParticleData {
             return ParticleData()
         }
@@ -123,11 +124,11 @@ interface CompiledData<T : ParticleData> {
         private val colorScript: CompiledScript,
         private val scaleScript: CompiledScript,
         private val myEmitterData: EmitterData,
-        private val myParticleData: gg.aquatic.comet.particle.ParticleData
+        private val myParticleData: gg.aquatic.comet.api.particle.ParticleData
     ) : CompiledData<ParticleDustData> {
         override fun realize(
             otherEmitterData: EmitterData,
-            otherParticleData: gg.aquatic.comet.particle.ParticleData
+            otherParticleData: gg.aquatic.comet.api.particle.ParticleData
         ): ParticleDustData {
             myEmitterData.copyFrom(otherEmitterData)
             myParticleData.copyFrom(otherParticleData)

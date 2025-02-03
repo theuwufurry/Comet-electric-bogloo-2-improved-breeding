@@ -1,12 +1,15 @@
 package gg.aquatic.comet.particle
 
-import gg.aquatic.comet.ParticleIDProvider
-import gg.aquatic.comet.emitter.parent.Parent
-import gg.aquatic.comet.emitter.parent.Pose
-import gg.aquatic.comet.particle.data.EntityData
+import gg.aquatic.comet.api.ParticleIDProvider
+import gg.aquatic.comet.api.emitter.parent.Pose
+import gg.aquatic.comet.api.particle.AbstractParticle
+import gg.aquatic.comet.api.particle.ParticleData
+import gg.aquatic.comet.api.particle.UpdateFlags
+import gg.aquatic.comet.api.particle.data.AbstractEntityDataBuilder
+import gg.aquatic.comet.api.particle.data.EntityData
+import gg.aquatic.comet.api.particle.display.TextDisplayComponent
+import gg.aquatic.comet.api.particle.display.sprite.SpriteData
 import gg.aquatic.comet.particle.data.EntityDataBuilder
-import gg.aquatic.comet.particle.display.TextDisplayComponent
-import gg.aquatic.comet.particle.display.sprite.SpriteData
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.type.EntityTypes
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.world.Location
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3d
@@ -16,8 +19,8 @@ import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.Wr
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity
 import java.util.*
 
-open class Particle(var data: ParticleData) : Parent {
-    val id = ParticleIDProvider.id()
+open class Particle(override var data: ParticleData) : AbstractParticle() {
+    override val id = ParticleIDProvider.id()
     private val uuid = UUID.randomUUID()
 
     private lateinit var previousEntityData: EntityData
@@ -31,11 +34,11 @@ open class Particle(var data: ParticleData) : Parent {
         )
     }
 
-    fun tick() {
+    override fun tick() {
         data.age++
     }
 
-    fun getAddPacket(): List<PacketWrapper<*>> {
+    override fun getAddPacket(): List<PacketWrapper<*>> {
         val packet = WrapperPlayServerSpawnEntity(
             id,
             Optional.of(uuid),
@@ -56,14 +59,21 @@ open class Particle(var data: ParticleData) : Parent {
                 data.color, data.color ushr 24, null,
                 data.translation, data.rotation, data.scale,
                 data.billboardConstraints, data.interpolationDelay, data.interpolationDuration
-            ), UpdateFlags(true, true, true, true, true, true), true
+            ), UpdateFlags(
+                display = true,
+                transparency = true,
+                translation = true,
+                rotation = true,
+                scale = true,
+                interpolation = true
+            ), true
         )
 
         val entityDataPacket: PacketWrapper<*> = WrapperPlayServerEntityMetadata(id, data)
         return listOf(packet, entityDataPacket)
     }
 
-    fun updatePacket(entityDataBuilder: EntityDataBuilder, shouldUpdate: Boolean): WrapperPlayServerEntityMetadata? {
+    override fun updatePacket(entityDataBuilder: AbstractEntityDataBuilder, shouldUpdate: Boolean): WrapperPlayServerEntityMetadata? {
         return if (shouldUpdate) handleFullUpdate(entityDataBuilder)
         else if (data.interpolationDuration > 1 && previousEntityData.reserveTransparency != null) {
             val interpolationDuration = data.interpolationDuration - 1
@@ -88,7 +98,7 @@ open class Particle(var data: ParticleData) : Parent {
         } else null
     }
 
-    private fun handleFullUpdate(entityDataBuilder: EntityDataBuilder): WrapperPlayServerEntityMetadata? {
+    private fun handleFullUpdate(entityDataBuilder: AbstractEntityDataBuilder): WrapperPlayServerEntityMetadata? {
         val flags = UpdateFlags()
         var transparency = data.color ushr 24
         var interpolationDuration = data.interpolationDuration
@@ -137,7 +147,7 @@ open class Particle(var data: ParticleData) : Parent {
         ).let { WrapperPlayServerEntityMetadata(id, it) }
     }
 
-    fun getMovementPacket(): WrapperPlayServerEntityTeleport {
+    override fun getMovementPacket(): WrapperPlayServerEntityTeleport {
         return WrapperPlayServerEntityTeleport(
             id, Location(
                 Vector3d(
@@ -149,25 +159,16 @@ open class Particle(var data: ParticleData) : Parent {
         )
     }
 
-    override fun pose(): Pose {
-        return Pose(
-            org.joml.Vector3d(
-                data.origin.x + data.relativePosition.x,
-                data.origin.y + data.relativePosition.y,
-                data.origin.z + data.relativePosition.z
-            ),
-            org.joml.Vector3d()
-        )
-    }
+    override val pose: Pose
+        get() {
+            return Pose(
+                org.joml.Vector3d(
+                    data.origin.x + data.relativePosition.x,
+                    data.origin.y + data.relativePosition.y,
+                    data.origin.z + data.relativePosition.z
+                ),
+                org.joml.Vector3d()
+            )
+        }
 }
 
-class UpdateFlags(
-    var display: Boolean = false,
-    var transparency: Boolean = false,
-    var translation: Boolean = false,
-    var rotation: Boolean = false,
-    var scale: Boolean = false,
-    var interpolation: Boolean = false
-) {
-    fun anyTrue() = display || transparency || translation || rotation || scale || interpolation
-}

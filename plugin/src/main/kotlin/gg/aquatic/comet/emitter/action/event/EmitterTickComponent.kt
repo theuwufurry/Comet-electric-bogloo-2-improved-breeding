@@ -1,15 +1,15 @@
 package gg.aquatic.comet.emitter.action.event
 
 import com.google.gson.JsonElement
-import gg.aquatic.comet.Component
-import gg.aquatic.comet.emitter.EmitterComponent
-import gg.aquatic.comet.emitter.EmitterData
+import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.emitter.EmitterComponent
+import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.emitter.action.ActionContext
+import gg.aquatic.comet.api.parsing.BaseComponentParser
+import gg.aquatic.comet.api.parsing.PostInit
+import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.emitter.action.Action
-import gg.aquatic.comet.emitter.action.ActionContext
-import gg.aquatic.comet.parsing.BaseComponentParser
 import gg.aquatic.comet.parsing.ParticleJsonParser
-import gg.aquatic.comet.parsing.PostInit
-import gg.aquatic.comet.parsing.macro.Macro
 
 class EmitterTickComponent(
     private val action: Action
@@ -20,7 +20,7 @@ class EmitterTickComponent(
         action.execute(
             ActionContext(
                 otherEmitterData, null,
-                otherEmitterData.emitter!!.pose()
+                otherEmitterData.emitter!!.pose
             )
         )
     }

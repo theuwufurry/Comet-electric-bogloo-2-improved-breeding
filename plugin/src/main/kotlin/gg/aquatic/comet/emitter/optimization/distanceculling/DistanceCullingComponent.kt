@@ -1,9 +1,9 @@
 package gg.aquatic.comet.emitter.optimization.distanceculling
 
 import com.google.gson.JsonElement
-import gg.aquatic.comet.parsing.ComponentParser
+import gg.aquatic.comet.api.parsing.ComponentParser
+import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.parsing.ParticleJsonParser
-import gg.aquatic.comet.parsing.macro.Macro
 
 class DistanceCullingComponent(val viewDistance: Float) {
     companion object : ComponentParser<DistanceCullingComponent> {

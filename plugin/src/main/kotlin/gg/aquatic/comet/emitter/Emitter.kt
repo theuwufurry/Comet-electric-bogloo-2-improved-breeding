@@ -1,17 +1,21 @@
 package gg.aquatic.comet.emitter
 
-import gg.aquatic.comet.Component
-import gg.aquatic.comet.emitter.environment.EnvironmentData
+import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.emitter.AbstractEmitter
+import gg.aquatic.comet.api.emitter.EmitterComponent
+import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.emitter.EmitterTickResult
+import gg.aquatic.comet.api.emitter.environment.EnvironmentData
+import gg.aquatic.comet.api.emitter.parent.Parent
+import gg.aquatic.comet.api.emitter.parent.Pose
+import gg.aquatic.comet.api.emitter.parent.pose
+import gg.aquatic.comet.api.particle.ParticleComponent
+import gg.aquatic.comet.api.particle.ParticleData
+import gg.aquatic.comet.api.particle.data.BillboardConstraints
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.UpdateFrequencyComponent
-import gg.aquatic.comet.emitter.parent.Parent
-import gg.aquatic.comet.emitter.parent.Pose
-import gg.aquatic.comet.emitter.parent.pose
 import gg.aquatic.comet.emitter.rate.RateComponent
 import gg.aquatic.comet.particle.Particle
-import gg.aquatic.comet.particle.ParticleComponent
-import gg.aquatic.comet.particle.ParticleData
-import gg.aquatic.comet.particle.data.BillboardConstraints
 import gg.aquatic.comet.particle.data.EntityDataBuilder
 import gg.aquatic.waves.chunk.trackedByPlayers
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.PacketEvents
@@ -25,7 +29,6 @@ import org.bukkit.util.Vector
 import org.joml.Quaterniond
 import org.joml.Quaternionf
 import org.joml.Vector3d
-import org.joml.Vector3f
 import java.util.concurrent.ConcurrentHashMap
 
 class Emitter(
@@ -38,25 +41,24 @@ class Emitter(
     location: Location,
     private val emitterData: EmitterData,
     private val unrealizedHolder: UnrealizedEmitter,
-    val forwardVector: Vector3d,
-    val environmentData: EnvironmentData,
+    override val forwardVector: Vector3d,
+    override val environmentData: EnvironmentData,
     private val audience: AquaticAudience
-) : Parent {
+) : AbstractEmitter() {
     private val emitterComponents: List<EmitterComponent> = components.filterIsInstance<EmitterComponent>()
     private val particleComponents: List<ParticleComponent> = components.filterIsInstance<ParticleComponent>()
 
-    var location = location
+    override var location = location
         private set
 
     //origin can change, rotation can change
     private val particles: MutableList<Particle> = mutableListOf()
     private val deadParticles: MutableList<Particle> = mutableListOf()
     private var blocked = false
-    private var dead = false
-    var emitterRotation: Quaterniond = calculateEmitterRotation()
+    override var emitterRotation: Quaterniond = calculateEmitterRotation()
 
-    fun calculateEmitterRotation(): Quaterniond {
-        return Quaterniond().rotateTo(forwardVector, pose().dir)
+    override fun calculateEmitterRotation(): Quaterniond {
+        return Quaterniond().rotateTo(forwardVector, pose.dir)
     }
 
     private val currentViewers = ConcurrentHashMap.newKeySet<Player>()
@@ -66,7 +68,7 @@ class Emitter(
         emitterComponents.forEach { it.init(emitterData) }
     }
 
-    fun tick(): EmitterTickResult {
+    override fun tick(): EmitterTickResult {
         if (blocked) {
             return EmitterTickResult(true)
         }
@@ -75,7 +77,7 @@ class Emitter(
 
         emitterData.age++
 
-        parent?.pose()?.let { setPose(it) }
+        parent?.pose?.let { setPose(it) }
         emitterRotation = calculateEmitterRotation()
         emitterComponents.forEach { it.execute(emitterData) }
 
@@ -212,14 +214,15 @@ class Emitter(
         }
     }
 
-    fun players(): List<Player> {
-        val maxDistance = distanceCullingComponent.viewDistance
-        return location.chunk.trackedByPlayers()
-            .filter { audience.canBeApplied(it) }
-            .filter { it.eyeLocation.distanceSquared(location) < maxDistance }
-    }
+    override val players: List<Player>
+        get() {
+            val maxDistance = distanceCullingComponent.viewDistance
+            return location.chunk.trackedByPlayers()
+                .filter { audience.canBeApplied(it) }
+                .filter { it.eyeLocation.distanceSquared(location) < maxDistance }
+        }
 
-    fun setPose(pose: Pose) {
+    override fun setPose(pose: Pose) {
         location.x = pose.pos.x
         location.y = pose.pos.y
         location.z = pose.pos.z
@@ -231,23 +234,18 @@ class Emitter(
         )
     }
 
-    override fun pose(): Pose {
-        return location.pose()
-    }
+    override val pose: Pose
+        get() {
+            return location.pose()
+        }
 
-    fun kill() {
+    override fun kill() {
         dead = true
         killParticles(particles)
         particles.clear()
     }
 
-    fun applyEmitterRotation(input: Quaternionf): Quaternionf {
+    override fun applyEmitterRotation(input: Quaternionf): Quaternionf {
         return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(emitterRotation).mul(input) else input
     }
-}
-
-class EmitterTickResult(val alive: Boolean, val deadParticles: List<Pair<Player, MutableList<Int>>> = listOf())
-
-fun Vector3d.toVector3f(): Vector3f {
-    return Vector3f(x.toFloat(), y.toFloat(), z.toFloat())
 }

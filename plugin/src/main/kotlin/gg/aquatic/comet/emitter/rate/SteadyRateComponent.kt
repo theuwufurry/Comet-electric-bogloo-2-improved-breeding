@@ -1,9 +1,13 @@
 package gg.aquatic.comet.emitter.rate
 
 import com.google.gson.JsonElement
-import gg.aquatic.comet.emitter.EmitterData
-import gg.aquatic.comet.parsing.*
-import gg.aquatic.comet.parsing.macro.Macro
+import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.parsing.ComponentParser
+import gg.aquatic.comet.api.parsing.compile
+import gg.aquatic.comet.api.parsing.emitterEngine
+import gg.aquatic.comet.api.parsing.macro.Macro
+import gg.aquatic.comet.parsing.ParticleJsonParser
+import gg.aquatic.comet.parsing.expression
 import javax.script.CompiledScript
 import kotlin.math.floor
 

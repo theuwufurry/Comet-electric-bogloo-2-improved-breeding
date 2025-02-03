@@ -1,14 +1,19 @@
 package gg.aquatic.comet.emitter.action.sub
 
 import com.google.gson.JsonElement
+import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.emitter.action.ActionContext
+import gg.aquatic.comet.api.emitter.action.SubAction
+import gg.aquatic.comet.api.emitter.parent.EmitterSpace
+import gg.aquatic.comet.api.parsing.ComponentParser
+import gg.aquatic.comet.api.parsing.PostInit
+import gg.aquatic.comet.api.parsing.compile
+import gg.aquatic.comet.api.parsing.emitterEngine
+import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.applyIf
-import gg.aquatic.comet.emitter.EmitterData
 import gg.aquatic.comet.emitter.UnrealizedEmitter
-import gg.aquatic.comet.emitter.action.ActionContext
-import gg.aquatic.comet.emitter.action.SubAction
-import gg.aquatic.comet.emitter.parent.EmitterSpace
-import gg.aquatic.comet.parsing.*
-import gg.aquatic.comet.parsing.macro.Macro
+import gg.aquatic.comet.parsing.ParticleJsonParser
+import gg.aquatic.comet.parsing.expression
 import org.bukkit.Location
 import org.bukkit.util.Vector
 
@@ -37,9 +42,7 @@ class SpawnEmitterSubAction(
     }
 
     override fun execute(context: ActionContext) {
-        if (context.pose == null) {
-            throw NullPointerException("Cannot use Spawn Emitter SubAction in this event!")
-        }
+        val pose = context.pose ?: throw NullPointerException("Cannot use Spawn Emitter SubAction in this event!")
 
         val parent = when (space) {
             EmitterSpace.PARENT_EMITTER -> context.otherEmitterData.emitter!!
@@ -50,10 +53,10 @@ class SpawnEmitterSubAction(
         for (unrealizedEmitter in unrealizedEmitters) {
             val location = Location(
                 context.otherEmitterData.world,
-                context.pose.pos.x + context.pose.dir.x * Math.random() * magnitude,
-                context.pose.pos.y + context.pose.dir.y * Math.random() * magnitude,
-                context.pose.pos.z + context.pose.dir.z * Math.random() * magnitude
-            ).applyIf(parent != null) { direction = Vector(context.pose.dir.x, context.pose.dir.y, context.pose.dir.z) }
+                pose.pos.x + pose.dir.x * Math.random() * magnitude,
+                pose.pos.y + pose.dir.y * Math.random() * magnitude,
+                pose.pos.z + pose.dir.z * Math.random() * magnitude
+            ).applyIf(parent != null) { direction = Vector(pose.dir.x, pose.dir.y, pose.dir.z) }
             unrealizedEmitter.realize(
                 parent,
                 location,

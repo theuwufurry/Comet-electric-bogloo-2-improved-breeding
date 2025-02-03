@@ -1,7 +1,7 @@
 package gg.aquatic.comet.particle.position.direction
 
-import gg.aquatic.comet.emitter.EmitterData
-import gg.aquatic.comet.particle.ParticleData
+import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.particle.ParticleData
 import org.joml.Quaterniond
 import org.joml.Vector3d
 import javax.script.CompiledScript

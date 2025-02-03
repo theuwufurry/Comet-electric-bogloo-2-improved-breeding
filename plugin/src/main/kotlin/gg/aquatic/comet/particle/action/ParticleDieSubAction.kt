@@ -1,18 +1,15 @@
 package gg.aquatic.comet.particle.action
 
 import com.google.gson.JsonElement
-import gg.aquatic.comet.emitter.action.ActionContext
-import gg.aquatic.comet.emitter.action.SubAction
-import gg.aquatic.comet.parsing.ComponentParser
-import gg.aquatic.comet.parsing.macro.Macro
+import gg.aquatic.comet.api.emitter.action.ActionContext
+import gg.aquatic.comet.api.emitter.action.SubAction
+import gg.aquatic.comet.api.parsing.ComponentParser
+import gg.aquatic.comet.api.parsing.macro.Macro
 
 class ParticleDieSubAction : SubAction {
     override fun execute(context: ActionContext) {
-        if (context.otherParticleData == null) {
-            throw NullPointerException("Emitter")
-        }
-
-        context.otherParticleData.dead = true
+        val otherParticleData = context.otherParticleData ?: throw NullPointerException("Emitter")
+        otherParticleData.dead = true
     }
 
     companion object : ComponentParser<ParticleDieSubAction> {

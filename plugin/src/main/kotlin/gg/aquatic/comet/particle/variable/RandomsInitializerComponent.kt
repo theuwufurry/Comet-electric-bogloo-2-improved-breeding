@@ -1,14 +1,14 @@
 package gg.aquatic.comet.particle.variable
 
 import com.google.gson.JsonElement
-import gg.aquatic.comet.Component
-import gg.aquatic.comet.emitter.EmitterComponent
-import gg.aquatic.comet.emitter.EmitterData
-import gg.aquatic.comet.parsing.BaseComponentParser
+import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.emitter.EmitterComponent
+import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.parsing.BaseComponentParser
+import gg.aquatic.comet.api.parsing.macro.Macro
+import gg.aquatic.comet.api.particle.ParticleComponent
+import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.parsing.ParticleJsonParser
-import gg.aquatic.comet.parsing.macro.Macro
-import gg.aquatic.comet.particle.ParticleComponent
-import gg.aquatic.comet.particle.ParticleData
 
 class RandomsInitializerComponent(private val emitterRandoms: Int, private val particleRandoms: Int) : EmitterComponent,
     ParticleComponent {

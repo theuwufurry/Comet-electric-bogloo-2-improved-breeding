@@ -1,12 +1,19 @@
 package gg.aquatic.comet.particle.display.sprite
 
 import com.google.gson.JsonElement
-import gg.aquatic.comet.emitter.EmitterData
-import gg.aquatic.comet.parsing.*
-import gg.aquatic.comet.parsing.macro.Macro
-import gg.aquatic.comet.particle.ParticleComponent
-import gg.aquatic.comet.particle.ParticleData
-import gg.aquatic.comet.particle.display.TextDisplayComponent
+import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.parsing.BaseComponentParser
+import gg.aquatic.comet.api.parsing.compile
+import gg.aquatic.comet.api.parsing.emitterEngine
+import gg.aquatic.comet.api.parsing.macro.Macro
+import gg.aquatic.comet.api.particle.ParticleComponent
+import gg.aquatic.comet.api.particle.ParticleData
+import gg.aquatic.comet.api.particle.display.TextDisplayComponent
+import gg.aquatic.comet.api.particle.display.sprite.SpriteComponent
+import gg.aquatic.comet.api.particle.display.sprite.SpriteData
+import gg.aquatic.comet.parsing.ParticleJsonParser
+import gg.aquatic.comet.parsing.expression
 import javax.script.CompiledScript
 
 class ConstantSpriteComponent(private val sprite: CompiledScript, private val myEmitterData: EmitterData) :
@@ -23,6 +30,16 @@ class ConstantSpriteComponent(private val sprite: CompiledScript, private val my
 
             return ConstantSpriteComponent(
                 engine.compile(jsonObject.expression("sprite") ?: return null, macros, true),
+                emitterData
+            )
+        }
+
+        fun default(): Component {
+            val emitterData = EmitterData()
+            val engine = emitterEngine(emitterData)
+
+            return ConstantSpriteComponent(
+                engine.compile("\"particle\"", null),
                 emitterData
             )
         }

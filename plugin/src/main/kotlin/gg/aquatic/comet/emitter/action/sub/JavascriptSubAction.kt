@@ -1,15 +1,15 @@
 package gg.aquatic.comet.emitter.action.sub
 
 import com.google.gson.JsonElement
-import gg.aquatic.comet.emitter.EmitterData
-import gg.aquatic.comet.emitter.action.ActionContext
-import gg.aquatic.comet.emitter.action.SubAction
-import gg.aquatic.comet.parsing.ComponentParser
-import gg.aquatic.comet.parsing.compile
-import gg.aquatic.comet.parsing.emitterEngine
-import gg.aquatic.comet.parsing.macro.Macro
-import gg.aquatic.comet.parsing.particleEngine
-import gg.aquatic.comet.particle.ParticleData
+import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.emitter.action.ActionContext
+import gg.aquatic.comet.api.emitter.action.SubAction
+import gg.aquatic.comet.api.parsing.ComponentParser
+import gg.aquatic.comet.api.parsing.compile
+import gg.aquatic.comet.api.parsing.emitterEngine
+import gg.aquatic.comet.api.parsing.macro.Macro
+import gg.aquatic.comet.api.parsing.particleEngine
+import gg.aquatic.comet.api.particle.ParticleData
 import javax.script.CompiledScript
 
 class JavascriptSubAction(
@@ -25,14 +25,14 @@ class JavascriptSubAction(
             script.eval()
         }
 
-        if (context.otherParticleData != null) {
-            myParticleData.copyFrom(context.otherParticleData)
+        context.otherParticleData?.let { otherParticleData ->
+            myParticleData.copyFrom(otherParticleData)
             for (script in particleScripts) {
                 //modifies my particle data and possibly my emitter data
                 script.eval()
             }
 
-            context.otherParticleData.copyFrom(myParticleData)
+            otherParticleData.copyFrom(myParticleData)
         }
 
         context.otherEmitterData.copyFrom(myEmitterData)

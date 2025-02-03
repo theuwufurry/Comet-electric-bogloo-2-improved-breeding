@@ -1,16 +1,19 @@
 package gg.aquatic.comet.emitter
 
-import gg.aquatic.comet.Component
-import gg.aquatic.comet.ParticleEmitter
-import gg.aquatic.comet.emitter.environment.EnvironmentData
+
+import gg.aquatic.comet.api.AbstractParticleEmitter
+import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
+import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.emitter.EmitterTickersHolder
+import gg.aquatic.comet.api.emitter.environment.EnvironmentData
+import gg.aquatic.comet.api.emitter.parent.Parent
+import gg.aquatic.comet.api.particle.data.BillboardConstraints
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.UpdateFrequencyComponent
-import gg.aquatic.comet.emitter.parent.Parent
 import gg.aquatic.comet.emitter.rate.RateComponent
-import gg.aquatic.comet.particle.data.BillboardConstraints
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
 import gg.aquatic.waves.util.audience.AquaticAudience
-import gg.aquatic.waves.util.audience.GlobalAudience
 import gg.aquatic.waves.util.toUser
 import io.ktor.util.collections.*
 import org.bukkit.Bukkit
@@ -19,48 +22,30 @@ import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitTask
 import org.joml.Vector3d
 
-object EmitterTickersHolder {
-    val unrealizedEmitters: MutableList<UnrealizedEmitter> = mutableListOf()
-
-    fun kill() {
-        for (unrealizedEmitter in unrealizedEmitters) {
-            unrealizedEmitter.kill()
-        }
-
-        unrealizedEmitters.clear()
-    }
-
-    fun killInstances() {
-        for (unrealizedEmitter in unrealizedEmitters) {
-            unrealizedEmitter.killInstances()
-        }
-    }
-}
-
 data class UnrealizedEmitter(
-    val components: List<Component>,
+    override val components: List<Component>,
     val rateComponent: RateComponent,
     val distanceCullingComponent: DistanceCullingComponent,
     val updateFrequencyComponent: UpdateFrequencyComponent,
-    val billboardConstraints: BillboardConstraints,
-    val forwardVector: Vector3d,
-) {
+    override val billboardConstraints: BillboardConstraints,
+    override val forwardVector: Vector3d,
+): AbstractUnrealizedEmitter() {
     private val emitters: MutableSet<Emitter> = ConcurrentSet()
     private var tasks: BukkitTask
 
     init {
         EmitterTickersHolder.unrealizedEmitters += this
-        tasks = Bukkit.getScheduler().runTaskTimerAsynchronously(ParticleEmitter.INSTANCE, Runnable {
+        tasks = Bukkit.getScheduler().runTaskTimerAsynchronously(AbstractParticleEmitter.INSTANCE, Runnable {
             tick()
         }, 1, 1)
     }
 
-    fun kill() {
+    override fun kill() {
         killInstances()
         tasks.cancel()
     }
 
-    fun killInstances() {
+    override fun killInstances() {
         emitters.forEach { it.kill() }
     }
 
@@ -87,11 +72,11 @@ data class UnrealizedEmitter(
         emitters.removeAll(deadEmitters)
     }
 
-    fun realize(
-        parent: Parent? = null,
+    override fun realize(
+        parent: Parent?,
         location: Location,
-        environmentData: EnvironmentData = EnvironmentData(),
-        audience: AquaticAudience = GlobalAudience()
+        environmentData: EnvironmentData,
+        audience: AquaticAudience
     ): Emitter {
         val emitterData = EmitterData()
         emitterData.world = location.world

@@ -1,7 +1,8 @@
 package gg.aquatic.comet.emitter.optimization.updatefrequency
 
-import gg.aquatic.comet.emitter.EmitterData
-import gg.aquatic.comet.particle.ParticleData
+import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.particle.ParticleData
+
 
 interface UpdateFrequencyComponent {
     val interpolationDelay: Int
