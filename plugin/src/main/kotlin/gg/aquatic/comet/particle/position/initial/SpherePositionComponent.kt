@@ -45,9 +45,7 @@ class SpherePositionComponent(
     override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
 
     companion object : BaseComponentParser {
-        init {
-            ParticleJsonParser.componentParsers += "sphere_position" to this
-        }
+        override val id: String = "sphere_position"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): SpherePositionComponent {
             val jsonObject = jsonElement.asJsonObject

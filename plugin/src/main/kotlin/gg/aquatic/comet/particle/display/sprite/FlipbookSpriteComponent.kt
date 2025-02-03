@@ -21,9 +21,7 @@ class FlipbookSpriteComponent(
     private val myParticleData: ParticleData, private val myEmitterData: EmitterData
 ) : ParticleComponent, SpriteComponent {
     companion object : BaseComponentParser {
-        init {
-            ParticleJsonParser.componentParsers += "flipbook_sprite" to this
-        }
+        override val id: String = "flipbook_sprite"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): FlipbookSpriteComponent? {
             val jsonObject = jsonElement.asJsonObject

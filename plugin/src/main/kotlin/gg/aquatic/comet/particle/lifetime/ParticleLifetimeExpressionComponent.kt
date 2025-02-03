@@ -36,9 +36,8 @@ class ParticleLifetimeExpressionComponent(
     override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
 
     companion object : BaseComponentParser {
-        init {
-            ParticleJsonParser.componentParsers += "particle_lifetime_expression" to this
-        }
+
+        override val id: String = "particle_lifetime_expression"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ParticleLifetimeExpressionComponent {
             val jsonObject = jsonElement.asJsonObject

@@ -2,10 +2,11 @@ package gg.aquatic.comet.emitter.optimization.updatefrequency
 
 import com.google.gson.JsonElement
 import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
+import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyResult
 import gg.aquatic.comet.api.parsing.ComponentParser
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.particle.ParticleData
-import gg.aquatic.comet.parsing.ParticleJsonParser
 
 class ManualUpdateFrequencyComponent(private val updateTimes: List<Int>, private val durationOffset: Int) :
     UpdateFrequencyComponent {
@@ -14,9 +15,7 @@ class ManualUpdateFrequencyComponent(private val updateTimes: List<Int>, private
         if (updateTimes.size > 1) updateTimes[1] - updateTimes[0] + durationOffset else 1
 
     companion object : ComponentParser<ManualUpdateFrequencyComponent> {
-        init {
-            ParticleJsonParser.updateFrequencyParsers += "manual_update_frequency" to this
-        }
+        override val id: String = "manual_update_frequency"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ManualUpdateFrequencyComponent? {
             val jsonObject = jsonElement.asJsonObject

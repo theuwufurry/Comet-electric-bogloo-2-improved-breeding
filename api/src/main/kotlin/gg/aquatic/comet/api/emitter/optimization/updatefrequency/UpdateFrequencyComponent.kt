@@ -1,4 +1,4 @@
-package gg.aquatic.comet.emitter.optimization.updatefrequency
+package gg.aquatic.comet.api.emitter.optimization.updatefrequency
 
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.particle.ParticleData
@@ -8,12 +8,6 @@ interface UpdateFrequencyComponent {
     val interpolationDelay: Int
     val initialInterpolationDuration: Int
     fun shouldSendUpdate(otherEmitterData: EmitterData, otherParticleData: ParticleData): UpdateFrequencyResult
-
-    companion object {
-        fun default(): UpdateFrequencyComponent {
-            return IntervalUpdateFrequencyComponent(1, 0)
-        }
-    }
 }
 
 class UpdateFrequencyResult(val shouldUpdate: Boolean, val interpolationDuration: Int?)

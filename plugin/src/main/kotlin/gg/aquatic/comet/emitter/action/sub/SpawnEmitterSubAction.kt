@@ -66,6 +66,8 @@ class SpawnEmitterSubAction(
     }
 
     companion object : ComponentParser<SpawnEmitterSubAction> {
+        override val id: String = "emitter_spawn"
+
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): SpawnEmitterSubAction? {
             if (!(jsonElement.isJsonObject && jsonElement.asJsonObject.has("emitter"))) return null
             val jsonObject = jsonElement.asJsonObject

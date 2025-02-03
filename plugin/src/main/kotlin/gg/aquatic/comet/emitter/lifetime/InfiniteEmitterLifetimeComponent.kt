@@ -5,7 +5,6 @@ import gg.aquatic.comet.api.emitter.EmitterComponent
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.parsing.BaseComponentParser
 import gg.aquatic.comet.api.parsing.macro.Macro
-import gg.aquatic.comet.parsing.ParticleJsonParser
 
 class InfiniteEmitterLifetimeComponent : EmitterComponent,
     EmitterLifetimeComponent {
@@ -19,9 +18,7 @@ class InfiniteEmitterLifetimeComponent : EmitterComponent,
     }
 
     companion object : BaseComponentParser {
-        init {
-            ParticleJsonParser.componentParsers += "infinite_emitter_lifetime" to this
-        }
+        override val id: String = "infinite_emitter_lifetime"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): InfiniteEmitterLifetimeComponent {
             return InfiniteEmitterLifetimeComponent()

@@ -7,9 +7,7 @@ import gg.aquatic.comet.parsing.ParticleJsonParser
 
 class DistanceCullingComponent(val viewDistance: Float) {
     companion object : ComponentParser<DistanceCullingComponent> {
-        init {
-            ParticleJsonParser.distanceCullingParser = "distance_culling" to this
-        }
+        override val id: String = "distance_culling"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): DistanceCullingComponent? {
             val jsonObject = jsonElement.asJsonObject

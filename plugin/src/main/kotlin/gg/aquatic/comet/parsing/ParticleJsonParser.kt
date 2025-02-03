@@ -3,9 +3,7 @@ package gg.aquatic.comet.parsing
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import gg.aquatic.comet.api.AbstractParticleEmitter
-import gg.aquatic.comet.api.Component
-import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.*
 import gg.aquatic.comet.api.emitter.EmitterTickersHolder
 import gg.aquatic.comet.api.parsing.*
 import gg.aquatic.comet.emitter.action.event.EmitterDeathComponent
@@ -21,10 +19,10 @@ import gg.aquatic.comet.emitter.lifetime.*
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.IntervalUpdateFrequencyComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.ManualUpdateFrequencyComponent
-import gg.aquatic.comet.emitter.optimization.updatefrequency.UpdateFrequencyComponent
+import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.emitter.rate.InstantRateComponent
 import gg.aquatic.comet.emitter.rate.ManualRateComponent
-import gg.aquatic.comet.emitter.rate.RateComponent
+import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.emitter.rate.SteadyRateComponent
 import gg.aquatic.comet.particle.action.event.ParticleDeathComponent
 import gg.aquatic.comet.particle.action.event.ParticleInitComponent
@@ -70,65 +68,84 @@ fun JsonElement.expression(): String? {
     return ((if (asPrimitive.isNumber) asPrimitive.asNumber.toString() else asPrimitive.asString))
 }
 
-object ParticleJsonParser: AbstractParticleJsonParser() {
-    override val componentParsers: MutableMap<String, BaseComponentParser> = mutableMapOf()
+object ParticleJsonParser : AbstractParticleJsonParser() {
 
-    val rateComponentParsers: MutableMap<String, ComponentParser<out RateComponent>> = mutableMapOf()
+    fun BaseComponentParser.register() {
+        componentParsers += this.id to this
+    }
+
+    fun ComponentParser<out RateComponent>.registerRate() {
+        rateComponentParsers += this.id to this
+    }
+
+    fun ComponentParser<out UpdateFrequencyComponent>.registerUpdate() {
+        updateFrequencyParsers += this.id to this
+    }
 
     lateinit var distanceCullingParser: Pair<String, ComponentParser<DistanceCullingComponent>>
-    val updateFrequencyParsers: MutableMap<String, ComponentParser<out UpdateFrequencyComponent>> = mutableMapOf()
+
+
 
     fun init() {
-        MacrosParser
+        for (parser in listOf(
+            EnvironmentDataComponent,
+            TimedEmitterLifetimeComponent,
+            InfiniteEmitterLifetimeComponent,
 
-        EnvironmentDataComponent
+            ConstantColorComponent,
+            GradientColorComponent,
 
-        TimedEmitterLifetimeComponent
-        InfiniteEmitterLifetimeComponent
+            ParticleLifetimeExpressionComponent,
 
-        SteadyRateComponent
-        InstantRateComponent
-        ManualRateComponent
+            ConstantSpriteComponent,
+            ExpressionSpriteComponent,
+            FlipbookSpriteComponent,
 
-        ConstantColorComponent
-        GradientColorComponent
+            ConstantModelComponent,
 
-        ParticleLifetimeExpressionComponent
+            InitialExpressionPositionComponent,
+            ExpressionPositionComponent,
+            MotionPositionComponent,
+            AttractorPositionComponent,
+            SpherePositionComponent,
 
-        ConstantSpriteComponent
-        ExpressionSpriteComponent
-        FlipbookSpriteComponent
+            ExpressionScaleComponent,
 
-        ConstantModelComponent
+            ExpressionRotationComponent,
+            DirectionRotationComponent,
+            VelocityRotationComponent,
 
-        InitialExpressionPositionComponent
-        ExpressionPositionComponent
-        MotionPositionComponent
-        AttractorPositionComponent
-        SpherePositionComponent
+            ParticleInitComponent,
+            ParticleTickComponent,
+            EmitterInitComponent,
+            RandomsInitializerComponent,
 
-        ExpressionScaleComponent
+            EmitterTickComponent,
+            EmitterTimelineComponent,
+            ParticleTimelineComponent,
 
-        ExpressionRotationComponent
-        DirectionRotationComponent
-        VelocityRotationComponent
+            EmitterDeathComponent,
+            ParticleDeathComponent
+        )) {
+            parser.register()
+        }
 
-        DistanceCullingComponent
+        distanceCullingParser = DistanceCullingComponent.id to DistanceCullingComponent
 
-        IntervalUpdateFrequencyComponent
-        ManualUpdateFrequencyComponent
+        for (parser in listOf(
+            SteadyRateComponent,
+            InstantRateComponent,
+            ManualRateComponent,
+        )) {
+            parser.registerRate()
+        }
 
-        ParticleInitComponent
-        ParticleTickComponent
-        EmitterInitComponent
-        RandomsInitializerComponent
-
-        EmitterTickComponent
-        EmitterTimelineComponent
-        ParticleTimelineComponent
-
-        EmitterDeathComponent
-        ParticleDeathComponent
+        for (parser in listOf(
+            IntervalUpdateFrequencyComponent,
+            ManualUpdateFrequencyComponent
+        )) {
+            parser.registerUpdate()
+        }
     }
 
     lateinit var jsonUnrealizedEmitters: Map<String, UnrealizedEmitter>
@@ -239,9 +256,9 @@ object ParticleJsonParser: AbstractParticleJsonParser() {
 
         return UnrealizedEmitter(
             components,
-            rateComponent ?: RateComponent.default(),
+            rateComponent ?: SteadyRateComponent.default(),
             distanceCullingComponent ?: DistanceCullingComponent.default(),
-            updateFrequencyComponent ?: UpdateFrequencyComponent.default(),
+            updateFrequencyComponent ?: IntervalUpdateFrequencyComponent.default(),
             billboardConstraints ?: BillboardConstraints.CENTER,
             forwardVector
         )

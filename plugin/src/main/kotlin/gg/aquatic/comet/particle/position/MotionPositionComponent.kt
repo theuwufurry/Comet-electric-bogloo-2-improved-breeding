@@ -337,9 +337,7 @@ class MotionPositionComponent(
     }
 
     companion object : BaseComponentParser {
-        init {
-            ParticleJsonParser.componentParsers += "motion_position" to this
-        }
+        override val id: String = "motion_position"
 
         override fun parse(
             jsonElement: JsonElement,

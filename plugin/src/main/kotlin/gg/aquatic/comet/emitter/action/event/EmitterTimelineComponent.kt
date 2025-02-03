@@ -35,9 +35,7 @@ class EmitterTimelineComponent(
     }
 
     companion object : BaseComponentParser {
-        init {
-            ParticleJsonParser.componentParsers += "on_emitter_timeline" to this
-        }
+        override val id: String = "on_emitter_timeline"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {
             val jsonObject =

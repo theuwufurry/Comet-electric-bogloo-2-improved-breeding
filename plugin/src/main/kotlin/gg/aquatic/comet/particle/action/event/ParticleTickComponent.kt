@@ -31,9 +31,7 @@ class ParticleTickComponent(
     override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
 
     companion object : BaseComponentParser {
-        init {
-            ParticleJsonParser.componentParsers += "on_particle_tick" to this
-        }
+        override val id: String = "on_particle_tick"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {
             return ParticleTickComponent(Action.parse(jsonElement.asJsonArray, macros))

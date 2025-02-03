@@ -2,10 +2,11 @@ package gg.aquatic.comet.emitter.optimization.updatefrequency
 
 import com.google.gson.JsonElement
 import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
+import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyResult
 import gg.aquatic.comet.api.parsing.ComponentParser
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.particle.ParticleData
-import gg.aquatic.comet.parsing.ParticleJsonParser
 import kotlin.math.floor
 
 class IntervalUpdateFrequencyComponent(private val interval: Int, offset: Int) : UpdateFrequencyComponent {
@@ -13,9 +14,7 @@ class IntervalUpdateFrequencyComponent(private val interval: Int, offset: Int) :
     override val initialInterpolationDuration: Int = interval + offset
 
     companion object : ComponentParser<IntervalUpdateFrequencyComponent> {
-        init {
-            ParticleJsonParser.updateFrequencyParsers += "interval_update_frequency" to this
-        }
+        override val id: String = "interval_update_frequency"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): IntervalUpdateFrequencyComponent? {
             val jsonObject = jsonElement.asJsonObject
@@ -24,6 +23,10 @@ class IntervalUpdateFrequencyComponent(private val interval: Int, offset: Int) :
             val offset =
                 if (jsonObject.has("offset") && jsonObject.get("offset").isJsonPrimitive) jsonObject.get("offset").asJsonPrimitive.asInt else 0
             return IntervalUpdateFrequencyComponent(interval, offset)
+        }
+
+        fun default(): UpdateFrequencyComponent {
+            return IntervalUpdateFrequencyComponent(1, 0)
         }
     }
 

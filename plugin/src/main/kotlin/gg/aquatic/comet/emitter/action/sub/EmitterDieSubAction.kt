@@ -12,6 +12,8 @@ class EmitterDieSubAction : SubAction {
     }
 
     companion object : ComponentParser<EmitterDieSubAction> {
+        override val id: String = "emitter_die"
+
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): EmitterDieSubAction? {
             if (jsonElement.isJsonPrimitive && jsonElement.asString == "emitter_die") {
                 return EmitterDieSubAction()

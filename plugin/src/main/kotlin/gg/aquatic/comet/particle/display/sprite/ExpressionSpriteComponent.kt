@@ -10,7 +10,6 @@ import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.api.particle.display.sprite.SpriteComponent
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
-import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.expression
 import javax.script.CompiledScript
 
@@ -20,9 +19,7 @@ class ExpressionSpriteComponent(
     private val myEmitterData: EmitterData
 ) : ParticleComponent, SpriteComponent {
     companion object : BaseComponentParser {
-        init {
-            ParticleJsonParser.componentParsers += "expression_sprite" to this
-        }
+        override val id: String = "expression_sprite"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ExpressionSpriteComponent? {
             val jsonObject = jsonElement.asJsonObject

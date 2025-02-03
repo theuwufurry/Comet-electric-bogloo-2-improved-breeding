@@ -12,16 +12,13 @@ import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.api.particle.display.TextDisplayComponent
 import gg.aquatic.comet.api.particle.display.sprite.SpriteComponent
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
-import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.expression
 import javax.script.CompiledScript
 
 class ConstantSpriteComponent(private val sprite: CompiledScript, private val myEmitterData: EmitterData) :
     ParticleComponent, SpriteComponent {
     companion object : BaseComponentParser {
-        init {
-            ParticleJsonParser.componentParsers += "constant_sprite" to this
-        }
+        override val id: String = "constant_sprite"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ConstantSpriteComponent? {
             val jsonObject = jsonElement.asJsonObject

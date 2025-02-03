@@ -71,9 +71,7 @@ class VelocityRotationComponent(
     }
 
     companion object : BaseComponentParser {
-        init {
-            ParticleJsonParser.componentParsers += "velocity_rotation" to this
-        }
+        override val id: String = "velocity_rotation"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {
             val obj = jsonElement.asJsonObjectOrNull() ?: throw MalformedJsonException("Velocity rotation component is not a json object!")

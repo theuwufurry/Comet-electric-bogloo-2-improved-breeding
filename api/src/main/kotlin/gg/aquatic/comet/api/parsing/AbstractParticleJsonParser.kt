@@ -8,16 +8,17 @@ import org.joml.Vector3d
 import org.joml.Vector3f
 
 interface ComponentParser<T> {
+    val id: String
     fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): T?
 }
 
 interface BaseComponentParser {
+    val id: String
     fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component?
 }
 
 abstract class AbstractParticleJsonParser {
     abstract fun parseJsons()
-    abstract val componentParsers: MutableMap<String, BaseComponentParser>
 }
 
 fun JsonElement.asJsonObjectOrNull(): JsonObject? {

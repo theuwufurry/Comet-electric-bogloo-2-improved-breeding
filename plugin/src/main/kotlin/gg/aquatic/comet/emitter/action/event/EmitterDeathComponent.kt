@@ -33,10 +33,7 @@ class EmitterDeathComponent(
     }
 
     companion object : BaseComponentParser {
-        init {
-
-            ParticleJsonParser.componentParsers += "on_emitter_death" to this
-        }
+        override val id: String = "on_emitter_death"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {
             return EmitterDeathComponent(Action.parse(jsonElement.asJsonArray, macros))

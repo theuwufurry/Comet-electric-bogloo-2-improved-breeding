@@ -26,9 +26,7 @@ class EnvironmentDataComponent(
     }
 
     companion object : BaseComponentParser {
-        init {
-            ParticleJsonParser.componentParsers += "default_environment_data" to this
-        }
+        override val id: String = "default_environment_data"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component? {
             val root = jsonElement.asJsonObjectOrNull() ?: return null

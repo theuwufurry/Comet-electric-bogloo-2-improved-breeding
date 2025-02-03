@@ -37,9 +37,7 @@ class RandomsInitializerComponent(private val emitterRandoms: Int, private val p
 
 
     companion object : BaseComponentParser {
-        init {
-            ParticleJsonParser.componentParsers += "randoms" to this
-        }
+        override val id: String = "randoms"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {
             val jsonObject = jsonElement.asJsonObject

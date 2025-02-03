@@ -31,9 +31,7 @@ class ParticleDeathComponent(
     }
 
     companion object : BaseComponentParser {
-        init {
-            ParticleJsonParser.componentParsers += "on_particle_death" to this
-        }
+        override val id: String = "on_particle_death"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {
             return ParticleDeathComponent(Action.parse(jsonElement.asJsonArray, macros))

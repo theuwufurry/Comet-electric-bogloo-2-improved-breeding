@@ -34,6 +34,8 @@ class ParticleVanillaSpawnSubAction(
     }
 
     companion object : ComponentParser<ParticleVanillaSpawnSubAction> {
+        override val id: String = "vanilla_particle"
+
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ParticleVanillaSpawnSubAction? {
             val obj = if (jsonElement.isJsonObject) jsonElement.asJsonObject else return null
             val particle = CompiledVanillaParticle.parse(obj["vanilla_particle"] ?: return null, macros)
@@ -51,6 +53,8 @@ class CompiledVanillaParticle(
     private val count: Int
 ) {
     companion object : ComponentParser<CompiledVanillaParticle> {
+        override val id: String = "vanilla_particle"
+
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): CompiledVanillaParticle {
             val obj =
                 if (!jsonElement.isJsonObject) throw MalformedJsonException("Particle should be a json object!") else jsonElement.asJsonObject!!

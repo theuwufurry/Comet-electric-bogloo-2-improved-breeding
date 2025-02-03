@@ -159,9 +159,7 @@ class AttractorPositionComponent(
     }
 
     companion object : BaseComponentParser {
-        init {
-            ParticleJsonParser.componentParsers += "attractor_position" to this
-        }
+        override val id: String = "attractor_position"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): AttractorPositionComponent? {
             val jsonObject = jsonElement.asJsonObject

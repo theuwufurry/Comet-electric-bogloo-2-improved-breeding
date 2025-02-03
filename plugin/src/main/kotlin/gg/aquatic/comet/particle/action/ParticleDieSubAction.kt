@@ -13,6 +13,8 @@ class ParticleDieSubAction : SubAction {
     }
 
     companion object : ComponentParser<ParticleDieSubAction> {
+        override val id: String = "particle_die"
+
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ParticleDieSubAction? {
             if (jsonElement.isJsonPrimitive && jsonElement.asString == "particle_die") {
                 return ParticleDieSubAction()

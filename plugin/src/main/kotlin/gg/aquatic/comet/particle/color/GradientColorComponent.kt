@@ -9,7 +9,6 @@ import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.particleEngine
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
-import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.expression
 import java.awt.Color
 import javax.script.CompiledScript
@@ -22,9 +21,7 @@ class GradientColorComponent(
     private val myParticleData: ParticleData
 ) : ParticleComponent, ColorComponent {
     companion object : BaseComponentParser {
-        init {
-            ParticleJsonParser.componentParsers += "gradient_color" to this
-        }
+        override val id: String = "gradient_color"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): GradientColorComponent? {
             val jsonObject = jsonElement.asJsonObject

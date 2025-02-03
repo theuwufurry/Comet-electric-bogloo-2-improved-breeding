@@ -31,6 +31,8 @@ class ParticleCommandSubAction(
     }
 
     companion object : ComponentParser<ParticleCommandSubAction> {
+        override val id: String = "command"
+
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ParticleCommandSubAction? {
             if (!jsonElement.isJsonObject) return null
             val jsonObject = jsonElement.asJsonObject

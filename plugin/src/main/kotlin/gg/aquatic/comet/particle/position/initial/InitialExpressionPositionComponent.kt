@@ -38,9 +38,8 @@ class InitialExpressionPositionComponent(
     override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
 
     companion object : BaseComponentParser {
-        init {
-            ParticleJsonParser.componentParsers += "initial_expression_position" to this
-        }
+
+        override val id: String = "initial_expression_position"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): InitialExpressionPositionComponent? {
             val jsonObject = jsonElement.asJsonObject

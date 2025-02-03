@@ -21,9 +21,7 @@ class ExpressionScaleComponent(
     private val myEmitterData: EmitterData
 ) : ParticleComponent, ScaleComponent {
     companion object : BaseComponentParser, ScaleComponent {
-        init {
-            ParticleJsonParser.componentParsers += "expression_scale" to this
-        }
+        override val id: String = "expression_scale"
 
         override fun parse(
             jsonElement: JsonElement,

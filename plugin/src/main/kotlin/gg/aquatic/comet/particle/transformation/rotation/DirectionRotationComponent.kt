@@ -23,9 +23,7 @@ class DirectionRotationComponent(
     private val myEmitterData: EmitterData
 ) : ParticleComponent, RotationComponent {
     companion object : BaseComponentParser {
-        init {
-            ParticleJsonParser.componentParsers += "direction_rotation" to this
-        }
+        override val id: String = "direction_rotation"
 
         override fun parse(
             jsonElement: JsonElement,

@@ -21,9 +21,7 @@ class ConstantModelComponent(
     private val myEmitterData: EmitterData
 ) : ParticleComponent, ModelComponent {
     companion object : BaseComponentParser {
-        init {
-            ParticleJsonParser.componentParsers += "constant_model" to this
-        }
+        override val id: String = "constant_model"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component? {
             val jsonObject = jsonElement.asJsonObject

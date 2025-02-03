@@ -33,9 +33,7 @@ class EmitterInitComponent(
     }
 
     companion object : BaseComponentParser {
-        init {
-            ParticleJsonParser.componentParsers += "on_emitter_init" to this
-        }
+        override val id: String = "on_emitter_init"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {
             return EmitterInitComponent(Action.parse(jsonElement.asJsonArray, macros))

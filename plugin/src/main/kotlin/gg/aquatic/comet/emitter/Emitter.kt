@@ -13,8 +13,8 @@ import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
-import gg.aquatic.comet.emitter.optimization.updatefrequency.UpdateFrequencyComponent
-import gg.aquatic.comet.emitter.rate.RateComponent
+import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
+import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.particle.Particle
 import gg.aquatic.comet.particle.data.EntityDataBuilder
 import gg.aquatic.waves.chunk.trackedByPlayers
@@ -102,9 +102,7 @@ class Emitter(
 
             val initialPos = Vector3d(particle.data.relativePosition)
             val shouldUpdate = updateFrequencyComponent.shouldSendUpdate(emitterData, particle.data)
-            if (shouldUpdate.interpolationDuration != null) {
-                particle.data.interpolationDuration = shouldUpdate.interpolationDuration
-            }
+            shouldUpdate.interpolationDuration?.let { particle.data.interpolationDuration = it }
 
             particleComponents.forEach { it.execute(emitterData, particle.data) }
 

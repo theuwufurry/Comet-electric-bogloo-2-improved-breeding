@@ -2,11 +2,11 @@ package gg.aquatic.comet.emitter.rate
 
 import com.google.gson.JsonElement
 import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.parsing.ComponentParser
 import gg.aquatic.comet.api.parsing.compile
 import gg.aquatic.comet.api.parsing.emitterEngine
 import gg.aquatic.comet.api.parsing.macro.Macro
-import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.expression
 import javax.script.CompiledScript
 import kotlin.math.floor
@@ -14,9 +14,8 @@ import kotlin.math.floor
 class SteadyRateComponent(private val spawnRate: CompiledScript, private val myEmitterData: EmitterData) :
     RateComponent {
     companion object : ComponentParser<SteadyRateComponent> {
-        init {
-            ParticleJsonParser.rateComponentParsers += "emitter_rate_steady" to this
-        }
+
+        override val id: String = "emitter_rate_steady"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): SteadyRateComponent? {
             val jsonObject = jsonElement.asJsonObject
@@ -24,6 +23,15 @@ class SteadyRateComponent(private val spawnRate: CompiledScript, private val myE
             val engine = emitterEngine(emitterData)
             return SteadyRateComponent(
                 engine.compile(jsonObject.expression("spawn_rate") ?: return null, macros),
+                emitterData
+            )
+        }
+
+        fun default(): RateComponent {
+            val emitterData = EmitterData()
+            val engine = emitterEngine(emitterData)
+            return SteadyRateComponent(
+                engine.compile("20", null),
                 emitterData
             )
         }

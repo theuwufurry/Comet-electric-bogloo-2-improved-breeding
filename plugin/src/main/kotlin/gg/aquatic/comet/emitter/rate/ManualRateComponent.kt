@@ -2,11 +2,11 @@ package gg.aquatic.comet.emitter.rate
 
 import com.google.gson.JsonElement
 import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.parsing.ComponentParser
 import gg.aquatic.comet.api.parsing.compile
 import gg.aquatic.comet.api.parsing.emitterEngine
 import gg.aquatic.comet.api.parsing.macro.Macro
-import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.expression
 import java.util.*
 import javax.script.CompiledScript
@@ -16,9 +16,7 @@ class ManualRateComponent(private val spawningMap: Map<Int, CompiledScript>, pri
     companion object : ComponentParser<ManualRateComponent> {
         private val timesInput = Regex("^\\d+\\.\\.\\d+$")
 
-        init {
-            ParticleJsonParser.rateComponentParsers += "emitter_rate_manual" to this
-        }
+        override val id: String = "emitter_rate_manual"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ManualRateComponent {
             val jsonObject = jsonElement.asJsonObject

@@ -39,6 +39,8 @@ class JavascriptSubAction(
     }
 
     companion object : ComponentParser<JavascriptSubAction> {
+        override val id: String = "expressions"
+
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): JavascriptSubAction? {
             if (!(jsonElement.isJsonObject && jsonElement.asJsonObject.getAsJsonArray("expressions") != null)) return null
 
