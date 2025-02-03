@@ -8,55 +8,41 @@ version = "1.2.0"
 
 repositories {
     mavenCentral()
-    maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
-    maven { url = uri("https://repo.codemc.io/repository/maven-snapshots/") }
-    maven {
-        url = uri("https://repo.nekroplex.com/releases")
+}
+
+dependencies {}
+
+subprojects {
+    apply(plugin = "kotlin")
+    apply(plugin = "io.github.goooler.shadow")
+
+    repositories {
+        mavenCentral()
+        maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
+        maven { url = uri("https://repo.codemc.io/repository/maven-snapshots/") }
+        maven {
+            url = uri("https://repo.nekroplex.com/releases")
+        }
+        maven("https://repo.papermc.io/repository/maven-public/") {
+            name = "papermc-repo"
+        }
+        maven("https://oss.sonatype.org/content/groups/public/") {
+            name = "sonatype"
+        }
+        maven("https://mvn.lumine.io/repository/maven-public/")
     }
-    maven("https://repo.papermc.io/repository/maven-public/") {
-        name = "papermc-repo"
+
+    dependencies {
+        compileOnly("org.spigotmc:spigot-api:1.19.4-R0.1-SNAPSHOT")
+        compileOnly("gg.aquatic.waves:Waves:1.1.9:publish")
+
+        compileOnly("org.openjdk.nashorn:nashorn-core:15.4")
+
+        compileOnly("io.lumine:Mythic-Dist:5.6.1")
+        compileOnly("com.ticxo.modelengine:ModelEngine:R4.0.7")
     }
-    maven("https://oss.sonatype.org/content/groups/public/") {
-        name = "sonatype"
-    }
-    maven("https://mvn.lumine.io/repository/maven-public/")
-}
 
-dependencies {
-    compileOnly("org.spigotmc:spigot-api:1.19.4-R0.1-SNAPSHOT")
-    compileOnly("gg.aquatic.waves:Waves:1.1.9:publish")
-
-    compileOnly("org.openjdk.nashorn:nashorn-core:15.4")
-
-    compileOnly("io.lumine:Mythic-Dist:5.6.1")
-    compileOnly("com.ticxo.modelengine:ModelEngine:R4.0.7")
-}
-
-val targetJavaVersion = 17
-kotlin {
-    jvmToolchain(targetJavaVersion)
-}
-
-tasks {
-    compileJava {
-        options.encoding = Charsets.UTF_8.name()
-        options.release.set(targetJavaVersion)
-    }
-}
-
-tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
-    archiveFileName.set("Comet-${project.version}.jar")
-    archiveClassifier.set("plugin")
-
-    exclude("kotlin/**")
-    exclude("org/**")
-    relocate("kotlin", "gg.aquatic.waves.shadow.kotlin")
-}
-
-tasks.processResources {
-    filteringCharset = Charsets.UTF_8.name()
-    filesMatching("plugin.yml") {
-        expand(getProperties())
-        expand(mutableMapOf("version" to project.version))
+    kotlin {
+        jvmToolchain(17)
     }
 }
