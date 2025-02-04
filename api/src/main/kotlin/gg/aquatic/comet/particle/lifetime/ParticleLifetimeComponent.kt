@@ -1,0 +1,3 @@
+package gg.aquatic.comet.particle.lifetime
+
+interface ParticleLifetimeComponent

@@ -69,7 +69,6 @@ fun JsonElement.expression(): String? {
 }
 
 object ParticleJsonParser : AbstractParticleJsonParser() {
-
     fun BaseComponentParser.register() {
         componentParsers += this.id to this
     }
