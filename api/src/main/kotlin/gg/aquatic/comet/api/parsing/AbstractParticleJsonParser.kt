@@ -3,6 +3,7 @@ package gg.aquatic.comet.api.parsing
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.parsing.macro.Macro
 import org.joml.Vector3d
 import org.joml.Vector3f
@@ -19,6 +20,8 @@ interface BaseComponentParser {
 
 abstract class AbstractParticleJsonParser {
     abstract fun parseJsons()
+
+    abstract fun getUnrealizedEmitterByID(id: String): AbstractUnrealizedEmitter?
 }
 
 fun JsonElement.asJsonObjectOrNull(): JsonObject? {

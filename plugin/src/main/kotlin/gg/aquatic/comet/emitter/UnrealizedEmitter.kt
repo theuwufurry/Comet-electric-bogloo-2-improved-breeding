@@ -3,6 +3,7 @@ package gg.aquatic.comet.emitter
 
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.EmitterTickersHolder
@@ -14,6 +15,7 @@ import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequency
 import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
 import gg.aquatic.waves.util.audience.AquaticAudience
+import gg.aquatic.waves.util.audience.GlobalAudience
 import gg.aquatic.waves.util.toUser
 import io.ktor.util.collections.*
 import org.bukkit.Bukkit
@@ -72,11 +74,11 @@ data class UnrealizedEmitter(
         emitters.removeAll(deadEmitters)
     }
 
-    override fun realize(
+    fun realize(
         parent: Parent?,
         location: Location,
-        environmentData: EnvironmentData,
-        audience: AquaticAudience
+        environmentData: EnvironmentData = EnvironmentData(),
+        audience: AquaticAudience = GlobalAudience()
     ): Emitter {
         val emitterData = EmitterData()
         emitterData.world = location.world
@@ -92,5 +94,13 @@ data class UnrealizedEmitter(
         ).also {
             emitters += it
         }
+    }
+
+    override fun realize(
+        parent: Parent?,
+        location: Location,
+        environmentData: EnvironmentData,
+    ): Emitter {
+        return realize(parent, location, environmentData, GlobalAudience())
     }
 }

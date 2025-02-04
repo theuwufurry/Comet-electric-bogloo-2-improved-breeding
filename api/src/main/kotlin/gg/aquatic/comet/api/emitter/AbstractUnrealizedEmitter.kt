@@ -28,7 +28,6 @@ object EmitterTickersHolder {
 }
 
 abstract class AbstractUnrealizedEmitter {
-
     abstract val components: List<Component>
     abstract val billboardConstraints: BillboardConstraints
     abstract val forwardVector: Vector3d
@@ -40,7 +39,6 @@ abstract class AbstractUnrealizedEmitter {
     abstract fun realize(
         parent: Parent? = null,
         location: Location,
-        environmentData: EnvironmentData = EnvironmentData(),
-        audience: AquaticAudience = GlobalAudience()
+        environmentData: EnvironmentData = EnvironmentData()
     ): AbstractEmitter
 }

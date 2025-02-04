@@ -1,7 +1,7 @@
 package gg.aquatic.comet.api.parsing.macro
 
 import com.google.gson.JsonObject
-import gg.aquatic.comet.api.macroParsers
+import gg.aquatic.comet.api.CometRegistry.macroParsers
 
 object MacrosParser {
 

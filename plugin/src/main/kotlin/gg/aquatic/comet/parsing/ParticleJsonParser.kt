@@ -4,6 +4,13 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import gg.aquatic.comet.api.*
+import gg.aquatic.comet.api.CometRegistry.componentParsers
+import gg.aquatic.comet.api.CometRegistry.rateComponentParsers
+import gg.aquatic.comet.api.CometRegistry.register
+import gg.aquatic.comet.api.CometRegistry.registerRate
+import gg.aquatic.comet.api.CometRegistry.registerUpdate
+import gg.aquatic.comet.api.CometRegistry.updateFrequencyParsers
+import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.emitter.EmitterTickersHolder
 import gg.aquatic.comet.api.parsing.*
 import gg.aquatic.comet.emitter.action.event.EmitterDeathComponent
@@ -69,21 +76,7 @@ fun JsonElement.expression(): String? {
 }
 
 object ParticleJsonParser : AbstractParticleJsonParser() {
-    fun BaseComponentParser.register() {
-        componentParsers += this.id to this
-    }
-
-    fun ComponentParser<out RateComponent>.registerRate() {
-        rateComponentParsers += this.id to this
-    }
-
-    fun ComponentParser<out UpdateFrequencyComponent>.registerUpdate() {
-        updateFrequencyParsers += this.id to this
-    }
-
     lateinit var distanceCullingParser: Pair<String, ComponentParser<DistanceCullingComponent>>
-
-
 
     fun init() {
         for (parser in listOf(
@@ -175,6 +168,10 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
         jsonUnrealizedEmitters = unrealizedEmitters
 
         postInit()
+    }
+
+    override fun getUnrealizedEmitterByID(id: String): AbstractUnrealizedEmitter? {
+        return jsonUnrealizedEmitters[id]
     }
 
     private fun recursivelyFindJsons(dir: File): Set<File> {

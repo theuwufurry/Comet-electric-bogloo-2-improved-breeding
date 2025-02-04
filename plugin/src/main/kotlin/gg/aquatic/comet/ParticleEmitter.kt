@@ -1,7 +1,7 @@
 package gg.aquatic.comet
 
 import gg.aquatic.comet.api.AbstractParticleEmitter
-import gg.aquatic.comet.api.macroParsers
+import gg.aquatic.comet.api.CometRegistry
 import gg.aquatic.comet.api.parsing.ResourcepackCreator
 import gg.aquatic.comet.particle.macro.CatmullParser
 import gg.aquatic.comet.particle.macro.HermiteParser
@@ -27,8 +27,9 @@ class ParticleEmitter : AbstractParticleEmitter() {
         initializeMacros()
 
         ParticleJsonParser.init()
+        CometRegistry.jsonParser = ParticleJsonParser
 
-        ParticleJsonParser.parseJsons()
+            ParticleJsonParser.parseJsons()
         dataFolder.mkdir()
 
         ResourcepackCreator.genPack()
@@ -71,9 +72,9 @@ class ParticleEmitter : AbstractParticleEmitter() {
     }
 
     private fun initializeMacros() {
-        macroParsers += "hermite" to HermiteParser
-        macroParsers += "catmull" to CatmullParser
-        macroParsers += "linear" to LinearParser
+        CometRegistry.macroParsers += "hermite" to HermiteParser
+        CometRegistry.macroParsers += "catmull" to CatmullParser
+        CometRegistry.macroParsers += "linear" to LinearParser
     }
 }
 
