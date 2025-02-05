@@ -8,7 +8,7 @@ import gg.aquatic.comet.particle.macro.HermiteParser
 import gg.aquatic.comet.particle.macro.LinearParser
 import gg.aquatic.comet.command.*
 import gg.aquatic.comet.hook.IHook
-import gg.aquatic.comet.hook.ModelEngineHook
+import gg.aquatic.comet.hook.modelengine.ModelEngineHook
 import gg.aquatic.comet.hook.mythicmobs.MythicMobsHook
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.waves.command.AquaticBaseCommand

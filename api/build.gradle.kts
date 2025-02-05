@@ -3,12 +3,7 @@ plugins {
     `maven-publish`
 }
 
-group = "gg.aquatic"
-version = "1.2.0"
-
-repositories {
-    mavenCentral()
-}
+version = parent!!.version
 
 val maven_username = if (env.isPresent("MAVEN_USERNAME")) env.fetch("MAVEN_USERNAME") else ""
 val maven_password = if (env.isPresent("MAVEN_PASSWORD")) env.fetch("MAVEN_PASSWORD") else ""
@@ -17,6 +12,10 @@ tasks {
     compileJava {
         options.encoding = Charsets.UTF_8.name()
         options.release.set(17)
+    }
+
+    build {
+        dependsOn(shadowJar)
     }
 }
 

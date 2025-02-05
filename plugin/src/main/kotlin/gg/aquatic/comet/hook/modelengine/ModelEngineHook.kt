@@ -1,8 +1,9 @@
-package gg.aquatic.comet.hook
+package gg.aquatic.comet.hook.modelengine
 
 import com.ticxo.modelengine.api.ModelEngineAPI
 import com.ticxo.modelengine.api.animation.property.IAnimationProperty
 import com.ticxo.modelengine.api.animation.script.ScriptReader
+import gg.aquatic.comet.hook.IHook
 import gg.aquatic.comet.parsing.ParticleJsonParser
 
 object ModelEngineHook : IHook {

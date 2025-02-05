@@ -2,12 +2,7 @@ plugins {
     kotlin("jvm")
 }
 
-group = "gg.aquatic"
-version = "1.2.0"
-
-repositories {
-    mavenCentral()
-}
+version = parent!!.version
 
 dependencies {
     implementation(project(":api"))
@@ -17,6 +12,10 @@ tasks {
     compileJava {
         options.encoding = Charsets.UTF_8.name()
         options.release.set(17)
+    }
+
+    build {
+        dependsOn(shadowJar)
     }
 }
 
