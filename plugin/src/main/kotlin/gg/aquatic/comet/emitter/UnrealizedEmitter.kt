@@ -95,10 +95,10 @@ data class UnrealizedEmitter(
         }
     }
 
-    fun realize(
+    override fun realize(
         parent: Parent?,
         location: Location,
-        environmentData: EnvironmentData = EnvironmentData(),
+        environmentData: EnvironmentData,
     ): Emitter {
         return realize(parent, location, environmentData, GlobalAudience())
     }
