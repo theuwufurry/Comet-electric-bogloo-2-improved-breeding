@@ -3,7 +3,6 @@ package gg.aquatic.comet.emitter
 
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.Component
-import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.EmitterTickersHolder
@@ -74,11 +73,11 @@ data class UnrealizedEmitter(
         emitters.removeAll(deadEmitters)
     }
 
-    fun realize(
+    override fun realize(
         parent: Parent?,
         location: Location,
-        environmentData: EnvironmentData = EnvironmentData(),
-        audience: AquaticAudience = GlobalAudience()
+        environmentData: EnvironmentData,
+        audience: AquaticAudience
     ): Emitter {
         val emitterData = EmitterData()
         emitterData.world = location.world
@@ -96,10 +95,10 @@ data class UnrealizedEmitter(
         }
     }
 
-    override fun realize(
+    fun realize(
         parent: Parent?,
         location: Location,
-        environmentData: EnvironmentData,
+        environmentData: EnvironmentData = EnvironmentData(),
     ): Emitter {
         return realize(parent, location, environmentData, GlobalAudience())
     }

@@ -39,6 +39,7 @@ abstract class AbstractUnrealizedEmitter {
     abstract fun realize(
         parent: Parent? = null,
         location: Location,
-        environmentData: EnvironmentData = EnvironmentData()
+        environmentData: EnvironmentData = EnvironmentData(),
+        audience: AquaticAudience = GlobalAudience()
     ): AbstractEmitter
 }

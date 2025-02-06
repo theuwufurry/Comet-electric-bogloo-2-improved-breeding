@@ -10,8 +10,7 @@ import org.joml.Quaternionf
 import org.joml.Vector3d
 import org.joml.Vector3f
 
-abstract class AbstractEmitter(
-) : Parent {
+abstract class AbstractEmitter : Parent {
 
     abstract val location: Location
     abstract val forwardVector: Vector3d
