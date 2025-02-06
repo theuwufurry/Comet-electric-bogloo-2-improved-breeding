@@ -3,6 +3,7 @@ package gg.aquatic.comet.api.emitter
 import org.bukkit.Location
 import org.bukkit.World
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 data class EmitterData(
     var id: UUID = UUID.randomUUID(),
@@ -24,5 +25,5 @@ data class EmitterData(
         variable.putAll(other.variable)
     }
 
-    val variable: MutableMap<String, Any> = mutableMapOf()
+    val variable: MutableMap<String, Any> = ConcurrentHashMap()
 }

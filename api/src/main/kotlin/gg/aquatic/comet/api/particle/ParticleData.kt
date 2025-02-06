@@ -8,6 +8,7 @@ import org.joml.Quaternionf
 import org.joml.Vector3d
 import org.joml.Vector3f
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 data class ParticleData(
     var id: UUID = UUID.randomUUID(),
@@ -55,5 +56,5 @@ data class ParticleData(
         variable.putAll(other.variable)
     }
 
-    val variable: MutableMap<String, Any> = mutableMapOf()
+    val variable: MutableMap<String, Any> = ConcurrentHashMap()
 }
