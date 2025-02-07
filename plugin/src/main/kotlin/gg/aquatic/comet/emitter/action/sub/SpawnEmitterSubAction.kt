@@ -46,7 +46,7 @@ class SpawnEmitterSubAction(
 
         val parent = when (space) {
             EmitterSpace.PARENT_EMITTER -> context.otherEmitterData.emitter!!
-            EmitterSpace.PARENT_PARTICLE -> context.otherParticleData?.particle
+            EmitterSpace.PARENT_PARTICLE -> context.otherParticleData!!.particle
             else -> null
         }
 

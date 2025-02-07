@@ -11,6 +11,7 @@ enum class EmitterSpace {
 
 interface Parent {
     val pose: Pose
+    val dead: Boolean
 }
 
 data class Pose(

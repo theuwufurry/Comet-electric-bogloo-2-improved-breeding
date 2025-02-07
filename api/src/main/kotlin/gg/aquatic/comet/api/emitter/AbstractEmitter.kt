@@ -30,7 +30,7 @@ abstract class AbstractEmitter : Parent {
 
     abstract fun applyEmitterRotation(input: Quaternionf): Quaternionf
 
-    var dead: Boolean = false
+    override var dead: Boolean = false
 }
 
 class EmitterTickResult(val alive: Boolean, val deadParticles: List<Pair<Player, MutableList<Int>>> = listOf())

@@ -23,6 +23,7 @@ interface MEGParent : Parent {
                 return bone.location.pose()
             }
 
+        override val dead: Boolean = true
     }
 
     class MEGModelParent(private val model: ActiveModel) : MEGParent {
@@ -30,5 +31,6 @@ interface MEGParent : Parent {
             get() {
                 return model.modeledEntity.base.location.pose()
             }
+        override val dead: Boolean = true
     }
 }

@@ -170,5 +170,8 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                 org.joml.Vector3d()
             )
         }
+
+    override val dead: Boolean
+        get() = data.dead
 }
 

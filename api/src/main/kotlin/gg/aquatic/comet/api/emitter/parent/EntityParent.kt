@@ -7,4 +7,7 @@ class EntityParent(val entity: Entity) : Parent {
         get() {
             return entity.location.pose()
         }
+
+    override val dead: Boolean
+        get() = entity.isDead
 }

@@ -81,7 +81,7 @@ class Emitter(
         emitterRotation = calculateEmitterRotation()
         emitterComponents.forEach { it.execute(emitterData) }
 
-        if (emitterData.dead) {
+        if (emitterData.dead || (parent != null && parent.dead)) {
             dead = true
             emitterComponents.forEach { it.die(emitterData) }
         }

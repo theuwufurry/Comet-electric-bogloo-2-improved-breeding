@@ -10,7 +10,8 @@ import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.parsing.ParticleJsonParser
 
-class RandomsInitializerComponent(private val emitterRandoms: Int, private val particleRandoms: Int) : EmitterComponent,
+class RandomsInitializerComponent(private val emitterRandoms: Int, private val particleRandoms: Int) :
+    EmitterComponent,
     ParticleComponent {
     override fun init(otherEmitterData: EmitterData) {
         for (i in 1..emitterRandoms) {
@@ -34,7 +35,6 @@ class RandomsInitializerComponent(private val emitterRandoms: Int, private val p
     override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
 
     override fun die(otherEmitterData: EmitterData) {}
-
 
     companion object : BaseComponentParser {
         override val id: String = "randoms"

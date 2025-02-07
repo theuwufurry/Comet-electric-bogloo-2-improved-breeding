@@ -24,13 +24,14 @@ class ParticleLifetimeExpressionComponent(
     ) {
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
-        otherParticleData.dead = !(lifetimeExpression?.run {
+        val dead = !(lifetimeExpression?.run {
             (eval() as Number).toDouble() <= 0.0
         } ?: maxLife?.run {
             val evaluated = (eval() as Number).toInt()
             otherParticleData.maxLife = evaluated
             otherParticleData.age <= evaluated
         } ?: false)
+        if (dead) otherParticleData.dead = true
     }
 
     override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
