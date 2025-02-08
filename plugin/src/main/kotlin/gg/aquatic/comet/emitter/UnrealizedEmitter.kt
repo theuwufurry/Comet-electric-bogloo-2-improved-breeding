@@ -67,6 +67,7 @@ data class UnrealizedEmitter(
         }
 
         for ((player, ids) in playerDeadParticleMap) {
+            if (player.toUser() == null) continue
             player.toUser().sendPacket(WrapperPlayServerDestroyEntities(*ids.toIntArray()))
         }
 

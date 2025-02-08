@@ -29,7 +29,7 @@ class ParticleEmitter : AbstractParticleEmitter() {
         ParticleJsonParser.init()
         CometRegistry.jsonParser = ParticleJsonParser
 
-            ParticleJsonParser.parseJsons()
+        ParticleJsonParser.parseJsons()
         dataFolder.mkdir()
 
         ResourcepackCreator.genPack()
