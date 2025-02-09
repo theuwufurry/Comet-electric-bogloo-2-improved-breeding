@@ -352,9 +352,9 @@ class MotionPositionComponent(
             if ("initial_velocity" in jsonObject.keySet()) {
                 val velocityObject = jsonObject.getAsJsonObject("initial_velocity") ?: return null
                 velocityComponent = ExpressionDirectionSubcomponent(
-                    engine.compile(velocityObject.expression("x") ?: return null, macros),
-                    engine.compile(velocityObject.expression("y") ?: return null, macros),
-                    engine.compile(velocityObject.expression("z") ?: return null, macros),
+                    engine.compile(velocityObject.expression("x") ?: "0", macros),
+                    engine.compile(velocityObject.expression("y") ?: "0", macros),
+                    engine.compile(velocityObject.expression("z") ?: "0", macros),
                     particleData, emitterData
                 )
             } else if ("random_velocity" in jsonObject.keySet()) {
