@@ -32,9 +32,9 @@ class ExpressionScaleComponent(
             val (engine, particleData) = particleEngine(emitterData)
 
             return ExpressionScaleComponent(
-                engine.compile(jsonObject.expression("x") ?: return null, macros),
-                engine.compile(jsonObject.expression("y") ?: return null, macros),
-                engine.compile(jsonObject.expression("z") ?: return null, macros),
+                engine.compile(jsonObject.expression("x") ?: "1", macros),
+                engine.compile(jsonObject.expression("y") ?: "1", macros),
+                engine.compile(jsonObject.expression("z") ?: "1", macros),
                 particleData, emitterData
             )
         }

@@ -352,9 +352,9 @@ class MotionPositionComponent(
             if ("initial_velocity" in jsonObject.keySet()) {
                 val velocityObject = jsonObject.getAsJsonObject("initial_velocity") ?: return null
                 velocityComponent = ExpressionDirectionSubcomponent(
-                    engine.compile(velocityObject.expression("x") ?: return null, macros),
-                    engine.compile(velocityObject.expression("y") ?: return null, macros),
-                    engine.compile(velocityObject.expression("z") ?: return null, macros),
+                    engine.compile(velocityObject.expression("x") ?: "0", macros),
+                    engine.compile(velocityObject.expression("y") ?: "0", macros),
+                    engine.compile(velocityObject.expression("z") ?: "0", macros),
                     particleData, emitterData
                 )
             } else if ("random_velocity" in jsonObject.keySet()) {
@@ -369,37 +369,37 @@ class MotionPositionComponent(
                             Pair(
                                 ExpressionDirectionSubcomponent(
                                     engine.compile(
-                                        it.getAsJsonArray("direction")[0].expression() ?: return@l null,
+                                        it.getAsJsonArray("direction")[0].expression() ?: "0",
                                         macros
                                     ),
                                     engine.compile(
-                                        it.getAsJsonArray("direction")[1].expression() ?: return@l null,
+                                        it.getAsJsonArray("direction")[1].expression() ?: "0",
                                         macros
                                     ),
                                     engine.compile(
-                                        it.getAsJsonArray("direction")[2].expression() ?: return@l null,
+                                        it.getAsJsonArray("direction")[2].expression() ?: "0",
                                         macros
                                     ),
                                     particleData, emitterData
-                                ), engine.compile(it.getAsJsonPrimitive("spread").expression() ?: return@l null, macros)
+                                ), engine.compile(it.getAsJsonPrimitive("spread").expression() ?: "0", macros)
                             )
                         } else {
                             Pair(
                                 ExpressionDirectionSubcomponent(
                                     engine.compile(
-                                        dirObject.asJsonObject.getAsJsonPrimitive("x").expression() ?: return@l null,
+                                        dirObject.asJsonObject.getAsJsonPrimitive("x")?.expression() ?: "0",
                                         macros
                                     ),
                                     engine.compile(
-                                        dirObject.asJsonObject.getAsJsonPrimitive("y").expression() ?: return@l null,
+                                        dirObject.asJsonObject.getAsJsonPrimitive("y")?.expression() ?: "0",
                                         macros
                                     ),
                                     engine.compile(
-                                        dirObject.asJsonObject.getAsJsonPrimitive("z").expression() ?: return@l null,
+                                        dirObject.asJsonObject.getAsJsonPrimitive("z")?.expression() ?: "0",
                                         macros
                                     ),
                                     particleData, emitterData
-                                ), engine.compile(it.getAsJsonPrimitive("spread").expression() ?: return@l null, macros)
+                                ), engine.compile(it.getAsJsonPrimitive("spread")?.expression() ?: "0", macros)
                             )
                         }
                     }
