@@ -57,6 +57,7 @@ import gg.aquatic.comet.particle.transformation.rotation.VelocityRotationCompone
 import gg.aquatic.comet.particle.transformation.scale.ExpressionScaleComponent
 import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
 import gg.aquatic.comet.particle.variable.RandomsInitializerComponent
+import io.lumine.mythic.bukkit.utils.lib.jooq.impl.QOM.Rand
 import org.joml.Vector3d
 import java.io.File
 import java.io.FileReader
@@ -92,6 +93,7 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
             ConstantSpriteComponent,
             ExpressionSpriteComponent,
             FlipbookSpriteComponent,
+            RandomsInitializerComponent,
 
             ConstantModelComponent,
 
