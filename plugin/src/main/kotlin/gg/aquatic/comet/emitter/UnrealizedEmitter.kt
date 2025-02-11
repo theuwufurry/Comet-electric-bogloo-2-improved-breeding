@@ -7,11 +7,11 @@ import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.EmitterTickersHolder
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
+import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.api.emitter.parent.Parent
+import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
-import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
-import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
 import gg.aquatic.waves.util.audience.AquaticAudience
 import gg.aquatic.waves.util.audience.GlobalAudience
@@ -30,7 +30,7 @@ data class UnrealizedEmitter(
     val updateFrequencyComponent: UpdateFrequencyComponent,
     override val billboardConstraints: BillboardConstraints,
     override val forwardVector: Vector3d,
-): AbstractUnrealizedEmitter() {
+) : AbstractUnrealizedEmitter() {
     private val emitters: MutableSet<Emitter> = ConcurrentSet()
     private var tasks: BukkitTask
 

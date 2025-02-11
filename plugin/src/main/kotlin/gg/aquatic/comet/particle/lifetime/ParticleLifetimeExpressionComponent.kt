@@ -8,7 +8,6 @@ import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.particleEngine
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
-import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.expression
 import javax.script.CompiledScript
 
@@ -18,6 +17,7 @@ class ParticleLifetimeExpressionComponent(
     private val myParticleData: ParticleData,
     private val myEmitterData: EmitterData
 ) : ParticleComponent, ParticleLifetimeComponent {
+    override val priority = 0
     override fun execute(
         otherEmitterData: EmitterData,
         otherParticleData: ParticleData,

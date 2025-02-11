@@ -3,33 +3,40 @@ package gg.aquatic.comet.parsing
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import gg.aquatic.comet.api.*
+import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.CometRegistry.componentParsers
 import gg.aquatic.comet.api.CometRegistry.rateComponentParsers
 import gg.aquatic.comet.api.CometRegistry.register
 import gg.aquatic.comet.api.CometRegistry.registerRate
 import gg.aquatic.comet.api.CometRegistry.registerUpdate
 import gg.aquatic.comet.api.CometRegistry.updateFrequencyParsers
+import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.emitter.EmitterTickersHolder
-import gg.aquatic.comet.api.parsing.*
+import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
+import gg.aquatic.comet.api.emitter.rate.RateComponent
+import gg.aquatic.comet.api.parsing.AbstractParticleJsonParser
+import gg.aquatic.comet.api.parsing.ComponentParser
+import gg.aquatic.comet.api.parsing.PostInit
+import gg.aquatic.comet.api.parsing.macro.Macro
+import gg.aquatic.comet.api.parsing.macro.MacrosParser
+import gg.aquatic.comet.api.particle.data.BillboardConstraints
+import gg.aquatic.comet.api.particle.display.DisplayComponent
+import gg.aquatic.comet.emitter.UnrealizedEmitter
 import gg.aquatic.comet.emitter.action.event.EmitterDeathComponent
 import gg.aquatic.comet.emitter.action.event.EmitterInitComponent
 import gg.aquatic.comet.emitter.action.event.EmitterTickComponent
 import gg.aquatic.comet.emitter.action.event.EmitterTimelineComponent
-import gg.aquatic.comet.api.parsing.macro.*
-import gg.aquatic.comet.api.particle.data.BillboardConstraints
-import gg.aquatic.comet.api.particle.display.DisplayComponent
-import gg.aquatic.comet.emitter.UnrealizedEmitter
 import gg.aquatic.comet.emitter.environment.EnvironmentDataComponent
-import gg.aquatic.comet.emitter.lifetime.*
+import gg.aquatic.comet.emitter.lifetime.EmitterLifetimeComponent
+import gg.aquatic.comet.emitter.lifetime.InfiniteEmitterLifetimeComponent
+import gg.aquatic.comet.emitter.lifetime.LoopingEmitterLifetimeComponent
+import gg.aquatic.comet.emitter.lifetime.TimedEmitterLifetimeComponent
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.IntervalUpdateFrequencyComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.ManualUpdateFrequencyComponent
-import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.emitter.rate.InstantRateComponent
 import gg.aquatic.comet.emitter.rate.ManualRateComponent
-import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.emitter.rate.SteadyRateComponent
 import gg.aquatic.comet.particle.action.event.ParticleDeathComponent
 import gg.aquatic.comet.particle.action.event.ParticleInitComponent
@@ -57,7 +64,6 @@ import gg.aquatic.comet.particle.transformation.rotation.VelocityRotationCompone
 import gg.aquatic.comet.particle.transformation.scale.ExpressionScaleComponent
 import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
 import gg.aquatic.comet.particle.variable.RandomsInitializerComponent
-import io.lumine.mythic.bukkit.utils.lib.jooq.impl.QOM.Rand
 import org.joml.Vector3d
 import java.io.File
 import java.io.FileReader
@@ -84,6 +90,7 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
             EnvironmentDataComponent,
             TimedEmitterLifetimeComponent,
             InfiniteEmitterLifetimeComponent,
+            LoopingEmitterLifetimeComponent,
 
             ConstantColorComponent,
             GradientColorComponent,

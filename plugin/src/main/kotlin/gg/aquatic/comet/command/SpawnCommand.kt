@@ -51,32 +51,34 @@ object SpawnCommand : ICommand {
             return
         }
 
-        val (yaw, pitch, data) = try { when (args.size) {
-            7 -> {
-                Triple(0f, 0f, args[6].parseEnvironmentData())
-            }
-
-            in 8..9 -> {
-                val yaw = args[6].toFloatOrNull()
-                if (yaw == null) {
-                    sender.sendMessage("Invalid yaw: ${args[6]}")
-                    return
+        val (yaw, pitch, data) = try {
+            when (args.size) {
+                7 -> {
+                    Triple(0f, 0f, args[6].parseEnvironmentData())
                 }
 
-                val pitch = args[7].toFloatOrNull()
-                if (pitch == null) {
-                    sender.sendMessage("Invalid pitch: ${args[6]}")
-                    return
+                in 8..9 -> {
+                    val yaw = args[6].toFloatOrNull()
+                    if (yaw == null) {
+                        sender.sendMessage("Invalid yaw: ${args[6]}")
+                        return
+                    }
+
+                    val pitch = args[7].toFloatOrNull()
+                    if (pitch == null) {
+                        sender.sendMessage("Invalid pitch: ${args[6]}")
+                        return
+                    }
+
+                    val data = (if (args.size == 9) args[8] else "{}").parseEnvironmentData()
+                    Triple(yaw, pitch, data)
                 }
 
-                val data = (if (args.size == 9) args[8] else "{}").parseEnvironmentData()
-                Triple(yaw, pitch, data)
+                else -> {
+                    Triple(0f, 0f, "{}".parseEnvironmentData())
+                }
             }
-
-            else -> {
-                Triple(0f, 0f, "{}".parseEnvironmentData())
-            }
-        } } catch (ignored: Exception) {
+        } catch (ignored: Exception) {
             sender.sendMessage("Invalid data!")
             return
         }

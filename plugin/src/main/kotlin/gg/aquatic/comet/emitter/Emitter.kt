@@ -6,15 +6,15 @@ import gg.aquatic.comet.api.emitter.EmitterComponent
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.EmitterTickResult
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
+import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.api.emitter.parent.pose
+import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
-import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
-import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.particle.Particle
 import gg.aquatic.comet.particle.data.EntityDataBuilder
 import gg.aquatic.waves.chunk.trackedByPlayers
@@ -45,8 +45,10 @@ class Emitter(
     override val environmentData: EnvironmentData,
     private val audience: AquaticAudience
 ) : AbstractEmitter() {
-    private val emitterComponents: List<EmitterComponent> = components.filterIsInstance<EmitterComponent>()
-    private val particleComponents: List<ParticleComponent> = components.filterIsInstance<ParticleComponent>()
+    private val emitterComponents: List<EmitterComponent> =
+        components.filterIsInstance<EmitterComponent>().sortedBy { it.priority }
+    private val particleComponents: List<ParticleComponent> =
+        components.filterIsInstance<ParticleComponent>().sortedBy { it.priority }
 
     override var location = location
         private set
@@ -74,8 +76,6 @@ class Emitter(
         }
 
         blocked = true
-
-        emitterData.age++
 
         parent?.pose?.let { setPose(it) }
         emitterRotation = calculateEmitterRotation()
@@ -165,7 +165,7 @@ class Emitter(
 
         deadParticles.clear()
 
-        if (!dead) spawnParticles()
+        if (!dead && emitterData.isActive) spawnParticles()
 
         blocked = false
         return EmitterTickResult(true, deadParticleIDs)

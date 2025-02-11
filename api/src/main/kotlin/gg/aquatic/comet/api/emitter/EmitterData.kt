@@ -11,7 +11,8 @@ data class EmitterData(
     var emitter: AbstractEmitter? = null,
     var age: Double = 0.0,
     var world: World? = null,
-    var location: Location = Location(null, 0.0, 0.0, 0.0)
+    var location: Location = Location(null, 0.0, 0.0, 0.0),
+    var isActive: Boolean = true
 ) {
     fun copyFrom(other: EmitterData) {
         id = other.id
@@ -20,6 +21,7 @@ data class EmitterData(
         age = other.age
         world = other.world
         location = other.location
+        isActive = other.isActive
 
         variable.clear()
         variable.putAll(other.variable)

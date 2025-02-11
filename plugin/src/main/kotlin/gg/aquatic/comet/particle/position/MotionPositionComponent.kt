@@ -41,6 +41,7 @@ class MotionPositionComponent(
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData
 ) : ParticleComponent, PositionComponent, PostInit {
+    override val priority = 0
     private var unrealizedEmitter: UnrealizedEmitter? = null
 
     override fun realize() {

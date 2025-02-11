@@ -8,11 +8,11 @@ import gg.aquatic.comet.api.parsing.BaseComponentParser
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
-import gg.aquatic.comet.parsing.ParticleJsonParser
 
 class RandomsInitializerComponent(private val emitterRandoms: Int, private val particleRandoms: Int) :
     EmitterComponent,
     ParticleComponent {
+    override val priority = 0
     override fun init(otherEmitterData: EmitterData) {
         for (i in 1..emitterRandoms) {
             if (i == 1) otherEmitterData.variable["random"] = Math.random()

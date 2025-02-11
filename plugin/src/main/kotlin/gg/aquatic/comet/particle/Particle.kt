@@ -73,7 +73,10 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
         return listOf(packet, entityDataPacket)
     }
 
-    override fun updatePacket(entityDataBuilder: AbstractEntityDataBuilder, shouldUpdate: Boolean): WrapperPlayServerEntityMetadata? {
+    override fun updatePacket(
+        entityDataBuilder: AbstractEntityDataBuilder,
+        shouldUpdate: Boolean
+    ): WrapperPlayServerEntityMetadata? {
         return if (shouldUpdate) handleFullUpdate(entityDataBuilder)
         else if (data.interpolationDuration > 1 && previousEntityData.reserveTransparency != null) {
             val interpolationDuration = data.interpolationDuration - 1

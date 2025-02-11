@@ -18,6 +18,8 @@ class ExpressionSpriteComponent(
     private val myParticleData: ParticleData,
     private val myEmitterData: EmitterData
 ) : ParticleComponent, SpriteComponent {
+    override val priority = 0
+
     companion object : BaseComponentParser {
         override val id: String = "expression_sprite"
 

@@ -11,7 +11,6 @@ import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.api.particle.display.model.ModelComponent
 import gg.aquatic.comet.api.particle.display.model.ModelData
-import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.expression
 import javax.script.CompiledScript
 
@@ -20,6 +19,8 @@ class ConstantModelComponent(
     private val id: CompiledScript,
     private val myEmitterData: EmitterData
 ) : ParticleComponent, ModelComponent {
+    override val priority = 0
+
     companion object : BaseComponentParser {
         override val id: String = "constant_model"
 

@@ -3,14 +3,14 @@ package gg.aquatic.comet
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.CometRegistry
 import gg.aquatic.comet.api.parsing.ResourcepackCreator
-import gg.aquatic.comet.particle.macro.CatmullParser
-import gg.aquatic.comet.particle.macro.HermiteParser
-import gg.aquatic.comet.particle.macro.LinearParser
 import gg.aquatic.comet.command.*
 import gg.aquatic.comet.hook.IHook
 import gg.aquatic.comet.hook.modelengine.ModelEngineHook
 import gg.aquatic.comet.hook.mythicmobs.MythicMobsHook
 import gg.aquatic.comet.parsing.ParticleJsonParser
+import gg.aquatic.comet.particle.macro.CatmullParser
+import gg.aquatic.comet.particle.macro.HermiteParser
+import gg.aquatic.comet.particle.macro.LinearParser
 import gg.aquatic.waves.command.AquaticBaseCommand
 import gg.aquatic.waves.command.register
 import org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory

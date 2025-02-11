@@ -15,7 +15,8 @@ import kotlin.math.min
 class ManualRateComponent(
     private val spawningMap: Map<Int, CompiledScript>,
     private val maxParticles: CompiledScript?,
-    private val myEmitterData: EmitterData) :
+    private val myEmitterData: EmitterData
+) :
     RateComponent {
 
     override fun toEmit(otherEmitterData: EmitterData): Int {

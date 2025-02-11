@@ -11,7 +11,6 @@ import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.api.particle.display.sprite.SpriteComponent
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
-import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.expression
 import javax.script.CompiledScript
 
@@ -20,6 +19,8 @@ class FlipbookSpriteComponent(
     private val spriteScripts: List<Pair<Double, CompiledScript>>,
     private val myParticleData: ParticleData, private val myEmitterData: EmitterData
 ) : ParticleComponent, SpriteComponent {
+    override val priority = 0
+
     companion object : BaseComponentParser {
         override val id: String = "flipbook_sprite"
 

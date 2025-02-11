@@ -39,10 +39,22 @@ fun tryParseAsColor(key: String, element: JsonElement, data: MutableMap<String, 
 }
 
 fun String.toRGBA(): Color? {
-    val i = try { Integer.decode(this) } catch (ignored: NumberFormatException) { return null }
+    val i = try {
+        Integer.decode(this)
+    } catch (ignored: NumberFormatException) {
+        return null
+    }
     return when (length) {
-        7 -> { Color((i ushr 16) and 0xFF, (i ushr 8) and 0xFF, i and 0xFF) }
-        9 -> { Color((i ushr 16) and 0xFF, (i ushr 8) and 0xFF, i and 0xFF, (i ushr 24) and 0xFF) }
-        else -> { null }
+        7 -> {
+            Color((i ushr 16) and 0xFF, (i ushr 8) and 0xFF, i and 0xFF)
+        }
+
+        9 -> {
+            Color((i ushr 16) and 0xFF, (i ushr 8) and 0xFF, i and 0xFF, (i ushr 24) and 0xFF)
+        }
+
+        else -> {
+            null
+        }
     }
 }

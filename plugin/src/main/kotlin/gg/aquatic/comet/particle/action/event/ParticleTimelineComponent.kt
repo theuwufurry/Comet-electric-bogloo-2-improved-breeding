@@ -11,11 +11,11 @@ import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.emitter.action.Action
-import gg.aquatic.comet.parsing.ParticleJsonParser
 
 class ParticleTimelineComponent(
     private val actionMap: Map<Int, Action>
 ) : ParticleComponent, PostInit {
+    override val priority = 0
     override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
         actionMap[otherParticleData.age.toInt()]?.execute(
             ActionContext(

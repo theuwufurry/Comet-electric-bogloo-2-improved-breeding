@@ -15,7 +15,7 @@ import gg.aquatic.comet.particle.action.ParticleVanillaSpawnSubAction
 
 class Action(
     override val subActions: List<SubAction>
-): AbstractAction() {
+) : AbstractAction() {
     companion object {
         private val subActionParsers: MutableList<ComponentParser<out SubAction>> = mutableListOf(
             SpawnEmitterSubAction,

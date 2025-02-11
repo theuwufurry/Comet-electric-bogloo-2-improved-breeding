@@ -8,10 +8,13 @@ import gg.aquatic.comet.api.parsing.macro.Macro
 
 class InfiniteEmitterLifetimeComponent : EmitterComponent,
     EmitterLifetimeComponent {
+    override val priority = -1
+
     override fun init(otherEmitterData: EmitterData) {
     }
 
     override fun execute(otherEmitterData: EmitterData) {
+        otherEmitterData.age++
     }
 
     override fun die(otherEmitterData: EmitterData) {

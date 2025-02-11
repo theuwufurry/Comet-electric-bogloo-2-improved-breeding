@@ -18,6 +18,7 @@ class RandomSpriteComponent(
     private val weightedSprites: List<Pair<CompiledScript, CompiledScript>>,
     private val myParticleData: ParticleData, private val myEmitterData: EmitterData
 ) : ParticleComponent, SpriteComponent {
+    override val priority = 0
     override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
         if (otherParticleData.age == 0.0) {
             myEmitterData.copyFrom(otherEmitterData)

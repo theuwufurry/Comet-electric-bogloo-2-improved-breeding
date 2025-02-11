@@ -10,7 +10,6 @@ import gg.aquatic.comet.api.parsing.PostInit
 import gg.aquatic.comet.api.parsing.compile
 import gg.aquatic.comet.api.parsing.emitterEngine
 import gg.aquatic.comet.api.parsing.macro.Macro
-import gg.aquatic.comet.applyIf
 import gg.aquatic.comet.emitter.UnrealizedEmitter
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.expression

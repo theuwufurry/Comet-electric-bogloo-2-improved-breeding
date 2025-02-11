@@ -1,3 +1,5 @@
 package gg.aquatic.comet.api
 
-interface Component
+interface Component {
+    val priority: Int
+}

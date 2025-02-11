@@ -32,6 +32,7 @@ dependencies {
 
     compileOnly("io.lumine:Mythic-Dist:5.6.1")
     compileOnly("com.ticxo.modelengine:ModelEngine:R4.0.7")
+    implementation(kotlin("stdlib-jdk8"))
 }
 
 kotlin {

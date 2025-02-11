@@ -9,11 +9,11 @@ import gg.aquatic.comet.api.parsing.BaseComponentParser
 import gg.aquatic.comet.api.parsing.PostInit
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.emitter.action.Action
-import gg.aquatic.comet.parsing.ParticleJsonParser
 
 class EmitterInitComponent(
     private val action: Action
 ) : EmitterComponent, PostInit {
+    override val priority = 0
     override fun init(otherEmitterData: EmitterData) {
         action.execute(
             ActionContext(

@@ -8,7 +8,6 @@ import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.particleEngine
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
-import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.expression
 import org.joml.Quaternionf
 import org.joml.Vector3f
@@ -22,6 +21,8 @@ class DirectionRotationComponent(
     private val myParticleData: ParticleData,
     private val myEmitterData: EmitterData
 ) : ParticleComponent, RotationComponent {
+    override val priority = 0
+
     companion object : BaseComponentParser {
         override val id: String = "direction_rotation"
 

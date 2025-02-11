@@ -20,6 +20,8 @@ class GradientColorComponent(
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData
 ) : ParticleComponent, ColorComponent {
+    override val priority = 0
+
     companion object : BaseComponentParser {
         override val id: String = "gradient_color"
 

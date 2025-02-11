@@ -5,7 +5,6 @@ import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.parsing.compile
 import gg.aquatic.comet.api.parsing.particleEngine
 
-
 interface ParticleLifetimeComponent {
     companion object {
         fun default(): Component {

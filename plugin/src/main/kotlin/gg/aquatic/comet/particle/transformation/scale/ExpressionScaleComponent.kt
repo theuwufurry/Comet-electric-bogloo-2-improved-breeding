@@ -8,7 +8,6 @@ import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.particleEngine
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
-import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.expression
 import org.joml.Vector3f
 import javax.script.CompiledScript
@@ -20,13 +19,15 @@ class ExpressionScaleComponent(
     private val myParticleData: ParticleData,
     private val myEmitterData: EmitterData
 ) : ParticleComponent, ScaleComponent {
+    override val priority = 0
+
     companion object : BaseComponentParser, ScaleComponent {
         override val id: String = "expression_scale"
 
         override fun parse(
             jsonElement: JsonElement,
             macros: Map<String, Macro>?
-        ): ExpressionScaleComponent? {
+        ): ExpressionScaleComponent {
             val jsonObject = jsonElement.asJsonObject
             val emitterData = EmitterData()
             val (engine, particleData) = particleEngine(emitterData)

@@ -8,11 +8,11 @@ import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.parsing.BaseComponentParser
 import gg.aquatic.comet.api.parsing.asJsonObjectOrNull
 import gg.aquatic.comet.api.parsing.macro.Macro
-import gg.aquatic.comet.parsing.ParticleJsonParser
 
 class EnvironmentDataComponent(
     val data: Map<String, Any> = mapOf()
 ) : EmitterComponent {
+    override val priority = 0
     override fun init(otherEmitterData: EmitterData) {
         for ((key, value) in data) {
             otherEmitterData.variable.putIfAbsent(key, value)

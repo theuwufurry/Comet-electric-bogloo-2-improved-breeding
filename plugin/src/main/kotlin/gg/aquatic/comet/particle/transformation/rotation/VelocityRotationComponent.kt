@@ -2,7 +2,6 @@ package gg.aquatic.comet.particle.transformation.rotation
 
 import com.google.gson.JsonElement
 import com.google.gson.stream.MalformedJsonException
-import gg.aquatic.comet.ParticleEmitter
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.emitter.EmitterData
@@ -13,7 +12,6 @@ import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.particleEngine
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
-import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.expression
 import org.joml.Quaternionf
 import org.joml.Vector3f
@@ -29,6 +27,7 @@ class VelocityRotationComponent(
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData
 ) : ParticleComponent, RotationComponent {
+    override val priority = 0
     val oldPositionMap: MutableMap<UUID, Vector3f> = ConcurrentHashMap()
 
     override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
@@ -74,9 +73,11 @@ class VelocityRotationComponent(
         override val id: String = "velocity_rotation"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {
-            val obj = jsonElement.asJsonObjectOrNull() ?: throw MalformedJsonException("Velocity rotation component is not a json object!")
+            val obj = jsonElement.asJsonObjectOrNull()
+                ?: throw MalformedJsonException("Velocity rotation component is not a json object!")
 
-            val spriteRotation = obj.expression("sprite_rotation")?.let { AbstractParticleEmitter.scriptEngineFactory.scriptEngine.eval(it) as Number }?.toFloat() ?: 0f
+            val spriteRotation = obj.expression("sprite_rotation")
+                ?.let { AbstractParticleEmitter.scriptEngineFactory.scriptEngine.eval(it) as Number }?.toFloat() ?: 0f
             val emitterData = EmitterData()
             val (engine, particleData) = particleEngine(emitterData)
             val directedRotation = engine.compile(obj.expression("directed_rotation") ?: "0", macros)

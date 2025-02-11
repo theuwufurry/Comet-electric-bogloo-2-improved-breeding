@@ -12,9 +12,11 @@ import javax.script.CompiledScript
 import kotlin.math.floor
 import kotlin.math.min
 
-class SteadyRateComponent(private val spawnRate: CompiledScript,
-                          private val maxParticles: CompiledScript?,
-                          private val myEmitterData: EmitterData) :
+class SteadyRateComponent(
+    private val spawnRate: CompiledScript,
+    private val maxParticles: CompiledScript?,
+    private val myEmitterData: EmitterData
+) :
     RateComponent {
     override fun toEmit(otherEmitterData: EmitterData): Int {
         myEmitterData.copyFrom(otherEmitterData)
@@ -34,7 +36,10 @@ class SteadyRateComponent(private val spawnRate: CompiledScript,
             0
         }
 
-        return min(floor(evaluatedSpawnRate / 20.0).toInt() + leftoversBonus, evaluatedMaxParticles - otherEmitterData.emitter!!.particles.size)
+        return min(
+            floor(evaluatedSpawnRate / 20.0).toInt() + leftoversBonus,
+            evaluatedMaxParticles - otherEmitterData.emitter!!.particles.size
+        )
     }
 
     companion object : ComponentParser<SteadyRateComponent> {

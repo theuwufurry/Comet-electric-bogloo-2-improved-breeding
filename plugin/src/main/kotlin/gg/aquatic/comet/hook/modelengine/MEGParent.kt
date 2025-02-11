@@ -12,6 +12,7 @@ interface MEGParent : Parent {
         fun byBone(bone: ModelBone): MEGBoneParent {
             return MEGBoneParent(bone)
         }
+
         fun byModel(model: ActiveModel): MEGModelParent {
             return MEGModelParent(model)
         }

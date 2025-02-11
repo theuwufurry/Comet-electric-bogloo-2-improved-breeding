@@ -21,7 +21,9 @@ object AtCommand : ICommand {
             return
         }
 
-        val data = try { (if (args.size > 3) args[3] else "{}").parseEnvironmentData() } catch (ignored: Exception) {
+        val data = try {
+            (if (args.size > 3) args[3] else "{}").parseEnvironmentData()
+        } catch (ignored: Exception) {
             sender.sendMessage("Invalid data!")
             return
         }

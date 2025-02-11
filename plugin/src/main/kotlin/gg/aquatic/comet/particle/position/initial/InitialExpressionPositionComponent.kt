@@ -8,7 +8,6 @@ import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.particleEngine
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
-import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.expression
 import gg.aquatic.comet.particle.position.PositionComponent
 import org.joml.Vector3d
@@ -21,6 +20,7 @@ class InitialExpressionPositionComponent(
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData
 ) : ParticleComponent, PositionComponent {
+    override val priority = 0
     override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
         if (otherParticleData.age == 0.0) {
             myEmitterData.copyFrom(otherEmitterData)

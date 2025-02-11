@@ -8,7 +8,6 @@ import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.particleEngine
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
-import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.expression
 import org.joml.Vector3d
 import java.util.*
@@ -22,6 +21,7 @@ class ExpressionPositionComponent(
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData
 ) : ParticleComponent, PositionComponent {
+    override val priority = 0
     private val oldOutputMap: MutableMap<UUID, Vector3d> = ConcurrentHashMap()
 
     override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {

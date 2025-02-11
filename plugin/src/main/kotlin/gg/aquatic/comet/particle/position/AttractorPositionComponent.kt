@@ -11,7 +11,6 @@ import gg.aquatic.comet.api.parsing.particleEngine
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.emitter.action.Action
-import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.expression
 import org.joml.Vector3d
 import java.util.*
@@ -27,6 +26,8 @@ class AttractorPositionComponent(
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData
 ) : ParticleComponent, PositionComponent, PostInit {
+    override val priority = 0
+
     class Attractor(
         val x: CompiledScript,
         val y: CompiledScript,
