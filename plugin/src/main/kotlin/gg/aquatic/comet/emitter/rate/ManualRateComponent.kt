@@ -10,9 +10,27 @@ import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.parsing.expression
 import java.util.*
 import javax.script.CompiledScript
+import kotlin.math.min
 
-class ManualRateComponent(private val spawningMap: Map<Int, CompiledScript>, private val myEmitterData: EmitterData) :
+class ManualRateComponent(
+    private val spawningMap: Map<Int, CompiledScript>,
+    private val maxParticles: CompiledScript?,
+    private val myEmitterData: EmitterData) :
     RateComponent {
+
+    override fun toEmit(otherEmitterData: EmitterData): Int {
+        myEmitterData.copyFrom(otherEmitterData)
+        val evaluatedMaxParticles = maxParticles?.let {
+            (it.eval() as Number).toInt()
+        } ?: Integer.MAX_VALUE
+        if (otherEmitterData.emitter!!.particles.size >= evaluatedMaxParticles) return 0
+
+        val entry = spawningMap[otherEmitterData.age.toInt()]
+        return if (entry != null) {
+            min((entry.eval() as Number).toInt(), evaluatedMaxParticles - otherEmitterData.emitter!!.particles.size)
+        } else 0
+    }
+
     companion object : ComponentParser<ManualRateComponent> {
         private val timesInput = Regex("^\\d+\\.\\.\\d+$")
 
@@ -44,16 +62,9 @@ class ManualRateComponent(private val spawningMap: Map<Int, CompiledScript>, pri
 
             return ManualRateComponent(
                 spawningMap,
+                jsonObject.expression("max_particles")?.let { engine.compile(it, macros) },
                 emitterData
             )
         }
-    }
-
-    override fun toEmit(otherEmitterData: EmitterData): Int {
-        myEmitterData.copyFrom(otherEmitterData)
-        val entry = spawningMap[otherEmitterData.age.toInt()]
-        return if (entry != null) {
-            (entry.eval() as Number).toInt()
-        } else 0
     }
 }

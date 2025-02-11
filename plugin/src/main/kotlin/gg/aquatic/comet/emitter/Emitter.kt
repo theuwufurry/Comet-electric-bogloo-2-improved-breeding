@@ -52,7 +52,7 @@ class Emitter(
         private set
 
     //origin can change, rotation can change
-    private val particles: MutableList<Particle> = mutableListOf()
+    override val particles: MutableList<Particle> = mutableListOf()
     private val deadParticles: MutableList<Particle> = mutableListOf()
     private var blocked = false
     override var emitterRotation: Quaterniond = calculateEmitterRotation()
