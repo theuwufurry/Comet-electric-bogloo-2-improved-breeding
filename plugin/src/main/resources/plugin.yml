@@ -7,3 +7,6 @@ libraries:
   - org.openjdk.nashorn:nashorn-core:15.4
 depend:
   - Waves
+soft-depend:
+  - MythicMobs
+  - ModelEngine
