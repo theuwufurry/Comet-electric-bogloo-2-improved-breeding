@@ -28,6 +28,11 @@ fun JsonElement.asJsonObjectOrNull(): JsonObject? {
     return if (isJsonObject) asJsonObject else null
 }
 
+fun JsonObject.asJsonObjectOrNull(member: String): JsonObject? {
+    val memberElement = get(member)
+    return if (memberElement != null && memberElement.isJsonObject) memberElement.asJsonObject else null
+}
+
 fun JsonElement.asStringOrNull(): String? {
     return if (isJsonPrimitive && asJsonPrimitive.isString) asString else null
 }

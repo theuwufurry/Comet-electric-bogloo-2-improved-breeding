@@ -5,6 +5,7 @@ import com.google.gson.JsonParser
 import com.google.gson.JsonPrimitive
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.parsing.asNumberOrNull
+import okio.ByteString.Companion.decodeHex
 import java.awt.Color
 
 fun String.parseEnvironmentData(): EnvironmentData {
@@ -39,22 +40,27 @@ fun tryParseAsColor(key: String, element: JsonElement, data: MutableMap<String, 
 }
 
 fun String.toRGBA(): Color? {
-    val i = try {
-        Integer.decode(this)
+    val hex = substring(1)
+    try {
+        when (hex.length) {
+            6 -> {
+                val r = Integer.decode("#${hex.substring(0, 2)}")
+                val g = Integer.decode("#${hex.substring(2, 4)}")
+                val b = Integer.decode("#${hex.substring(4, 6)}")
+
+                return Color(r, g, b)
+            }
+            8 -> {
+                val a = Integer.decode("#${hex.substring(0, 2)}")
+                val r = Integer.decode("#${hex.substring(2, 4)}")
+                val g = Integer.decode("#${hex.substring(4, 6)}")
+                val b = Integer.decode("#${hex.substring(6, 8)}")
+
+                return Color(r, g, b, a)
+            }
+            else -> return null
+        }
     } catch (ignored: NumberFormatException) {
         return null
-    }
-    return when (length) {
-        7 -> {
-            Color((i ushr 16) and 0xFF, (i ushr 8) and 0xFF, i and 0xFF)
-        }
-
-        9 -> {
-            Color((i ushr 16) and 0xFF, (i ushr 8) and 0xFF, i and 0xFF, (i ushr 24) and 0xFF)
-        }
-
-        else -> {
-            null
-        }
     }
 }

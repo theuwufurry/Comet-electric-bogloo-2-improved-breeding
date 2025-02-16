@@ -11,6 +11,7 @@ import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.particle.macro.CatmullParser
 import gg.aquatic.comet.particle.macro.HermiteParser
 import gg.aquatic.comet.particle.macro.LinearParser
+import gg.aquatic.comet.snowstorm.SnowstormTranspiler
 import gg.aquatic.waves.command.AquaticBaseCommand
 import gg.aquatic.waves.command.register
 import org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory
@@ -25,6 +26,8 @@ class ParticleEmitter : AbstractParticleEmitter() {
         scriptEngineFactory = NashornScriptEngineFactory()
 
         initializeMacros()
+
+        SnowstormTranspiler.load()
 
         ParticleJsonParser.init()
         CometRegistry.jsonParser = ParticleJsonParser

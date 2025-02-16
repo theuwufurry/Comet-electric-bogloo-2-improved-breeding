@@ -348,7 +348,10 @@ class MotionPositionComponent(
             val emitterData = EmitterData()
             val (engine, particleData) = particleEngine(emitterData)
 
-            var velocityComponent: DirectionSubcomponent? = null
+            var velocityComponent: DirectionSubcomponent = RandomDirectionSubcomponent(
+                myParticleData = particleData,
+                myEmitterData = emitterData
+            )
 
             if ("initial_velocity" in jsonObject.keySet()) {
                 val velocityObject = jsonObject.getAsJsonObject("initial_velocity") ?: return null
@@ -423,7 +426,7 @@ class MotionPositionComponent(
             val actions = jsonObject.getAsJsonArray("on_collision")?.let { Action.parse(it, macros) }
 
             return MotionPositionComponent(
-                velocityComponent ?: return null,
+                velocityComponent,
                 accelerationScript,
                 jsonObject.expression("drag")?.let { engine.compile(it, macros) },
                 jsonObject.expression("restitution")?.let { engine.compile(it, macros) },

@@ -64,6 +64,7 @@ import gg.aquatic.comet.particle.transformation.rotation.VelocityRotationCompone
 import gg.aquatic.comet.particle.transformation.scale.ExpressionScaleComponent
 import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
 import gg.aquatic.comet.particle.variable.RandomsInitializerComponent
+import gg.aquatic.comet.snowstorm.SnowstormTranspiler
 import org.joml.Vector3d
 import java.io.File
 import java.io.FileReader
@@ -154,9 +155,12 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
 
     override fun parseJsons() {
         val dataFolder = AbstractParticleEmitter.INSTANCE.dataFolder
-        if (!dataFolder.exists()) return
+        dataFolder.mkdirs()
+
+        SnowstormTranspiler.load()
 
         val effectsFolder = File(dataFolder.path + "/effects/")
+        effectsFolder.mkdirs()
         val effects = recursivelyFindJsons(effectsFolder)
 
         val unrealizedEmitters: MutableMap<String, UnrealizedEmitter> = mutableMapOf()
@@ -183,7 +187,7 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
         return jsonUnrealizedEmitters[id]
     }
 
-    private fun recursivelyFindJsons(dir: File): Set<File> {
+    fun recursivelyFindJsons(dir: File): Set<File> {
         val files: MutableSet<File> = mutableSetOf()
         for (file in dir.listFiles()!!) {
             if (file.isDirectory) {
