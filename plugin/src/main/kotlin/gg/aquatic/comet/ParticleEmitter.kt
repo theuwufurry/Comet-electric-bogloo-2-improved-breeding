@@ -71,7 +71,13 @@ class ParticleEmitter : AbstractParticleEmitter() {
         if (server.pluginManager.getPlugin("ModelEngine") != null) {
             hooks += ModelEngineHook
         }
-        hooks.forEach { it.initialize() }
+        hooks.forEach {
+            try {
+                it.initialize()
+            } catch (e: Exception) {
+                logger.warning("Failed to initialize hook: ${it.javaClass.name}")
+            }
+        }
     }
 
     private fun initializeMacros() {
