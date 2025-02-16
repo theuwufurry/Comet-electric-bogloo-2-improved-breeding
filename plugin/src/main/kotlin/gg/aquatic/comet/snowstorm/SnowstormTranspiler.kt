@@ -32,7 +32,7 @@ object SnowstormTranspiler {
 
         val snowstormEffectsFolder = File(dataFolder.path + "/snowstorm/")
         snowstormEffectsFolder.mkdirs()
-        val transpiledEffectsFolder = File(dataFolder.path + "/output/transpiled/")
+        val transpiledEffectsFolder = File(dataFolder.path + "/effects/transpiled/")
         transpiledEffectsFolder.mkdirs()
         val effects = recursivelyFindJsons(snowstormEffectsFolder)
 

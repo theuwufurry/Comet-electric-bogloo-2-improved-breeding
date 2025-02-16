@@ -27,8 +27,6 @@ class ParticleEmitter : AbstractParticleEmitter() {
 
         initializeMacros()
 
-        SnowstormTranspiler.load()
-
         ParticleJsonParser.init()
         CometRegistry.jsonParser = ParticleJsonParser
 
