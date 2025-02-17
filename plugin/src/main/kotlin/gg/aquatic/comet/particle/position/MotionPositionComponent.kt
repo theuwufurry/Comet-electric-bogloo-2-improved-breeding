@@ -88,8 +88,9 @@ class MotionPositionComponent(
         val oldPos = oldPositionMap[otherParticleData.id]
         val velocity = Vector3d(otherParticleData.relativePosition).sub(oldPos)
 
-        velocity.mul(1.0 - dragCoefficient)
-        acceleration.mul(1.0 - dragCoefficient)
+//        velocity.mul(1.0 - dragCoefficient)
+//        acceleration.mul(1.0 - dragCoefficient)
+        acceleration.add(Vector3d(velocity).mul(-dragCoefficient))
 
         oldPositionMap[otherParticleData.id] = Vector3d(otherParticleData.relativePosition)
 

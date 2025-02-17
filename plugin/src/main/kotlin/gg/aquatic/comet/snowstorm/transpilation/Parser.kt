@@ -6,7 +6,7 @@ import gg.aquatic.comet.snowstorm.transpilation.token.Token
 import gg.aquatic.comet.snowstorm.transpilation.token.TokenType
 import gg.aquatic.comet.snowstorm.transpilation.token.TokenType.*
 
-typealias Program = List<Expr>
+typealias Script = List<Expr>
 
 class Parser(
     private val tokens: List<Token>,
@@ -14,7 +14,7 @@ class Parser(
 ) {
     private var current = 0
 
-    fun parse(): Program {
+    fun parse(): Script {
         val exprs: MutableList<Expr> = mutableListOf()
         current--
 

@@ -4,12 +4,12 @@ import com.google.gson.JsonObject
 import gg.aquatic.comet.particle.transformation.scale.ExpressionScaleComponent
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedComponent
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
-import gg.aquatic.comet.snowstorm.transpilation.expression.Expr
+import gg.aquatic.comet.snowstorm.transpilation.Script
 
 class Scale(
-    private val x: List<Expr>,
-    private val y: List<Expr>,
-    private val z: List<Expr>,
+    private val x: Script,
+    private val y: Script,
+    private val z: Script,
 ) : DeserializedComponent {
     override fun serialize(root: JsonObject, deserializedEffect: DeserializedParticleEffect) {
         val jsonObject = JsonObject()

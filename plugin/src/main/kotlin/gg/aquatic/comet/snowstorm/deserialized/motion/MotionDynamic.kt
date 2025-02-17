@@ -6,13 +6,14 @@ import gg.aquatic.comet.particle.position.initial.InitialExpressionPositionCompo
 import gg.aquatic.comet.particle.position.initial.SpherePositionComponent
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedComponent
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
-import gg.aquatic.comet.snowstorm.transpilation.Program
+import gg.aquatic.comet.snowstorm.transpilation.Script
 
 class MotionDynamic(
-    var initialOffset: Triple<Program?, Program?, Program?> = EMPTY_TRIPLE,
+    var initialOffset: Triple<Script?, Script?, Script?> = EMPTY_TRIPLE,
     var dir: Direction? = null,
-    var magnitude: Program? = null,
-    var linearAcceleration: Triple<Program?, Program?, Program?> = EMPTY_TRIPLE
+    var magnitude: Script? = null,
+    var linearAcceleration: Triple<Script?, Script?, Script?> = EMPTY_TRIPLE,
+    var drag: Script? = null
 ) : DeserializedComponent {
     override fun serialize(root: JsonObject, deserializedEffect: DeserializedParticleEffect) {
         if (initialOffset != Triple(null, null, null)) {
@@ -67,6 +68,10 @@ class MotionDynamic(
                 }
             }
 
+            if (drag != null) {
+                motionPositionObject.addProperty("drag", deserializedEffect.toJS(drag!!))
+            }
+
             val deserializedSphere =
                 (deserializedEffect.components.firstOrNull { it is SphereShapeDeserializedComponent } as? SphereShapeDeserializedComponent)
             if (deserializedSphere != null && (dir == null || dir!! !is Direction.SphereDirection)) {
@@ -85,9 +90,9 @@ class MotionDynamic(
 
     interface Direction {
         data class VectorDirection(
-            val x: Program?,
-            val y: Program?,
-            val z: Program?,
+            val x: Script?,
+            val y: Script?,
+            val z: Script?,
         ) : Direction
 
         data class SphereDirection(

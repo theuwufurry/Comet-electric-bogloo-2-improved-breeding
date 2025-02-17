@@ -36,7 +36,7 @@ object BillboardDeserializer : Deserializer {
             val last = BinaryExpr(
                 parsed.last(),
                 Token(TokenType.STAR, "*", null, 0),
-                LiteralExpr(12.0)
+                LiteralExpr(8.0)
             )
 
             parsed.dropLast(1).toMutableList().apply {

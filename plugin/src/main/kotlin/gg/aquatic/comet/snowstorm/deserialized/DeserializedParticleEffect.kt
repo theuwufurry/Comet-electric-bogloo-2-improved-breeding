@@ -7,7 +7,6 @@ import gg.aquatic.comet.snowstorm.component.variable.Randoms
 import gg.aquatic.comet.snowstorm.deserialized.curve.CatmullCurve
 import gg.aquatic.comet.snowstorm.transpilation.*
 import gg.aquatic.comet.snowstorm.transpilation.expression.BinaryExpr
-import gg.aquatic.comet.snowstorm.transpilation.expression.Expr
 import gg.aquatic.comet.snowstorm.transpilation.expression.LiteralExpr
 import gg.aquatic.comet.snowstorm.transpilation.token.Token
 import gg.aquatic.comet.snowstorm.transpilation.token.TokenType
@@ -43,7 +42,7 @@ class DeserializedParticleEffect {
     fun parseExpr(
         molang: String,
         toTicks: Boolean = false
-    ): Program {
+    ): Script {
         val scanner = Scanner(molang)
         val (tokens, errors) = scanner.scanTokens()
         for (error in errors) {
@@ -63,7 +62,7 @@ class DeserializedParticleEffect {
     }
 
     fun toJS(
-        exprs: Program
+        exprs: Script
     ): String {
         val resolver = ConstantResolver()
         val resolved = resolver.resolve(exprs)

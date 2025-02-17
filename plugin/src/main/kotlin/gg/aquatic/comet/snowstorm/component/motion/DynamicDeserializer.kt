@@ -39,6 +39,20 @@ object DynamicDeserializer : Deserializer {
             }
         }
 
+        val dragScript = jsonObject["linear_drag_coefficient"]?.primitiveString()?.let {
+            if (it == "0") return@let null
+            val parsed = deserializedEffect.parseExpr(it)
+            val last = BinaryExpr(
+                parsed.last(),
+                Token(TokenType.SLASH, "/", null, 0),
+                LiteralExpr(20.0)
+            )
+
+            parsed.dropLast(1).toMutableList().apply {
+                add(last)
+            }
+        }
+
         val motionDynamic = deserializedEffect.components.firstOrNull { it is MotionDynamic }
         if (motionDynamic == null) {
             deserializedEffect.components += MotionDynamic()
@@ -49,6 +63,7 @@ object DynamicDeserializer : Deserializer {
                             parsedArray[1],
                             parsedArray[2]
                         )
+                        drag = dragScript
                     }
                 }
         } else {
@@ -59,6 +74,10 @@ object DynamicDeserializer : Deserializer {
                     parsedArray[1],
                     parsedArray[2]
                 )
+            }
+
+            if (dragScript != null) {
+                motionDynamic.drag = dragScript
             }
         }
     }

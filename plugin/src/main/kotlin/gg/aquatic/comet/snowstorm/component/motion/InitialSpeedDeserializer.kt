@@ -21,7 +21,7 @@ object InitialSpeedDeserializer : Deserializer {
         val last = BinaryExpr(
             parsed.last(),
             Token(TokenType.SLASH, "/", null, 0),
-            LiteralExpr(256.0)
+            LiteralExpr(16.0)
         )
 
         parsed = parsed.dropLast(1).toMutableList().apply {
