@@ -1,5 +1,6 @@
 package gg.aquatic.comet.api.parsing
 
+import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import gg.aquatic.comet.api.Component

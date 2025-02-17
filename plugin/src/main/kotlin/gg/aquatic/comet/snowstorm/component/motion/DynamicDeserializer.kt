@@ -25,12 +25,7 @@ object DynamicDeserializer : Deserializer {
         }
 
         val offsetArray = jsonObject["linear_acceleration"] as? JsonArray
-        if (offsetArray == null || offsetArray.size() != 3) {
-            AbstractParticleEmitter.INSTANCE.logger.warning("Malformed linear acceleration in $id component parsing ${file.path}")
-            return
-        }
-
-        val parsedArray = offsetArray.map {
+        val parsedArray = offsetArray?.map {
             if (it.primitiveString() == "0") return@map null
             val parsed = deserializedEffect.parseExpr(it.primitiveString())
             val last = BinaryExpr(
@@ -43,15 +38,28 @@ object DynamicDeserializer : Deserializer {
                 add(last)
             }
         }
+
         val motionDynamic = deserializedEffect.components.firstOrNull { it is MotionDynamic }
         if (motionDynamic == null) {
-            deserializedEffect.components += MotionDynamic(
-                Triple(
+            deserializedEffect.components += MotionDynamic()
+                .apply {
+                    if (parsedArray != null) {
+                        linearAcceleration = Triple(
+                            parsedArray[0],
+                            parsedArray[1],
+                            parsedArray[2]
+                        )
+                    }
+                }
+        } else {
+            motionDynamic as MotionDynamic
+            if (parsedArray != null) {
+                motionDynamic.linearAcceleration = Triple(
                     parsedArray[0],
                     parsedArray[1],
                     parsedArray[2]
                 )
-            )
+            }
         }
     }
 }

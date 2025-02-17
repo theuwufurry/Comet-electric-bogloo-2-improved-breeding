@@ -6,8 +6,8 @@ import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.parsing.asJsonObjectOrNull
 import gg.aquatic.comet.snowstorm.Deserializer
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
+import gg.aquatic.comet.snowstorm.deserialized.motion.MotionDynamic
 import gg.aquatic.comet.snowstorm.deserialized.primitiveString
-import gg.aquatic.comet.snowstorm.deserialized.shape.EmitterShapePoint
 import java.io.File
 
 object EmitterShapePointDeserializer : Deserializer {
@@ -27,6 +27,14 @@ object EmitterShapePointDeserializer : Deserializer {
         }
 
         val parsedArray = offsetArray.map { deserializedEffect.parseExpr(it.primitiveString()) }
-        deserializedEffect.components += EmitterShapePoint(parsedArray[0], parsedArray[1], parsedArray[2])
+        val triple = Triple(parsedArray[0], parsedArray[1], parsedArray[2])
+        val motionDynamic = deserializedEffect.components.firstOrNull { it is MotionDynamic }
+        if (motionDynamic == null) {
+            deserializedEffect.components += MotionDynamic(
+                initialOffset = triple
+            )
+        } else {
+            (motionDynamic as MotionDynamic).initialOffset = triple
+        }
     }
 }

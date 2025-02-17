@@ -12,10 +12,12 @@ import gg.aquatic.comet.snowstorm.component.emitterlifetime.EmitterLifetimeExpre
 import gg.aquatic.comet.snowstorm.component.emitterlifetime.EmitterLifetimeLoopingDeserializer
 import gg.aquatic.comet.snowstorm.component.emitterlifetime.EmitterLifetimeOnceDeserializer
 import gg.aquatic.comet.snowstorm.component.motion.DynamicDeserializer
+import gg.aquatic.comet.snowstorm.component.motion.InitialSpeedDeserializer
 import gg.aquatic.comet.snowstorm.component.particlelifetime.ParticleLifetimeExpressionDeserializer
 import gg.aquatic.comet.snowstorm.component.rate.RateInstantDeserializer
 import gg.aquatic.comet.snowstorm.component.rate.RateSteadyDeserializer
 import gg.aquatic.comet.snowstorm.component.shape.EmitterShapePointDeserializer
+import gg.aquatic.comet.snowstorm.component.shape.EmitterSphereShapeDeserializer
 import gg.aquatic.comet.snowstorm.component.variable.EmitterInitDeserializer
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
 import gg.aquatic.comet.snowstorm.deserialized.emitterlifetime.EmitterLifetimeOnce
@@ -59,6 +61,7 @@ object SnowstormTranspiler {
             ParticleLifetimeExpressionDeserializer,
 
             EmitterShapePointDeserializer,
+            EmitterSphereShapeDeserializer,
 
             BillboardDeserializer,
 
@@ -66,7 +69,8 @@ object SnowstormTranspiler {
 
             EmitterInitDeserializer,
 
-            DynamicDeserializer
+            DynamicDeserializer,
+            InitialSpeedDeserializer
         ).forEach { it.register() }
     }
 

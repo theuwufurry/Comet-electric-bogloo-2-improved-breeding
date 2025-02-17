@@ -60,6 +60,10 @@ class ParticleEmitter : AbstractParticleEmitter() {
         )
     }
 
+    override fun onDisable() {
+        ParticleJsonParser.onDisable()
+    }
+
     private fun initializeHooks() {
         val hooks = mutableListOf<IHook>()
         if (server.pluginManager.getPlugin("MythicMobs") != null) {

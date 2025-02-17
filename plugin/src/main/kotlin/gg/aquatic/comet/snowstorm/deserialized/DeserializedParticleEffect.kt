@@ -5,10 +5,7 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import gg.aquatic.comet.snowstorm.component.variable.Randoms
 import gg.aquatic.comet.snowstorm.deserialized.curve.CatmullCurve
-import gg.aquatic.comet.snowstorm.transpilation.ConstantResolver
-import gg.aquatic.comet.snowstorm.transpilation.JavascriptPrinter
-import gg.aquatic.comet.snowstorm.transpilation.Parser
-import gg.aquatic.comet.snowstorm.transpilation.Scanner
+import gg.aquatic.comet.snowstorm.transpilation.*
 import gg.aquatic.comet.snowstorm.transpilation.expression.BinaryExpr
 import gg.aquatic.comet.snowstorm.transpilation.expression.Expr
 import gg.aquatic.comet.snowstorm.transpilation.expression.LiteralExpr
@@ -46,7 +43,7 @@ class DeserializedParticleEffect {
     fun parseExpr(
         molang: String,
         toTicks: Boolean = false
-    ): List<Expr> {
+    ): Program {
         val scanner = Scanner(molang)
         val (tokens, errors) = scanner.scanTokens()
         for (error in errors) {
@@ -66,7 +63,7 @@ class DeserializedParticleEffect {
     }
 
     fun toJS(
-        exprs: List<Expr>
+        exprs: Program
     ): String {
         val resolver = ConstantResolver()
         val resolved = resolver.resolve(exprs)

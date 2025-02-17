@@ -1,6 +1,7 @@
 package gg.aquatic.comet.emitter.action.sub
 
 import com.google.gson.JsonElement
+import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.action.ActionContext
 import gg.aquatic.comet.api.emitter.action.SubAction
@@ -33,7 +34,7 @@ class SpawnEmitterSubAction(
 ) : SubAction, PostInit {
     private lateinit var unrealizedEmitters: List<UnrealizedEmitter>
 
-    override fun realize() {
+    override fun realize(unrealizedEmitter: AbstractUnrealizedEmitter) {
         unrealizedEmitters = unrealizedEmitterIDs.map {
             ParticleJsonParser.jsonUnrealizedEmitters[it]
                 ?: throw NullPointerException("$it is not a valid emitter ID!")

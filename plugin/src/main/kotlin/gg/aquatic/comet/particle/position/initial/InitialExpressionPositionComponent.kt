@@ -14,9 +14,9 @@ import org.joml.Vector3d
 import javax.script.CompiledScript
 
 class InitialExpressionPositionComponent(
-    private val xOffset: CompiledScript,
-    private val yOffset: CompiledScript,
-    private val zOffset: CompiledScript,
+    private val xOffset: CompiledScript?,
+    private val yOffset: CompiledScript?,
+    private val zOffset: CompiledScript?,
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData
 ) : ParticleComponent, PositionComponent {
@@ -27,9 +27,9 @@ class InitialExpressionPositionComponent(
             myParticleData.copyFrom(otherParticleData)
             otherParticleData.relativePosition.add(
                 Vector3d(
-                    (xOffset.eval() as Number).toDouble(),
-                    (yOffset.eval() as Number).toDouble(),
-                    (zOffset.eval() as Number).toDouble()
+                    (xOffset?.eval() as? Number)?.toDouble() ?: 0.0,
+                    (yOffset?.eval() as? Number)?.toDouble() ?: 0.0,
+                    (zOffset?.eval() as? Number)?.toDouble() ?: 0.0,
                 ).rotate(otherEmitterData.emitter!!.emitterRotation)
             )
         }
@@ -47,9 +47,9 @@ class InitialExpressionPositionComponent(
             val (engine, particleData) = particleEngine(emitterData)
 
             return InitialExpressionPositionComponent(
-                engine.compile(jsonObject.expression("x") ?: return null, macros),
-                engine.compile(jsonObject.expression("y") ?: return null, macros),
-                engine.compile(jsonObject.expression("z") ?: return null, macros),
+                jsonObject.expression("x")?.let { engine.compile(it, macros) },
+                jsonObject.expression("y")?.let { engine.compile(it, macros) },
+                jsonObject.expression("z")?.let { engine.compile(it, macros) },
                 emitterData, particleData
             )
         }

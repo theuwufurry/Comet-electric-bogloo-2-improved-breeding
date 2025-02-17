@@ -1,6 +1,7 @@
 package gg.aquatic.comet.particle.position
 
 import com.google.gson.JsonElement
+import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.action.ActionContext
 import gg.aquatic.comet.api.parsing.BaseComponentParser
@@ -36,8 +37,8 @@ class AttractorPositionComponent(
         val radius: CompiledScript?
     )
 
-    override fun realize() {
-        onHitAction?.subActions?.filterIsInstance<PostInit>()?.forEach { it.realize() }
+    override fun realize(unrealizedEmitter: AbstractUnrealizedEmitter) {
+        onHitAction?.subActions?.filterIsInstance<PostInit>()?.forEach { it.realize(unrealizedEmitter) }
     }
 
     private class EvaluatedAttractor(val pos: Vector3d, val mass: Double, val radius: Double?)

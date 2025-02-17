@@ -3,6 +3,7 @@ package gg.aquatic.comet.particle.action.event
 import com.google.gson.JsonElement
 import com.google.gson.stream.MalformedJsonException
 import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.action.ActionContext
 import gg.aquatic.comet.api.parsing.BaseComponentParser
@@ -27,9 +28,9 @@ class ParticleTimelineComponent(
 
     override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}
 
-    override fun realize() {
+    override fun realize(unrealizedEmitter: AbstractUnrealizedEmitter) {
         actionMap.values.forEach { action ->
-            action.subActions.filterIsInstance<PostInit>().forEach { subAction -> subAction.realize() }
+            action.subActions.filterIsInstance<PostInit>().forEach { subAction -> subAction.realize(unrealizedEmitter) }
         }
     }
 

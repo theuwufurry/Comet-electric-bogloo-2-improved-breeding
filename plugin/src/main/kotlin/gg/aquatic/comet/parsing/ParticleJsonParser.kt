@@ -148,7 +148,7 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
         }
     }
 
-    lateinit var jsonUnrealizedEmitters: Map<String, UnrealizedEmitter>
+    lateinit var jsonUnrealizedEmitters: MutableMap<String, UnrealizedEmitter>
         private set
 
     override fun parseJsons() {
@@ -284,7 +284,11 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
 
     private fun postInit() {
         for ((_, unrealizedEmitter) in jsonUnrealizedEmitters) {
-            unrealizedEmitter.components.forEach { (it as? PostInit)?.realize() }
+            unrealizedEmitter.components.forEach { (it as? PostInit)?.realize(unrealizedEmitter) }
         }
+    }
+
+    fun onDisable() {
+        jsonUnrealizedEmitters.clear()
     }
 }
