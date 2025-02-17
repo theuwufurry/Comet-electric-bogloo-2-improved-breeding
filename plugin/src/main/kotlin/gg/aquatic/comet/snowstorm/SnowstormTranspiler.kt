@@ -8,7 +8,9 @@ import gg.aquatic.comet.parsing.ParticleJsonParser.recursivelyFindJsons
 import gg.aquatic.comet.snowstorm.component.CurveDeserializer
 import gg.aquatic.comet.snowstorm.component.appearance.BillboardDeserializer
 import gg.aquatic.comet.snowstorm.component.appearance.TintingDeserializer
+import gg.aquatic.comet.snowstorm.component.emitterlifetime.EmitterLifetimeExpressionDeserializer
 import gg.aquatic.comet.snowstorm.component.emitterlifetime.EmitterLifetimeLoopingDeserializer
+import gg.aquatic.comet.snowstorm.component.emitterlifetime.EmitterLifetimeOnceDeserializer
 import gg.aquatic.comet.snowstorm.component.motion.DynamicDeserializer
 import gg.aquatic.comet.snowstorm.component.particlelifetime.ParticleLifetimeExpressionDeserializer
 import gg.aquatic.comet.snowstorm.component.rate.RateInstantDeserializer
@@ -16,6 +18,7 @@ import gg.aquatic.comet.snowstorm.component.rate.RateSteadyDeserializer
 import gg.aquatic.comet.snowstorm.component.shape.EmitterShapePointDeserializer
 import gg.aquatic.comet.snowstorm.component.variable.EmitterInitDeserializer
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
+import gg.aquatic.comet.snowstorm.deserialized.emitterlifetime.EmitterLifetimeOnce
 import java.io.File
 import java.io.FileReader
 
@@ -50,6 +53,8 @@ object SnowstormTranspiler {
             RateInstantDeserializer,
 
             EmitterLifetimeLoopingDeserializer,
+            EmitterLifetimeOnceDeserializer,
+            EmitterLifetimeExpressionDeserializer,
 
             ParticleLifetimeExpressionDeserializer,
 
