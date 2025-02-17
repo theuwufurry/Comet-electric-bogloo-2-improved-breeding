@@ -3,18 +3,20 @@ package gg.aquatic.comet.snowstorm.deserialized.curve
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedComponent
+import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
+import gg.aquatic.comet.snowstorm.transpilation.expression.Expr
 
 class CatmullCurve(
-    private val name: String,
-    private val input: String,
+    val name: String,
+    private val input: List<Expr>,
     private val times: List<Double>,
     private val points: List<Double>,
-    private val range: String
+    private val range: List<Expr>
 ) : DeserializedComponent {
-    override fun serialize(root: JsonObject) {
+    override fun serialize(root: JsonObject, deserializedEffect: DeserializedParticleEffect) {
         val jsonObject = JsonObject()
         jsonObject.addProperty("type", "catmull")
-        jsonObject.addProperty("input", input)
+        jsonObject.addProperty("input", deserializedEffect.toJS(input))
 
         val xArray = JsonArray()
         for (time in times) {
@@ -29,8 +31,8 @@ class CatmullCurve(
         }
 
         jsonObject.add("y", yArray)
-        jsonObject.addProperty("range", range)
+        jsonObject.addProperty("range", deserializedEffect.toJS(range))
 
-        root["macros"].asJsonObject.add(name, jsonObject)
+        root["macros"].asJsonObject.add("__${name.replace('.', '_')}__", jsonObject)
     }
 }

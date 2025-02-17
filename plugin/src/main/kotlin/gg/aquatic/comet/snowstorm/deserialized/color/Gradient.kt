@@ -4,15 +4,17 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import gg.aquatic.comet.particle.color.GradientColorComponent
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedComponent
+import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
+import gg.aquatic.comet.snowstorm.transpilation.expression.Expr
 
 class Gradient(
-    private val interpolant: String,
+    private val interpolant: List<Expr>,
     private val data: List<Pair<Double, String>>
 ) : DeserializedComponent {
-    override fun serialize(root: JsonObject) {
+    override fun serialize(root: JsonObject, deserializedEffect: DeserializedParticleEffect) {
         val jsonObject = JsonObject()
 
-        jsonObject.addProperty("interpolant", interpolant)
+        jsonObject.addProperty("interpolant", deserializedEffect.toJS(interpolant))
 
         val dataArr = JsonArray()
 

@@ -1,22 +1,41 @@
 package gg.aquatic.comet.snowstorm.transpilation
 
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
+import gg.aquatic.comet.snowstorm.transpilation.expression.*
 import gg.aquatic.comet.snowstorm.transpilation.token.Token
 import gg.aquatic.comet.snowstorm.transpilation.token.TokenType
 import gg.aquatic.comet.snowstorm.transpilation.token.TokenType.*
-import gg.aquatic.comet.snowstorm.transpilation.expression.*
-
-/*
- */
 
 class Parser(
-    val tokens: List<Token>,
-    val deserializedParticleEffect: DeserializedParticleEffect
+    private val tokens: List<Token>,
+    private val deserializedParticleEffect: DeserializedParticleEffect
 ) {
     private var current = 0
 
-    fun parse(): Expr {
-        return expression()
+    fun parse(): List<Expr> {
+        val exprs: MutableList<Expr> = mutableListOf()
+        current--
+
+        do {
+            current++
+            exprs += assign()
+        } while (current + 3 < tokens.size && match(1, SEMICOLON))
+
+        return exprs
+    }
+
+    private fun assign(): Expr {
+        val expr = expression()
+        if (match(1, EQUAL)) {
+            current++
+            val value = expression()
+            if (expr is VarExpr) {
+                val name = expr.name
+                return AssignExpr(name, value)
+            }
+        }
+
+        return expr
     }
 
     private fun expression(): Expr {
@@ -131,7 +150,7 @@ class Parser(
 
         if (match(0, IDENTIFIER)) {
             val identifier = tokens[current]
-            val variable = Var.createVar(identifier, deserializedParticleEffect)
+            val variable = VarExpr.createVar(identifier, deserializedParticleEffect)
             return variable
         }
 

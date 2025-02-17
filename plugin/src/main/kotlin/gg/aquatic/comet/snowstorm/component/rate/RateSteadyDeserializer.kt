@@ -7,6 +7,7 @@ import gg.aquatic.comet.parsing.expression
 import gg.aquatic.comet.snowstorm.Deserializer
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
 import gg.aquatic.comet.snowstorm.deserialized.rate.RateSteady
+import gg.aquatic.comet.snowstorm.transpilation.expression.LiteralExpr
 import java.io.File
 
 object RateSteadyDeserializer : Deserializer {
@@ -22,8 +23,9 @@ object RateSteadyDeserializer : Deserializer {
             return
         }
 
-        val spawnRate = jsonObject.expression("spawn_rate") ?: "1"
-        val maxParticles = jsonObject.expression("max_particles") ?: "50"
+        val spawnRate = jsonObject.expression("spawn_rate")?.let { deserializedEffect.parseExpr(it) } ?: listOf(LiteralExpr(1))
+        val maxParticles =
+            jsonObject.expression("max_particles")?.let { deserializedEffect.parseExpr(it) } ?: listOf(LiteralExpr(50))
 
         deserializedEffect.components += RateSteady(spawnRate, maxParticles)
     }

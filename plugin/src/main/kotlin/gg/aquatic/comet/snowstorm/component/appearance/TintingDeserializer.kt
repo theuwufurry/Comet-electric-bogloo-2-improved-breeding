@@ -35,7 +35,7 @@ object TintingDeserializer : Deserializer {
         }
 
         deserializedEffect.components += Gradient(
-            deserializedEffect.parseMolang(interpolant),
+            deserializedEffect.parseExpr(interpolant),
             gradient
         )
     }

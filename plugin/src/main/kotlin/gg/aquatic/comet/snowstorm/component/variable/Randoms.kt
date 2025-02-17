@@ -3,12 +3,13 @@ package gg.aquatic.comet.snowstorm.component.variable
 import com.google.gson.JsonObject
 import gg.aquatic.comet.particle.variable.RandomsInitializerComponent
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedComponent
+import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
 
 class Randoms(
     var emitter: Int = 0,
-    var particle: Int = 0) : DeserializedComponent
-{
-    override fun serialize(root: JsonObject) {
+    var particle: Int = 0
+) : DeserializedComponent {
+    override fun serialize(root: JsonObject, deserializedEffect: DeserializedParticleEffect) {
         val jsonObject = JsonObject()
         jsonObject.addProperty("emitter", emitter)
         jsonObject.addProperty("particle", particle)

@@ -12,7 +12,8 @@ sealed interface Expr {
         fun visitLiteralExpr(literalExpr: LiteralExpr): R
         fun visitUnaryExpr(unaryExpr: UnaryExpr): R
         fun visitMathExpr(mathExpr: MathExpr): R
-        fun visitVar(implicitVar: Var): R
+        fun visitVar(variable: VarExpr): R
+        fun visitSetVar(assignExpr: AssignExpr): R
     }
 }
 
@@ -51,7 +52,10 @@ class UnaryExpr(
     }
 }
 
-class MathExpr private constructor(
+/**
+ * Use factory function when parsing!
+ */
+class MathExpr(
     val identifier: Token,
     val args: List<Expr>
 ) : Expr {
@@ -85,8 +89,8 @@ class MathExpr private constructor(
     )
 }
 
-class Var private constructor(
-    val name: String
+class VarExpr private constructor(
+    var name: Token
 ) : Expr {
     override fun <R> accept(visitor: Expr.Visitor<R>): R {
         return visitor.visitVar(this)
@@ -107,9 +111,9 @@ class Var private constructor(
             "variable.particle_random_4" to "particle_variable.random4",
         )
 
-        fun createVar(identifier: Token, deserializedParticleEffect: DeserializedParticleEffect): Var {
+        fun createVar(identifier: Token, deserializedParticleEffect: DeserializedParticleEffect): VarExpr {
             if (fields[identifier.lexeme] == null) {
-                return Var("__${identifier.lexeme.replace('.', '_')}__")
+                return VarExpr(identifier)
             }
 
             val emitterRandoms = when (identifier.lexeme) {
@@ -130,7 +134,16 @@ class Var private constructor(
 
             deserializedParticleEffect.specifyRandoms(emitterRandoms, particleRandoms)
 
-            return Var(fields[identifier.lexeme]!!)
+            return VarExpr(identifier)
         }
+    }
+}
+
+class AssignExpr(
+    val identifier: Token,
+    val expr: Expr
+) : Expr {
+    override fun <R> accept(visitor: Expr.Visitor<R>): R {
+        return visitor.visitSetVar(this)
     }
 }

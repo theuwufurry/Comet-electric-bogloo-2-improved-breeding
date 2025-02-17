@@ -27,7 +27,7 @@ class CatmullEvaluator private constructor(
     private val times: List<Double>,
 ) {
     fun eval(inputTime: Double, rangeStart: Double, rangeEnd: Double): Double {
-        var usableInputTime= inputTime
+        var usableInputTime = inputTime
         if (!(rangeEnd != 0.0 && rangeStart != 0.0)) {
             usableInputTime = inputTime / (rangeEnd - rangeStart) + rangeStart
         }

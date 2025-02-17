@@ -1,8 +1,11 @@
 package gg.aquatic.comet.snowstorm.transpilation
 
+import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
 import gg.aquatic.comet.snowstorm.transpilation.expression.*
 
-object JavascriptPrinter : Expr.Visitor<String> {
+class JavascriptPrinter(
+    private val deserializedEffect: DeserializedParticleEffect
+) : Expr.Visitor<String> {
     override fun visitBinaryExpr(binaryExpr: BinaryExpr): String {
         return "${binaryExpr.left.accept(this)} ${binaryExpr.operator.lexeme} ${binaryExpr.right.accept(this)}"
     }
@@ -23,11 +26,34 @@ object JavascriptPrinter : Expr.Visitor<String> {
         return MathExpr.funcs[mathExpr.identifier.lexeme]!!.stringifier(mathExpr.args.joinToString { it.accept(this) })
     }
 
-    override fun visitVar(implicitVar: Var): String {
-        return implicitVar.name
+    override fun visitVar(variable: VarExpr): String {
+        val implicit = VarExpr.fields[variable.name.lexeme]
+        if (implicit != null) {
+            return implicit
+        }
+
+        if (deserializedEffect.curves.any { it.name == variable.name.lexeme }) {
+            return "__${variable.name.lexeme.replace('.', '_')}__"
+        }
+
+        return if (variable.name.lexeme.startsWith("variable")) {
+            variable.name.lexeme.replaceFirst("variable", "emitter_variable")
+        } else {
+            "emitter_variable.${variable.name}"
+        }
     }
 
-    fun print(expr: Expr): String {
-        return expr.accept(this)
+    override fun visitSetVar(assignExpr: AssignExpr): String {
+        return if (assignExpr.identifier.lexeme.startsWith("variable")) {
+            "${assignExpr.identifier.lexeme.replaceFirst("variable", "emitter_variable")}=${assignExpr.expr.accept(this)}"
+        } else {
+            "emitter_variable.${assignExpr.identifier.lexeme}=${assignExpr.expr.accept(this)}"
+        }
+    }
+
+    fun print(exprs: List<Expr>): String {
+        return exprs.joinToString(separator = ";") {
+            it.accept(this)
+        }
     }
 }

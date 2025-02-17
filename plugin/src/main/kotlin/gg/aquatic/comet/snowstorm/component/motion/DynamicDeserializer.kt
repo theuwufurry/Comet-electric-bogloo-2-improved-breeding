@@ -8,6 +8,10 @@ import gg.aquatic.comet.snowstorm.Deserializer
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
 import gg.aquatic.comet.snowstorm.deserialized.motion.MotionDynamic
 import gg.aquatic.comet.snowstorm.deserialized.primitiveString
+import gg.aquatic.comet.snowstorm.transpilation.expression.BinaryExpr
+import gg.aquatic.comet.snowstorm.transpilation.expression.LiteralExpr
+import gg.aquatic.comet.snowstorm.transpilation.token.Token
+import gg.aquatic.comet.snowstorm.transpilation.token.TokenType
 import java.io.File
 
 object DynamicDeserializer : Deserializer {
@@ -28,7 +32,16 @@ object DynamicDeserializer : Deserializer {
 
         val parsedArray = offsetArray.map {
             if (it.primitiveString() == "0") return@map null
-            "${deserializedEffect.parseMolang(it.primitiveString())} / 256.0"
+            val parsed = deserializedEffect.parseExpr(it.primitiveString())
+            val last = BinaryExpr(
+                parsed.last(),
+                Token(TokenType.SLASH, "/", null, 0),
+                LiteralExpr(256.0)
+            )
+
+            parsed.dropLast(1).toMutableList().apply {
+                add(last)
+            }
         }
         val motionDynamic = deserializedEffect.components.firstOrNull { it is MotionDynamic }
         if (motionDynamic == null) {

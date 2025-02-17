@@ -5,7 +5,6 @@ import com.google.gson.JsonParser
 import com.google.gson.JsonPrimitive
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.parsing.asNumberOrNull
-import okio.ByteString.Companion.decodeHex
 import java.awt.Color
 
 fun String.parseEnvironmentData(): EnvironmentData {
@@ -50,6 +49,7 @@ fun String.toRGBA(): Color? {
 
                 return Color(r, g, b)
             }
+
             8 -> {
                 val a = Integer.decode("#${hex.substring(0, 2)}")
                 val r = Integer.decode("#${hex.substring(2, 4)}")
@@ -58,6 +58,7 @@ fun String.toRGBA(): Color? {
 
                 return Color(r, g, b, a)
             }
+
             else -> return null
         }
     } catch (ignored: NumberFormatException) {

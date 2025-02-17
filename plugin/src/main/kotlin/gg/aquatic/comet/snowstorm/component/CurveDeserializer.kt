@@ -5,7 +5,11 @@ import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
 import gg.aquatic.comet.snowstorm.deserialized.curve.CatmullCurve
 
 object CurveDeserializer {
-    fun parse(fieldName: String, obj: JsonObject, deserializedParticleEffect: DeserializedParticleEffect): CatmullCurve {
+    fun parse(
+        fieldName: String,
+        obj: JsonObject,
+        deserializedParticleEffect: DeserializedParticleEffect
+    ): CatmullCurve {
         assert(obj["type"].asString == "catmull")
 
         val nodesArray = obj["nodes"].asJsonArray
@@ -17,11 +21,11 @@ object CurveDeserializer {
             values += node.asNumber.toDouble()
         }
 
-        val horizontalRange = deserializedParticleEffect.parseMolang(obj["horizontal_range"].asString)
+        val horizontalRange = deserializedParticleEffect.parseExpr(obj["horizontal_range"].asString)
 
         return CatmullCurve(
-            "__${fieldName.replace('.', '_')}__",
-            deserializedParticleEffect.parseMolang(obj["input"].asString),
+            fieldName,
+            deserializedParticleEffect.parseExpr(obj["input"].asString),
             times, values, horizontalRange
         )
     }

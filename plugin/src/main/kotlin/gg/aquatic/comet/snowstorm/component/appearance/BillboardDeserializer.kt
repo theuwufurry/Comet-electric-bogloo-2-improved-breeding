@@ -8,9 +8,13 @@ import gg.aquatic.comet.snowstorm.Deserializer
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
 import gg.aquatic.comet.snowstorm.deserialized.primitiveString
 import gg.aquatic.comet.snowstorm.deserialized.transformation.scale.Scale
+import gg.aquatic.comet.snowstorm.transpilation.expression.BinaryExpr
+import gg.aquatic.comet.snowstorm.transpilation.expression.LiteralExpr
+import gg.aquatic.comet.snowstorm.transpilation.token.Token
+import gg.aquatic.comet.snowstorm.transpilation.token.TokenType
 import java.io.File
 
-object BillboardDeserializer : Deserializer{
+object BillboardDeserializer : Deserializer {
     override val id = "minecraft:particle_appearance_billboard"
 
     override fun deserialize(jsonElement: JsonElement, file: File, deserializedEffect: DeserializedParticleEffect) {
@@ -26,7 +30,19 @@ object BillboardDeserializer : Deserializer{
             return
         }
 
-        val parsedArray = sizeArray.map { deserializedEffect.parseMolang(it.primitiveString()) }
-        deserializedEffect.components += Scale(parsedArray[0], parsedArray[1], "1")
+        val parsedArray = sizeArray.map {
+            val parsed = deserializedEffect.parseExpr(it.primitiveString())
+
+            val last = BinaryExpr(
+                parsed.last(),
+                Token(TokenType.STAR, "*", null, 0),
+                LiteralExpr(12.0)
+            )
+
+            parsed.dropLast(1).toMutableList().apply {
+                add(last)
+            }
+        }
+        deserializedEffect.components += Scale(parsedArray[0], parsedArray[1], listOf(LiteralExpr(1.0)))
     }
 }

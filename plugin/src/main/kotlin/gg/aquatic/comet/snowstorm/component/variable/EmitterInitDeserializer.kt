@@ -1,17 +1,16 @@
-package gg.aquatic.comet.snowstorm.component.particlelifetime
+package gg.aquatic.comet.snowstorm.component.variable
 
 import com.google.gson.JsonElement
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.parsing.asJsonObjectOrNull
-import gg.aquatic.comet.parsing.expression
+import gg.aquatic.comet.api.parsing.asStringOrNull
 import gg.aquatic.comet.snowstorm.Deserializer
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
-import gg.aquatic.comet.snowstorm.deserialized.particlelifetime.ParticleLifetimeExpression
-import gg.aquatic.comet.snowstorm.transpilation.expression.LiteralExpr
+import gg.aquatic.comet.snowstorm.deserialized.variable.EmitterInit
 import java.io.File
 
-object ParticleLifetimeExpressionDeserializer : Deserializer {
-    override val id = "minecraft:particle_lifetime_expression"
+object EmitterInitDeserializer : Deserializer {
+    override val id = "minecraft:emitter_initialization"
 
     override fun deserialize(jsonElement: JsonElement, file: File, deserializedEffect: DeserializedParticleEffect) {
         val jsonObject = jsonElement.asJsonObjectOrNull()
@@ -20,8 +19,9 @@ object ParticleLifetimeExpressionDeserializer : Deserializer {
             return
         }
 
-        val maxLifetime =
-            (jsonObject.expression("max_lifetime")?.let { deserializedEffect.parseExpr(it, true) } ?: listOf(LiteralExpr(200.0)))
-        deserializedEffect.components += ParticleLifetimeExpression(maxLifetime)
+        val creationStr = jsonObject["creation_expression"]?.asStringOrNull()
+        if (creationStr != null) {
+            deserializedEffect.components += EmitterInit(deserializedEffect.parseExpr(creationStr))
+        }
     }
 }

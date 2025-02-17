@@ -26,7 +26,7 @@ object EmitterShapePointDeserializer : Deserializer {
             return
         }
 
-        val parsedArray = offsetArray.map { deserializedEffect.parseMolang(it.primitiveString()) }
+        val parsedArray = offsetArray.map { deserializedEffect.parseExpr(it.primitiveString()) }
         deserializedEffect.components += EmitterShapePoint(parsedArray[0], parsedArray[1], parsedArray[2])
     }
 }

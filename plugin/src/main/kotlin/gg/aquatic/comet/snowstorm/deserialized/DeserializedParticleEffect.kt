@@ -4,15 +4,22 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import gg.aquatic.comet.snowstorm.component.variable.Randoms
+import gg.aquatic.comet.snowstorm.deserialized.curve.CatmullCurve
+import gg.aquatic.comet.snowstorm.transpilation.ConstantResolver
 import gg.aquatic.comet.snowstorm.transpilation.JavascriptPrinter
 import gg.aquatic.comet.snowstorm.transpilation.Parser
 import gg.aquatic.comet.snowstorm.transpilation.Scanner
+import gg.aquatic.comet.snowstorm.transpilation.expression.BinaryExpr
+import gg.aquatic.comet.snowstorm.transpilation.expression.Expr
+import gg.aquatic.comet.snowstorm.transpilation.expression.LiteralExpr
+import gg.aquatic.comet.snowstorm.transpilation.token.Token
+import gg.aquatic.comet.snowstorm.transpilation.token.TokenType
 import java.io.File
 import kotlin.math.max
 
 class DeserializedParticleEffect {
     val components: MutableList<DeserializedComponent> = mutableListOf()
-    val curves: MutableList<DeserializedComponent> = mutableListOf()
+    val curves: MutableList<CatmullCurve> = mutableListOf()
 
     fun serializeInto(output: File) {
         val root = JsonObject()
@@ -21,22 +28,25 @@ class DeserializedParticleEffect {
         root.add("components", componentsObj)
         root.add("macros", macrosObj)
         for (component in components) {
-            component.serialize(root)
+            component.serialize(root, this)
         }
 
         for (curve in curves) {
-            curve.serialize(root)
+            curve.serialize(root, this)
         }
 
-        val gson = GsonBuilder().setPrettyPrinting().create()
+        val gson = GsonBuilder()
+            .setPrettyPrinting()
+            .disableHtmlEscaping()
+            .create()
         val string = gson.toJson(root)
         output.writeText(string)
     }
 
-    fun parseMolang(
+    fun parseExpr(
         molang: String,
-        toTicks: Boolean = false,
-    ): String {
+        toTicks: Boolean = false
+    ): List<Expr> {
         val scanner = Scanner(molang)
         val (tokens, errors) = scanner.scanTokens()
         for (error in errors) {
@@ -44,13 +54,23 @@ class DeserializedParticleEffect {
         }
 
         val parser = Parser(tokens, this)
-        val expr = parser.parse()
-        var js = JavascriptPrinter.print(expr)
+        var expr = parser.parse()
         if (toTicks) {
-            js = "($js) * 20.0"
+            val lastExpr = expr.last()
+            val transformedExpr = BinaryExpr(lastExpr, Token(TokenType.STAR, "*", null, 0), LiteralExpr(20.0))
+            expr = expr.dropLast(1).toMutableList()
+                .apply { add(transformedExpr) }
         }
 
-        return js
+        return expr
+    }
+
+    fun toJS(
+        exprs: List<Expr>
+    ): String {
+        val resolver = ConstantResolver()
+        val resolved = resolver.resolve(exprs)
+        return JavascriptPrinter(this).print(resolved)
     }
 
     fun specifyRandoms(

@@ -14,6 +14,7 @@ import gg.aquatic.comet.snowstorm.component.particlelifetime.ParticleLifetimeExp
 import gg.aquatic.comet.snowstorm.component.rate.RateInstantDeserializer
 import gg.aquatic.comet.snowstorm.component.rate.RateSteadyDeserializer
 import gg.aquatic.comet.snowstorm.component.shape.EmitterShapePointDeserializer
+import gg.aquatic.comet.snowstorm.component.variable.EmitterInitDeserializer
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
 import java.io.File
 import java.io.FileReader
@@ -57,6 +58,8 @@ object SnowstormTranspiler {
             BillboardDeserializer,
 
             TintingDeserializer,
+
+            EmitterInitDeserializer,
 
             DynamicDeserializer
         ).forEach { it.register() }
