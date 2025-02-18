@@ -21,9 +21,17 @@ object EmitterLifetimeLoopingDeserializer : Deserializer {
         }
 
         val activeTime =
-            (jsonObject.expression("active_time")?.let { deserializedEffect.parseExpr(it, true) } ?: listOf(LiteralExpr(200.0)))
+            (jsonObject.expression("active_time")?.let { deserializedEffect.parseExpr(it, true) } ?: listOf(
+                LiteralExpr(
+                    200.0
+                )
+            ))
         val sleepTime =
-            (jsonObject.expression("sleep_time")?.let { deserializedEffect.parseExpr(it, true) } ?: listOf(LiteralExpr(0.0)))
+            (jsonObject.expression("sleep_time")?.let { deserializedEffect.parseExpr(it, true) } ?: listOf(
+                LiteralExpr(
+                    0.0
+                )
+            ))
         deserializedEffect.components += EmitterLifetimeLooping(activeTime, sleepTime)
     }
 }

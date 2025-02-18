@@ -92,3 +92,14 @@ fun <T> T.applyIf(condition: Boolean, action: T.() -> Unit): T {
     if (condition) action()
     return this
 }
+
+data class Result<out R, out E>(
+    val result: R,
+    val errors: List<E>
+) {
+    companion object {
+        infix fun <R, E> R.with(other: List<E>): Result<R, E> {
+            return Result(this, other)
+        }
+    }
+}

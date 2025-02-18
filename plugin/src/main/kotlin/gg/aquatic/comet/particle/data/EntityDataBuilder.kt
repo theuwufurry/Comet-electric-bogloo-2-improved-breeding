@@ -1,5 +1,6 @@
 package gg.aquatic.comet.particle.data
 
+import gg.aquatic.comet.api.parsing.ResourcepackCreator
 import gg.aquatic.comet.api.particle.UpdateFlags
 import gg.aquatic.comet.api.particle.data.AbstractEntityDataBuilder
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
@@ -7,10 +8,7 @@ import gg.aquatic.comet.api.particle.data.EntityData
 import gg.aquatic.comet.api.particle.display.TextDisplayComponent
 import gg.aquatic.comet.api.particle.display.model.ModelData
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.component.ComponentTypes
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityDataTypes
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.ItemStack
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.type.ItemTypes
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Quaternion4f
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
@@ -89,13 +87,10 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
             is ModelData -> {
                 if (flags.display) {
 
-                    val stack = ItemStack.builder().type(ItemTypes.getByName(displayData.item)).amount(1).build()
-                    stack.setComponent(ComponentTypes.CUSTOM_MODEL_DATA, displayData.id)
-
                     entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                         22 + PACKET_OFFSET,
                         EntityDataTypes.ITEMSTACK,
-                        stack
+                        ResourcepackCreator.modelMap[displayData.id]!!
                     )
                 }
             }

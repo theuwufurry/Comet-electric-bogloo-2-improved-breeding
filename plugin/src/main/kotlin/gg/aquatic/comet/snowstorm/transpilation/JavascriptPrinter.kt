@@ -45,7 +45,12 @@ class JavascriptPrinter(
 
     override fun visitSetVar(assignExpr: AssignExpr): String {
         return if (assignExpr.identifier.lexeme.startsWith("variable")) {
-            "${assignExpr.identifier.lexeme.replaceFirst("variable", "emitter_variable")}=${assignExpr.expr.accept(this)}"
+            "${
+                assignExpr.identifier.lexeme.replaceFirst(
+                    "variable",
+                    "emitter_variable"
+                )
+            }=${assignExpr.expr.accept(this)}"
         } else {
             "emitter_variable.${assignExpr.identifier.lexeme}=${assignExpr.expr.accept(this)}"
         }

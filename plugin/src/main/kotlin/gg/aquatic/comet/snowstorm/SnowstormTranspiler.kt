@@ -20,7 +20,6 @@ import gg.aquatic.comet.snowstorm.component.shape.EmitterShapePointDeserializer
 import gg.aquatic.comet.snowstorm.component.shape.EmitterSphereShapeDeserializer
 import gg.aquatic.comet.snowstorm.component.variable.EmitterInitDeserializer
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
-import gg.aquatic.comet.snowstorm.deserialized.emitterlifetime.EmitterLifetimeOnce
 import java.io.File
 import java.io.FileReader
 

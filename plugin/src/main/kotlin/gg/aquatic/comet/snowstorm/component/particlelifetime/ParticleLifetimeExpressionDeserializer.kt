@@ -21,7 +21,8 @@ object ParticleLifetimeExpressionDeserializer : Deserializer {
         }
 
         val maxLifetime =
-            (jsonObject.expression("max_lifetime")?.let { deserializedEffect.parseExpr(it, true) } ?: listOf(LiteralExpr(200.0)))
+            (jsonObject.expression("max_lifetime")?.let { deserializedEffect.parseExpr(it, true) }
+                ?: listOf(LiteralExpr(200.0)))
         deserializedEffect.components += ParticleLifetimeExpression(maxLifetime)
     }
 }

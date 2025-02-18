@@ -1,5 +1,7 @@
 package gg.aquatic.comet.snowstorm.transpilation
 
+import gg.aquatic.comet.Result
+import gg.aquatic.comet.Result.Companion.with
 import gg.aquatic.comet.snowstorm.transpilation.token.Token
 import gg.aquatic.comet.snowstorm.transpilation.token.TokenType
 import gg.aquatic.comet.snowstorm.transpilation.token.TokenType.*
@@ -12,7 +14,7 @@ class Scanner(
     private var current = 0
     private var line = 1
 
-    fun scanTokens(): Pair<List<Token>, List<Error>> {
+    fun scanTokens(): Result<List<Token>, Error> {
         val errors: MutableList<Error> = mutableListOf()
 
         while (!outsideSource()) {
@@ -70,7 +72,7 @@ class Scanner(
 
         tokens += Token(EOF, "", null, line)
 
-        return tokens to errors
+        return tokens with errors
     }
 
     /**

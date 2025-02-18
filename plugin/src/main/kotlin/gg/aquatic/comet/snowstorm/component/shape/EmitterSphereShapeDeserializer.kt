@@ -29,20 +29,21 @@ object EmitterSphereShapeDeserializer : Deserializer {
         val offsetArray = jsonObject["offset"] as? JsonArray
         val parsedArray = offsetArray?.map { deserializedEffect.parseExpr(it.primitiveString()) }
 
-        val radius = jsonObject.expression("radius")?.let { deserializedEffect.parseExpr(it) } ?: listOf(LiteralExpr(1.0))
+        val radius =
+            jsonObject.expression("radius")?.let { deserializedEffect.parseExpr(it) } ?: listOf(LiteralExpr(1.0))
         val surfaceOnly = jsonObject["surface_only"]?.asBooleanOrNull() ?: false
 
 
         val motionDir = jsonObject["direction"]?.let top@{
             if (it is JsonArray) {
                 if (it.size() < 3) return@top null
-                    MotionDynamic.Direction.VectorDirection(
-                        deserializedEffect.parseExpr(it[0].asString),
-                        deserializedEffect.parseExpr(it[1].asString),
-                        deserializedEffect.parseExpr(it[2].asString),
-                    )
+                MotionDynamic.Direction.VectorDirection(
+                    deserializedEffect.parseExpr(it[0].asString),
+                    deserializedEffect.parseExpr(it[1].asString),
+                    deserializedEffect.parseExpr(it[2].asString),
+                )
             } else if (it is JsonPrimitive && it.isString) {
-                if(it.asString == "inwards") return@top MotionDynamic.Direction.SphereDirection(SpherePositionComponent.DirType.INWARDS)
+                if (it.asString == "inwards") return@top MotionDynamic.Direction.SphereDirection(SpherePositionComponent.DirType.INWARDS)
                 else return@top MotionDynamic.Direction.SphereDirection(SpherePositionComponent.DirType.OUTWARDS)
             } else null
         }

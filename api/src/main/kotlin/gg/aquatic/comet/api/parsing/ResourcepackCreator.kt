@@ -5,16 +5,22 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import gg.aquatic.comet.api.AbstractParticleEmitter
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.component.ComponentTypes
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.ItemStack
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.type.ItemTypes
 import java.awt.image.BufferedImage
 import java.io.File
 import java.io.FileReader
 import javax.imageio.ImageIO
+import kotlin.random.Random
 
 object ResourcepackCreator {
     private const val RP_NAME = "Particle Creator"
     private const val RP_IMAGE = "pack.png"
     private const val RP_META = "pack.mcmeta"
     private const val NAMESPACE = "particlecreator"
+
+    val modelMap: MutableMap<String, ItemStack> = mutableMapOf()
 
     fun genPack() {
         val dataFolder = AbstractParticleEmitter.INSTANCE.dataFolder
@@ -63,16 +69,16 @@ object ResourcepackCreator {
             val model = File(file.path + "/" + file.nameWithoutExtension + ".json")
             val texture = File(file.path + "/" + file.nameWithoutExtension + ".png")
             if (!model.exists() || !texture.exists()) continue
-            var item: File? = null
-
-            for (subFile in file.listFiles()!!) {
-                if (subFile != model && subFile != texture) {
-                    item = subFile
-                    break
-                }
-            }
-
-            if (item == null) continue
+//            var item: File? = null
+//
+//            for (subFile in file.listFiles()!!) {
+//                if (subFile != model && subFile != texture) {
+//                    item = subFile
+//                    break
+//                }
+//            }
+//
+//            if (item == null) continue
 
             val newModel = File(modelFolder.path + "/" + model.name)
             model.copyTo(newModel)
@@ -89,7 +95,33 @@ object ResourcepackCreator {
             newModel.writeText(gson.toJson(rootObject))
 
             texture.copyTo(File(texturesFolder.path + "/" + texture.name))
-            item.copyTo(File(itemFolder.path + "/" + item.name))
+
+            val itemsObj = JsonObject()
+
+            val texturesObj = JsonObject()
+            texturesObj.addProperty("layer0", "item/structure_block")
+            itemsObj.add("textures", texturesObj)
+
+            itemsObj.addProperty("parent", "item/structure_block")
+
+            val overridesArr = JsonArray()
+            val override = JsonObject()
+            val predicate = JsonObject()
+            val index = Random.nextInt(1024, Integer.MAX_VALUE)
+            val stack = ItemStack.builder().type(ItemTypes.getByName("structure_block")).amount(1).build()
+            stack.setComponent(ComponentTypes.CUSTOM_MODEL_DATA, index)
+
+            modelMap += file.nameWithoutExtension to stack
+
+            predicate.addProperty("custom_model_data", index)
+            override.add("predicate", predicate)
+            override.addProperty("model", "item/particlecreator/${file.nameWithoutExtension}")
+            overridesArr.add(override)
+
+            itemsObj.add("overrides", overridesArr)
+
+            val itemTarget = File(itemFolder.path  + "/structure_block.json")
+            itemTarget.writeText(gson.toJson(itemsObj))
         }
     }
 

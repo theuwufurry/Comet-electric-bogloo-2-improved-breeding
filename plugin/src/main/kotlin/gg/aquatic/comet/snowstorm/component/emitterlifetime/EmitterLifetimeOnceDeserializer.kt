@@ -21,7 +21,11 @@ object EmitterLifetimeOnceDeserializer : Deserializer {
         }
 
         val activeTime =
-            (jsonObject.expression("active_time")?.let { deserializedEffect.parseExpr(it, true) } ?: listOf(LiteralExpr(200.0)))
+            (jsonObject.expression("active_time")?.let { deserializedEffect.parseExpr(it, true) } ?: listOf(
+                LiteralExpr(
+                    200.0
+                )
+            ))
 
         deserializedEffect.components += EmitterLifetimeOnce(activeTime)
     }

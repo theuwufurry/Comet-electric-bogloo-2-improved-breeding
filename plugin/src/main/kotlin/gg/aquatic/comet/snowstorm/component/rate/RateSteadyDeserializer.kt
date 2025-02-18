@@ -23,7 +23,8 @@ object RateSteadyDeserializer : Deserializer {
             return
         }
 
-        val spawnRate = jsonObject.expression("spawn_rate")?.let { deserializedEffect.parseExpr(it) } ?: listOf(LiteralExpr(1))
+        val spawnRate =
+            jsonObject.expression("spawn_rate")?.let { deserializedEffect.parseExpr(it) } ?: listOf(LiteralExpr(1))
         val maxParticles =
             jsonObject.expression("max_particles")?.let { deserializedEffect.parseExpr(it) } ?: listOf(LiteralExpr(50))
 

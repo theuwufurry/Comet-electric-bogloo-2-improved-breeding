@@ -1,11 +1,12 @@
 package gg.aquatic.comet.particle.position.initial
 
-import com.google.gson.JsonArray
 import com.google.gson.JsonElement
-import com.google.gson.JsonObject
 import gg.aquatic.comet.api.emitter.EmitterData
-import gg.aquatic.comet.api.parsing.*
+import gg.aquatic.comet.api.parsing.BaseComponentParser
+import gg.aquatic.comet.api.parsing.asStringOrNull
+import gg.aquatic.comet.api.parsing.compile
 import gg.aquatic.comet.api.parsing.macro.Macro
+import gg.aquatic.comet.api.parsing.particleEngine
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.parsing.expression
@@ -59,7 +60,7 @@ class SpherePositionComponent(
 
         val magnitude = (dir.magnitude?.eval() as? Number)?.toDouble() ?: 1.0
 
-        return when(dir.type) {
+        return when (dir.type) {
             DirType.INWARDS -> {
                 directionMap[otherParticleData.id]!!.mul(-1.0).normalize(magnitude)
             }
@@ -81,13 +82,22 @@ class SpherePositionComponent(
             val (engine, particleData) = particleEngine(emitterData)
 
             val dir = jsonObject["direction"]?.let top@{
-                val magnitudeScript = jsonObject["magnitude"]?.expression()?.let { magnitude -> engine.compile(magnitude, macros) }
+                val magnitudeScript =
+                    jsonObject["magnitude"]?.expression()?.let { magnitude -> engine.compile(magnitude, macros) }
 
                 it.asStringOrNull()?.let { str ->
                     when (str) {
-                        "inwards" -> { return@top SphereDirection(DirType.INWARDS, magnitudeScript) }
-                        "outwards" -> { return@top SphereDirection(DirType.OUTWARDS, magnitudeScript) }
-                        else -> { null }
+                        "inwards" -> {
+                            return@top SphereDirection(DirType.INWARDS, magnitudeScript)
+                        }
+
+                        "outwards" -> {
+                            return@top SphereDirection(DirType.OUTWARDS, magnitudeScript)
+                        }
+
+                        else -> {
+                            null
+                        }
                     }
                 }
             }
