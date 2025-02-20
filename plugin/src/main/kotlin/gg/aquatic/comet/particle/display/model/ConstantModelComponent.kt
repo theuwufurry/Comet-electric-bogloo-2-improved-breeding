@@ -1,9 +1,11 @@
 package gg.aquatic.comet.particle.display.model
 
 import com.google.gson.JsonElement
+import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.parsing.BaseComponentParser
+import gg.aquatic.comet.api.parsing.ResourcepackCreator
 import gg.aquatic.comet.api.parsing.compile
 import gg.aquatic.comet.api.parsing.emitterEngine
 import gg.aquatic.comet.api.parsing.macro.Macro
@@ -15,7 +17,6 @@ import gg.aquatic.comet.parsing.expression
 import javax.script.CompiledScript
 
 class ConstantModelComponent(
-    private val item: CompiledScript,
     private val id: CompiledScript,
     private val myEmitterData: EmitterData
 ) : ParticleComponent, ModelComponent {
@@ -30,8 +31,7 @@ class ConstantModelComponent(
             val engine = emitterEngine(emitterData)
 
             return ConstantModelComponent(
-                engine.compile(jsonObject.expression("item") ?: return null, macros),
-                engine.compile(jsonObject.expression("id") ?: return null, macros),
+                engine.compile(jsonObject.expression("id") ?: return null, macros, true),
                 emitterData
             )
         }
@@ -40,7 +40,13 @@ class ConstantModelComponent(
     override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
         myEmitterData.copyFrom(otherEmitterData)
         otherParticleData.displayData = if (otherParticleData.age == 0.0) {
-            ModelData(item.eval() as String, (id.eval() as Number).toInt())
+            val id = id.eval() as String
+            if (id !in ResourcepackCreator.modelMap.keys) {
+                AbstractParticleEmitter.INSTANCE.logger.warning("Invalid model id $id!")
+                return
+            }
+
+            ModelData(id)
         } else {
             otherParticleData.displayData
         }

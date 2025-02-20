@@ -9,6 +9,7 @@ import gg.aquatic.comet.snowstorm.Deserializer
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
 import gg.aquatic.comet.snowstorm.deserialized.color.Gradient
 import java.io.File
+import kotlin.math.max
 
 object TintingDeserializer : Deserializer {
     override val id = "minecraft:particle_appearance_tinting"
@@ -31,7 +32,7 @@ object TintingDeserializer : Deserializer {
             val colorStr = colorElem.asStringOrNull() ?: continue
             val color = colorStr.toRGBA() ?: continue
 
-            gradient += time to "new Color(${color.red}, ${color.green}, ${color.blue}, ${color.alpha})"
+            gradient += time to "new Color(${color.red}, ${color.green}, ${color.blue}, ${max(color.alpha, 25)})"
         }
 
         deserializedEffect.components += Gradient(
