@@ -19,11 +19,11 @@ class JavascriptPrinter(
     }
 
     override fun visitUnaryExpr(unaryExpr: UnaryExpr): String {
-        return "${unaryExpr.operator.lexeme}${unaryExpr.right.accept(this)})"
+        return "${unaryExpr.operator.lexeme}${unaryExpr.right.accept(this)}"
     }
 
     override fun visitMathExpr(mathExpr: MathExpr): String {
-        return MathExpr.funcs[mathExpr.identifier.lexeme]!!.stringifier(mathExpr.args.joinToString { it.accept(this) })
+        return MathExpr.funcs[mathExpr.identifier.lexeme]!!.stringifier(mathExpr.args.map { it.accept(this) })
     }
 
     override fun visitVar(variable: VarExpr): String {

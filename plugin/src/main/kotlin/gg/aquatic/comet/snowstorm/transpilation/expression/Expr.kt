@@ -68,8 +68,9 @@ class MathExpr(
          * identifier : arity
          */
         val funcs = mapOf(
-            "sin" to MathFunction(1) { "Math.sin(($it) * Math.PI / 180.0)" },
-            "cos" to MathFunction(1) { "Math.cos(($it) * Math.PI / 180.0)" },
+            "sin" to MathFunction(1) { args -> "Math.sin((${args.first()}) * Math.PI / 180.0)" },
+            "cos" to MathFunction(1) { args -> "Math.cos((${args.first()}) * Math.PI / 180.0)" },
+            "random" to MathFunction(2) { args -> "(Math.random() * (${args[1]} - ${args[0]}) + ${args[0]})" }
         )
 
         fun mathExpr(identifier: Token, args: List<Expr>): Pair<MathExpr?, String?> {
@@ -85,7 +86,7 @@ class MathExpr(
 
     class MathFunction(
         val arity: Int,
-        val stringifier: (argString: String) -> String
+        val stringifier: (args: List<String>) -> String
     )
 }
 
