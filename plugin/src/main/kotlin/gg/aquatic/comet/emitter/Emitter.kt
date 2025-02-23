@@ -72,7 +72,6 @@ class Emitter(
 
     override fun tick(): EmitterTickResult {
         if (blocked) {
-            println("blocked")
             return EmitterTickResult(true)
         }
 
