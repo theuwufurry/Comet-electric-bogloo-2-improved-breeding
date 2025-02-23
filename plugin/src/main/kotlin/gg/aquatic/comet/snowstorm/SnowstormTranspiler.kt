@@ -4,6 +4,7 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.parsing.asJsonObjectOrNull
+import gg.aquatic.comet.api.parsing.asStringOrNull
 import gg.aquatic.comet.parsing.ParticleJsonParser.recursivelyFindJsons
 import gg.aquatic.comet.snowstorm.component.CurveDeserializer
 import gg.aquatic.comet.snowstorm.component.appearance.BillboardDeserializer
@@ -97,6 +98,25 @@ object SnowstormTranspiler {
         }
 
         val deserialized = DeserializedParticleEffect()
+
+        val description = particleEffectObject["description"]?.asJsonObjectOrNull()
+        if (description == null) {
+            AbstractParticleEmitter.INSTANCE.logger.warning("${snowstormFile.path} should have a description!")
+            return null
+        }
+
+        val texture = let {
+            val params = description["basic_render_parameters"]?.asJsonObjectOrNull() ?: return@let null
+            val path = params["texture"]?.asStringOrNull() ?: return@let null
+            path.split("/").last()
+        }
+
+        if (texture == null) {
+            AbstractParticleEmitter.INSTANCE.logger.warning("${snowstormFile.path} should have a texture!")
+            return null
+        }
+
+        deserialized.texture = texture
 
         if (particleEffectObject.has("curves")) {
             val curvesObject = particleEffectObject.getAsJsonObject("curves")
