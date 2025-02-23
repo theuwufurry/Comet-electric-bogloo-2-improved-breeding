@@ -206,7 +206,7 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
         val isListed = let {
             val elem = rootObject["listed"] ?: return@let true
             val primitive = if (elem.isJsonPrimitive) elem.asJsonPrimitive else return@let true
-            return@let (primitive as? Boolean)?.let { it } ?: true
+            return@let if (primitive.isBoolean) primitive.asBoolean else true
         }
 
         val componentsObject: JsonObject = rootObject.getAsJsonObject("components") ?: return null

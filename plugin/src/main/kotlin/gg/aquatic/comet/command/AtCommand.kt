@@ -37,7 +37,7 @@ object AtCommand : ICommand {
 
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
         return when (args.size) {
-            2 -> ParticleJsonParser.jsonUnrealizedEmitters.keys.toList()
+            2 -> ParticleJsonParser.jsonUnrealizedEmitters.filter { it.value.isListed }.keys.toList()
             else -> emptyList()
         }
     }
