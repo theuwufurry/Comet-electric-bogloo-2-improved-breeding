@@ -14,6 +14,7 @@ import java.io.File
 import kotlin.math.max
 
 class DeserializedParticleEffect {
+    lateinit var texture: String
     val components: MutableList<DeserializedComponent> = mutableListOf()
     val curves: MutableList<CatmullCurve> = mutableListOf()
 

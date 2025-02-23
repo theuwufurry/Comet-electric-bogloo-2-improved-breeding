@@ -1,4 +1,4 @@
-package gg.aquatic.comet.api.parsing
+package gg.aquatic.comet.api.parsing.resourcepack
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
@@ -8,6 +8,7 @@ import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.component.ComponentTypes
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.ItemStack
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.type.ItemTypes
+import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.File
 import java.io.FileReader
@@ -19,14 +20,33 @@ object ResourcepackCreator {
     private const val RP_IMAGE = "pack.png"
     private const val RP_META = "pack.mcmeta"
     private const val NAMESPACE = "particlecreator"
+    private const val PARTICLES_PNG = "particles.png"
 
     val modelMap: MutableMap<String, ItemStack> = mutableMapOf()
 
+    val uvs: MutableList<UVData> = mutableListOf()
+    /*
+    look through provided sprites for something of matching name
+    generate imgs with that label
+    label images with uv coord and size
+    img_${x_coord}_${y_coord}_${x_size}_${y_size}
+     */
+    fun initTextures(texturesFolder: File) {
+        val defaultParticles = File(texturesFolder, "particles.png")
+        if (!defaultParticles.exists()) {
+            defaultParticles.writeBytes(AbstractParticleEmitter.INSTANCE.getResource(PARTICLES_PNG)!!.readAllBytes())
+        }
+    }
+
     fun genPack() {
         val dataFolder = AbstractParticleEmitter.INSTANCE.dataFolder
-        if (!dataFolder.exists()) return
+        dataFolder.mkdirs()
 
         val texturesFolder = File(dataFolder.path + "/textures")
+        texturesFolder.mkdirs()
+
+        initTextures(texturesFolder)
+
         val images: MutableList<File> = mutableListOf()
 
         val oldRPFolder = File(dataFolder.path + "/output/$RP_NAME")
@@ -38,8 +58,20 @@ object ResourcepackCreator {
                 images += file
             }
 
+            if (uvs.size != 0) {
+                val tempDir = File(dataFolder, ".temp/")
+                tempDir.mkdirs()
+
+                genUVs(images, tempDir)
+
+                images += tempDir.listFiles()!!.filter { it.extension == "png" }
+            }
+
             genSprites(images)
         }
+
+        val tempDir = File(dataFolder, ".temp/")
+        tempDir.deleteRecursively()
 
         val modelFolder = File(dataFolder.path + "/models")
 
@@ -51,6 +83,8 @@ object ResourcepackCreator {
 
             genModels(models)
         }
+
+        uvs.clear()
     }
 
     private fun genModels(files: List<File>) {
@@ -69,16 +103,6 @@ object ResourcepackCreator {
             val model = File(file.path + "/" + file.nameWithoutExtension + ".json")
             val texture = File(file.path + "/" + file.nameWithoutExtension + ".png")
             if (!model.exists() || !texture.exists()) continue
-//            var item: File? = null
-//
-//            for (subFile in file.listFiles()!!) {
-//                if (subFile != model && subFile != texture) {
-//                    item = subFile
-//                    break
-//                }
-//            }
-//
-//            if (item == null) continue
 
             val newModel = File(modelFolder.path + "/" + model.name)
             model.copyTo(newModel)
@@ -120,7 +144,7 @@ object ResourcepackCreator {
 
             itemsObj.add("overrides", overridesArr)
 
-            val itemTarget = File(itemFolder.path  + "/structure_block.json")
+            val itemTarget = File(itemFolder.path + "/structure_block.json")
             itemTarget.writeText(gson.toJson(itemsObj))
         }
     }
@@ -162,25 +186,29 @@ object ResourcepackCreator {
         var index = '\uE000'
 
         for (image in images) {
-            val bufferedImage: BufferedImage = ImageIO.read(image) ?: continue
+            val bufferedImage: BufferedImage = ImageIO.read(image)
+
             val width = bufferedImage.width
             val height = bufferedImage.height
-            if (width % height != 0) {
-                continue
-            }
-
-            val count = width / height
-            val chars = StringBuilder()
-
-            for (i in 0 until count) {
-                chars.append(index.toString())
-                index += 1
-            }
 
             val jsonObject = JsonObject()
 
             val charArray = JsonArray()
-            charArray.add(chars.toString())
+
+            if (width % height != 0) {
+                charArray.add(index.toString())
+                index++
+            } else {
+                val count = width / height
+                val chars = StringBuilder()
+
+                for (i in 0 until count) {
+                    chars.append(index.toString())
+                    index++
+                }
+
+                charArray.add(chars.toString())
+            }
 
             jsonObject.addProperty("type", "bitmap")
             jsonObject.addProperty("file", "$NAMESPACE:font/${image.name}")
@@ -211,24 +239,58 @@ object ResourcepackCreator {
             val bufferedImage: BufferedImage = ImageIO.read(image) ?: continue
             val width = bufferedImage.width
             val height = bufferedImage.height
+
             if (width % height != 0) {
-                continue
-            }
-
-            val count = width / height
-
-            if (count > 1) {
-                for (i in 0 until count) {
-                    jsonObject.addProperty(image.nameWithoutExtension + "." + i, index.toString())
-                    index += 1
-                }
-            } else {
                 jsonObject.addProperty(image.nameWithoutExtension, index.toString())
-                index += 1
+                index++
+            } else {
+                val count = width / height
+
+                if (count > 1) {
+                    for (i in 0 until count) {
+                        jsonObject.addProperty(image.nameWithoutExtension + "." + i, index.toString())
+                        index++
+                    }
+                } else {
+                    jsonObject.addProperty(image.nameWithoutExtension, index.toString())
+                    index++
+                }
             }
         }
 
         val gson = GsonBuilder().setPrettyPrinting().create()
         lang.writeText(gson.toJson(jsonObject))
+    }
+
+    private fun genUVs(images: List<File>, targetDir: File) {
+        val dataFolder = AbstractParticleEmitter.INSTANCE.dataFolder
+        if (!dataFolder.exists()) return
+
+        for ((coords, size, name) in uvs) {
+            val image = images.firstOrNull { it.nameWithoutExtension == name }
+            if (image == null) {
+                AbstractParticleEmitter.INSTANCE.logger.warning("UV $name does not having a provided texture!")
+                continue
+            }
+
+            val bufferedImage: BufferedImage = ImageIO.read(image)
+            if (bufferedImage.width < coords.x + size.x || bufferedImage.height < coords.y + size.y) {
+                AbstractParticleEmitter.INSTANCE.logger.warning("$name is too small for the specified uv size!")
+                continue
+            }
+
+            val subImage = bufferedImage.getSubimage(coords.x, coords.y, size.x, size.y)!!.ensureSize()
+            ImageIO.write(subImage, "png", File(targetDir, "${name}_${coords.x}_${coords.y}_${size.x}_${size.y}.png"))
+        }
+    }
+
+    private fun BufferedImage.ensureSize(): BufferedImage {
+        ensureFilled(0, 0)
+        ensureFilled(width - 1, height - 1)
+        return this
+    }
+
+    private fun BufferedImage.ensureFilled(x: Int, y: Int) {
+        if (getRGB(x, y) ushr 24 == 0) setRGB(x, y, Color(255, 255, 255, 4).rgb)
     }
 }

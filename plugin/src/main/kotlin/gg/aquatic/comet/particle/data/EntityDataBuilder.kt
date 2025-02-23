@@ -1,6 +1,6 @@
 package gg.aquatic.comet.particle.data
 
-import gg.aquatic.comet.api.parsing.ResourcepackCreator
+import gg.aquatic.comet.api.parsing.resourcepack.ResourcepackCreator
 import gg.aquatic.comet.api.particle.UpdateFlags
 import gg.aquatic.comet.api.particle.data.AbstractEntityDataBuilder
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
