@@ -30,6 +30,7 @@ data class UnrealizedEmitter(
     val updateFrequencyComponent: UpdateFrequencyComponent,
     override val billboardConstraints: BillboardConstraints,
     override val forwardVector: Vector3d,
+    val isListed: Boolean
 ) : AbstractUnrealizedEmitter() {
     private val emitters: MutableSet<Emitter> = ConcurrentSet()
     private var tasks: BukkitTask

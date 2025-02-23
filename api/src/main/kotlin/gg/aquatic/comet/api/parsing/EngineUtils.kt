@@ -60,7 +60,7 @@ fun Compilable.compile(input: String, macros: Map<String, Macro>?, tryAsSimpleSt
         }
     }
 
-    return compile(input)
+    return compile(output)
 }
 
 fun Compilable.compileOrNull(script: String): CompiledScript? {

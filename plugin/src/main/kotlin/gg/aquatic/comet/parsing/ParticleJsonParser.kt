@@ -203,6 +203,12 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
     private fun parseComponents(rootObject: JsonObject): UnrealizedEmitter? {
         val macros: Map<String, Macro>? = rootObject.getAsJsonObject("macros")?.let { MacrosParser.parseMacros(it) }
 
+        val isListed = let {
+            val elem = rootObject["listed"] ?: return@let true
+            val primitive = if (elem.isJsonPrimitive) elem.asJsonPrimitive else return@let true
+            return@let (primitive as? Boolean)?.let { it } ?: true
+        }
+
         val componentsObject: JsonObject = rootObject.getAsJsonObject("components") ?: return null
 
         val components: MutableList<Component> = mutableListOf()
@@ -268,7 +274,8 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
             distanceCullingComponent ?: DistanceCullingComponent.default(),
             updateFrequencyComponent ?: IntervalUpdateFrequencyComponent.default(),
             billboardConstraints ?: BillboardConstraints.CENTER,
-            forwardVector
+            forwardVector,
+            isListed
         )
     }
 
