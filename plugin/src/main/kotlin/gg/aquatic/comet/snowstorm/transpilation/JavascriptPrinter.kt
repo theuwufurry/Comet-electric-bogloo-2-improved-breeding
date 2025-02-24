@@ -27,7 +27,8 @@ class JavascriptPrinter(
     }
 
     override fun visitVar(variable: VarExpr): String {
-        val implicit = VarExpr.fields[variable.name.lexeme]
+        val implicit = VarExpr.fields.firstNotNullOfOrNull { (r, s) -> if (r.matches(variable.name.lexeme)) s else null }
+
         if (implicit != null) {
             return implicit
         }
@@ -39,7 +40,7 @@ class JavascriptPrinter(
         return if (variable.name.lexeme.startsWith("variable")) {
             variable.name.lexeme.replaceFirst("variable", "emitter_variable")
         } else {
-            "emitter_variable.${variable.name}"
+            "emitter_variable.${variable.name.lexeme}"
         }
     }
 

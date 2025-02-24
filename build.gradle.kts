@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "gg.aquatic"
-version = "1.4.6"
+version = "1.4.7"
 
 repositories {
     maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")

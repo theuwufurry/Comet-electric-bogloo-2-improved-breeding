@@ -98,22 +98,22 @@ class VarExpr private constructor(
     }
 
     companion object {
-        val fields: Map<String, String> = mapOf(
-            "variable.emitter_age" to "(emitter.age / 20.0)",
-            "variable.emitter_random_1" to "emitter_variable.random",
-            "variable.emitter_random_2" to "emitter_variable.random2",
-            "variable.emitter_random_3" to "emitter_variable.random3",
-            "variable.emitter_random_4" to "emitter_variable.random4",
-            "variable.particle_age" to "(particle.age / 20.0)",
-            "variable.particle_lifetime" to "(particle.maxLife / 20.0)",
-            "variable.particle_random_1" to "particle_variable.random",
-            "variable.particle_random_2" to "particle_variable.random2",
-            "variable.particle_random_3" to "particle_variable.random3",
-            "variable.particle_random_4" to "particle_variable.random4",
+        val fields: Map<Regex, String> = mapOf(
+            Regex("(variable|v)\\.emitter_age") to "(emitter.age / 20.0)",
+            Regex("(variable|v)\\.emitter_random_1") to "emitter_variable.random",
+            Regex("(variable|v)\\.emitter_random_2") to "emitter_variable.random2",
+            Regex("(variable|v)\\.emitter_random_3") to "emitter_variable.random3",
+            Regex("(variable|v)\\.emitter_random_4") to "emitter_variable.random4",
+            Regex("(variable|v)\\.particle_age") to "(particle.age / 20.0)",
+            Regex("(variable|v)\\.particle_lifetime") to "(particle.maxLife / 20.0)",
+            Regex("(variable|v)\\.particle_random_1") to "particle_variable.random",
+            Regex("(variable|v)\\.particle_random_2") to "particle_variable.random2",
+            Regex("(variable|v)\\.particle_random_3") to "particle_variable.random3",
+            Regex("(variable|v)\\.particle_random_4") to "particle_variable.random4",
         )
 
         fun createVar(identifier: Token, deserializedParticleEffect: DeserializedParticleEffect): VarExpr {
-            if (fields[identifier.lexeme] == null) {
+            if (fields.keys.none { it.matches(identifier.lexeme) }) {
                 return VarExpr(identifier)
             }
 
@@ -122,6 +122,11 @@ class VarExpr private constructor(
                 "variable.emitter_random_2" -> 2
                 "variable.emitter_random_3" -> 3
                 "variable.emitter_random_4" -> 4
+
+                "v.emitter_random_1" -> 1
+                "v.emitter_random_2" -> 2
+                "v.emitter_random_3" -> 3
+                "v.emitter_random_4" -> 4
                 else -> 0
             }
 
@@ -130,6 +135,11 @@ class VarExpr private constructor(
                 "variable.particle_random_2" -> 2
                 "variable.particle_random_3" -> 3
                 "variable.particle_random_4" -> 4
+
+                "v.particle_random_1" -> 1
+                "v.particle_random_2" -> 2
+                "v.particle_random_3" -> 3
+                "v.particle_random_4" -> 4
                 else -> 0
             }
 
