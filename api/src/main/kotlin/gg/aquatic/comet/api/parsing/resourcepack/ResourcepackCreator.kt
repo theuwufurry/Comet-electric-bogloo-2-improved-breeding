@@ -99,6 +99,17 @@ object ResourcepackCreator {
         val texturesFolder = File(dataFolder.path + "/output/$RP_NAME/assets/minecraft/textures/item/particlecreator")
         texturesFolder.mkdirs()
 
+        val gson = GsonBuilder().setPrettyPrinting().create()
+
+        val texturesObj = JsonObject()
+
+        val itemsObj = JsonObject()
+        itemsObj.addProperty("parent", "item/structure_block")
+        texturesObj.addProperty("layer0", "item/structure_block")
+        itemsObj.add("textures", texturesObj)
+
+        val overridesArr = JsonArray()
+
         for (file in files) {
             val model = File(file.path + "/" + file.nameWithoutExtension + ".json")
             val texture = File(file.path + "/" + file.nameWithoutExtension + ".png")
@@ -115,20 +126,10 @@ object ResourcepackCreator {
             texturesObject.remove("particle")
             texturesObject.addProperty("particle", "item/particlecreator/" + file.nameWithoutExtension)
 
-            val gson = GsonBuilder().setPrettyPrinting().create()
             newModel.writeText(gson.toJson(rootObject))
 
             texture.copyTo(File(texturesFolder.path + "/" + texture.name))
 
-            val itemsObj = JsonObject()
-
-            val texturesObj = JsonObject()
-            texturesObj.addProperty("layer0", "item/structure_block")
-            itemsObj.add("textures", texturesObj)
-
-            itemsObj.addProperty("parent", "item/structure_block")
-
-            val overridesArr = JsonArray()
             val override = JsonObject()
             val predicate = JsonObject()
             val index = Random.nextInt(1024, Integer.MAX_VALUE)
@@ -141,12 +142,12 @@ object ResourcepackCreator {
             override.add("predicate", predicate)
             override.addProperty("model", "item/particlecreator/${file.nameWithoutExtension}")
             overridesArr.add(override)
-
-            itemsObj.add("overrides", overridesArr)
-
-            val itemTarget = File(itemFolder.path + "/structure_block.json")
-            itemTarget.writeText(gson.toJson(itemsObj))
         }
+
+        itemsObj.add("overrides", overridesArr)
+
+        val itemTarget = File(itemFolder.path + "/structure_block.json")
+        itemTarget.writeText(gson.toJson(itemsObj))
     }
 
     private fun genSprites(images: List<File>) {

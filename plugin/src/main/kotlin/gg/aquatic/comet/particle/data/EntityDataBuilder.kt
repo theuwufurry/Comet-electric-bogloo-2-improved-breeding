@@ -86,7 +86,6 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
 
             is ModelData -> {
                 if (flags.display) {
-
                     entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                         22 + PACKET_OFFSET,
                         EntityDataTypes.ITEMSTACK,
