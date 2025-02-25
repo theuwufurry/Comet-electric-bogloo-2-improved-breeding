@@ -2,9 +2,11 @@ package gg.aquatic.comet.particle.display.model
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.parsing.BaseComponentParser
+import gg.aquatic.comet.api.parsing.asStringOrNull
 import gg.aquatic.comet.api.parsing.compile
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.particleEngine
@@ -31,12 +33,24 @@ class FlipbookModelComponent(
             val (engine, particleData) = particleEngine(emitterData)
 
             val models: MutableList<Pair<Double, CompiledScript>> = mutableListOf()
-            for (element in jsonObject.getAsJsonArray("models")) {
-                models += (element as JsonObject).getAsJsonPrimitive("index").asNumber.toDouble() to engine.compile(
-                    element.expression("model") ?: return null,
-                    macros, true
-                )
+            if (jsonObject["models"].isJsonArray) {
+                for (element in jsonObject.getAsJsonArray("models")) {
+                    models += (element as JsonObject).getAsJsonPrimitive("index").asNumber.toDouble() to engine.compile(
+                        element.expression("model") ?: return null,
+                        macros, true
+                    )
+                }
+            } else if (jsonObject["models"].isJsonObject) {
+                for ((index, model) in jsonObject["models"].asJsonObject.entrySet()) {
+                    models += index.toDouble() to engine.compile(
+                        model.asStringOrNull() ?: return null,
+                        macros, true
+                    )
+                }
+            } else {
+                return null
             }
+
 
             return FlipbookModelComponent(
                 engine.compile(jsonObject.expression("input") ?: return null, macros),
