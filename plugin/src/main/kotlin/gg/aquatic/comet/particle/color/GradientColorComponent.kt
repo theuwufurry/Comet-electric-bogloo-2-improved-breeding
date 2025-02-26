@@ -39,7 +39,6 @@ class GradientColorComponent(
                 }
             } else if (jsonObject["data"].isJsonObject) {
                 for ((index, colorStr) in jsonObject.getAsJsonObject("data").entrySet()) {
-                    println("index: $index colorStr: ${colorStr.asString}")
                     gradient += index.toDouble() to engine.compile(
                         colorStr.asString.addDependency(),
                         macros

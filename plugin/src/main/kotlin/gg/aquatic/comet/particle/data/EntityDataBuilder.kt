@@ -14,6 +14,7 @@ import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
 import org.bukkit.Bukkit
+import org.joml.Quaternionf
 import org.joml.Vector3f
 
 val PACKET_OFFSET = if (checkVersion()) 1 else 0
@@ -31,6 +32,10 @@ private fun checkVersion(): Boolean {
 }
 
 object EntityDataBuilder : AbstractEntityDataBuilder() {
+    private val defaultRotation = Quaternionf(0f, 0f, 0f, 1f)
+    private val defaultTranslation = Vector3f()
+    private val defaultScale = Vector3f(1f)
+
     private val key = Key.key("particlecreator", "default")
 
     override fun getDataFor(
@@ -52,7 +57,6 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
         when (val displayData = component.displayData) {
             is SpriteData -> {
                 if (initial) {
-                    println("sprite data")
                     entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                         23 + PACKET_OFFSET,
                         EntityDataTypes.INT,
@@ -159,23 +163,27 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
 //        }
 
         if (flags.scale) {
-            entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
-                11 + PACKET_OFFSET,
-                EntityDataTypes.VECTOR3F,
-                gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3f(
-                    component.scale.x,
-                    component.scale.y,
-                    component.scale.z
+            if (component.scale != defaultScale) {
+                entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
+                    11 + PACKET_OFFSET,
+                    EntityDataTypes.VECTOR3F,
+                    gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3f(
+                        component.scale.x,
+                        component.scale.y,
+                        component.scale.z
+                    )
                 )
-            )
+            }
         }
 
         if (flags.rotation) {
-            entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
-                12 + PACKET_OFFSET,
-                EntityDataTypes.QUATERNION,
-                Quaternion4f(component.rotation.x, component.rotation.y, component.rotation.z, component.rotation.w)
-            )
+            if (component.rotation == defaultRotation) {
+                entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
+                    12 + PACKET_OFFSET,
+                    EntityDataTypes.QUATERNION,
+                    Quaternion4f(component.rotation.x, component.rotation.y, component.rotation.z, component.rotation.w)
+                )
+            }
         }
 
         if (flags.rotation || flags.scale) {
