@@ -52,6 +52,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
         when (val displayData = component.displayData) {
             is SpriteData -> {
                 if (initial) {
+                    println("sprite data")
                     entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                         23 + PACKET_OFFSET,
                         EntityDataTypes.INT,
@@ -95,6 +96,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
             }
 
             else -> {
+                println("else")
                 if (flags.display) {
                     entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                         22 + PACKET_OFFSET,

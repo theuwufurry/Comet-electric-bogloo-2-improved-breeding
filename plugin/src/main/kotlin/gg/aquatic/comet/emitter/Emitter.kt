@@ -158,7 +158,7 @@ class Emitter(
             if (distanceSquared <= distanceCullingComponent.viewDistance) {
                 deadParticleIDs += player to rawDeadParticleIDs
                 for (packet in dataPackets) {
-                    playerManager.sendPacket(player, packet)
+                    playerManager.sendPacketSilently(player, packet)
                 }
             }
         }
@@ -175,7 +175,7 @@ class Emitter(
         if (particlesToKill.isEmpty()) return
         val ids = particlesToKill.map { it.id }.toIntArray()
         for (player in currentViewers) {
-            player.toUser().sendPacket(WrapperPlayServerDestroyEntities(*ids))
+            player.toUser().sendPacketSilently(WrapperPlayServerDestroyEntities(*ids))
         }
     }
 
@@ -206,7 +206,7 @@ class Emitter(
             if (distanceSquared < distanceCullingComponent.viewDistance) {
                 currentViewers += player
                 for (packet in bundle) {
-                    player.toUser().sendPacket(packet)
+                    player.toUser().sendPacketSilently(packet)
                 }
             }
         }
