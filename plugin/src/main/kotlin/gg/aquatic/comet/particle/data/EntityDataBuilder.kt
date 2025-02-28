@@ -177,7 +177,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
         }
 
         if (flags.rotation) {
-            if (component.rotation == defaultRotation) {
+            if (component.rotation != defaultRotation) {
                 entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                     12 + PACKET_OFFSET,
                     EntityDataTypes.QUATERNION,
