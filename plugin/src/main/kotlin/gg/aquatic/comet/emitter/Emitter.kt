@@ -43,7 +43,7 @@ class Emitter(
     private val unrealizedHolder: UnrealizedEmitter,
     override val forwardVector: Vector3d,
     override val environmentData: EnvironmentData,
-    private val audience: AquaticAudience
+    override val audience: AquaticAudience
 ) : AbstractEmitter() {
     private val emitterComponents: List<EmitterComponent> =
         components.filterIsInstance<EmitterComponent>().sortedBy { it.priority }

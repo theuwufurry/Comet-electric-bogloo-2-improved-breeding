@@ -4,6 +4,7 @@ import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.api.particle.AbstractParticle
+import gg.aquatic.waves.util.audience.AquaticAudience
 import org.bukkit.Location
 import org.bukkit.entity.Player
 import org.joml.Quaterniond
@@ -33,6 +34,8 @@ abstract class AbstractEmitter : Parent {
     abstract fun applyEmitterRotation(input: Quaternionf): Quaternionf
 
     override var dead: Boolean = false
+
+    abstract val audience: AquaticAudience
 }
 
 class EmitterTickResult(val alive: Boolean, val deadParticles: List<Pair<Player, MutableList<Int>>> = listOf())

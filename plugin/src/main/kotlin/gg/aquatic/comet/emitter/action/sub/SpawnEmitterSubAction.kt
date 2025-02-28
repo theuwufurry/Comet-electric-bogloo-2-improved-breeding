@@ -60,7 +60,8 @@ class SpawnEmitterSubAction(
             unrealizedEmitter.realize(
                 parent,
                 location,
-                context.otherEmitterData.emitter!!.environmentData
+                context.otherEmitterData.emitter!!.environmentData,
+                context.otherEmitterData.emitter!!.audience
             )
         }
     }
