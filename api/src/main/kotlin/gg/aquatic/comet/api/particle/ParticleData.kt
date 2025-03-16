@@ -11,7 +11,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 data class ParticleData(
-    var id: UUID = UUID.randomUUID(),
+    var id: UUID,
     var particle: AbstractParticle? = null,
     var dead: Boolean = false,
     var age: Double = 0.0,
@@ -28,7 +28,7 @@ data class ParticleData(
     var emitter: AbstractEmitter? = null,
     var acceleration: Vector3d = Vector3d(),
     var interpolationDelay: Int = -1,
-    var interpolationDuration: Int = 2
+    var interpolationDuration: Int = 2,
 ) {
     val pos: Vector3d
         get() = Vector3d(origin).add(relativePosition)
@@ -57,4 +57,19 @@ data class ParticleData(
     }
 
     val variable: MutableMap<String, Any> = ConcurrentHashMap()
+
+    fun locHash(): Int {
+        return arrayOf(origin, relativePosition).contentHashCode()
+    }
+
+    fun displayHash(): Int {
+        return displayData.hashCode()
+    }
+
+    /**
+     * Hash what applies to most components
+     */
+    fun accessibleHashCode(): Int {
+        return arrayOf(dead, age, maxLife, displayData, color, origin, relativePosition, translation, rotation, scale, velocity, acceleration, variable).contentDeepHashCode()
+    }
 }

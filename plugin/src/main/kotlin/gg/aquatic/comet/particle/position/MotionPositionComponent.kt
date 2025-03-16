@@ -54,6 +54,7 @@ class MotionPositionComponent(
     }
 
     private val oldPositionMap: MutableMap<UUID, Vector3d> = ConcurrentHashMap()
+    private val cacheOldPositions: MutableMap<UUID, Vector3d> = ConcurrentHashMap()
 
     override fun execute(
         otherEmitterData: EmitterData,
@@ -62,8 +63,10 @@ class MotionPositionComponent(
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
 
+        val map = if (otherEmitterData.emitter!!.isPregen) cacheOldPositions else oldPositionMap
+
         if (otherParticleData.age == 0.0) {
-            oldPositionMap[otherParticleData.id] = Vector3d(otherParticleData.relativePosition)
+            map[otherParticleData.id] = Vector3d(otherParticleData.relativePosition)
             otherParticleData.relativePosition = Vector3d(otherParticleData.relativePosition).add(
                 initialVelocityComponent?.dir(
                     otherEmitterData,
@@ -85,14 +88,14 @@ class MotionPositionComponent(
 
         otherParticleData.acceleration = Vector3d()
 
-        val oldPos = oldPositionMap[otherParticleData.id]
+        val oldPos = map[otherParticleData.id]
         val velocity = Vector3d(otherParticleData.relativePosition).sub(oldPos)
 
 //        velocity.mul(1.0 - dragCoefficient)
 //        acceleration.mul(1.0 - dragCoefficient)
         acceleration.add(Vector3d(velocity).mul(-dragCoefficient))
 
-        oldPositionMap[otherParticleData.id] = Vector3d(otherParticleData.relativePosition)
+        map[otherParticleData.id] = Vector3d(otherParticleData.relativePosition)
 
         val newPos = Vector3d(otherParticleData.relativePosition).add(velocity).add(acceleration)
         val correction = fixCollisions(newPos, otherParticleData.acceleration)

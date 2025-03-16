@@ -1,6 +1,7 @@
 package gg.aquatic.comet.particle.position.initial
 
 import com.google.gson.JsonElement
+import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.parsing.BaseComponentParser
 import gg.aquatic.comet.api.parsing.asStringOrNull
@@ -33,9 +34,9 @@ class SpherePositionComponent(
         otherParticleData.relativePosition = if (otherParticleData.age == 0.0) {
             val radius = (radiusScript.eval() as Number).toDouble()
             val radiusSquared = radius * radius
-            var sphereOffset = randomVector(radius)
+            var sphereOffset = randomVector(otherEmitterData.emitter!!, radius)
             while (sphereOffset.lengthSquared() > radiusSquared) {
-                sphereOffset = randomVector(radius)
+                sphereOffset = randomVector(otherEmitterData.emitter!!, radius)
             }
 
             directionMap[otherParticleData.id] = sphereOffset
@@ -44,11 +45,11 @@ class SpherePositionComponent(
         } else otherParticleData.relativePosition
     }
 
-    private fun randomVector(radius: Double): Vector3d {
+    private fun randomVector(emitter: AbstractEmitter, radius: Double): Vector3d {
         return Vector3d(
-            Math.random() * 2.0 * radius - radius,
-            Math.random() * 2.0 * radius - radius,
-            Math.random() * 2.0 * radius - radius
+            emitter.random.kotlinRandom.nextDouble() * 2.0 * radius - radius,
+            emitter.random.kotlinRandom.nextDouble() * 2.0 * radius - radius,
+            emitter.random.kotlinRandom.nextDouble() * 2.0 * radius - radius
         )
     }
 

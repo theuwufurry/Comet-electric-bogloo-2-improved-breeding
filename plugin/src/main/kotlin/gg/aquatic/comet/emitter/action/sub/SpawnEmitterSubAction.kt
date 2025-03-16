@@ -53,15 +53,18 @@ class SpawnEmitterSubAction(
         for (unrealizedEmitter in unrealizedEmitters) {
             val location = Location(
                 context.otherEmitterData.world,
-                pose.pos.x + pose.dir.x * Math.random() * magnitude,
-                pose.pos.y + pose.dir.y * Math.random() * magnitude,
-                pose.pos.z + pose.dir.z * Math.random() * magnitude
+                pose.pos.x + pose.dir.x * context.otherEmitterData.emitter!!.random.kotlinRandom.nextDouble() * magnitude,
+                pose.pos.y + pose.dir.y * context.otherEmitterData.emitter!!.random.kotlinRandom.nextDouble() * magnitude,
+                pose.pos.z + pose.dir.z * context.otherEmitterData.emitter!!.random.kotlinRandom.nextDouble() * magnitude
             ).apply { direction = Vector(pose.dir.x, pose.dir.y, pose.dir.z) }
-            unrealizedEmitter.realize(
+
+            context.otherEmitterData.emitter!!.realize(
+                unrealizedEmitter,
                 parent,
                 location,
                 context.otherEmitterData.emitter!!.environmentData,
-                context.otherEmitterData.emitter!!.audience
+                context.otherEmitterData.emitter!!.audience,
+                context.otherEmitterData.emitter!!.random,
             )
         }
     }

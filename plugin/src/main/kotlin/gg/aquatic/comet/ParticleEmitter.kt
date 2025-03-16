@@ -4,6 +4,7 @@ import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.CometRegistry
 import gg.aquatic.comet.api.parsing.resourcepack.ResourcepackCreator
 import gg.aquatic.comet.command.*
+import gg.aquatic.comet.emitter.GlobalTicker
 import gg.aquatic.comet.hook.IHook
 import gg.aquatic.comet.hook.modelengine.ModelEngineHook
 import gg.aquatic.comet.hook.mythicmobs.MythicMobsHook
@@ -18,7 +19,6 @@ import org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory
 //val debugDust: Particle.DustOptions = Particle.DustOptions(Color.fromRGB(255, 255, 255), 0.6F)
 
 class ParticleEmitter : AbstractParticleEmitter() {
-
     override fun onEnable() {
         INSTANCE = this
 
@@ -33,6 +33,8 @@ class ParticleEmitter : AbstractParticleEmitter() {
         dataFolder.mkdir()
 
         ResourcepackCreator.genPack()
+
+        GlobalTicker.init()
 
         AquaticBaseCommand(
             "comet", "Base command of Comet plugin", mutableListOf(), mutableMapOf(
@@ -62,6 +64,7 @@ class ParticleEmitter : AbstractParticleEmitter() {
 
     override fun onDisable() {
         ParticleJsonParser.onDisable()
+        GlobalTicker.disable()
     }
 
     private fun initializeHooks() {

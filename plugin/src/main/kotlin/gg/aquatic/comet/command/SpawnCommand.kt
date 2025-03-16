@@ -1,6 +1,6 @@
 package gg.aquatic.comet.command
 
-import gg.aquatic.comet.emitter.environment.parseEnvironmentData
+import gg.aquatic.comet.api.emitter.environment.parseEnvironmentData
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.waves.command.ICommand
 import gg.aquatic.waves.util.audience.AquaticAudience

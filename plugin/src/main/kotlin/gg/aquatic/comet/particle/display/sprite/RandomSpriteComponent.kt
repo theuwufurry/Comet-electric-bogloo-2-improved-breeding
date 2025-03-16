@@ -34,7 +34,7 @@ class RandomSpriteComponent(
             }
 
             val normalizedWeightedSprites = evaluatedWeightedSprites.map { (k, v) -> (k / totalWeight to v) }
-            val random = Random.nextDouble()
+            val random = otherEmitterData.emitter!!.random.kotlinRandom.nextDouble()
 
             var runningWeight = 0.0
             for ((weight, sprite) in normalizedWeightedSprites) {

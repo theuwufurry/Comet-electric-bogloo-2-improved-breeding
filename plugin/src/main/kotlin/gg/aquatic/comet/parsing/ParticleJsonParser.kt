@@ -12,7 +12,6 @@ import gg.aquatic.comet.api.CometRegistry.registerUpdate
 import gg.aquatic.comet.api.CometRegistry.updateFrequencyParsers
 import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
-import gg.aquatic.comet.api.emitter.EmitterTickersHolder
 import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.parsing.AbstractParticleJsonParser
@@ -22,6 +21,7 @@ import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.macro.MacrosParser
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
 import gg.aquatic.comet.api.particle.display.DisplayComponent
+import gg.aquatic.comet.emitter.GlobalTicker
 import gg.aquatic.comet.emitter.UnrealizedEmitter
 import gg.aquatic.comet.emitter.action.event.EmitterDeathComponent
 import gg.aquatic.comet.emitter.action.event.EmitterInitComponent
@@ -166,12 +166,12 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
 
         val unrealizedEmitters: MutableMap<String, UnrealizedEmitter> = mutableMapOf()
 
-        EmitterTickersHolder.kill()
+        GlobalTicker.killInstances()
 
         for (file in effects) {
             val rootObject = JsonParser.parseReader(FileReader(file)).asJsonObject
 
-            val emitter = parseComponents(rootObject)
+            val emitter = parseComponents(rootObject, file.nameWithoutExtension)
             emitter?.run {
                 unrealizedEmitters += file.nameWithoutExtension to emitter
             } ?: run {
@@ -202,7 +202,7 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
         return files
     }
 
-    private fun parseComponents(rootObject: JsonObject): UnrealizedEmitter? {
+    private fun parseComponents(rootObject: JsonObject, id: String): UnrealizedEmitter? {
         val macros: Map<String, Macro>? = rootObject.getAsJsonObject("macros")?.let { MacrosParser.parseMacros(it) }
 
         val isListed = let {
@@ -271,6 +271,7 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
         ensureNecessaryComponents(components)
 
         return UnrealizedEmitter(
+            id,
             components,
             rateComponent ?: SteadyRateComponent.default(),
             distanceCullingComponent ?: DistanceCullingComponent.default(),

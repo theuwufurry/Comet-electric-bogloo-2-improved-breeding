@@ -22,18 +22,22 @@ class ExpressionPositionComponent(
     private val myParticleData: ParticleData
 ) : ParticleComponent, PositionComponent {
     override val priority = 0
-    private val oldOutputMap: MutableMap<UUID, Vector3d> = ConcurrentHashMap()
+    private val cachedOldOutput: MutableMap<UUID, Vector3d> = ConcurrentHashMap()
+    private val oldOutput: MutableMap<UUID, Vector3d> = ConcurrentHashMap()
 
     override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
-        val oldResult = oldOutputMap.getOrPut(otherParticleData.id) { Vector3d() }
+
+        val om = if (otherEmitterData.emitter!!.isPregen) cachedOldOutput else oldOutput
+
+        val oldResult = om.getOrPut(otherParticleData.id) { Vector3d() }
         val newResult = Vector3d(
             (xOffset.eval() as Number).toDouble() * otherEmitterData.emitter!!.environmentData.size,
             (yOffset.eval() as Number).toDouble() * otherEmitterData.emitter!!.environmentData.size,
             (zOffset.eval() as Number).toDouble() * otherEmitterData.emitter!!.environmentData.size
         )
-        oldOutputMap[otherParticleData.id] = newResult.rotate(myEmitterData.emitter!!.emitterRotation)
+        om[otherParticleData.id] = newResult.rotate(myEmitterData.emitter!!.emitterRotation)
         val newPos = Vector3d(otherParticleData.relativePosition).add(Vector3d(newResult).sub(oldResult))
         otherParticleData.relativePosition = newPos
     }

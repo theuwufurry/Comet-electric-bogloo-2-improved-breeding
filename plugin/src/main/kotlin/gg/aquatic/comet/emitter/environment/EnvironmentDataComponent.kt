@@ -5,12 +5,16 @@ import com.google.gson.JsonPrimitive
 import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.emitter.EmitterComponent
 import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.emitter.environment.Datum
+import gg.aquatic.comet.api.emitter.environment.DatumNum
+import gg.aquatic.comet.api.emitter.environment.DatumStr
+import gg.aquatic.comet.api.emitter.environment.tryParseAsColor
 import gg.aquatic.comet.api.parsing.BaseComponentParser
 import gg.aquatic.comet.api.parsing.asJsonObjectOrNull
 import gg.aquatic.comet.api.parsing.macro.Macro
 
 class EnvironmentDataComponent(
-    val data: Map<String, Any> = mapOf()
+    val data: Map<String, Datum<*, *>> = mapOf()
 ) : EmitterComponent {
     override val priority = 0
     override fun init(otherEmitterData: EmitterData) {
@@ -30,7 +34,7 @@ class EnvironmentDataComponent(
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component? {
             val root = jsonElement.asJsonObjectOrNull() ?: return null
-            val data: MutableMap<String, Any> = mutableMapOf()
+            val data: MutableMap<String, Datum<*, *>> = mutableMapOf()
 
             for ((key, element) in root.entrySet()) {
                 if (!tryParseAsColor(key, element, data)) {
@@ -38,11 +42,11 @@ class EnvironmentDataComponent(
                     element as JsonPrimitive
 
                     if (element.isString) {
-                        data += key to element.asString
+                        data += key to DatumStr(element.asString)
                     }
 
                     if (element.isNumber) {
-                        data += key to element.asNumber
+                        data += key to DatumNum(element.asNumber)
                     }
                 }
             }

@@ -3,7 +3,6 @@ package gg.aquatic.comet.api.emitter
 import org.bukkit.Location
 import org.bukkit.World
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 
 data class EmitterData(
     var id: UUID = UUID.randomUUID(),
@@ -12,7 +11,7 @@ data class EmitterData(
     var age: Double = 0.0,
     var world: World? = null,
     var location: Location = Location(null, 0.0, 0.0, 0.0),
-    var isActive: Boolean = true
+    var isActive: Boolean = true,
 ) {
     fun copyFrom(other: EmitterData) {
         id = other.id
@@ -27,5 +26,16 @@ data class EmitterData(
         variable.putAll(other.variable)
     }
 
-    val variable: MutableMap<String, Any> = ConcurrentHashMap()
+    var variable: MutableMap<String, Any> = VariableMutableMap()
+
+    fun accessibleHashCode(): Int {
+        return arrayOf(dead, age, world, location, isActive, variable).contentDeepHashCode()
+    }
+
+    fun clone(): EmitterData {
+        return EmitterData(id, dead, emitter, age, world, location.clone(), isActive).apply i@{
+            this@i.variable = (this@EmitterData.variable as VariableMutableMap).clone()
+        }
+    }
 }
+

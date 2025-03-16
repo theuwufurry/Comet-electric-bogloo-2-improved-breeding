@@ -2,9 +2,9 @@ package gg.aquatic.comet.snowstorm.component.appearance
 
 import com.google.gson.JsonElement
 import gg.aquatic.comet.api.AbstractParticleEmitter
+import gg.aquatic.comet.api.emitter.environment.toRGBA
 import gg.aquatic.comet.api.parsing.asJsonObjectOrNull
 import gg.aquatic.comet.api.parsing.asStringOrNull
-import gg.aquatic.comet.emitter.environment.toRGBA
 import gg.aquatic.comet.snowstorm.Deserializer
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
 import gg.aquatic.comet.snowstorm.deserialized.color.Gradient
