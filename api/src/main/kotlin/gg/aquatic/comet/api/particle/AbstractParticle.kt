@@ -6,7 +6,6 @@ import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport
 
-
 abstract class AbstractParticle() : Parent {
     abstract var data: ParticleData
     abstract val id: Int
@@ -18,13 +17,14 @@ abstract class AbstractParticle() : Parent {
     abstract fun getMovementPacket(): WrapperPlayServerEntityTeleport
 }
 
-class UpdateFlags(
+data class UpdateFlags(
     var display: Boolean = false,
     var transparency: Boolean = false,
     var translation: Boolean = false,
     var rotation: Boolean = false,
     var scale: Boolean = false,
-    var interpolation: Boolean = false
+    var transformationInterpolation: Boolean = false,
+    var teleportationDuration: Boolean = false,
 ) {
-    fun anyTrue() = display || transparency || translation || rotation || scale || interpolation
+    fun anyTrue() = display || transparency || translation || rotation || scale || transformationInterpolation || teleportationDuration
 }

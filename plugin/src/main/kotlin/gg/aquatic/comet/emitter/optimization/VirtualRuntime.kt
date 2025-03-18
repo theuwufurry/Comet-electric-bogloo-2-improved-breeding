@@ -6,6 +6,15 @@ import gg.aquatic.comet.emitter.GlobalTicker
 class VirtualRuntime(
     initialEmitter: Emitter
 ) {
+    /*
+    after emitter dies, have it report back:
+        - caches for Location and Display
+        - the Path to travel
+            - timestamped real world positions
+        - timestamped display data
+    put this in GlobalTicker registry in the same way
+     */
+
     private val emitters: MutableList<VirtualEmitter> = mutableListOf()
     private val emittersToAdd: MutableList<VirtualEmitter> = mutableListOf()
 
@@ -25,7 +34,7 @@ class VirtualRuntime(
                 val r = emitter.tick()
                 if (!r.alive) {
                     deadEmitters += emitter
-                    GlobalTicker.emitterCache[emitter.emitterData.id] = emitter.cache
+                    GlobalTicker.emitterCache[emitter.emitterData.id] = emitter.cachedPath()
                 }
             }
 

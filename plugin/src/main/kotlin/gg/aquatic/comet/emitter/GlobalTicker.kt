@@ -2,6 +2,7 @@ package gg.aquatic.comet.emitter
 
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.emitter.AbstractEmitter
+import gg.aquatic.comet.emitter.optimization.CachedPath
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
 import gg.aquatic.waves.util.toUser
 import io.ktor.util.collections.*
@@ -18,8 +19,7 @@ object GlobalTicker {
     private val emittersToAdd: Queue<AbstractEmitter> = ConcurrentLinkedQueue()
     private var task: BukkitTask? = null
 
-    //emitter id -> [ particle id -> < loc hashes , display hashes > ]
-    val emitterCache: MutableMap<UUID, Map<UUID, Pair<Set<Int>, Set<Int>>>> = ConcurrentHashMap()
+    val emitterCache: MutableMap<UUID, CachedPath> = ConcurrentHashMap()
 
     fun init() {
         task = Bukkit.getScheduler().runTaskTimerAsynchronously(AbstractParticleEmitter.INSTANCE, Runnable {

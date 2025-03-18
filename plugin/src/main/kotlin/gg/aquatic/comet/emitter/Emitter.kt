@@ -20,9 +20,13 @@ import gg.aquatic.waves.chunk.trackedByPlayers
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.PacketEvents
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport
 import gg.aquatic.waves.util.audience.AquaticAudience
 import gg.aquatic.waves.util.toUser
+import org.bukkit.Color
 import org.bukkit.Location
+import org.bukkit.Particle.DustOptions
+import org.bukkit.Particle.REDSTONE
 import org.bukkit.entity.Player
 import org.bukkit.util.Vector
 import org.joml.Quaterniond
@@ -30,7 +34,6 @@ import org.joml.Quaternionf
 import org.joml.Vector3d
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.HashSet
 import kotlin.random.Random
 import kotlin.system.measureNanoTime
 
@@ -78,6 +81,7 @@ components intertwine w/ eachother, so need to do full simulation
         report all the caches once everyone is done, but we need to basically spawn another ticker
     launch ticker on external emitter spawn
         subemitters get added to stack
+
  */
 
 class Emitter(
@@ -96,6 +100,9 @@ class Emitter(
     internal: Boolean,
     val seed: Int = Random.nextInt(),
 ) : AbstractEmitter() {
+    private val dustOptions =
+        DustOptions(Color.fromRGB(Random.nextInt(255), Random.nextInt(255), Random.nextInt(255)), 0.5f)
+
     override val id: UUID = emitterData.id
     val emitterComponents: List<EmitterComponent> =
         components.filterIsInstance<EmitterComponent>().sortedBy { it.priority }
@@ -120,16 +127,25 @@ class Emitter(
     private val currentViewers = ConcurrentHashMap.newKeySet<Player>()
 
     init {
+        blocked = true
         emitterData.emitter = this
 
         if (!internal) {
-            VirtualRuntime(this).generateCaches()
+            println(
+                "took: ${
+                    measureNanoTime {
+                        VirtualRuntime(this).generateCaches()
+                    }.toDouble() / 1_000_000.0
+                }"
+            )
         }
 
         emitterComponents.forEach { it.init(emitterData) }
+        blocked = false
     }
 
     private var locMisses = 0
+    private var displayMisses = 0
     private var particleMisses = 0
     private var emitterMisses = 0
 
@@ -150,11 +166,12 @@ class Emitter(
         }
 
         if (dead && particles.size == 0) {
-            if (locMisses > 0 || particleMisses > 0 || emitterMisses > 0) {
+            if (locMisses > 0 || particleMisses > 0 || emitterMisses > 0 || displayMisses > 0) {
                 println(
                     """
                 -- ${unrealizedEmitter.id} --
                 $locMisses loc misses
+                $displayMisses display misses
                 $particleMisses particle misses
                 $emitterMisses emitter misses
             """.trimIndent()
@@ -176,16 +193,45 @@ class Emitter(
 
             val initialPos = Vector3d(particle.data.relativePosition)
             val shouldUpdate = updateFrequencyComponent.shouldSendUpdate(emitterData, particle.data)
-            shouldUpdate.interpolationDuration?.let { particle.data.interpolationDuration = it }
+            shouldUpdate.interpolationDuration?.let { particle.data.transformationInterpolationDuration = it }
 
             particleComponents.forEach { it.execute(emitterData, particle.data) }
 
             val c = GlobalTicker.emitterCache[emitterData.id]
             if (c != null) {
-                val p = c[particle.data.id]
+                val p = c.hashes[particle.data.id]
                 if (p != null) {
+                    if (particle.data.displayHash() !in p.second) {
+                        displayMisses++
+                    }
+
                     if (particle.data.locHash() !in p.first) {
                         locMisses++
+                    } else {
+                        //match!!
+                        val locs = c.locations[particle.data.id]!!
+//                        if (particle.data.age.toInt() > locs.last().time)  handle path end
+                        val curPos = locs.firstOrNull { it.time == particle.data.age.toInt() }
+                        if (curPos != null) {
+                            val nextPos = locs.getOrNull(locs.indexOf(curPos) + 1)
+                            if (nextPos != null) {
+                                val nnextPos = locs.getOrNull(locs.indexOf(curPos) + 2)
+                                if (nnextPos != null) {
+                                    val dt = nnextPos.time - nextPos.time
+                                    particle.data.teleportationDuration = dt + 1
+
+                                    dataPackets += WrapperPlayServerEntityTeleport(
+                                        particle.id, gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.world.Location(
+                                            gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3d(
+                                                nextPos.vec.x,
+                                                nextPos.vec.y,
+                                                nextPos.vec.z,
+                                            ), 0f, 0f
+                                        ), true
+                                    )
+                                }
+                            }
+                        }
                     }
                 } else {
                     particleMisses++
@@ -200,11 +246,11 @@ class Emitter(
                 continue
             }
 
-            if (initialPos != particle.data.relativePosition) {
-                if (shouldUpdate.shouldUpdate) {
-                    particle.getMovementPacket().let { dataPackets += it }
-                }
-            }
+//            if (initialPos != particle.data.relativePosition) {
+//                if (shouldUpdate.shouldUpdate) {
+//                    particle.getMovementPacket().let { dataPackets += it }
+//                }
+//            }
 
             particle.updatePacket(EntityDataBuilder, shouldUpdate.shouldUpdate)
                 ?.let { dataPackets += it }
@@ -276,7 +322,13 @@ class Emitter(
             particleData.origin = location.toVector().toVector3d()
             particleData.billboardConstraints = billboardConstraints
             particleData.interpolationDelay = updateFrequencyComponent.interpolationDelay
-            particleData.interpolationDuration = updateFrequencyComponent.initialInterpolationDuration
+            particleData.transformationInterpolationDuration = updateFrequencyComponent.initialInterpolationDuration
+
+            val locs = GlobalTicker.emitterCache[id]?.locations?.get(particleData.id)
+            if (locs != null) {
+                val first = locs.first()
+                particleData.teleportationDuration = ((locs[1].time - first.time)) + 1
+            }
 
             particleComponents.forEach { it.execute(emitterData, particleData) }
 

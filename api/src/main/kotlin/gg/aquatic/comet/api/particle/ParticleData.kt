@@ -27,8 +27,9 @@ data class ParticleData(
     var billboardConstraints: BillboardConstraints = BillboardConstraints.CENTER,
     var emitter: AbstractEmitter? = null,
     var acceleration: Vector3d = Vector3d(),
-    var interpolationDelay: Int = -1,
-    var interpolationDuration: Int = 2,
+    var interpolationDelay: Int = 0,
+    var transformationInterpolationDuration: Int = 2,
+    var teleportationDuration: Int = 1,
 ) {
     val pos: Vector3d
         get() = Vector3d(origin).add(relativePosition)
@@ -50,7 +51,7 @@ data class ParticleData(
         billboardConstraints = other.billboardConstraints
         acceleration = other.acceleration
         interpolationDelay = other.interpolationDelay
-        interpolationDuration = other.interpolationDuration
+        transformationInterpolationDuration = other.transformationInterpolationDuration
 
         variable.clear()
         variable.putAll(other.variable)
@@ -63,13 +64,13 @@ data class ParticleData(
     }
 
     fun displayHash(): Int {
-        return displayData.hashCode()
+        return arrayOf(displayData, color, rotation, scale).contentHashCode()
     }
 
     /**
      * Hash what applies to most components
      */
     fun accessibleHashCode(): Int {
-        return arrayOf(dead, age, maxLife, displayData, color, origin, relativePosition, translation, rotation, scale, velocity, acceleration, variable).contentDeepHashCode()
+        return arrayOf(dead, age, maxLife, displayData, color, origin, relativePosition, translation, rotation, scale, velocity, acceleration, variable).contentHashCode()
     }
 }

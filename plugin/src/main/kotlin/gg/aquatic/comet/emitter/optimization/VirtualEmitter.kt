@@ -75,7 +75,9 @@ class VirtualEmitter(
 
     override val random: DeterministicRandom = DeterministicRandom(seed)
 
-    val cache: MutableMap<UUID, Pair<MutableSet<Int>, MutableSet<Int>>> = mutableMapOf()
+    private val path: CachedPath = CachedPath()
+//    private val cache: MutableMap<UUID, Pair<MutableSet<Int>, MutableSet<Int>>> = mutableMapOf()
+//    private val positionCache: MutableMap<UUID, MutableList<TimestampedVector3d>> = mutableMapOf()
 
     override val audience: AquaticAudience = object : AquaticAudience {
         override val uuids: Collection<UUID> = emptyList()
@@ -107,10 +109,14 @@ class VirtualEmitter(
 
             particleComponents.forEach { it.execute(emitterData, particleData) }
 
-            cache[particleData.id] =
+            path.hashes[particleData.id] =
                 mutableSetOf<Int>().apply { add(particleData.locHash()) } to mutableSetOf<Int>().apply {
                     add(particleData.displayHash())
                 }
+
+            path.locations[particleData.id] = mutableListOf<TimestampedVector3d>().apply {
+                add(TimestampedVector3d(0, particleData.pos))
+            }
 
             particle.init()
 
@@ -142,9 +148,13 @@ class VirtualEmitter(
 
             particleComponents.forEach { it.execute(emitterData, particle.data) }
 
-            cache[particle.data.id]!!.apply {
+            path.hashes[particle.data.id]!!.apply {
                 first += particle.data.locHash()
                 second += particle.data.displayHash()
+            }
+
+            path.locations[particle.data.id]!!.apply {
+                add(TimestampedVector3d(particle.data.age.toInt(), particle.data.pos))
             }
 
             if (particle.data.dead) {
@@ -161,6 +171,10 @@ class VirtualEmitter(
         if (!dead && emitterData.isActive) spawnParticles()
 
         return EmitterTickResult(true)
+    }
+
+    fun cachedPath(): CachedPath {
+        return path.optimized()
     }
 
     override val players: List<Player> = emptyList()

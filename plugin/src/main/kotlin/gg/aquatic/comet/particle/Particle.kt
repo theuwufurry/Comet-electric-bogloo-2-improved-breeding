@@ -30,7 +30,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
             data.displayData,
             data.color, data.color ushr 24, null,
             data.translation, data.rotation, data.scale,
-            data.billboardConstraints, data.interpolationDelay, data.interpolationDuration
+            data.billboardConstraints, data.interpolationDelay, data.transformationInterpolationDuration, data.teleportationDuration
         )
     }
 
@@ -58,14 +58,15 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                 data.displayData,
                 data.color, data.color ushr 24, null,
                 data.translation, data.rotation, data.scale,
-                data.billboardConstraints, data.interpolationDelay, data.interpolationDuration
+                data.billboardConstraints, data.interpolationDelay, data.transformationInterpolationDuration, data.teleportationDuration
             ), UpdateFlags(
                 display = true,
                 transparency = true,
                 translation = true,
                 rotation = true,
                 scale = true,
-                interpolation = true
+                transformationInterpolation = true,
+                teleportationDuration = true
             ), true
         )
 
@@ -78,9 +79,9 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
         shouldUpdate: Boolean
     ): WrapperPlayServerEntityMetadata? {
         return if (shouldUpdate) handleFullUpdate(entityDataBuilder)
-        else if (data.interpolationDuration > 1 && previousEntityData.reserveTransparency != null) {
-            val interpolationDuration = data.interpolationDuration - 1
-            val flags = UpdateFlags(false, false, false, false, false, true)
+        else if (data.transformationInterpolationDuration > 1 && previousEntityData.reserveTransparency != null) {
+            val transformationInterpolationDuration = data.transformationInterpolationDuration - 1
+            val flags = UpdateFlags(false, false, false, false, false, true, false)
 
             val newData =
                 EntityData(
@@ -90,7 +91,10 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                     data.translation,
                     data.rotation,
                     data.scale,
-                    data.billboardConstraints, data.interpolationDelay, interpolationDuration
+                    data.billboardConstraints,
+                    data.interpolationDelay,
+                    transformationInterpolationDuration,
+                    data.teleportationDuration
                 )
 
             previousEntityData = newData.copy()
@@ -104,14 +108,15 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
     private fun handleFullUpdate(entityDataBuilder: AbstractEntityDataBuilder): WrapperPlayServerEntityMetadata? {
         val flags = UpdateFlags()
         var transparency = data.color ushr 24
-        var interpolationDuration = data.interpolationDuration
+        var interpolationDuration = data.transformationInterpolationDuration
         flags.display = (previousEntityData.displayData != data.displayData)
                 || ((previousEntityData.color and 0xFFFFFF) != (data.color and 0xFFFFFF))
         flags.transparency = previousEntityData.transparency != transparency
         flags.translation = previousEntityData.translation != data.translation
         flags.rotation = previousEntityData.rotation != data.rotation
         flags.scale = previousEntityData.scale != data.scale
-        flags.interpolation = previousEntityData.interpolationDuration != data.interpolationDuration
+        flags.transformationInterpolation = previousEntityData.transformationInterpolationDuration != data.transformationInterpolationDuration
+        flags.teleportationDuration = previousEntityData.teleportationDuration != data.teleportationDuration
 
         var reserveTransparency: Int? = null
         if (interpolationDuration > 1) {
@@ -121,12 +126,12 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                     reserveTransparency = transparency
                     transparency = 127
                     interpolationDuration = 0
-                    flags.interpolation = true
+                    flags.transformationInterpolation = true
                 }
             } else {
                 interpolationDuration--
                 transparency = previousEntityData.reserveTransparency!!
-                flags.interpolation = true
+                flags.transformationInterpolation = true
             }
         }
 
@@ -140,7 +145,8 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                 data.translation,
                 data.rotation,
                 data.scale,
-                data.billboardConstraints, data.interpolationDelay, interpolationDuration
+                data.billboardConstraints, data.interpolationDelay,
+                interpolationDuration, data.teleportationDuration
             )
 
         previousEntityData = newData.copy()

@@ -125,20 +125,20 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
             component.interpolationDelay
         )
 
-        if (initial || flags.interpolation) {
+        if (initial || flags.transformationInterpolation) {
             entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                 9,
                 EntityDataTypes.INT,
-                component.interpolationDuration
+                component.transformationInterpolationDuration
             )
+        }
 
-            if (PACKET_OFFSET > 0) {
-                entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
-                    10,
-                    EntityDataTypes.INT,
-                    component.interpolationDuration
-                )
-            }
+        if ((initial || flags.teleportationDuration) && PACKET_OFFSET > 0) {
+            entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
+                10,
+                EntityDataTypes.INT,
+                component.teleportationDuration
+            )
         }
 
         if (initial) {
