@@ -1,6 +1,7 @@
 package gg.aquatic.comet.api.particle
 
 import gg.aquatic.comet.api.emitter.AbstractEmitter
+import gg.aquatic.comet.api.emitter.VariableMutableMap
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
 import gg.aquatic.comet.api.particle.display.DisplayData
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
@@ -8,7 +9,6 @@ import org.joml.Quaternionf
 import org.joml.Vector3d
 import org.joml.Vector3f
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 
 data class ParticleData(
     var id: UUID,
@@ -57,7 +57,7 @@ data class ParticleData(
         variable.putAll(other.variable)
     }
 
-    val variable: MutableMap<String, Any> = ConcurrentHashMap()
+    var variable: MutableMap<String, Any> = VariableMutableMap()
 
     fun locHash(): Int {
         return arrayOf(origin, relativePosition).contentHashCode()
@@ -72,5 +72,31 @@ data class ParticleData(
      */
     fun accessibleHashCode(): Int {
         return arrayOf(dead, age, maxLife, displayData, color, origin, relativePosition, translation, rotation, scale, velocity, acceleration, variable).contentHashCode()
+    }
+
+    fun clone(): ParticleData {
+        return ParticleData(
+            id = id,
+            particle = particle,
+            dead = dead,
+            age = age,
+            maxLife = maxLife,
+            displayData = displayData.copy(),
+            color = color,
+            origin = Vector3d(origin),
+            relativePosition = Vector3d(relativePosition),
+            translation = Vector3f(translation),
+            rotation = Quaternionf(rotation),
+            scale = Vector3f(scale),
+            velocity = Vector3d(velocity),
+            billboardConstraints = billboardConstraints,
+            emitter = emitter,
+            acceleration = Vector3d(acceleration),
+            interpolationDelay = interpolationDelay,
+            transformationInterpolationDuration = transformationInterpolationDuration,
+            teleportationDuration = teleportationDuration
+        ).apply i@{
+            this@i.variable = (this@ParticleData.variable as VariableMutableMap).clone()
+        }
     }
 }

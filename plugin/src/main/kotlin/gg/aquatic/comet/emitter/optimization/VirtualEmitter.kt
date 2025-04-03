@@ -13,6 +13,9 @@ import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
 import gg.aquatic.comet.emitter.Emitter
 import gg.aquatic.comet.emitter.UnrealizedEmitter
+import gg.aquatic.comet.emitter.optimization.vec.DisplayDataVector
+import gg.aquatic.comet.emitter.optimization.vec.DisplayDataVectorCoefficients
+import gg.aquatic.comet.emitter.optimization.vec.WrappedPos
 import gg.aquatic.comet.particle.Particle
 import gg.aquatic.waves.util.audience.AquaticAudience
 import org.bukkit.Location
@@ -75,7 +78,11 @@ class VirtualEmitter(
 
     override val random: DeterministicRandom = DeterministicRandom(seed)
 
-    private val path: CachedPath = CachedPath()
+    private val path: CachedPath = CachedPath(
+        (environmentData.data["loc_tol"] as? Number)?.toDouble() ?: 0.05,
+        (environmentData.data["disp_tol"] as? Number)?.toDouble() ?: 0.05,
+        (environmentData.data["col_tol"] as? Number)?.toDouble() ?: 32.0,
+    )
 //    private val cache: MutableMap<UUID, Pair<MutableSet<Int>, MutableSet<Int>>> = mutableMapOf()
 //    private val positionCache: MutableMap<UUID, MutableList<TimestampedVector3d>> = mutableMapOf()
 
@@ -114,8 +121,23 @@ class VirtualEmitter(
                     add(particleData.displayHash())
                 }
 
-            path.locations[particleData.id] = mutableListOf<TimestampedVector3d>().apply {
-                add(TimestampedVector3d(0, particleData.pos))
+            path.locations[particleData.id] = mutableListOf<TimestampedPos>().apply {
+                add(TimestampedPos(0, WrappedPos(particleData.pos, 0.0, LOC_TIME_COEFFICIENT)))
+            }
+
+            path.displayData[particleData.id] = mutableListOf<TimestampedDisplayData>().apply {
+                add(TimestampedDisplayData(0, DisplayDataVector.create(particle, DEFAULT_COEFFICIENTS)))
+            }
+
+            path.colors[particleData.id] = mutableListOf<TimestampedColor>().apply {
+                add(
+                    TimestampedColor(
+                        0,
+                        (particle.data.color ushr 16) and 0xFF,
+                        (particle.data.color ushr 8) and 0xFF,
+                        particle.data.color and 0xFF
+                    )
+                )
             }
 
             particle.init()
@@ -154,7 +176,23 @@ class VirtualEmitter(
             }
 
             path.locations[particle.data.id]!!.apply {
-                add(TimestampedVector3d(particle.data.age.toInt(), particle.data.pos))
+                add(TimestampedPos(particle.data.age.toInt(), WrappedPos(particle.data.pos, particle.data.age, LOC_TIME_COEFFICIENT)))
+            }
+
+            path.displayData[particle.data.id]!!.apply {
+                add(TimestampedDisplayData(particle.data.age.toInt(), DisplayDataVector.create(particle, DEFAULT_COEFFICIENTS)))
+            }
+
+            path.colors[particle.data.id]!!.apply {
+                add(
+                    TimestampedColor(
+                        particle.data.age.toInt(),
+                        (particle.data.color ushr 16) and 0xFF,
+                        (particle.data.color ushr 8) and 0xFF,
+                        particle.data.color and 0xFF
+
+                    )
+                )
             }
 
             if (particle.data.dead) {
@@ -216,4 +254,14 @@ class VirtualEmitter(
             runtime,
         )
     }
+
+    companion object {
+        val DEFAULT_COEFFICIENTS = DisplayDataVectorCoefficients(
+            time = 0.08
+        )
+
+        val LOC_TIME_COEFFICIENT = 0.1
+    }
 }
+
+fun Int.alpha(): Double = ((this ushr 24) and 0xFF) / 255.0

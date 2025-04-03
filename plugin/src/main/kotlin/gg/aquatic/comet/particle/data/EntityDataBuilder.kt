@@ -33,10 +33,11 @@ private fun checkVersion(): Boolean {
 
 object EntityDataBuilder : AbstractEntityDataBuilder() {
     private val defaultRotation = Quaternionf(0f, 0f, 0f, 1f)
-    private val defaultTranslation = Vector3f()
     private val defaultScale = Vector3f(1f)
 
     private val key = Key.key("particlecreator", "default")
+
+    private val DEBUG = 0
 
     override fun getDataFor(
         entityData: EntityData,
@@ -149,20 +150,8 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
             )
         }
 
-//        if (flags.translation) {
-//            entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
-//                10 + PACKET_OFFSET,
-//                EntityDataTypes.VECTOR3F,
-//                gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3f(
-//                    component.translation.x,
-//                    component.translation.y,
-//                    component.translation.z
-//                )
-//            )
-//        }
-
         if (flags.scale) {
-            if (component.scale != defaultScale) {
+            if (!(initial && component.scale == defaultScale)) {
                 entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                     11 + PACKET_OFFSET,
                     EntityDataTypes.VECTOR3F,
@@ -176,7 +165,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
         }
 
         if (flags.rotation) {
-            if (component.rotation != defaultRotation) {
+            if (!(initial && component.rotation == defaultRotation)) {
                 entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                     12 + PACKET_OFFSET,
                     EntityDataTypes.QUATERNION,
@@ -203,6 +192,32 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
             )
         }
 
+        if (DEBUG >= 1) print(flags, component)
+
         return entityData
+    }
+
+    private fun print(flags: UpdateFlags, entityData: EntityData) {
+        if (!flags.anyRelevantTrue()) return
+        val strB = StringBuilder()
+        strB.append("/---- EDB -----\n")
+        if (flags.display) {
+            strB.append("| DISPLAY: ${entityData.displayData}\n")
+            strB.append("|_ COLOR: ${entityData.color}\n")
+        }
+        if (flags.translation)
+            strB.append("| TRANSLATION: ${entityData.translation}\n")
+        if (flags.scale)
+            strB.append("| SCALE: ${entityData.scale}\n")
+        if (flags.teleportationDuration)
+            strB.append("| TELEPORTATION DURATION: ${entityData.teleportationDuration}\n")
+        if (flags.transformationInterpolation)
+            strB.append("| TRANSFORMATION INTERPOLATION DURATION: ${entityData.transformationInterpolationDuration}\n")
+        if (flags.transparency)
+            strB.append("| TRANSPARENCY: ${entityData.transparency}\n")
+        if (flags.rotation)
+            strB.append("| ROTATION: ${entityData.rotation}\n")
+
+        println(strB)
     }
 }

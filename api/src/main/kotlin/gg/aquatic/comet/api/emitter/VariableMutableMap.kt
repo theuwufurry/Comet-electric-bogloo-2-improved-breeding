@@ -85,18 +85,10 @@ class VariableMutableMap(
 
     companion object {
         fun Any.tryAsDatum(): Datum<*, *>? {
-            return when (this::class) {
-                Number::class -> {
-                    DatumNum(this as Number)
-                }
-                String::class -> {
-                    DatumStr(this as String)
-                }
-                Color::class -> {
-                    DatumColor(this as Color)
-                }
-                else -> null
-            }
+            if (this is Number) return DatumNum(this)
+            if (this is String) return DatumStr(this)
+            if (this is Color) return DatumColor(this)
+            return null
         }
     }
 

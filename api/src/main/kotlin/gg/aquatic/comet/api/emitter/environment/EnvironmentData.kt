@@ -45,6 +45,14 @@ class DatumNum(
     }
 }
 
+class DatumBool(
+    override val value: Boolean
+) : Datum<Boolean, DatumBool> {
+    override fun clone(): DatumBool {
+        return DatumBool(value)
+    }
+}
+
 fun tryParseAsColor(key: String, element: JsonElement, data: MutableMap<String, Datum<*, *>>): Boolean {
     if (!(element.isJsonPrimitive && element.asJsonPrimitive.isString)) return false
     val color = element.asString?.toRGBA() ?: return false
@@ -97,6 +105,10 @@ fun String.parseEnvironmentData(): EnvironmentData {
 
             if (element.isNumber) {
                 data += key to DatumNum(element.asNumber)
+            }
+
+            if (element.isBoolean) {
+                data += key to DatumBool(element.asBoolean)
             }
         }
     }

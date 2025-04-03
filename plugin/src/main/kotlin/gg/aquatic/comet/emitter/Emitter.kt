@@ -11,6 +11,7 @@ import gg.aquatic.comet.api.emitter.random.DeterministicRandom
 import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
+import gg.aquatic.comet.api.particle.UpdateFlags
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
 import gg.aquatic.comet.emitter.optimization.VirtualRuntime
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
@@ -26,7 +27,6 @@ import gg.aquatic.waves.util.toUser
 import org.bukkit.Color
 import org.bukkit.Location
 import org.bukkit.Particle.DustOptions
-import org.bukkit.Particle.REDSTONE
 import org.bukkit.entity.Player
 import org.bukkit.util.Vector
 import org.joml.Quaterniond
@@ -46,12 +46,17 @@ components intertwine w/ eachother, so need to do full simulation
                 store hash?
             other components need to know if there's a divergence, so need to do true run-through
 
+    MUST update on sprite change
     tracked things:
         position (tele. packets)
         display data
             scale
             color
             these deal w/ same interpolation duration so their updates must come at the same time or at multiples of interpolation duration
+
+            color: 3d vector
+            scale: 1d
+            rotation: 4d (quaternion)
     emitter uses , to see if path deviations has happened
         hash for position
         hash for display
@@ -132,7 +137,7 @@ class Emitter(
 
         if (!internal) {
             println(
-                "took: ${
+                "Took: ${
                     measureNanoTime {
                         VirtualRuntime(this).generateCaches()
                     }.toDouble() / 1_000_000.0
@@ -191,69 +196,200 @@ class Emitter(
 
             particle.tick()
 
-            val initialPos = Vector3d(particle.data.relativePosition)
             val shouldUpdate = updateFrequencyComponent.shouldSendUpdate(emitterData, particle.data)
             shouldUpdate.interpolationDuration?.let { particle.data.transformationInterpolationDuration = it }
 
+            val initialPos = Vector3d(particle.data.origin).add(particle.data.relativePosition)
+
             particleComponents.forEach { it.execute(emitterData, particle.data) }
 
-            val c = GlobalTicker.emitterCache[emitterData.id]
-            if (c != null) {
-                val p = c.hashes[particle.data.id]
-                if (p != null) {
-                    if (particle.data.displayHash() !in p.second) {
-                        displayMisses++
-                    }
-
-                    if (particle.data.locHash() !in p.first) {
-                        locMisses++
-                    } else {
-                        //match!!
-                        val locs = c.locations[particle.data.id]!!
+            if (environmentData.data["optimize"] != null && environmentData.data["optimize"] == true) {
+                val c = GlobalTicker.emitterCache[emitterData.id]
+                if (c != null) {
+                    val p = c.hashes[particle.data.id]
+                    if (p != null) {
+                        var teleportationDuration: Int? = null
+                        if (particle.data.locHash() !in p.first) {
+                            locMisses++
+                        } else {
+                            //match!!
+                            val locs = c.locations[particle.data.id]!!
 //                        if (particle.data.age.toInt() > locs.last().time)  handle path end
-                        val curPos = locs.firstOrNull { it.time == particle.data.age.toInt() }
-                        if (curPos != null) {
-                            val nextPos = locs.getOrNull(locs.indexOf(curPos) + 1)
-                            if (nextPos != null) {
-                                val nnextPos = locs.getOrNull(locs.indexOf(curPos) + 2)
-                                if (nnextPos != null) {
-                                    val dt = nnextPos.time - nextPos.time
-                                    particle.data.teleportationDuration = dt + 1
+                            locs.withIndex().firstOrNull { it.value.time == particle.data.age.toInt() }
+                                ?.let { (i, cp) ->
+                                    if (DEBUG_LOCS >= 1) println("=> MATCH TP : ${particle.data.age.toInt()}")
+                                    val nextPos = locs.getOrNull(i + 1)
+                                    if (nextPos != null) {
+                                        if (DEBUG_LOCS >= 2) println("TP | ${nextPos.vec.vec.x} ${nextPos.vec.vec.y} ${nextPos.vec.vec.z}")
+                                        dataPackets += WrapperPlayServerEntityTeleport(
+                                            particle.id,
+                                            gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.world.Location(
+                                                gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3d(
+                                                    nextPos.vec.vec.x,
+                                                    nextPos.vec.vec.y,
+                                                    nextPos.vec.vec.z,
+                                                ), 0f, 0f
+                                            ),
+                                            true
+                                        )
+
+                                        val nnextPos = locs.getOrNull(i + 2)
+                                        if (nnextPos != null) {
+                                            val dt = nnextPos.time - nextPos.time
+                                            if (dt != nextPos.time - cp.time) {
+                                                teleportationDuration = dt + 1
+                                            }
+                                        }
+                                    }
+                                } ?: run {
+                                if (particle.data.age.toInt() == 1) {
+                                    val first = locs.first()
+                                    val second = locs[1]
+
+                                    if (DEBUG_LOCS >= 1) println("INIT TP | POS: ${second.vec.vec}")
+
+                                    val dt = second.time - first.time
+                                    particle.data.transformationInterpolationDuration = dt + 1
 
                                     dataPackets += WrapperPlayServerEntityTeleport(
-                                        particle.id, gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.world.Location(
+                                        particle.id,
+                                        gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.world.Location(
                                             gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3d(
-                                                nextPos.vec.x,
-                                                nextPos.vec.y,
-                                                nextPos.vec.z,
+                                                second.vec.vec.x,
+                                                second.vec.vec.y,
+                                                second.vec.vec.z,
                                             ), 0f, 0f
-                                        ), true
+                                        ),
+                                        true
                                     )
+                                } else {
                                 }
                             }
                         }
+
+                        if (particle.data.displayHash() !in p.second) {
+                            displayMisses++
+                        } else {
+                            if (DEBUG_DISPLAY_DATA >= 1) println("T : ${particle.data.age}")
+
+                            val color =
+                                c.colors[particle.data.id]!!.firstOrNull { it.time == particle.data.age.toInt() }?.color
+                            val displayData = c.displayData[particle.data.id]!!
+
+                            displayData.withIndex().firstOrNull { it.value.time == particle.data.age.toInt() }
+                                ?.let { (i, cp) ->
+                                    if (DEBUG_DISPLAY_DATA >= 1) println("=> MATCH DISPLAY : ${particle.data.age.toInt()} $i")
+                                    val nextDatum = displayData.getOrNull(i + 1)
+                                    if (nextDatum != null) {
+                                        val nd = particle.data.clone()
+                                        color?.let { nd.color = it }
+                                        nd.displayData = nextDatum.vec.displayData
+                                        nd.scale = nextDatum.vec.scale
+                                        nd.rotation = nextDatum.vec.rot
+
+                                        val prevDt = nextDatum.time - cp.time
+
+                                        nd.transformationInterpolationDuration = prevDt
+
+                                        //TODO: make sure transparency works
+                                        val flags = UpdateFlags()
+
+                                        if (teleportationDuration != null) {
+                                            nd.teleportationDuration = teleportationDuration!!
+                                            flags.teleportationDuration = true
+                                        }
+
+                                        flags.display = (nextDatum.vec.displayData != cp.vec.displayData)
+                                        flags.rotation = (nextDatum.vec.rot != cp.vec.rot)
+                                        flags.scale = (nextDatum.vec.scale != cp.vec.scale)
+
+                                        particle.updatePacket(EntityDataBuilder, true, nd, flags)
+                                            ?.let { dataPackets += it }
+
+                                        val nnextDatum = displayData.getOrNull(i + 2)
+
+                                        if (nnextDatum != null) {
+                                            val dt = nnextDatum.time - nextDatum.time
+                                            particle.data.transformationInterpolationDuration = dt
+                                        }
+                                    }
+                                } ?: run {
+                                if (particle.data.age.toInt() == 1) {
+                                    val first = displayData.first()
+                                    val second = displayData[1]
+
+                                    val dt = second.time - first.time
+                                    particle.data.transformationInterpolationDuration = dt
+
+                                    val nd = particle.data.clone()
+                                    color?.let { nd.color = it }
+                                    nd.scale = second.vec.scale
+                                    nd.rotation = second.vec.rot
+
+                                    if (teleportationDuration != null) {
+                                        nd.teleportationDuration = teleportationDuration!!
+                                    }
+
+                                    if (DEBUG_DISPLAY_DATA >= 1) println("INIT | SCALE: ${nd.scale}")
+
+                                    particle.updatePacket(EntityDataBuilder, true, nd, UpdateFlags.allTrue())
+                                        ?.let { dataPackets += it }
+                                } else if (color != null) {
+                                    val nd = particle.data.clone()
+                                    nd.color = color
+
+                                    if (DEBUG_DISPLAY_DATA >= 1) println("COLOR | $color")
+
+                                    if (teleportationDuration != null) {
+                                        nd.teleportationDuration = teleportationDuration!!
+                                    }
+
+                                    particle.updatePacket(EntityDataBuilder, true, nd, UpdateFlags(display = true, teleportationDuration = teleportationDuration != null))
+                                        ?.let { dataPackets += it }
+                                } else {
+                                    if (teleportationDuration != null) {
+                                        val nd = particle.data.clone()
+                                        nd.teleportationDuration = teleportationDuration!!
+
+                                        particle.updatePacket(EntityDataBuilder, true, nd, UpdateFlags(teleportationDuration = true))
+                                            ?.let { dataPackets += it }
+                                    } else { }
+
+                                }
+                            }
+                        }
+
+                    } else {
+                        particleMisses++
                     }
                 } else {
-                    particleMisses++
+                    emitterMisses++
+                }
+
+                if (particle.data.dead) {
+                    particleComponents.forEach { it.die(emitterData, particle.data) }
+                    die()
+                    continue
                 }
             } else {
-                emitterMisses++
+                if (initialPos != particle.data.relativePosition) {
+                    if (shouldUpdate.shouldUpdate) {
+                        particle.getMovementPacket().let { dataPackets += it }
+                    }
+                }
+
+                particle.updatePacket(
+                    entityDataBuilder = EntityDataBuilder,
+                    shouldUpdate = shouldUpdate.shouldUpdate,
+                    flagOverride = null
+                )?.let { dataPackets += it }
+
+                if (particle.data.dead) {
+                    particleComponents.forEach { it.die(emitterData, particle.data) }
+                    die()
+                    continue
+                }
             }
-
-            if (particle.data.dead) {
-                particleComponents.forEach { it.die(emitterData, particle.data) }
-                die()
-                continue
-            }
-
-//            if (initialPos != particle.data.relativePosition) {
-//                if (shouldUpdate.shouldUpdate) {
-//                    particle.getMovementPacket().let { dataPackets += it }
-//                }
-//            }
-
-            particle.updatePacket(EntityDataBuilder, shouldUpdate.shouldUpdate)
-                ?.let { dataPackets += it }
         }
 
         val playerManager = PacketEvents.getAPI().playerManager
@@ -324,18 +460,40 @@ class Emitter(
             particleData.interpolationDelay = updateFrequencyComponent.interpolationDelay
             particleData.transformationInterpolationDuration = updateFrequencyComponent.initialInterpolationDuration
 
-            val locs = GlobalTicker.emitterCache[id]?.locations?.get(particleData.id)
-            if (locs != null) {
-                val first = locs.first()
-                particleData.teleportationDuration = ((locs[1].time - first.time)) + 1
-            }
-
             particleComponents.forEach { it.execute(emitterData, particleData) }
 
             particle.init()
 
             val packets = particle.getAddPacket()
             bundle.addAll(packets)
+
+            if (environmentData.data["optimize"] != null && environmentData.data["optimize"] == true) {
+
+//            val packets = particle.getAddPacket()
+//            bundle.addAll(packets)
+                val locs = GlobalTicker.emitterCache[id]?.locations?.get(particleData.id)
+                if (locs != null) {
+                    val first = locs.first()
+                    particleData.teleportationDuration = ((locs[1].time - first.time)) + 1
+                }
+
+                val displayData = GlobalTicker.emitterCache[id]?.displayData?.get(particleData.id)
+                if (displayData != null) {
+                    val first = displayData.first()
+                    val second = displayData[1]
+
+                    particle.data.transformationInterpolationDuration = (second.time - first.time) + 1
+//                val nd = particle.data.clone()
+//                nd.color = second.vec.color()
+//                nd.scale = second.vec.scale
+//                nd.rotation = second.vec.rot
+//
+//                println("sending w/ scale ${nd.scale}")
+//
+//                particle.updatePacket(EntityDataBuilder, true, nd)
+//                    ?.let { bundle += it }
+                }
+            }
 
             particles += particle
         }
@@ -403,5 +561,10 @@ class Emitter(
 
     override fun applyEmitterRotation(input: Quaternionf): Quaternionf {
         return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(emitterRotation).mul(input) else input
+    }
+
+    companion object {
+        val DEBUG_LOCS = 0
+        val DEBUG_DISPLAY_DATA = 0
     }
 }
