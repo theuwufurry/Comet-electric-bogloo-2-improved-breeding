@@ -37,7 +37,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
 
     private val key = Key.key("particlecreator", "default")
 
-    private val DEBUG = 1
+    private val DEBUG = 2
 
     override fun getDataFor(
         entityData: EntityData,
@@ -192,15 +192,15 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
             )
         }
 
-        if (DEBUG >= 1) print(flags, component)
+        if (DEBUG >= 1) print(flags, component, initial)
 
         return entityData
     }
 
-    private fun print(flags: UpdateFlags, entityData: EntityData) {
+    private fun print(flags: UpdateFlags, entityData: EntityData, initial: Boolean) {
         if (!flags.anyRelevantTrue()) return
         val strB = StringBuilder()
-        strB.append("/---- EDB -----\n")
+        strB.append("/-- ${if (initial) "I" else ""}- EDB -----\n")
         if (flags.display) {
             strB.append("| DISPLAY: ${entityData.displayData}\n")
             strB.append("|_ COLOR: ${entityData.color}\n")
