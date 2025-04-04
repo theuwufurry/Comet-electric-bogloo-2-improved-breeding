@@ -1,5 +1,6 @@
 package gg.aquatic.comet.emitter.optimization
 
+import gg.aquatic.comet.api.particle.display.DisplayData
 import gg.aquatic.comet.emitter.optimization.vec.DisplayDataVector
 import gg.aquatic.comet.emitter.optimization.vec.Vec
 import gg.aquatic.comet.emitter.optimization.vec.WrappedPos
@@ -26,10 +27,10 @@ class CachedPath(
      * particle id -> < timestamped vector3d >, world coords
      */
     var locations: MutableMap<UUID, MutableList<TimestampedPos>> = mutableMapOf()
-    var colors: MutableMap<UUID, MutableList<TimestampedColor>> = mutableMapOf()
-    var displayData: MutableMap<UUID, MutableList<TimestampedDisplayData>> = mutableMapOf()
+    var coloredTextureData: MutableMap<UUID, MutableList<TimestampedColoredTexture>> = mutableMapOf()
+    var transformableData: MutableMap<UUID, MutableList<TimestampedTransformableData>> = mutableMapOf()
 
-    fun optimized(): CachedPath {
+    fun optimize(): CachedPath {
         locations.replaceAll { _, v ->
             val b = v.size
             val r = simplfiyLocs(v, locTol)
@@ -47,7 +48,7 @@ class CachedPath(
 
             r
         }
-        displayData.replaceAll { _, v ->
+        transformableData.replaceAll { _, v ->
             val b = v.size
             val r = simplifyDisplayData(v, dispTol)
 
@@ -65,14 +66,14 @@ class CachedPath(
 
             r
         }
-        colors.replaceAll { _, v ->
+        coloredTextureData.replaceAll { _, v ->
             val b = v.size
             val r = simplifyColors(v, colTol)
-            if (DEBUG_COLORS >= 1) {
+            if (DEBUG_COL_TEX >= 1) {
                 println("--CD--\n" + "$b -> ${r.size}")
             }
 
-            if (DEBUG_COLORS >= 2) {
+            if (DEBUG_COL_TEX >= 2) {
                 for (a in r) {
                     println(a)
                 }
@@ -81,14 +82,15 @@ class CachedPath(
             r
 
         }
+
         return this
     }
 
     companion object {
         // 0 - off, 1 - size, 2 - list
-        val DEBUG_LOCS = 1
-        val DEBUG_DISPLAY_DATA = 1
-        val DEBUG_COLORS = 1
+        val DEBUG_LOCS = 0
+        val DEBUG_DISPLAY_DATA = 0
+        val DEBUG_COL_TEX = 0
     }
 }
 
@@ -115,14 +117,15 @@ class TimestampedPos(
     }
 }
 
-class TimestampedColor(
+class TimestampedColoredTexture(
     val time: Int,
     private val r: Int,
     private val g: Int,
     private val b: Int,
+    val displayData: DisplayData,
 ) {
     val color = (r shl 16) or (g shl 8) or b
-    fun distanceSquared(other: TimestampedColor): Int {
+    fun distanceSquared(other: TimestampedColoredTexture): Int {
         val dr = r - other.r
         val dg = g - other.g
         val db = b - other.b
@@ -133,11 +136,12 @@ class TimestampedColor(
         return """
             | Time: $time
             | Color: $r $g $b
+            | DisplayData: $displayData
         """.trimIndent()
     }
 }
 
-class TimestampedDisplayData(
+class TimestampedTransformableData(
     time: Int,
     override val vec: DisplayDataVector
 ) : TimestampedData(time) {
@@ -150,20 +154,19 @@ class TimestampedDisplayData(
 }
 
 private fun simplifyColors(
-    toSimplify: MutableList<TimestampedColor>,
+    toSimplify: MutableList<TimestampedColoredTexture>,
     tolerance: Double
-): MutableList<TimestampedColor> {
+): MutableList<TimestampedColoredTexture> {
     if (toSimplify.size < 3) return toSimplify
 
-
     val sqTolerance = tolerance * tolerance
-    val radialSimplified: MutableList<TimestampedColor> = mutableListOf(toSimplify.first())
+    val radialSimplified: MutableList<TimestampedColoredTexture> = mutableListOf(toSimplify.first())
 
     var lastPoint = toSimplify.first()
 
     for (i in 1 until toSimplify.size - 1) {
         val currNode = toSimplify[i]
-        if (lastPoint.distanceSquared(currNode) > sqTolerance) {
+        if (lastPoint.displayData != currNode.displayData || lastPoint.distanceSquared(currNode) > sqTolerance) {
             radialSimplified += currNode
             lastPoint = currNode
         }
@@ -203,13 +206,13 @@ private fun simplfiyLocs(
 }
 
 private fun simplifyDisplayData(
-    toSimplify: MutableList<TimestampedDisplayData>,
+    toSimplify: MutableList<TimestampedTransformableData>,
     tolerance: Double
-): MutableList<TimestampedDisplayData> {
+): MutableList<TimestampedTransformableData> {
     if (toSimplify.size < 3) return toSimplify
 
     val sqTolerance = tolerance * tolerance
-    val radialSimplified: MutableList<TimestampedDisplayData> = mutableListOf(toSimplify.first())
+    val radialSimplified: MutableList<TimestampedTransformableData> = mutableListOf(toSimplify.first())
 
     var lastPoint = toSimplify.first()
 

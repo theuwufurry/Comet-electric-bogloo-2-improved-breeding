@@ -13,6 +13,7 @@ import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.api.particle.UpdateFlags
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
+import gg.aquatic.comet.api.particle.display.DisplayData
 import gg.aquatic.comet.emitter.optimization.VirtualRuntime
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.particle.Particle
@@ -209,6 +210,7 @@ class Emitter(
                     val p = c.hashes[particle.data.id]
                     if (p != null) {
                         var teleportationDuration: Int? = null
+
                         if (particle.data.locHash() !in p.first) {
                             locMisses++
                         } else {
@@ -272,18 +274,20 @@ class Emitter(
                         } else {
                             if (DEBUG_DISPLAY_DATA >= 1) println("T : ${particle.data.age}")
 
-                            val color =
-                                c.colors[particle.data.id]!!.firstOrNull { it.time == particle.data.age.toInt() }?.color
-                            val displayData = c.displayData[particle.data.id]!!
+                            val (color: Int?, dD: DisplayData?) =
+                                c.coloredTextureData[particle.data.id]!!.firstOrNull { it.time == particle.data.age.toInt() }
+                                    ?.let { it.color to it.displayData } ?: (null to null)
+                            val transformableData = c.transformableData[particle.data.id]!!
 
-                            displayData.withIndex().firstOrNull { it.value.time == particle.data.age.toInt() }
+                            transformableData.withIndex().firstOrNull { it.value.time == particle.data.age.toInt() }
                                 ?.let { (i, cp) ->
                                     if (DEBUG_DISPLAY_DATA >= 1) println("=> MATCH DISPLAY : ${particle.data.age.toInt()} $i")
-                                    val nextDatum = displayData.getOrNull(i + 1)
+                                    val nextDatum = transformableData.getOrNull(i + 1)
                                     if (nextDatum != null) {
-                                        val nd = particle.data.clone()
+                                        val nd = ParticleData(particle.data.id)
                                         color?.let { nd.color = it }
-                                        nd.displayData = nextDatum.vec.displayData
+                                        nd.color = nd.color or ((nextDatum.vec.alpha * 255.0).toInt() shl 24)
+                                        dD?.let { nd.displayData = dD }
                                         nd.scale = nextDatum.vec.scale
                                         nd.rotation = nextDatum.vec.rot
 
@@ -299,14 +303,15 @@ class Emitter(
                                             flags.teleportationDuration = true
                                         }
 
-                                        flags.display = (nextDatum.vec.displayData != cp.vec.displayData)
+                                        flags.display = color != null
                                         flags.rotation = (nextDatum.vec.rot != cp.vec.rot)
                                         flags.scale = (nextDatum.vec.scale != cp.vec.scale)
+//                                        flags.transparency = (nextDatum.vec.alpha != cp.vec.alpha)
 
                                         particle.updatePacket(EntityDataBuilder, true, nd, flags)
                                             ?.let { dataPackets += it }
 
-                                        val nnextDatum = displayData.getOrNull(i + 2)
+                                        val nnextDatum = transformableData.getOrNull(i + 2)
 
                                         if (nnextDatum != null) {
                                             val dt = nnextDatum.time - nextDatum.time
@@ -315,28 +320,33 @@ class Emitter(
                                     }
                                 } ?: run {
                                 if (particle.data.age.toInt() == 1) {
-                                    val first = displayData.first()
-                                    val second = displayData[1]
+                                    val first = transformableData.first()
+                                    val second = transformableData[1]
 
                                     val dt = second.time - first.time
                                     particle.data.transformationInterpolationDuration = dt
 
-                                    val nd = particle.data.clone()
+                                    val nd = ParticleData(particle.data.id)
                                     color?.let { nd.color = it }
+                                    nd.color = nd.color or ((second.vec.alpha * 255.0).toInt() shl 24)
+                                    dD?.let { nd.displayData = dD }
                                     nd.scale = second.vec.scale
+                                    nd.rotation = second.vec.rot
                                     nd.rotation = second.vec.rot
 
                                     if (teleportationDuration != null) {
                                         nd.teleportationDuration = teleportationDuration!!
                                     }
 
-                                    if (DEBUG_DISPLAY_DATA >= 1) println("INIT | SCALE: ${nd.scale}")
+                                    if (DEBUG_DISPLAY_DATA >= 1) println("DD | INIT")
 
                                     particle.updatePacket(EntityDataBuilder, true, nd, UpdateFlags.allTrue())
                                         ?.let { dataPackets += it }
                                 } else if (color != null) {
-                                    val nd = particle.data.clone()
+                                    val nd = ParticleData(particle.data.id)
                                     nd.color = color
+                                    nd.displayData = dD!!
+                                    // use correct display data
 
                                     if (DEBUG_DISPLAY_DATA >= 1) println("COLOR | $color")
 
@@ -344,16 +354,30 @@ class Emitter(
                                         nd.teleportationDuration = teleportationDuration!!
                                     }
 
-                                    particle.updatePacket(EntityDataBuilder, true, nd, UpdateFlags(display = true, teleportationDuration = teleportationDuration != null))
+                                    particle.updatePacket(
+                                        EntityDataBuilder,
+                                        true,
+                                        nd,
+                                        UpdateFlags(
+                                            display = true,
+                                            teleportationDuration = teleportationDuration != null
+                                        )
+                                    )
                                         ?.let { dataPackets += it }
                                 } else {
                                     if (teleportationDuration != null) {
-                                        val nd = particle.data.clone()
+                                        val nd = ParticleData(particle.data.id)
                                         nd.teleportationDuration = teleportationDuration!!
 
-                                        particle.updatePacket(EntityDataBuilder, true, nd, UpdateFlags(teleportationDuration = true))
+                                        particle.updatePacket(
+                                            EntityDataBuilder,
+                                            true,
+                                            nd,
+                                            UpdateFlags(teleportationDuration = true)
+                                        )
                                             ?.let { dataPackets += it }
-                                    } else { }
+                                    } else {
+                                    }
 
                                 }
                             }
@@ -477,7 +501,7 @@ class Emitter(
                     particleData.teleportationDuration = ((locs[1].time - first.time)) + 1
                 }
 
-                val displayData = GlobalTicker.emitterCache[id]?.displayData?.get(particleData.id)
+                val displayData = GlobalTicker.emitterCache[id]?.transformableData?.get(particleData.id)
                 if (displayData != null) {
                     val first = displayData.first()
                     val second = displayData[1]
@@ -566,5 +590,6 @@ class Emitter(
     companion object {
         val DEBUG_LOCS = 0
         val DEBUG_DISPLAY_DATA = 0
+        val DEBUG_TEXTURE_DATA = 0
     }
 }

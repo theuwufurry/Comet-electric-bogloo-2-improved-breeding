@@ -1,6 +1,5 @@
 package gg.aquatic.comet.emitter.optimization.vec
 
-import gg.aquatic.comet.api.particle.display.DisplayData
 import gg.aquatic.comet.emitter.optimization.alpha
 import gg.aquatic.comet.particle.Particle
 import org.joml.Quaternionf
@@ -11,12 +10,11 @@ pitch, roll, scale are not simple
     0 -> 2pi, get closest distance
  */
 class DisplayDataVector private constructor(
-    private var alpha: Double,
+    var alpha: Double,
     var rot: Quaternionf,
     var scale: Vector3f,
     var time: Double,
     private val coefficients: DisplayDataVectorCoefficients,
-    val displayData: DisplayData,
 ) : Vec {
     /**
      * INTERNAL variables must be modified with EXTERNAL variables to prevent imprecision errors
@@ -46,7 +44,7 @@ class DisplayDataVector private constructor(
         }
 
     override fun clone(): Vec {
-        return DisplayDataVector(alpha, Quaternionf(rot), Vector3f(scale), time, coefficients, displayData)
+        return DisplayDataVector(alpha, Quaternionf(rot), Vector3f(scale), time, coefficients)
     }
 
     override fun lengthSquared(): Double {
@@ -118,7 +116,6 @@ class DisplayDataVector private constructor(
             scale: Vector3f,
             time: Double,
             coefficients: DisplayDataVectorCoefficients,
-            displayData: DisplayData
         ): DisplayDataVector {
             return DisplayDataVector(
                 alpha,
@@ -126,7 +123,6 @@ class DisplayDataVector private constructor(
                 scale,
                 time,
                 coefficients,
-                displayData
             )
         }
 
@@ -140,7 +136,6 @@ class DisplayDataVector private constructor(
                 particle.data.scale,
                 particle.data.age,
                 coefficients,
-                particle.data.displayData
             )
         }
     }

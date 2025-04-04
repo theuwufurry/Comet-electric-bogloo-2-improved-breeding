@@ -125,17 +125,18 @@ class VirtualEmitter(
                 add(TimestampedPos(0, WrappedPos(particleData.pos, 0.0, LOC_TIME_COEFFICIENT)))
             }
 
-            path.displayData[particleData.id] = mutableListOf<TimestampedDisplayData>().apply {
-                add(TimestampedDisplayData(0, DisplayDataVector.create(particle, DEFAULT_COEFFICIENTS)))
+            path.transformableData[particleData.id] = mutableListOf<TimestampedTransformableData>().apply {
+                add(TimestampedTransformableData(0, DisplayDataVector.create(particle, DEFAULT_COEFFICIENTS)))
             }
 
-            path.colors[particleData.id] = mutableListOf<TimestampedColor>().apply {
+            path.coloredTextureData[particleData.id] = mutableListOf<TimestampedColoredTexture>().apply {
                 add(
-                    TimestampedColor(
+                    TimestampedColoredTexture(
                         0,
                         (particle.data.color ushr 16) and 0xFF,
                         (particle.data.color ushr 8) and 0xFF,
-                        particle.data.color and 0xFF
+                        particle.data.color and 0xFF,
+                        particle.data.displayData
                     )
                 )
             }
@@ -179,17 +180,18 @@ class VirtualEmitter(
                 add(TimestampedPos(particle.data.age.toInt(), WrappedPos(particle.data.pos, particle.data.age, LOC_TIME_COEFFICIENT)))
             }
 
-            path.displayData[particle.data.id]!!.apply {
-                add(TimestampedDisplayData(particle.data.age.toInt(), DisplayDataVector.create(particle, DEFAULT_COEFFICIENTS)))
+            path.transformableData[particle.data.id]!!.apply {
+                add(TimestampedTransformableData(particle.data.age.toInt(), DisplayDataVector.create(particle, DEFAULT_COEFFICIENTS)))
             }
 
-            path.colors[particle.data.id]!!.apply {
+            path.coloredTextureData[particle.data.id]!!.apply {
                 add(
-                    TimestampedColor(
+                    TimestampedColoredTexture(
                         particle.data.age.toInt(),
                         (particle.data.color ushr 16) and 0xFF,
                         (particle.data.color ushr 8) and 0xFF,
-                        particle.data.color and 0xFF
+                        particle.data.color and 0xFF,
+                        particle.data.displayData
 
                     )
                 )
@@ -212,7 +214,7 @@ class VirtualEmitter(
     }
 
     fun cachedPath(): CachedPath {
-        return path.optimized()
+        return path.optimize()
     }
 
     override val players: List<Player> = emptyList()
