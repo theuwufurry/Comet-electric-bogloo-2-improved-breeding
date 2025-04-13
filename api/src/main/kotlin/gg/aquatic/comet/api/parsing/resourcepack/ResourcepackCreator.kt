@@ -173,7 +173,15 @@ object ResourcepackCreator {
 
         for (image in images) {
             val imageFile = File(texturesFolder.path + "/" + image.name)
-            image.copyTo(imageFile)
+            val bufferedImage: BufferedImage = ImageIO.read(image)
+            val argbImage = BufferedImage(bufferedImage.width, bufferedImage.height, BufferedImage.TYPE_INT_ARGB)
+            val graphics = argbImage.createGraphics()
+            graphics.drawImage(bufferedImage, 0,0, null)
+            graphics.dispose()
+            argbImage.ensureGrid(16)
+            argbImage.ensureSize()
+
+            ImageIO.write(argbImage, "png", imageFile)
         }
     }
 
@@ -291,7 +299,24 @@ object ResourcepackCreator {
         return this
     }
 
+    private fun BufferedImage.ensureGrid(interval: Int): BufferedImage {
+        if (interval < 0) throw IllegalArgumentException("Can't accept an interval < 0")
+        for (x in 0..<width step interval) {
+            for (y in 0..<height step interval) {
+                ensureFilled(x, y)
+            }
+        }
+
+        for (x in (interval - 1)..<width step interval) {
+            for (y in (interval - 1)..<height step interval) {
+                ensureFilled(x, y)
+            }
+        }
+
+        return this
+    }
+
     private fun BufferedImage.ensureFilled(x: Int, y: Int) {
-        if (getRGB(x, y) ushr 24 == 0) setRGB(x, y, Color(255, 255, 255, 4).rgb)
+        if (getRGB(x, y) ushr 24 == 0) setRGB(x, y, Color(255, 0, 255, 4).rgb)
     }
 }

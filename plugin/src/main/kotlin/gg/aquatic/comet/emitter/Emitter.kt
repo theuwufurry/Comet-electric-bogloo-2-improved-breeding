@@ -88,6 +88,46 @@ components intertwine w/ eachother, so need to do full simulation
     launch ticker on external emitter spawn
         subemitters get added to stack
 
+
+
+    teleportation duration can only be changed during INACTIVE period or at Display Update
+
+    given a period P such that teleportation duration is only set to D at the beginning of P,
+    teleports within P must happen at minimum D ticks apart
+    the last teleport of P must be sent at time T such that T = ||P|| - D
+
+    a path consists of consecutive periods^
+    divided at either display data updates, or inactive periods
+        inactive periods are when the only non zero component of the delta of 2 consecutive display data points is the time component
+
+    location and display data path solutions likely have multiple valid configurations, maybe do some iteration?
+
+    explore:
+        baseline would have simplified display data points at times 0 and 10 and complex positioning
+        find minimum teleporation duration, and send that at the start
+            assuming no inactive location periods, send positioning continuously
+        simple case, only location-complex, depends only on location tolerance
+
+        complex display data and simple positioning is similarly non problematic
+
+
+    strategy:
+        Simplify locations and display data
+
+        fun simplify(<interval, with locs and display data> I): <timestamped teleport durations>
+            var min = # of loc updates on I
+
+            for (h (harmonic period) such that period / h < min)
+                if (locs fit h) min = period / h
+
+            # now that we have the interval attempt, min >= 1. now try splicing up based on display data
+
+            var running = ?
+            for (display data on I)
+                val K = interval from last to previous display data
+                running += simplify(K)
+
+            return running or best, whichever is better
  */
 
 class Emitter(
@@ -137,13 +177,15 @@ class Emitter(
         emitterData.emitter = this
 
         if (!internal) {
-            println(
-                "Took: ${
-                    measureNanoTime {
-                        VirtualRuntime(this).generateCaches()
-                    }.toDouble() / 1_000_000.0
-                }"
-            )
+            if (environmentData.data["optimize"] != null && environmentData.data["optimize"] == true) {
+                println(
+                    "Took: ${
+                        measureNanoTime {
+                            VirtualRuntime(this).generateCaches()
+                        }.toDouble() / 1_000_000.0
+                    }"
+                )
+            }
         }
 
         emitterComponents.forEach { it.init(emitterData) }
@@ -504,25 +546,25 @@ class Emitter(
 
             if (!(environmentData.data["optimize"] != null && environmentData.data["optimize"] == true)) {
                 end()
-                return
+                return@repeat
             }
 
             val locs = GlobalTicker.emitterCache[id]?.locations?.get(particleData.id)
             if (locs == null) {
                 end()
-                return
+                return@repeat
             }
 
             val displayData = GlobalTicker.emitterCache[id]?.transformableData?.get(particleData.id)
             if (displayData == null) {
                 end()
-                return
+                return@repeat
             }
 
             val texturedColor = GlobalTicker.emitterCache[id]?.coloredTextureData?.get(particleData.id)
             if (texturedColor == null) {
                 end()
-                return
+                return@repeat
             }
 
             val pd = ParticleData(particle.data.id)
@@ -618,8 +660,8 @@ class Emitter(
     }
 
     companion object {
-        val DEBUG_LOCS = 0
-        val DEBUG_DISPLAY_DATA = 0
+        val DEBUG_LOCS = 2
+        val DEBUG_DISPLAY_DATA = 2
         val DEBUG_TEXTURE_DATA = 0
     }
 }

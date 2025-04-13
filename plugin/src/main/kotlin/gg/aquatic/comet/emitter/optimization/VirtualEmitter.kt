@@ -121,11 +121,11 @@ class VirtualEmitter(
                     add(particleData.displayHash())
                 }
 
-            path.locations[particleData.id] = mutableListOf<TimestampedPos>().apply {
+            path.internalLocations[particleData.id] = mutableListOf<TimestampedPos>().apply {
                 add(TimestampedPos(0, WrappedPos(particleData.pos, 0.0, LOC_TIME_COEFFICIENT)))
             }
 
-            path.transformableData[particleData.id] = mutableListOf<TimestampedTransformableData>().apply {
+            path.internalTransformableData[particleData.id] = mutableListOf<TimestampedTransformableData>().apply {
                 add(TimestampedTransformableData(0, DisplayDataVector.create(particle, DEFAULT_COEFFICIENTS)))
             }
 
@@ -176,11 +176,11 @@ class VirtualEmitter(
                 second += particle.data.displayHash()
             }
 
-            path.locations[particle.data.id]!!.apply {
+            path.internalLocations[particle.data.id]!!.apply {
                 add(TimestampedPos(particle.data.age.toInt(), WrappedPos(particle.data.pos, particle.data.age, LOC_TIME_COEFFICIENT)))
             }
 
-            path.transformableData[particle.data.id]!!.apply {
+            path.internalTransformableData[particle.data.id]!!.apply {
                 add(TimestampedTransformableData(particle.data.age.toInt(), DisplayDataVector.create(particle, DEFAULT_COEFFICIENTS)))
             }
 
