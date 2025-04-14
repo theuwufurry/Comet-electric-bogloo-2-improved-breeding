@@ -40,16 +40,18 @@ data class UnrealizedEmitter(
         emitterData.world = location.world
         emitterData.location = location
         emitterData.variable.putAll(environmentData.data)
-        return Emitter(
+        val emitter =  Emitter(
             parent,
             components,
             rateComponent,
             distanceCullingComponent,
             updateFrequencyComponent,
             billboardConstraints, location, emitterData, this, forwardVector, environmentData, audience, false
-        ).also {
-            GlobalTicker.addEmitter(it)
-        }
+        )
+
+        GlobalTicker.addEmitter(emitter)
+
+        return emitter
     }
 
     override fun realize(

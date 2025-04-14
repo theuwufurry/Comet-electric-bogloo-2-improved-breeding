@@ -37,7 +37,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
 
     private val key = Key.key("particlecreator", "default")
 
-    private val DEBUG = 2
+    private val DEBUG = 0
 
     override fun getDataFor(
         entityData: EntityData,
@@ -217,6 +217,11 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
             strB.append("| TRANSPARENCY: ${entityData.transparency}\n")
         if (flags.rotation)
             strB.append("| ROTATION: ${entityData.rotation}\n")
+
+        if (flags.teleportationDuration &&
+            !flags.scale && !flags.translation && !flags.display && !flags.transformationInterpolation && !flags.transparency && !flags.rotation) {
+            strB.append("| LONELY!")
+        }
 
         println(strB)
     }

@@ -129,14 +129,21 @@ class CachedPath(
         for (id in hashes.keys) {
             val locs = locations[id]!!
             val transformables = transformableData[id]!!
+            val colorTex = coloredTextureData[id]!!
 
             val locTimes = locs.map { it.time }
             val transformableTimes = transformables.map { it.time }
+            val colorTexTimes = colorTex.map { it.time }
+            val ddTimes = sortedSetOf<Int>()
+            ddTimes += transformableTimes
+            ddTimes += colorTexTimes
             val r: OptimizationResult
-            println("===============")
-            println("  | LOC TIMES: $locTimes")
-            println("  | T TIMES: $transformableTimes")
-            val t = measureNanoTime { r = actualize(optimize(locTimes, transformableTimes)) }
+            if (DEBUG_LOCS >= 1) println("===============")
+            if (DEBUG_LOCS >= 1) println("  | LOC TIMES: $locTimes")
+            if (DEBUG_LOCS >= 1) println("  | T TIMES: $transformableTimes")
+            if (DEBUG_LOCS >= 1) println("  | TEX TIMES: $colorTexTimes")
+            if (DEBUG_LOCS >= 1) println("  | DDTIMES: $ddTimes")
+            val t = measureNanoTime { r = actualize(optimize(locTimes, ddTimes.toList())) }
 
 //            val interval = Interval(
 //                startTime = 0,
@@ -147,12 +154,12 @@ class CachedPath(
 //
 //            val result = interval.optimize()
 
-            println("[[[[[[ OPTIMIZED ]]]]]]")
-            println(" | TOOK: ${t / 1_000_000.0} ms")
-            println(" | TPS: ${r.tps}")
-            println(" | UPDATES: ${r.updates}")
-            println(" | DD: ${r.ddUpdates}")
-            println(" | COST: ${r.cost}")
+            if (DEBUG_LOCS >= 1) println("[[[[[[ OPTIMIZED ]]]]]]")
+            if (DEBUG_LOCS >= 1) println(" | TOOK: ${t / 1_000_000.0} ms")
+            if (DEBUG_LOCS >= 1) println(" | TPS: ${r.tps}")
+            if (DEBUG_LOCS >= 1) println(" | UPDATES: ${r.updates}")
+            if (DEBUG_LOCS >= 1) println(" | DD: ${r.ddUpdates}")
+            if (DEBUG_LOCS >= 1) println(" | COST: ${r.cost}")
 
             val internalLocs = internalLocations[id]!!
             val internalTransformables = internalTransformableData[id]!!
@@ -163,6 +170,9 @@ class CachedPath(
             val allUpdates = r.updates.toSortedSet()
             allUpdates.addAll(r.ddUpdates)
             allUpdates.addAll(transformableTimes)
+            allUpdates.addAll(colorTexTimes)
+
+            if (DEBUG_LOCS >= 1) println("  | ALL UPDATES: $allUpdates")
 
             val mappedTransformables = allUpdates.map { u -> internalTransformables.first { iTransformable -> iTransformable.time == u } }.toMutableList()
             transformableData[id] = mappedTransformables
@@ -173,8 +183,8 @@ class CachedPath(
 
     companion object {
         // 0 - off, 1 - size, 2 - list
-        val DEBUG_LOCS = 2
-        val DEBUG_DISPLAY_DATA = 2
+        val DEBUG_LOCS = 0
+        val DEBUG_DISPLAY_DATA = 0
         val DEBUG_COL_TEX = 0
     }
 }

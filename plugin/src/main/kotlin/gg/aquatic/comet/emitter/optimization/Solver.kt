@@ -60,8 +60,13 @@ fun optimize(
             val ddVariations = ddSwaps(tps, updatesVariation, ddTimes)
             for (ddVariation in ddVariations) {
 //                println("  | diddVariation: $ddVariation")
+                val newTps = mutableListOf<Int>()
+                newTps.addAll(tps)
+                newTps.addAll(ddVariation.second)
+                newTps.sort()
+
                 val c =
-                    cost(ddVariation.first, tps, false, bestCost, ddVariation.second)
+                    cost(ddVariation.first, newTps, false, bestCost, ddVariation.second)
                 if (c < bestCost) {
                     bestCost = c
                     bestVariation = ddVariation
@@ -92,7 +97,7 @@ fun optimize(
 /**
  * @return Returns update TIMES of all permutations with given number of splits
  */
-private fun orderedSplits(
+fun orderedSplits(
     tps: List<Int>,
     splits: Int
 ): List<List<Int>>? {
@@ -101,7 +106,31 @@ private fun orderedSplits(
 
     val result: MutableList<List<Int>> = mutableListOf()
 
-    for (p in 1 until tps.size) {
+    for (p in 1 until tps.size - 1) {
+        val times = tps.subList(1, p + 2)
+        val duration = times.last() - times.first()
+        var f = false
+
+        for (period in (duration).downTo(2)) {
+            if (duration % period != 0) continue
+            var found = true
+            for (t in times) {
+                if ((t - times.first()) % period != 0) {
+                    found = false
+                    break
+                }
+            }
+
+            if (found) {
+                f = true
+                break
+            }
+        }
+
+        if (!f && duration * TP_COST > (UPDATE_COST + TP_COST) * (p - 1)) {
+            continue
+        }
+
         val right = _orderedSplits(tps.subList(p, tps.size), splits - 1) ?: continue
         for (variation in right) {
             val r = mutableListOf<Int>()
@@ -116,7 +145,7 @@ private fun orderedSplits(
     return result
 }
 
-private fun _orderedSplits(
+fun _orderedSplits(
     tps: List<Int>,
     updates: Int,
 ): List<List<Int>>? {
@@ -125,7 +154,31 @@ private fun _orderedSplits(
 
     val result: MutableList<List<Int>> = mutableListOf()
 
-    for (p in 1 until tps.size) {
+    for (p in 1 until tps.size - 1) {
+        val times = tps.subList(1, p + 2)
+        val duration = times.last() - times.first()
+        var f = false
+
+        for (period in (duration).downTo(2)) {
+            if (duration % period != 0) continue
+            var found = true
+            for (t in times) {
+                if ((t - times.first()) % period != 0) {
+                    found = false
+                    break
+                }
+            }
+
+            if (found) {
+                f = true
+                break
+            }
+        }
+
+        if (!f && duration * TP_COST > (UPDATE_COST + TP_COST) * (p - 1)) {
+            continue
+        }
+
         val right = _orderedSplits(tps.subList(p, tps.size), updates - 1) ?: continue
         for (variation in right) {
             val r = mutableListOf<Int>()
@@ -138,6 +191,10 @@ private fun _orderedSplits(
 
     return result
 }
+
+
+
+//TODO: Properly adjust for all possible ddtimes in the same update time teleport time interval
 /**
  * @param tps Teleport times
  * @param updateTimes TP update times
@@ -384,6 +441,7 @@ fun actualize(
     val actualizedUpdates = sortedSetOf<Int>()
 
     val updateTimes = template.updates.toSortedSet()
+    updateTimes.addAll(template.ddUpdates)
     updateTimes.add(template.tps.last())
     if (debug) println("updates times: $updateTimes")
 
@@ -436,9 +494,6 @@ fun actualize(
             if (debug) println("  | failed to find period")
 //            cost += duration * TP_COST
 //            if (cost > best) return Double.MAX_VALUE
-            for (k in timeStart..timeEnd) {
-                actualizedTps += k
-            }
 
             if (timeEndIndex < template.tps.size - 1) {
                 actualizedUpdates += (timeEnd - 1)

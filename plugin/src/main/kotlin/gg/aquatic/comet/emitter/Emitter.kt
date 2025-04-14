@@ -281,6 +281,7 @@ class Emitter(
                                         if (nnextPos != null) {
                                             val dt = nnextPos.time - nextPos.time
                                             if (dt != nextPos.time - cp.time) {
+                                                if (DEBUG_LOCS >= 1) println("-> TP DURATION : ${dt + 1}")
                                                 teleportationDuration = dt + 1
                                             }
                                         }
@@ -291,9 +292,6 @@ class Emitter(
                                     val second = locs[1]
 
                                     if (DEBUG_LOCS >= 1) println("INIT TP | POS: ${second.vec.vec}")
-
-                                    val dt = second.time - first.time
-                                    particle.data.transformationInterpolationDuration = dt + 1
 
                                     dataPackets += WrapperPlayServerEntityTeleport(
                                         particle.id,
@@ -306,6 +304,15 @@ class Emitter(
                                         ),
                                         true
                                     )
+
+                                    if (locs.size > 2) {
+                                        val third = locs[2]
+                                        val dt = third.time - second.time
+                                        if (dt != second.time - first.time) {
+                                            if (DEBUG_LOCS >= 1) println("I -> TP DURATION : ${dt + 1}")
+                                            teleportationDuration = dt + 1
+                                        }
+                                    }
                                 } else {
                                 }
                             }
@@ -314,7 +321,7 @@ class Emitter(
                         if (particle.data.displayHash() !in p.second) {
                             displayMisses++
                         } else {
-                            if (DEBUG_DISPLAY_DATA >= 1) println("T : ${particle.data.age}")
+//                            if (DEBUG_DISPLAY_DATA >= 1) println("T : ${particle.data.age}")
 
                             val (color: Int?, dD: DisplayData?) =
                                 c.coloredTextureData[particle.data.id]!!.firstOrNull { it.time == particle.data.age.toInt() }
@@ -660,8 +667,8 @@ class Emitter(
     }
 
     companion object {
-        val DEBUG_LOCS = 2
-        val DEBUG_DISPLAY_DATA = 2
+        val DEBUG_LOCS = 0
+        val DEBUG_DISPLAY_DATA = 0
         val DEBUG_TEXTURE_DATA = 0
     }
 }
