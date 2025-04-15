@@ -21,15 +21,17 @@ abstract class AbstractUnrealizedEmitter {
     abstract fun realize(
         parent: Parent? = null,
         location: Location,
-        environmentData: EnvironmentData = EnvironmentData()
-    ): AbstractEmitter
+        environmentData: EnvironmentData = EnvironmentData(),
+        after: (AbstractEmitter) -> Unit,
+    )
 
     abstract fun realize(
         parent: Parent? = null,
         location: Location,
         environmentData: EnvironmentData = EnvironmentData(),
-        audience: AquaticAudience = GlobalAudience()
-    ): AbstractEmitter
+        audience: AquaticAudience = GlobalAudience(),
+        after: (AbstractEmitter) -> Unit,
+    )
 
     abstract fun internalRealize(
         parent: Parent? = null,

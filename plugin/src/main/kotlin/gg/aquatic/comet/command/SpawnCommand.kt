@@ -3,14 +3,11 @@ package gg.aquatic.comet.command
 import gg.aquatic.comet.api.emitter.environment.parseEnvironmentData
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.waves.command.ICommand
-import gg.aquatic.waves.util.audience.AquaticAudience
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Entity
-import org.bukkit.entity.Player
 import org.joml.Vector3d
-import java.util.*
 
 object SpawnCommand : ICommand {
     override fun run(sender: CommandSender, args: Array<out String>) {
@@ -87,7 +84,7 @@ object SpawnCommand : ICommand {
         }
 
         val location = Location(world, x, y, z, yaw, pitch)
-        emitter.realize(null, location, data)
+        emitter.realize(null, location, data) {}
     }
 
     private fun handlePos(input: String, origin: Double): Double? {

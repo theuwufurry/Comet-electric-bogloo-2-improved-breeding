@@ -31,7 +31,7 @@ class SpawnParticleMechanic(
             parent = null,
             location = location,
             audience = aquaticAudience
-        )
+        ) {}
 
         return SkillResult.SUCCESS
     }

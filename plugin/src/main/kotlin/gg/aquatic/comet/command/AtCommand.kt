@@ -31,7 +31,7 @@ object AtCommand : ICommand {
         val entities = Bukkit.selectEntities(sender, args[1])
         for (entity in entities) {
             val asParent = EntityParent(entity)
-            emitter.realize(asParent, entity.location, data)
+            emitter.realize(asParent, entity.location, data) {}
         }
     }
 

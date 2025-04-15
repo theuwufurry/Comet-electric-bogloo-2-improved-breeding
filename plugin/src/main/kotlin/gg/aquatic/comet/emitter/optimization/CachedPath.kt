@@ -54,30 +54,12 @@ class CachedPath(
             locations[k] = r
         }
 
-//        locations.replaceAll { _, v ->
-//            val b = v.size
-//            val r = simplfiyLocs(v, locTol)
-//            if (DEBUG_LOCS >= 1) {
-//                println(
-//                    "--L--\n" + "$b -> ${r.size}"
-//                )
-//            }
-//
-//            if (DEBUG_LOCS >= 2) {
-//                for (a in r) {
-//                    println(a)
-//                }
-//            }
-//
-//            r
-//        }
-
         internalTransformableData.forEach { (k, v) ->
             val b = v.size
             val r = simplifyDisplayData(v, dispTol)
 
             if (DEBUG_DISPLAY_DATA >= 1) {
-                print(
+                println(
                     "--DD--\n" + "$b -> ${r.size}"
                 )
             }
@@ -91,24 +73,6 @@ class CachedPath(
             transformableData[k] = r
         }
 
-//        transformableData.replaceAll { _, v ->
-//            val b = v.size
-//            val r = simplifyDisplayData(v, dispTol)
-//
-//            if (DEBUG_DISPLAY_DATA >= 1) {
-//                print(
-//                    "--DD--\n" + "$b -> ${r.size}"
-//                )
-//            }
-//
-//            if (DEBUG_DISPLAY_DATA >= 2) {
-//                for (a in r) {
-//                    println(a)
-//                }
-//            }
-//
-//            r
-//        }
         coloredTextureData.replaceAll { _, v ->
             val b = v.size
             val r = simplifyColors(v, colTol)
@@ -134,9 +98,15 @@ class CachedPath(
             val locTimes = locs.map { it.time }
             val transformableTimes = transformables.map { it.time }
             val colorTexTimes = colorTex.map { it.time }
-            val ddTimes = sortedSetOf<Int>()
+            val ddTimes = mutableListOf<Int>()
+
             ddTimes += transformableTimes
             ddTimes += colorTexTimes
+            val internalTransformables = internalTransformableData[id]!!
+            val filledTimes = fillTransparency(internalTransformables)
+            if (DEBUG_DISPLAY_DATA >= 1) println("  | FILLED: $filledTimes")
+            ddTimes += filledTimes
+            ddTimes.sort()
             val r: OptimizationResult
             if (DEBUG_LOCS >= 1) println("===============")
             if (DEBUG_LOCS >= 1) println("  | LOC TIMES: $locTimes")
@@ -162,7 +132,6 @@ class CachedPath(
             if (DEBUG_LOCS >= 1) println(" | COST: ${r.cost}")
 
             val internalLocs = internalLocations[id]!!
-            val internalTransformables = internalTransformableData[id]!!
             //assemble tp locations
             val mappedLocs = r.tps.map { tpTime -> internalLocs.first { iLoc -> iLoc.time == tpTime } }.toMutableList()
             locations[id] = mappedLocs
@@ -170,11 +139,14 @@ class CachedPath(
             val allUpdates = r.updates.toSortedSet()
             allUpdates.addAll(r.ddUpdates)
             allUpdates.addAll(transformableTimes)
+            allUpdates.addAll(filledTimes)
             allUpdates.addAll(colorTexTimes)
 
             if (DEBUG_LOCS >= 1) println("  | ALL UPDATES: $allUpdates")
 
-            val mappedTransformables = allUpdates.map { u -> internalTransformables.first { iTransformable -> iTransformable.time == u } }.toMutableList()
+            val mappedTransformables =
+                allUpdates.map { u -> internalTransformables.first { iTransformable -> iTransformable.time == u } }
+                    .toMutableList()
             transformableData[id] = mappedTransformables
         }
 
@@ -300,6 +272,29 @@ private fun simplfiyLocs(
 
 }
 
+/**
+ * Fills in 127 boundary crosses
+ * @return Times of filled transparencies.
+ */
+private fun fillTransparency(
+    full: MutableList<TimestampedTransformableData>,
+): List<Int> {
+    val times = mutableListOf<Int>()
+    var prev = full.first()
+    for (i in 1..<full.size) {
+        val curr = full[i]
+
+        if (prev.vec.alpha * 255.0 > 127.0 && curr.vec.alpha * 255.0 <= 127.0) {
+            times += prev.time
+            times += curr.time
+        }
+
+        prev = curr
+    }
+
+    return times
+}
+
 private fun simplifyDisplayData(
     toSimplify: MutableList<TimestampedTransformableData>,
     tolerance: Double
@@ -386,162 +381,4 @@ private fun <T : TimestampedData> douglas(sqTolerance: Double, nodes: List<T>): 
             nodes.subList(index + 1, nodes.size)
         )
     }
-}
-
-class Interval(
-    val startTime: Int, //inclusive
-    val endTime: Int, //exclusive
-    val transformables: List<TimestampedTransformableData>,
-    val locs: List<TimestampedPos>
-) {
-    fun optimize(): Result {
-        println("<<< OPTIMIZE >>>")
-        val duration = endTime - startTime
-        println(" | S, E, D: $startTime, $endTime, $duration")
-
-        if (duration == 0) throw IllegalStateException("$startTime == $endTime !!")
-        val myLocs = locs.during(startTime until endTime)
-        if (myLocs.isEmpty()) {
-            println(" | EMPTY LOCS")
-            return Result(
-                cost = 0.0,
-                timedTeleportDurations = mapOf(),
-                locUpdateTimes = listOf(),
-            )
-        }
-
-        if (myLocs.size == 1) {
-            println(" | 1 LOC at ${myLocs.first().time}")
-            if (myLocs.first().time == startTime) {
-                return Result(
-                    cost = 1.0,
-                    timedTeleportDurations = mapOf(startTime to duration),
-                    locUpdateTimes = listOf(startTime),
-                )
-            }
-        }
-
-        println(" | LOCS:")
-        for (loc in myLocs) {
-            println("   | T: ${loc.time}, P: ${loc.vec.vec}")
-        }
-
-        var bestHarmonicCost = duration
-
-        for (period in 2..(duration / 2)) {
-            if (duration % period != 0) continue //now we have harmonic, check if it lines up with key points
-
-            var valid = true
-            for (loc in myLocs) {
-                if ((loc.time - startTime) % period != 0) {
-                    valid = false
-                    break
-                }
-            }
-
-            if (valid) {
-                bestHarmonicCost = duration / period
-            }
-        }
-
-        fun harmonicResult(): Result {
-            val locUpdateTimes = mutableListOf<Int>()
-            var t = startTime
-            repeat(bestHarmonicCost) {
-                locUpdateTimes += t
-                t += duration / bestHarmonicCost
-            }
-
-            return Result(
-                cost = bestHarmonicCost.toDouble(),
-                timedTeleportDurations = mapOf(startTime to duration / bestHarmonicCost),
-                locUpdateTimes = locUpdateTimes,
-            )
-        }
-
-        println(" | BEST HARMONIC COST: $bestHarmonicCost")
-
-        val myTransformables = transformables.during(startTime until endTime)
-
-        println(" | TRANSFORMABLES:")
-        for (t in myTransformables) {
-            println("   | T: ${t.time}, S: ${t.vec.scale}")
-        }
-
-        if (myTransformables.isEmpty()) {
-            return harmonicResult()
-        }
-
-        if (myTransformables.size == 1) {
-            val first = myTransformables.first()
-            if (first.time == startTime) {
-                //only 1 display data, at the start, so this would mean further calls would be identical to this one. this means no display data optimizations possible, default to harmonic case
-                return harmonicResult()
-            }
-        }
-
-        var bestComplexCost = Double.MAX_VALUE
-        var bestLeft: Result? = null
-        var bestRight: Result? = null
-        for (pivot in myTransformables) {
-            println(" | PIVOT:")
-            println("    | T: ${pivot.time}, S: ${pivot.vec.scale}")
-            //pivot
-            val left = Interval(
-                startTime = startTime,
-                endTime = pivot.time,
-                transformables = transformables,
-                locs = locs,
-            ).let { optimize() }
-
-            val right = Interval(
-                startTime = pivot.time,
-                endTime = endTime,
-                transformables = transformables,
-                locs = locs,
-            ).let { optimize() }
-
-            val cost = left.cost + right.cost
-            if (cost < bestComplexCost) {
-                bestComplexCost = cost
-                bestLeft = left
-                bestRight = right
-            }
-        }
-
-        println(" | BEST COMPLEX COST: $bestComplexCost")
-
-        if (bestComplexCost < bestHarmonicCost) {
-            bestLeft!!; bestRight!!
-
-            val ttd = bestLeft.timedTeleportDurations.toMutableMap()
-
-            for ((t, d) in bestRight.timedTeleportDurations) {
-                ttd[t] = d
-            }
-
-            return Result(
-                cost = bestComplexCost,
-                timedTeleportDurations = ttd,
-                locUpdateTimes = bestLeft.locUpdateTimes.toMutableList().apply { addAll(bestRight.locUpdateTimes) },
-            )
-        } else {
-            return harmonicResult()
-        }
-    }
-
-    private fun <T : TimestampedData> List<T>.during(range: IntRange): List<T> {
-        if (range.isEmpty()) return emptyList()
-
-        return this.filter { it.time in range }
-    }
-
-    /*
-    report back on when to set TPID and to what, and when loc updates should happen
-     */
-    class Result(
-        val cost: Double,
-        val timedTeleportDurations: Map<Int, Int>,
-        val locUpdateTimes: List<Int>,
-    )
 }

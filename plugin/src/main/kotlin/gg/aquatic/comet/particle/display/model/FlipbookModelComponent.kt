@@ -2,7 +2,6 @@ package gg.aquatic.comet.particle.display.model
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.parsing.BaseComponentParser

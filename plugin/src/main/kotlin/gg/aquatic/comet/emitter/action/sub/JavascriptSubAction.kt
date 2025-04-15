@@ -10,7 +10,6 @@ import gg.aquatic.comet.api.parsing.emitterEngine
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.particleEngine
 import gg.aquatic.comet.api.particle.ParticleData
-import java.util.*
 import javax.script.CompiledScript
 
 class JavascriptSubAction(

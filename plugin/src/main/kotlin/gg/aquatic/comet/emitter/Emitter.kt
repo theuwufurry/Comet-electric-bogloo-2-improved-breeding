@@ -35,6 +35,7 @@ import org.joml.Quaternionf
 import org.joml.Vector3d
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.random.Random
 import kotlin.system.measureNanoTime
 
@@ -163,7 +164,7 @@ class Emitter(
     //origin can change, rotation can change
     override val particles: MutableList<Particle> = mutableListOf()
     private val deadParticles: MutableList<Particle> = mutableListOf()
-    private var blocked = false
+    private val blocked = AtomicBoolean(false)
     override var emitterRotation: Quaterniond = calculateEmitterRotation()
 
     fun calculateEmitterRotation(): Quaterniond {
@@ -173,7 +174,7 @@ class Emitter(
     private val currentViewers = ConcurrentHashMap.newKeySet<Player>()
 
     init {
-        blocked = true
+        blocked.set(true)
         emitterData.emitter = this
 
         if (!internal) {
@@ -189,7 +190,7 @@ class Emitter(
         }
 
         emitterComponents.forEach { it.init(emitterData) }
-        blocked = false
+        blocked.set(false)
     }
 
     private var locMisses = 0
@@ -198,11 +199,12 @@ class Emitter(
     private var emitterMisses = 0
 
     override fun tick(): EmitterTickResult {
-        if (blocked) {
+        if (blocked.get()) {
+            println("${unrealizedEmitter.id} blocked!")
             return EmitterTickResult(true)
         }
 
-        blocked = true
+        blocked.set(true)
 
         parent?.pose?.let { setPose(it) }
         emitterRotation = calculateEmitterRotation()
@@ -357,7 +359,8 @@ class Emitter(
                                         flags.rotation = (nextDatum.vec.rot != cp.vec.rot)
                                         flags.scale = (nextDatum.vec.scale != cp.vec.scale)
                                         flags.transformationInterpolation = (prevDt != cp.time - prevDatum.time)
-//                                        flags.transparency = (nextDatum.vec.alpha != cp.vec.alpha)
+                                        flags.transparency = (nextDatum.vec.alpha != cp.vec.alpha)
+                                        if (DEBUG_DISPLAY_DATA >= 1) println("  | TRANSPARENCY: ${nextDatum.vec.alpha * 255.0}")
 
                                         particle.updatePacket(EntityDataBuilder, true, nd, flags)
                                             ?.let { dataPackets += it }
@@ -388,6 +391,7 @@ class Emitter(
                                     flags.display = color != null
                                     flags.rotation = (second.vec.rot != first.vec.rot)
                                     flags.scale = (second.vec.scale != first.vec.scale)
+                                    flags.transparency = (second.vec.alpha != first.vec.alpha)
 
                                     if (teleportationDuration != null) {
                                         nd.teleportationDuration = teleportationDuration!!
@@ -517,7 +521,7 @@ class Emitter(
 
         if (!dead && emitterData.isActive) spawnParticles()
 
-        blocked = false
+        blocked.set(false)
         return EmitterTickResult(true, deadParticleIDs)
     }
 

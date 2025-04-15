@@ -83,8 +83,15 @@ class VirtualEmitter(
         (environmentData.data["disp_tol"] as? Number)?.toDouble() ?: 0.05,
         (environmentData.data["col_tol"] as? Number)?.toDouble() ?: 32.0,
     )
-//    private val cache: MutableMap<UUID, Pair<MutableSet<Int>, MutableSet<Int>>> = mutableMapOf()
-//    private val positionCache: MutableMap<UUID, MutableList<TimestampedVector3d>> = mutableMapOf()
+
+    private val coefficients = DisplayDataVectorCoefficients(
+        (environmentData.data["c_alpha"] as? Number)?.toDouble() ?: 1.0,
+        (environmentData.data["c_rot"] as? Number)?.toFloat() ?: 1f,
+        (environmentData.data["c_scale"] as? Number)?.toFloat() ?: 1f,
+        (environmentData.data["c_time"] as? Number)?.toDouble() ?: 0.08,
+    )
+
+    private val timeCoefficient = (environmentData.data["c_time"] as? Number)?.toDouble() ?: 0.1
 
     override val audience: AquaticAudience = object : AquaticAudience {
         override val uuids: Collection<UUID> = emptyList()
@@ -122,11 +129,11 @@ class VirtualEmitter(
                 }
 
             path.internalLocations[particleData.id] = mutableListOf<TimestampedPos>().apply {
-                add(TimestampedPos(0, WrappedPos(particleData.pos, 0.0, LOC_TIME_COEFFICIENT)))
+                add(TimestampedPos(0, WrappedPos(particleData.pos, 0.0, timeCoefficient)))
             }
 
             path.internalTransformableData[particleData.id] = mutableListOf<TimestampedTransformableData>().apply {
-                add(TimestampedTransformableData(0, DisplayDataVector.create(particle, DEFAULT_COEFFICIENTS)))
+                add(TimestampedTransformableData(0, DisplayDataVector.create(particle, coefficients)))
             }
 
             path.coloredTextureData[particleData.id] = mutableListOf<TimestampedColoredTexture>().apply {
@@ -177,11 +184,11 @@ class VirtualEmitter(
             }
 
             path.internalLocations[particle.data.id]!!.apply {
-                add(TimestampedPos(particle.data.age.toInt(), WrappedPos(particle.data.pos, particle.data.age, LOC_TIME_COEFFICIENT)))
+                add(TimestampedPos(particle.data.age.toInt(), WrappedPos(particle.data.pos, particle.data.age, timeCoefficient)))
             }
 
             path.internalTransformableData[particle.data.id]!!.apply {
-                add(TimestampedTransformableData(particle.data.age.toInt(), DisplayDataVector.create(particle, DEFAULT_COEFFICIENTS)))
+                add(TimestampedTransformableData(particle.data.age.toInt(), DisplayDataVector.create(particle, coefficients)))
             }
 
             path.coloredTextureData[particle.data.id]!!.apply {
@@ -255,14 +262,6 @@ class VirtualEmitter(
             random,
             runtime,
         )
-    }
-
-    companion object {
-        val DEFAULT_COEFFICIENTS = DisplayDataVectorCoefficients(
-            time = 0.08
-        )
-
-        val LOC_TIME_COEFFICIENT = 0.1
     }
 }
 

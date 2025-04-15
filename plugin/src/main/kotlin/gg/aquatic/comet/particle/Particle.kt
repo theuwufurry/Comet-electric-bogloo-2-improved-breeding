@@ -195,8 +195,6 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
             flags to newData
         } ?: return null
 
-
-
         previousEntityData = newData.copy()
 
         return entityDataBuilder.getDataFor(

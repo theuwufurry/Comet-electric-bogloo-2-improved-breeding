@@ -19,6 +19,7 @@ import gg.aquatic.waves.util.audience.GlobalAudience
 import org.bukkit.Location
 import org.joml.Vector3d
 import java.util.*
+import kotlin.system.measureNanoTime
 
 data class UnrealizedEmitter(
     override val id: String,
@@ -34,32 +35,44 @@ data class UnrealizedEmitter(
         parent: Parent?,
         location: Location,
         environmentData: EnvironmentData,
-        audience: AquaticAudience
-    ): Emitter {
+        audience: AquaticAudience,
+        after: (AbstractEmitter) -> Unit,
+    ) {
         val emitterData = EmitterData(UUID.randomUUID())
         emitterData.world = location.world
         emitterData.location = location
         emitterData.variable.putAll(environmentData.data)
-        val emitter =  Emitter(
-            parent,
-            components,
-            rateComponent,
-            distanceCullingComponent,
-            updateFrequencyComponent,
-            billboardConstraints, location, emitterData, this, forwardVector, environmentData, audience, false
-        )
 
-        GlobalTicker.addEmitter(emitter)
+        val initialization = {
+            val emitter: Emitter
+            val t = measureNanoTime {
+                emitter = Emitter(
+                    parent,
+                    components,
+                    rateComponent,
+                    distanceCullingComponent,
+                    updateFrequencyComponent,
+                    billboardConstraints, location, emitterData, this, forwardVector, environmentData, audience, false
+                )
+            }
 
-        return emitter
+            println("$id took ${t.toDouble() / 1_000_000.0}ms")
+
+            after(emitter)
+
+            emitter
+        }
+
+        GlobalTicker.addInitialization(initialization)
     }
 
     override fun realize(
         parent: Parent?,
         location: Location,
         environmentData: EnvironmentData,
-    ): Emitter {
-        return realize(parent, location, environmentData, GlobalAudience())
+        after: (AbstractEmitter) -> Unit,
+    ) {
+        realize(parent, location, environmentData, GlobalAudience(), after)
     }
 
     override fun internalRealize(

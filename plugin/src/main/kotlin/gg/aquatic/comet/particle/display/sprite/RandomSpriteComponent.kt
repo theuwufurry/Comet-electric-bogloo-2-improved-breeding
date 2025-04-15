@@ -12,7 +12,6 @@ import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.api.particle.display.sprite.SpriteComponent
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
 import javax.script.CompiledScript
-import kotlin.random.Random
 
 class RandomSpriteComponent(
     private val weightedSprites: List<Pair<CompiledScript, CompiledScript>>,
