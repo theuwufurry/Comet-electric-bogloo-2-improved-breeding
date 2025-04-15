@@ -14,11 +14,16 @@ colors ARE important, use radial check
 optimize in between w/ douglas for everything else
  */
 
+/**
+ * @param considerColorTex Whether to consider color and textures in optimizations. False is faster.
+ */
 class CachedPath(
     val locTol: Double = 0.05,
     val dispTol: Double = 0.05,
     val colTol: Double = 32.0,
+    val considerColorTex: Boolean
 ) {
+    val emitterData: MutableList<TimestampedEmitterData> = mutableListOf()
     /**
      * particle id -> < loc hashes , display hashes >
      */
@@ -101,17 +106,19 @@ class CachedPath(
             val ddTimes = mutableListOf<Int>()
 
             ddTimes += transformableTimes
-            ddTimes += colorTexTimes
+            if (considerColorTex) ddTimes += colorTexTimes
             val internalTransformables = internalTransformableData[id]!!
             val filledTimes = fillTransparency(internalTransformables)
             if (DEBUG_DISPLAY_DATA >= 1) println("  | FILLED: $filledTimes")
             ddTimes += filledTimes
             ddTimes.sort()
+
+//            println("ddTimes.size: ${ddTimes.size}")
             val r: OptimizationResult
             if (DEBUG_LOCS >= 1) println("===============")
             if (DEBUG_LOCS >= 1) println("  | LOC TIMES: $locTimes")
             if (DEBUG_LOCS >= 1) println("  | T TIMES: $transformableTimes")
-            if (DEBUG_LOCS >= 1) println("  | TEX TIMES: $colorTexTimes")
+            if (considerColorTex) if (DEBUG_LOCS >= 1) println("  | TEX TIMES: $colorTexTimes")
             if (DEBUG_LOCS >= 1) println("  | DDTIMES: $ddTimes")
             val t = measureNanoTime { r = actualize(optimize(locTimes, ddTimes.toList())) }
 
@@ -140,7 +147,7 @@ class CachedPath(
             allUpdates.addAll(r.ddUpdates)
             allUpdates.addAll(transformableTimes)
             allUpdates.addAll(filledTimes)
-            allUpdates.addAll(colorTexTimes)
+            if (considerColorTex) allUpdates.addAll(colorTexTimes)
 
             if (DEBUG_LOCS >= 1) println("  | ALL UPDATES: $allUpdates")
 
@@ -150,7 +157,14 @@ class CachedPath(
             transformableData[id] = mappedTransformables
         }
 
+        clearInternals()
+
         return this
+    }
+
+    private fun clearInternals() {
+        internalLocations.clear()
+        internalTransformableData.clear()
     }
 
     companion object {
@@ -219,6 +233,12 @@ class TimestampedTransformableData(
         """.trimIndent()
     }
 }
+
+class TimestampedEmitterData(
+    val time: Int,
+    val dead: Boolean,
+    val spawns: Int,
+)
 
 private fun simplifyColors(
     toSimplify: MutableList<TimestampedColoredTexture>,

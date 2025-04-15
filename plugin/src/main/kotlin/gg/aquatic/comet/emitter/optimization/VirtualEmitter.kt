@@ -82,6 +82,7 @@ class VirtualEmitter(
         (environmentData.data["loc_tol"] as? Number)?.toDouble() ?: 0.05,
         (environmentData.data["disp_tol"] as? Number)?.toDouble() ?: 0.05,
         (environmentData.data["col_tol"] as? Number)?.toDouble() ?: 32.0,
+        (environmentData.data["c_coltex"] as? Boolean) ?: true,
     )
 
     private val coefficients = DisplayDataVectorCoefficients(
@@ -111,10 +112,14 @@ class VirtualEmitter(
 
     init {
         emitterComponents.forEach { it.init(emitterData) }
+
+        path.emitterData.add(TimestampedEmitterData(0, false, 0))
     }
 
     private fun spawnParticles() {
-        repeat(rateComponent.toEmit(emitterData)) {
+        val amount = rateComponent.toEmit(emitterData)
+        path.emitterData.add(TimestampedEmitterData(emitterData.age.toInt(), false, amount))
+        repeat(amount) {
             val particleData = ParticleData(random.uuid())
             val particle = Particle(particleData)
             particleData.particle = particle
@@ -162,6 +167,7 @@ class VirtualEmitter(
         if (emitterData.dead || (parent != null && parent.dead)) {
             dead = true
             emitterComponents.forEach { it.die(emitterData) }
+            path.emitterData += TimestampedEmitterData(emitterData.age.toInt(), true, 0)
         }
 
         if (dead && particles.size == 0) {

@@ -4,6 +4,7 @@ import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.emitter.optimization.CachedPath
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
+import gg.aquatic.waves.util.map
 import gg.aquatic.waves.util.toUser
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
@@ -39,6 +40,14 @@ object GlobalTicker {
 
     val blocked = AtomicBoolean(false)
     private fun tick() {
+        if (DEBUG >= 1 && emitters.size > 1) {
+            println("--- TICK ---")
+            println("  | eI: ${emitterInitializations.size}")
+            println("  | e: ${emitters.size}")
+            println("  | eTA: ${emittersToAdd.size}")
+            println("  | eC: ${emitterCache.size}")
+        }
+
         if (blocked.get()) {
             println("Thread blocked")
             return
@@ -46,8 +55,12 @@ object GlobalTicker {
 
         blocked.set(true)
 
-        emitters += emitterInitializations.map { it() }
-        emitterInitializations.clear()
+        val start = System.currentTimeMillis()
+        while(true) {
+            val curr = emitterInitializations.poll() ?: break
+            emitters += curr()
+            if (System.currentTimeMillis() - start > TIMEOUT_MS) break
+        }
 
         val deadEmitters = HashSet<AbstractEmitter>()
         val playerDeadParticleMap: MutableMap<Player, MutableList<Int>> = mutableMapOf()
@@ -71,7 +84,7 @@ object GlobalTicker {
             }
         }
 
-        if (emitters.size > 1) {
+        if (DEBUG >= 1 && emitters.size > 1) {
             println("Tick Took ${t.toDouble() / 1_000_000.0}ms")
         }
 
@@ -100,4 +113,7 @@ object GlobalTicker {
         emitters.forEach { it.kill() }
         emitterCache.clear()
     }
+
+    const val TIMEOUT_MS = 50
+    const val DEBUG = 1
 }
