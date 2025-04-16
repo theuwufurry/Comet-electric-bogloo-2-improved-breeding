@@ -35,9 +35,9 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
     private val defaultRotation = Quaternionf(0f, 0f, 0f, 1f)
     private val defaultScale = Vector3f(1f)
 
-    private val key = Key.key("particlecreator", "default")
+    private val key = Key.key(ResourcepackCreator.NAMESPACE, ResourcepackCreator.FONT_NAME)
 
-    private val DEBUG = 2
+    private val DEBUG = 0
 
     override fun getDataFor(
         entityData: EntityData,

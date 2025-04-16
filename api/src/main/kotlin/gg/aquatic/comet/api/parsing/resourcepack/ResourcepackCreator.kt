@@ -19,7 +19,8 @@ object ResourcepackCreator {
     private const val RP_NAME = "Particle Creator"
     private const val RP_IMAGE = "pack.png"
     private const val RP_META = "pack.mcmeta"
-    private const val NAMESPACE = "particlecreator"
+    const val NAMESPACE = "p"
+    const val FONT_NAME = "d"
     private const val PARTICLES_PNG = "particles.png"
 
     val modelMap: MutableMap<String, ItemStack> = mutableMapOf()
@@ -93,10 +94,10 @@ object ResourcepackCreator {
         val itemFolder = File(dataFolder.path + "/output/$RP_NAME/assets/minecraft/models/item")
         itemFolder.mkdirs()
 
-        val modelFolder = File(dataFolder.path + "/output/$RP_NAME/assets/minecraft/models/item/particlecreator")
+        val modelFolder = File(dataFolder.path + "/output/$RP_NAME/assets/minecraft/models/item/$NAMESPACE")
         modelFolder.mkdirs()
 
-        val texturesFolder = File(dataFolder.path + "/output/$RP_NAME/assets/minecraft/textures/item/particlecreator")
+        val texturesFolder = File(dataFolder.path + "/output/$RP_NAME/assets/minecraft/textures/item/$NAMESPACE")
         texturesFolder.mkdirs()
 
         val gson = GsonBuilder().setPrettyPrinting().create()
@@ -122,9 +123,9 @@ object ResourcepackCreator {
             val texturesObject = rootObject.getAsJsonObject("textures")
 
             texturesObject.remove("0")
-            texturesObject.addProperty("0", "item/particlecreator/" + file.nameWithoutExtension)
+            texturesObject.addProperty("0", "item/$NAMESPACE/" + file.nameWithoutExtension)
             texturesObject.remove("particle")
-            texturesObject.addProperty("particle", "item/particlecreator/" + file.nameWithoutExtension)
+            texturesObject.addProperty("particle", "item/$NAMESPACE/" + file.nameWithoutExtension)
 
             newModel.writeText(gson.toJson(rootObject))
 
@@ -140,7 +141,7 @@ object ResourcepackCreator {
 
             predicate.addProperty("custom_model_data", index)
             override.add("predicate", predicate)
-            override.addProperty("model", "item/particlecreator/${file.nameWithoutExtension}")
+            override.addProperty("model", "item/$NAMESPACE/${file.nameWithoutExtension}")
             overridesArr.add(override)
         }
 
@@ -188,7 +189,7 @@ object ResourcepackCreator {
     private fun genFont(images: List<File>) {
         val dataFolder = AbstractParticleEmitter.INSTANCE.dataFolder
 
-        val font = File(dataFolder.path + "/output/$RP_NAME/assets/$NAMESPACE/font/default.json")
+        val font = File(dataFolder.path + "/output/$RP_NAME/assets/$NAMESPACE/font/$FONT_NAME.json")
         font.parentFile.mkdirs()
 
         val providers = JsonArray()
