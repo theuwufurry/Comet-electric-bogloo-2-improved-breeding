@@ -111,16 +111,29 @@ class VirtualEmitter(
     override val isPregen: Boolean = true
     private var time = 0
 
+    var emitterActionsBuffer = mutableListOf<(AbstractEmitter) -> Unit>()
+
+    /**
+     * Particle UUID -> Actions
+     */
+    var particleActionsBuffer = mutableMapOf<UUID, TimestampedParticleActions>()
+
     init {
         emitterComponents.forEach { it.init(emitterData) }
 
-        path.emitterData.add(TimestampedEmitterData(0, false, emptyList()))
+        if (emitterActionsBuffer.isNotEmpty()) {
+            path.emitterData.add(TimestampedEmitterData(0, false, emptyList()))
+            path.emitterActions += TimestampedEmitterActions(0, emitterActionsBuffer)
+            emitterActionsBuffer = mutableListOf()
+        }
     }
 
     private fun spawnParticles() {
+        particleActionsBuffer = mutableMapOf()
         val spawns = mutableListOf<UUID>()
         repeat(rateComponent.toEmit(emitterData)) {
-            val particleData = ParticleData(random.uuid())
+            val uuid = random.uuid()
+            val particleData = ParticleData(uuid)
             spawns += particleData.id
             val particle = Particle(particleData)
             particleData.particle = particle
@@ -160,12 +173,18 @@ class VirtualEmitter(
         }
 
         path.emitterData.add(TimestampedEmitterData(time, false, spawns))
+        for ((id, action) in particleActionsBuffer) {
+            if (action.actions.isNotEmpty()) {
+                path.particleActions[id] = mutableListOf(action)
+            }
+        }
     }
 
     override fun tick(): EmitterTickResult {
         time++
         parent?.pose?.let { setPose(it) }
         emitterRotation = calculateEmitterRotation()
+        emitterActionsBuffer = mutableListOf()
         emitterComponents.forEach { it.execute(emitterData) }
 
         if (emitterData.dead || (parent != null && parent.dead)) {
@@ -178,6 +197,7 @@ class VirtualEmitter(
             return EmitterTickResult(false)
         }
 
+        particleActionsBuffer = mutableMapOf()
         for (particle in particles) {
             fun die() {
                 deadParticles += particle
@@ -194,11 +214,21 @@ class VirtualEmitter(
             }
 
             path.internalLocations[particle.data.id]!!.apply {
-                add(TimestampedPos(particle.data.age.toInt(), WrappedPos(particle.data.pos, particle.data.age, timeCoefficient)))
+                add(
+                    TimestampedPos(
+                        particle.data.age.toInt(),
+                        WrappedPos(particle.data.pos, particle.data.age, timeCoefficient)
+                    )
+                )
             }
 
             path.internalTransformableData[particle.data.id]!!.apply {
-                add(TimestampedTransformableData(particle.data.age.toInt(), DisplayDataVector.create(particle, coefficients)))
+                add(
+                    TimestampedTransformableData(
+                        particle.data.age.toInt(),
+                        DisplayDataVector.create(particle, coefficients)
+                    )
+                )
             }
 
             path.coloredTextureData[particle.data.id]!!.apply {
@@ -218,6 +248,21 @@ class VirtualEmitter(
                 particleComponents.forEach { it.die(emitterData, particle.data) }
                 die()
                 continue
+            }
+        }
+
+        if (emitterActionsBuffer.isNotEmpty()) {
+            path.emitterActions += TimestampedEmitterActions(time, emitterActionsBuffer)
+            emitterActionsBuffer = mutableListOf()
+        }
+
+        for ((id, action) in particleActionsBuffer) {
+            if (action.actions.isNotEmpty()) {
+                (path.particleActions[id] ?: run {
+                    val a = mutableListOf<TimestampedParticleActions>()
+                    path.particleActions[id] = a
+                    a
+                }) += action
             }
         }
 
@@ -263,7 +308,8 @@ class VirtualEmitter(
         location: Location,
         environmentData: EnvironmentData,
         audience: AquaticAudience,
-        random: DeterministicRandom
+        random: DeterministicRandom,
+        uuid: UUID
     ) {
         (unrealizedEmitter as UnrealizedEmitter).virtualRealize(
             parent,
@@ -271,6 +317,7 @@ class VirtualEmitter(
             environmentData,
             random,
             runtime,
+            uuid
         )
     }
 }

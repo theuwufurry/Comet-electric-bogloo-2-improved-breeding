@@ -39,5 +39,6 @@ abstract class AbstractUnrealizedEmitter {
         environmentData: EnvironmentData = EnvironmentData(),
         audience: AquaticAudience,
         random: DeterministicRandom,
+        uuid: UUID,
     ): AbstractEmitter
 }

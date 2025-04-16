@@ -48,6 +48,7 @@ abstract class AbstractEmitter : Parent {
         environmentData: EnvironmentData = EnvironmentData(),
         audience: AquaticAudience,
         random: DeterministicRandom,
+        uuid: UUID = random.uuid()
     )
 }
 

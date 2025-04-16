@@ -12,6 +12,8 @@ import gg.aquatic.comet.api.parsing.compile
 import gg.aquatic.comet.api.parsing.emitterEngine
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.emitter.UnrealizedEmitter
+import gg.aquatic.comet.emitter.optimization.TimestampedParticleActions
+import gg.aquatic.comet.emitter.optimization.VirtualEmitter
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.expression
 import org.bukkit.Location
@@ -44,6 +46,9 @@ class SpawnEmitterSubAction(
     override fun execute(context: ActionContext) {
         val pose = context.pose ?: throw NullPointerException("Cannot use Spawn Emitter SubAction in this event!")
 
+        val vEm =
+            if (context.otherEmitterData.emitter!!.isPregen) context.otherEmitterData.emitter!! as VirtualEmitter else null
+
         val parent = when (space) {
             EmitterSpace.PARENT_EMITTER -> context.otherEmitterData.emitter!!
             EmitterSpace.PARENT_PARTICLE -> context.otherParticleData!!.particle
@@ -58,6 +63,44 @@ class SpawnEmitterSubAction(
                 pose.pos.z + pose.dir.z * context.otherEmitterData.emitter!!.random.kotlinRandom.nextDouble() * magnitude
             ).apply { direction = Vector(pose.dir.x, pose.dir.y, pose.dir.z) }
 
+            val uuid = context.otherEmitterData.emitter!!.random.uuid()
+
+            vEm?.let {
+                if (space == EmitterSpace.PARENT_PARTICLE) {
+                    (it.particleActionsBuffer[context.otherParticleData!!.id] ?: run {
+                        val a = TimestampedParticleActions(context.otherParticleData!!.age.toInt(), mutableListOf())
+                        it.particleActionsBuffer[context.otherParticleData!!.id] = a
+                        a
+                    }).let { actionsBuffer ->
+                        actionsBuffer.actions += { em, pd ->
+                            em.realize(
+                                unrealizedEmitter,
+                                pd,
+                                location,
+                                em.environmentData,
+                                em.audience,
+                                em.random,
+                                uuid
+                            )
+                        }
+                    }
+                } else {
+                    it.emitterActionsBuffer.let { actionsBuffer ->
+                        actionsBuffer += { em ->
+                            em.realize(
+                                unrealizedEmitter,
+                                if (space != EmitterSpace.WORLD) em else null,
+                                location,
+                                em.environmentData,
+                                em.audience,
+                                em.random,
+                                uuid
+                            )
+                        }
+                    }
+                }
+            }
+
             context.otherEmitterData.emitter!!.realize(
                 unrealizedEmitter,
                 parent,
@@ -65,6 +108,7 @@ class SpawnEmitterSubAction(
                 context.otherEmitterData.emitter!!.environmentData,
                 context.otherEmitterData.emitter!!.audience,
                 context.otherEmitterData.emitter!!.random,
+                uuid
             )
         }
     }
@@ -78,7 +122,9 @@ class SpawnEmitterSubAction(
             val emitterData = EmitterData()
             val engine = emitterEngine(emitterData)
             val unrealizedEmitterIDs = if (jsonObject.get("emitter").isJsonPrimitive) {
-                listOf(engine.compile(jsonObject.expression("emitter") ?: return null, macros, true).eval() as String)
+                listOf(
+                    engine.compile(jsonObject.expression("emitter") ?: return null, macros, true).eval() as String
+                )
             } else {
                 val arr = jsonObject.getAsJsonArray("emitter")
                 val ids: MutableList<String> = mutableListOf()

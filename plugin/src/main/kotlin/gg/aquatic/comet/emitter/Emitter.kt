@@ -41,98 +41,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.random.Random
 import kotlin.system.measureNanoTime
 
-/*
-components intertwine w/ eachother, so need to do full simulation
-    components provide path in pre-realization
-    path is optimized, but original data is kept
-    after realization
-        component still has access to cached data, basically the same run-through happens
-                store hash?
-            other components need to know if there's a divergence, so need to do true run-through
-
-    MUST update on sprite change
-    tracked things:
-        position (tele. packets)
-        display data
-            scale
-            color
-            these deal w/ same interpolation duration so their updates must come at the same time or at multiples of interpolation duration
-
-            color: 3d vector
-            scale: 1d
-            rotation: 4d (quaternion)
-    emitter uses , to see if path deviations has happened
-        hash for position
-        hash for display
-    components hash all available data
-        keep available hashes PER particle id; if any hash isn't contained, then we have fucked up
-
-    location dependency?
-        no - can pregenerate effects no problemo
-        yes - {
-            pregenerating takes some time, Tp
-            tick = Td
-
-            each tich, pregenerate AT MINIMUM particles for next tick, keep generating until tick ends
-        }
-    must also tick emitter components
-        should generate all at once
-        fuck
-            particle id's must be deterministic
-                all components must be deterministic
-            starting conditions are the same for emitters
-        during this time all subemitters must also be instant emitters
-            don't want to make every single component have to handle it separately
-            emitter.subEmitter method?
-    data stored for each UnrealizedEmitter, map from emitter id to cached data
-        when emitter dies, clear that cache
-    subemitters cannot be treated the same;
-        report all the caches once everyone is done, but we need to basically spawn another ticker
-    launch ticker on external emitter spawn
-        subemitters get added to stack
-
-
-
-    teleportation duration can only be changed during INACTIVE period or at Display Update
-
-    given a period P such that teleportation duration is only set to D at the beginning of P,
-    teleports within P must happen at minimum D ticks apart
-    the last teleport of P must be sent at time T such that T = ||P|| - D
-
-    a path consists of consecutive periods^
-    divided at either display data updates, or inactive periods
-        inactive periods are when the only non zero component of the delta of 2 consecutive display data points is the time component
-
-    location and display data path solutions likely have multiple valid configurations, maybe do some iteration?
-
-    explore:
-        baseline would have simplified display data points at times 0 and 10 and complex positioning
-        find minimum teleporation duration, and send that at the start
-            assuming no inactive location periods, send positioning continuously
-        simple case, only location-complex, depends only on location tolerance
-
-        complex display data and simple positioning is similarly non problematic
-
-
-    strategy:
-        Simplify locations and display data
-
-        fun simplify(<interval, with locs and display data> I): <timestamped teleport durations>
-            var min = # of loc updates on I
-
-            for (h (harmonic period) such that period / h < min)
-                if (locs fit h) min = period / h
-
-            # now that we have the interval attempt, min >= 1. now try splicing up based on display data
-
-            var running = ?
-            for (display data on I)
-                val K = interval from last to previous display data
-                running += simplify(K)
-
-            return running or best, whichever is better
- */
-
 class Emitter(
     val parent: Parent? = null,
     val components: List<Component>,
@@ -148,11 +56,13 @@ class Emitter(
     override val audience: AquaticAudience,
     internal: Boolean,
     val seed: Int = Random.nextInt(),
-) : AbstractEmitter() {
+
+    ) : AbstractEmitter() {
     private val dustOptions =
         DustOptions(Color.fromRGB(Random.nextInt(255), Random.nextInt(255), Random.nextInt(255)), 0.5f)
 
-    val static = ((environmentData.data["static"] as? Boolean) ?: true) && (environmentData.data["optimize"] != null && environmentData.data["optimize"] == true)
+    val optimized = environmentData.data["optimize"] != null && environmentData.data["optimize"] == true
+    val static = ((environmentData.data["static"] as? Boolean) ?: true) && optimized
 
     override val id: UUID = emitterData.id
     val emitterComponents: List<EmitterComponent> =
@@ -182,9 +92,9 @@ class Emitter(
         emitterData.emitter = this
 
         if (!internal) {
-            if (environmentData.data["optimize"] != null && environmentData.data["optimize"] == true) {
+            if (optimized) {
                 println(
-                    "Took: ${
+                    "${unrealizedEmitter.id} took: ${
                         measureNanoTime {
                             VirtualRuntime(this).generateCaches()
                         }.toDouble() / 1_000_000.0
@@ -193,7 +103,21 @@ class Emitter(
             }
         }
 
-        emitterComponents.forEach { it.init(emitterData) }
+        if (!static) {
+            emitterComponents.forEach { it.init(emitterData) }
+        }
+
+        if (optimized) {
+            val c = GlobalTicker.emitterCache[emitterData.id]
+            if (c != null) {
+                c.emitterActions.firstOrNull { it.time == 0 }?.let { emData ->
+                    emData.actions.forEach { a ->
+                        a(this)
+                    }
+                }
+            }
+        }
+
         blocked.set(false)
     }
 
@@ -258,7 +182,7 @@ class Emitter(
 
             particleComponents.forEach { it.execute(emitterData, particle.data) }
 
-            if (environmentData.data["optimize"] != null && environmentData.data["optimize"] == true) {
+            if (optimized) {
                 run optimized@{
                     val c = GlobalTicker.emitterCache[emitterData.id]
                     if (c == null) {
@@ -534,7 +458,8 @@ class Emitter(
                 for (packet in dataPackets) {
                     try {
                         player.toUser().sendPacketSilently(packet)
-                    } catch (ignored: NullPointerException) {}
+                    } catch (ignored: NullPointerException) {
+                    }
                 }
             }
         }
@@ -576,6 +501,12 @@ class Emitter(
             return EmitterTickResult(false)
         }
 
+        c.emitterActions.firstOrNull { it.time == time }?.let { emData ->
+            emData.actions.forEach { a ->
+                a(this)
+            }
+        }
+
         for (particle in particles) {
             particle.data.age++
 
@@ -590,6 +521,8 @@ class Emitter(
                     particleMisses++
                     return@optimized
                 }
+
+                c.particleActions[particle.data.id]?.firstOrNull { it.time == particle.data.age.toInt() }?.actions?.forEach { it(this@Emitter, particle) }
 
                 var teleportationDuration: Int? = null
                 //match!!
@@ -828,7 +761,8 @@ class Emitter(
                 for (packet in dataPackets) {
                     try {
                         playerManager.sendPacketSilently(player, packet)
-                    } catch (ignored: NullPointerException) {}
+                    } catch (ignored: NullPointerException) {
+                    }
                 }
             }
         }
@@ -845,7 +779,8 @@ class Emitter(
         for (player in currentViewers) {
             try {
                 player.toUser().sendPacketSilently(WrapperPlayServerDestroyEntities(*ids))
-            } catch (ignored: NullPointerException) {}
+            } catch (ignored: NullPointerException) {
+            }
         }
     }
 
@@ -871,7 +806,7 @@ class Emitter(
                 particles += particle
             }
 
-            if (!(environmentData.data["optimize"] != null && environmentData.data["optimize"] == true)) {
+            if (!optimized) {
                 end()
                 return@repeat
             }
@@ -929,7 +864,8 @@ class Emitter(
                 for (packet in bundle) {
                     try {
                         player.toUser().sendPacketSilently(packet)
-                    } catch (ignored: NullPointerException) {}
+                    } catch (ignored: NullPointerException) {
+                    }
                 }
             }
         }
@@ -937,19 +873,19 @@ class Emitter(
 
 
     private fun staticSpawnParticles(timestampedEmitterData: TimestampedEmitterData) {
+        val c = GlobalTicker.emitterCache[emitterData.id]
+        if (c == null) {
+            emitterMisses++
+            AbstractParticleEmitter.INSTANCE.logger.severe("${unrealizedEmitter.id} emitter id not found in cache! Please submit a bug report.")
+            return
+        }
+
         val bundle: MutableList<PacketWrapper<*>> = mutableListOf()
         for (spawn in timestampedEmitterData.spawns) {
             val particleData = ParticleData(spawn)
             val particle = Particle(particleData)
-//            particleData.particle = particle
-//            particleData.origin = location.toVector().toVector3d()
-//            particleData.billboardConstraints = billboardConstraints
-//            particleData.interpolationDelay = updateFrequencyComponent.interpolationDelay
-//            particleData.transformationInterpolationDuration = updateFrequencyComponent.initialInterpolationDuration
 
-//            particleComponents.forEach { it.execute(emitterData, particleData) }
-//
-//            particle.init()
+            c.particleActions[particle.data.id]?.firstOrNull { it.time == 0 }?.actions?.forEach { it(this@Emitter, particle) }
 
             fun end(d: ParticleData = particle.data) {
                 val packets = particle.getAddPacket(d)
@@ -1016,7 +952,8 @@ class Emitter(
                 for (packet in bundle) {
                     try {
                         player.toUser().sendPacketSilently(packet)
-                    } catch (ignored: NullPointerException) {}
+                    } catch (ignored: NullPointerException) {
+                    }
                 }
             }
         }
@@ -1054,7 +991,8 @@ class Emitter(
         location: Location,
         environmentData: EnvironmentData,
         audience: AquaticAudience,
-        random: DeterministicRandom
+        random: DeterministicRandom,
+        uuid: UUID
     ) {
         unrealizedEmitter.internalRealize(
             parent,
@@ -1062,6 +1000,7 @@ class Emitter(
             environmentData,
             audience,
             random,
+            uuid
         )
     }
 

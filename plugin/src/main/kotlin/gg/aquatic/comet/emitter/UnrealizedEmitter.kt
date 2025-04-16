@@ -56,8 +56,6 @@ data class UnrealizedEmitter(
                 )
             }
 
-            println("$id took ${t.toDouble() / 1_000_000.0}ms")
-
             after(emitter)
 
             emitter
@@ -81,13 +79,14 @@ data class UnrealizedEmitter(
         environmentData: EnvironmentData,
         audience: AquaticAudience,
         random: DeterministicRandom,
+        uuid: UUID
     ): AbstractEmitter {
-        val emitterData = EmitterData(random.uuid())
+        val emitterData = EmitterData(uuid)
         emitterData.world = location.world
         emitterData.location = location
         emitterData.variable.putAll(environmentData.data)
 
-        return Emitter(
+        val e = Emitter(
             parent,
             components,
             rateComponent,
@@ -101,10 +100,12 @@ data class UnrealizedEmitter(
             environmentData,
             audience,
             true,
-            seed = random.kotlinRandom.nextInt()
-        ).also {
-            GlobalTicker.addEmitter(it)
-        }
+            seed = random.kotlinRandom.nextInt(),
+        )
+
+        GlobalTicker.addEmitter(e)
+
+        return e
     }
 
     fun virtualRealize(
@@ -113,8 +114,9 @@ data class UnrealizedEmitter(
         environmentData: EnvironmentData,
         random: DeterministicRandom,
         runtime: VirtualRuntime,
+        uuid: UUID,
     ) {
-        val emitterData = EmitterData(random.uuid())
+        val emitterData = EmitterData(uuid)
         emitterData.world = location.world
         emitterData.location = location
         emitterData.variable.putAll(environmentData.data)
