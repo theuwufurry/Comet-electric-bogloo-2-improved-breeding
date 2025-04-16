@@ -109,18 +109,19 @@ class VirtualEmitter(
         }
 
     override val isPregen: Boolean = true
+    private var time = 0
 
     init {
         emitterComponents.forEach { it.init(emitterData) }
 
-        path.emitterData.add(TimestampedEmitterData(0, false, 0))
+        path.emitterData.add(TimestampedEmitterData(0, false, emptyList()))
     }
 
     private fun spawnParticles() {
-        val amount = rateComponent.toEmit(emitterData)
-        path.emitterData.add(TimestampedEmitterData(emitterData.age.toInt(), false, amount))
-        repeat(amount) {
+        val spawns = mutableListOf<UUID>()
+        repeat(rateComponent.toEmit(emitterData)) {
             val particleData = ParticleData(random.uuid())
+            spawns += particleData.id
             val particle = Particle(particleData)
             particleData.particle = particle
             particleData.origin = location.toVector().toVector3d()
@@ -157,9 +158,12 @@ class VirtualEmitter(
 
             particles += particle
         }
+
+        path.emitterData.add(TimestampedEmitterData(time, false, spawns))
     }
 
     override fun tick(): EmitterTickResult {
+        time++
         parent?.pose?.let { setPose(it) }
         emitterRotation = calculateEmitterRotation()
         emitterComponents.forEach { it.execute(emitterData) }
@@ -167,10 +171,10 @@ class VirtualEmitter(
         if (emitterData.dead || (parent != null && parent.dead)) {
             dead = true
             emitterComponents.forEach { it.die(emitterData) }
-            path.emitterData += TimestampedEmitterData(emitterData.age.toInt(), true, 0)
         }
 
         if (dead && particles.size == 0) {
+            path.emitterData += TimestampedEmitterData(time, true, emptyList())
             return EmitterTickResult(false)
         }
 

@@ -1,5 +1,6 @@
 package gg.aquatic.comet.emitter.optimization
 
+import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.api.particle.display.DisplayData
 import gg.aquatic.comet.emitter.optimization.vec.DisplayDataVector
 import gg.aquatic.comet.emitter.optimization.vec.Vec
@@ -237,7 +238,7 @@ class TimestampedTransformableData(
 class TimestampedEmitterData(
     val time: Int,
     val dead: Boolean,
-    val spawns: Int,
+    val spawns: List<UUID>,
 )
 
 private fun simplifyColors(

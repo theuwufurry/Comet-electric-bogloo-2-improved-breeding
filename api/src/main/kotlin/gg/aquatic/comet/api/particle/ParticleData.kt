@@ -1,6 +1,7 @@
 package gg.aquatic.comet.api.particle
 
 import gg.aquatic.comet.api.emitter.AbstractEmitter
+import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.VariableMutableMap
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
 import gg.aquatic.comet.api.particle.display.DisplayData
@@ -53,11 +54,13 @@ data class ParticleData(
         interpolationDelay = other.interpolationDelay
         transformationInterpolationDuration = other.transformationInterpolationDuration
 
-        variable.clear()
-        variable.putAll(other.variable)
+        variable = other.variable
+//        variable.clear()
+//        variable.putAll(other.variable)
     }
 
     var variable: MutableMap<String, Any> = VariableMutableMap()
+    val externalVariable: MutableMap<String, Any> = EmitterData.MapWrapper(::variable)
 
     fun locHash(): Int {
         return arrayOf(origin, relativePosition).contentHashCode()
@@ -65,13 +68,6 @@ data class ParticleData(
 
     fun displayHash(): Int {
         return arrayOf(displayData, color, rotation, scale).contentHashCode()
-    }
-
-    /**
-     * Hash what applies to most components
-     */
-    fun accessibleHashCode(): Int {
-        return arrayOf(dead, age, maxLife, displayData, color, origin, relativePosition, translation, rotation, scale, velocity, acceleration, variable).contentHashCode()
     }
 
     fun clone(): ParticleData {

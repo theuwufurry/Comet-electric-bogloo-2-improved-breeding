@@ -15,7 +15,8 @@ class VariableMutableMap(
     }
 
     override val entries: MutableSet<MutableMap.MutableEntry<String, Any>>
-        get() = backingMap.map { (k, v) -> VariableEntry(k, v, this) }.toMutableSet()
+        get() = EntrySetView(this)
+//        get() = backingMap.map { (k, v) -> VariableEntry(k, v, this) }.toMutableSet()
     override val keys: MutableSet<String>
         get() = backingMap.keys
     override val size: Int
@@ -80,6 +81,57 @@ class VariableMutableMap(
         override fun setValue(newValue: Any): Any {
             map[key] = newValue.tryAsDatum() ?: throw InvalidDatumTypeException(newValue)
             return newValue
+        }
+    }
+
+    private class EntrySetView(
+        private val mapInstance: VariableMutableMap
+    ) : AbstractMutableSet<MutableMap.MutableEntry<String, Any>>() {
+
+        override val size: Int
+            get() = mapInstance.backingMap.size
+
+        override fun iterator(): MutableIterator<MutableMap.MutableEntry<String, Any>> {
+            val backingIterator = mapInstance.backingMap.entries.iterator()
+
+            return object : MutableIterator<MutableMap.MutableEntry<String, Any>> {
+                private var currentBackingEntry: MutableMap.MutableEntry<String, Datum<*, *>>? = null
+
+                override fun hasNext(): Boolean = backingIterator.hasNext()
+
+                override fun next(): MutableMap.MutableEntry<String, Any> {
+                    val backingEntry = backingIterator.next()
+                    currentBackingEntry = backingEntry
+                    return VariableEntry(backingEntry.key, backingEntry.value, mapInstance)
+                }
+
+                override fun remove() {
+                    check(currentBackingEntry != null) { "next() must be called before remove()" }
+                    backingIterator.remove()
+                    currentBackingEntry = null
+                }
+            }
+        }
+
+        override fun add(element: MutableMap.MutableEntry<String, Any>): Boolean {
+            throw UnsupportedOperationException("Adding entries directly to the entry set is not supported.")
+        }
+
+        override fun clear() {
+            mapInstance.backingMap.clear()
+        }
+
+        override fun contains(element: MutableMap.MutableEntry<String, Any>): Boolean {
+            val backingDatum = mapInstance.backingMap[element.key]
+            return backingDatum != null && backingDatum.value == element.value
+        }
+
+        override fun remove(element: MutableMap.MutableEntry<String, Any>): Boolean {
+            val backingDatum = mapInstance.backingMap[element.key]
+            if (backingDatum != null && backingDatum.value == element.value) {
+                return mapInstance.backingMap.remove(element.key) != null
+            }
+            return false
         }
     }
 

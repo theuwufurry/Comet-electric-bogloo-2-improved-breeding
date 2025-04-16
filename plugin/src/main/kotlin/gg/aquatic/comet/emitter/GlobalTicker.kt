@@ -25,7 +25,7 @@ object GlobalTicker {
     val emitterCache: MutableMap<UUID, CachedPath> = ConcurrentHashMap()
 
     fun init() {
-        task = Bukkit.getScheduler().runTaskTimerAsynchronously(AbstractParticleEmitter.INSTANCE, Runnable {
+        task = Bukkit.getScheduler().runTaskTimer(AbstractParticleEmitter.INSTANCE, Runnable {
             tick()
         }, 1, 1)
     }
@@ -40,15 +40,15 @@ object GlobalTicker {
 
     val blocked = AtomicBoolean(false)
     private fun tick() {
-        if (DEBUG >= 1 && emitters.size > 1) {
-            println("--- TICK ---")
-            println("  | eI: ${emitterInitializations.size}")
-            println("  | e: ${emitters.size}")
-            println("  | eTA: ${emittersToAdd.size}")
-            println("  | eC: ${emitterCache.size}")
-        }
-
         if (blocked.get()) {
+//            if (DEBUG >= 1 && emitters.size > 0) {
+//                println("--- TICK ---")
+//                println("  | eI: ${emitterInitializations.size}")
+//                println("  | e: ${emitters.size}")
+//                println("  | eTA: ${emittersToAdd.size}")
+//                println("  | eC: ${emitterCache.size}")
+//            }
+
             println("Thread blocked")
             return
         }
@@ -84,7 +84,7 @@ object GlobalTicker {
             }
         }
 
-        if (DEBUG >= 1 && emitters.size > 1) {
+        if (DEBUG >= 1 && emitters.size > 0) {
             println("Tick Took ${t.toDouble() / 1_000_000.0}ms")
         }
 

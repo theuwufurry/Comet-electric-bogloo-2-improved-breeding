@@ -1,5 +1,6 @@
 package gg.aquatic.comet.emitter
 
+import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.emitter.*
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
@@ -151,7 +152,7 @@ class Emitter(
     private val dustOptions =
         DustOptions(Color.fromRGB(Random.nextInt(255), Random.nextInt(255), Random.nextInt(255)), 0.5f)
 
-    val static = (environmentData.data["static"] as? Boolean) ?: true
+    val static = ((environmentData.data["static"] as? Boolean) ?: true) && (environmentData.data["optimize"] != null && environmentData.data["optimize"] == true)
 
     override val id: UUID = emitterData.id
     val emitterComponents: List<EmitterComponent> =
@@ -208,7 +209,13 @@ class Emitter(
         }
 
         blocked.set(true)
+        val r = if (static) staticTick() else nonStaticTick()
+        blocked.set(false)
 
+        return r
+    }
+
+    private fun nonStaticTick(): EmitterTickResult {
         parent?.pose?.let { setPose(it) }
         emitterRotation = calculateEmitterRotation()
         emitterComponents.forEach { it.execute(emitterData) }
@@ -525,28 +532,324 @@ class Emitter(
             if (distanceSquared <= distanceCullingComponent.viewDistance) {
                 deadParticleIDs += player to rawDeadParticleIDs
                 for (packet in dataPackets) {
-                    playerManager.sendPacketSilently(player, packet)
+                    try {
+                        player.toUser().sendPacketSilently(packet)
+                    } catch (ignored: NullPointerException) {}
                 }
             }
         }
 
         deadParticles.clear()
 
-        if (!dead && emitterData.isActive) staticSpawnParticles()
+        if (!dead && emitterData.isActive) nonStaticSpawnParticles()
 
-        blocked.set(false)
         return EmitterTickResult(true, deadParticleIDs)
+
+    }
+
+    private var time = 0
+    private fun staticTick(): EmitterTickResult {
+        if (time == -1 && particles.size == 0) {
+            if (locMisses > 0 || particleMisses > 0 || emitterMisses > 0 || displayMisses > 0) {
+                println(
+                    """
+                -- ${unrealizedEmitter.id} --
+                $locMisses loc misses
+                $displayMisses display misses
+                $particleMisses particle misses
+                $emitterMisses emitter misses
+            """.trimIndent()
+                )
+            }
+
+            return EmitterTickResult(false)
+        }
+
+        if (time != -1) time++
+
+        val dataPackets: MutableList<PacketWrapper<*>> = mutableListOf()
+
+        val c = GlobalTicker.emitterCache[emitterData.id]
+        if (c == null) {
+            emitterMisses++
+            AbstractParticleEmitter.INSTANCE.logger.severe("${unrealizedEmitter.id} emitter id not found in cache! Please submit a bug report.")
+            return EmitterTickResult(false)
+        }
+
+        for (particle in particles) {
+            particle.data.age++
+
+            run optimized@{
+                fun die() {
+                    deadParticles += particle
+                }
+
+                val p = c.hashes[particle.data.id]
+
+                if (p == null) {
+                    particleMisses++
+                    return@optimized
+                }
+
+                var teleportationDuration: Int? = null
+                //match!!
+                val locs = c.locations[particle.data.id]!!
+//                        if (particle.data.age.toInt() > locs.last().time)  handle path end
+                locs.withIndex().firstOrNull { it.value.time == particle.data.age.toInt() }
+                    ?.let { (i, cp) ->
+                        if (i == locs.size - 1) {
+                            //last
+                            if (DEBUG_LOCS >= 1 || DEBUG_DISPLAY_DATA >= 1) {
+                                println("==> MATCHED END")
+                            }
+                            die()
+                            return@optimized
+                        }
+
+                        if (DEBUG_LOCS >= 1) println("=> MATCH TP : ${particle.data.age.toInt()}")
+                        val nextPos = locs.getOrNull(i + 1)
+                        if (nextPos != null) {
+                            if (DEBUG_LOCS >= 2) println("TP | ${nextPos.vec.vec.x} ${nextPos.vec.vec.y} ${nextPos.vec.vec.z}")
+                            dataPackets += WrapperPlayServerEntityTeleport(
+                                particle.id,
+                                gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.world.Location(
+                                    gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3d(
+                                        nextPos.vec.vec.x,
+                                        nextPos.vec.vec.y,
+                                        nextPos.vec.vec.z,
+                                    ), 0f, 0f
+                                ),
+                                true
+                            )
+
+                            val nnextPos = locs.getOrNull(i + 2)
+                            if (nnextPos != null) {
+                                val dt = nnextPos.time - nextPos.time
+                                if (dt != nextPos.time - cp.time) {
+                                    if (DEBUG_LOCS >= 1) println("-> TP DURATION : ${dt + 1}")
+                                    teleportationDuration = dt + 1
+                                }
+                            }
+                        }
+                    } ?: run {
+                    if (particle.data.age.toInt() == 1) {
+                        val first = locs.first()
+                        val second = locs[1]
+
+                        if (DEBUG_LOCS >= 1) println("INIT TP | POS: ${second.vec.vec}")
+
+                        dataPackets += WrapperPlayServerEntityTeleport(
+                            particle.id,
+                            gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.world.Location(
+                                gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3d(
+                                    second.vec.vec.x,
+                                    second.vec.vec.y,
+                                    second.vec.vec.z,
+                                ), 0f, 0f
+                            ),
+                            true
+                        )
+
+                        if (locs.size > 2) {
+                            val third = locs[2]
+                            val dt = third.time - second.time
+                            if (dt != second.time - first.time) {
+                                if (DEBUG_LOCS >= 1) println("I -> TP DURATION : ${dt + 1}")
+                                teleportationDuration = dt + 1
+                            }
+                        }
+                    } else {
+                    }
+                }
+//                            if (DEBUG_DISPLAY_DATA >= 1) println("T : ${particle.data.age}")
+
+                val (color: Int?, dD: DisplayData?) =
+                    c.coloredTextureData[particle.data.id]!!.firstOrNull { it.time == particle.data.age.toInt() }
+                        ?.let { it.color to it.displayData } ?: (null to null)
+                val transformableData = c.transformableData[particle.data.id]!!
+
+                transformableData.withIndex().firstOrNull { it.value.time == particle.data.age.toInt() }
+                    ?.let { (i, cp) ->
+                        if (DEBUG_DISPLAY_DATA >= 1) println("=> MATCH DISPLAY : ${particle.data.age.toInt()} $i")
+                        val prevDatum = transformableData[i - 1]
+                        val nextDatum = transformableData.getOrNull(i + 1)
+                        if (nextDatum != null) {
+                            val nd = ParticleData(particle.data.id)
+                            color?.let { nd.color = it }
+                            nd.color = nd.color or ((nextDatum.vec.alpha * 255.0).toInt() shl 24)
+                            dD?.let { nd.displayData = dD }
+                            nd.scale = nextDatum.vec.scale
+                            nd.rotation = nextDatum.vec.rot
+
+                            val prevDt = nextDatum.time - cp.time
+
+                            nd.transformationInterpolationDuration = prevDt
+
+                            //TODO: make sure transparency works
+                            val flags = UpdateFlags()
+
+                            if (teleportationDuration != null) {
+                                nd.teleportationDuration = teleportationDuration!!
+                                flags.teleportationDuration = true
+                            }
+
+                            flags.display = color != null
+                            flags.rotation = (nextDatum.vec.rot != cp.vec.rot)
+                            flags.scale = (nextDatum.vec.scale != cp.vec.scale)
+                            flags.transformationInterpolation = (prevDt != cp.time - prevDatum.time)
+                            flags.transparency = (nextDatum.vec.alpha != cp.vec.alpha)
+                            if (DEBUG_DISPLAY_DATA >= 1) println("  | TRANSPARENCY: ${nextDatum.vec.alpha * 255.0}")
+
+                            particle.updatePacket(EntityDataBuilder, true, nd, flags)
+                                ?.let { dataPackets += it }
+
+                            val nnextDatum = transformableData.getOrNull(i + 2)
+
+                            if (nnextDatum != null) {
+                                val dt = nnextDatum.time - nextDatum.time
+                                particle.data.transformationInterpolationDuration = dt
+                            }
+                        }
+                    } ?: run {
+                    if (particle.data.age.toInt() == 1) {
+                        val first = transformableData.first()
+                        val second = transformableData[1]
+
+                        val dt = second.time - first.time
+                        particle.data.transformationInterpolationDuration = dt
+
+                        val nd = ParticleData(particle.data.id)
+                        color?.let { nd.color = it }
+                        nd.color = nd.color or ((second.vec.alpha * 255.0).toInt() shl 24)
+                        dD?.let { nd.displayData = dD }
+                        nd.scale = second.vec.scale
+                        nd.rotation = second.vec.rot
+
+                        val flags = UpdateFlags()
+                        flags.display = color != null
+                        flags.rotation = (second.vec.rot != first.vec.rot)
+                        flags.scale = (second.vec.scale != first.vec.scale)
+                        flags.transparency = (second.vec.alpha != first.vec.alpha)
+
+                        if (teleportationDuration != null) {
+                            nd.teleportationDuration = teleportationDuration!!
+                            flags.teleportationDuration = true
+                        }
+
+                        if (DEBUG_DISPLAY_DATA >= 1) println("DD | INIT")
+
+                        particle.updatePacket(EntityDataBuilder, true, nd, flags)
+                            ?.let { dataPackets += it }
+                    } else if (color != null) {
+                        val nd = ParticleData(particle.data.id)
+                        nd.color = color
+                        nd.displayData = dD!!
+                        // use correct display data
+
+                        if (DEBUG_DISPLAY_DATA >= 1) println("COLOR | $color")
+
+                        if (teleportationDuration != null) {
+                            nd.teleportationDuration = teleportationDuration!!
+                        }
+
+                        particle.updatePacket(
+                            EntityDataBuilder,
+                            true,
+                            nd,
+                            UpdateFlags(
+                                display = true,
+                                teleportationDuration = teleportationDuration != null
+                            )
+                        )
+                            ?.let { dataPackets += it }
+                    } else {
+                        if (teleportationDuration != null) {
+                            val nd = ParticleData(particle.data.id)
+                            nd.teleportationDuration = teleportationDuration!!
+
+                            particle.updatePacket(
+                                EntityDataBuilder,
+                                true,
+                                nd,
+                                UpdateFlags(teleportationDuration = true)
+                            )
+                                ?.let { dataPackets += it }
+                        } else {
+                        }
+                    }
+                }
+            }
+        }
+
+        val data = c.emitterData.firstOrNull { it.time == time }
+        if (data != null) {
+            if (data.dead) {
+                time = -1
+            }
+
+            staticSpawnParticles(data)
+        }
+
+        val playerManager = PacketEvents.getAPI().playerManager
+
+        particles.removeAll(deadParticles)
+        val rawDeadParticleIDs = deadParticles.map { it.id }.toMutableList()
+        val deadParticleIDs: MutableList<Pair<Player, MutableList<Int>>> = mutableListOf()
+        val particleIDs: MutableList<Int> by lazy {
+            particles.map { it.id }.toMutableList().also { it.addAll(rawDeadParticleIDs) }
+        }
+        val chunkViewers = location.chunk.trackedByPlayers()
+
+        val playersToRemove = HashSet<Player>()
+        for (currentViewer in currentViewers) {
+            if (currentViewer !in chunkViewers || !currentViewer.isOnline) {
+                playersToRemove += currentViewer
+            }
+        }
+
+        for (player in playersToRemove) {
+            currentViewers -= player
+        }
+
+        for (player in location.chunk.trackedByPlayers()) {
+            if (player in playersToRemove) continue
+            val distanceSquared = player.eyeLocation.distanceSquared(location)
+            if (currentViewers.contains(player)) {
+                if (distanceSquared > distanceCullingComponent.viewDistance || !audience.canBeApplied(player)) {
+                    deadParticleIDs += player to particleIDs
+                    currentViewers -= player
+                }
+            }
+
+            if (!audience.canBeApplied(player) || player !in currentViewers) continue
+
+            if (distanceSquared <= distanceCullingComponent.viewDistance) {
+                deadParticleIDs += player to rawDeadParticleIDs
+                for (packet in dataPackets) {
+                    try {
+                        playerManager.sendPacketSilently(player, packet)
+                    } catch (ignored: NullPointerException) {}
+                }
+            }
+        }
+
+        deadParticles.clear()
+
+        return EmitterTickResult(true, deadParticleIDs)
+
     }
 
     private fun killParticles(particlesToKill: List<Particle>) {
         if (particlesToKill.isEmpty()) return
         val ids = particlesToKill.map { it.id }.toIntArray()
         for (player in currentViewers) {
-            player.toUser().sendPacketSilently(WrapperPlayServerDestroyEntities(*ids))
+            try {
+                player.toUser().sendPacketSilently(WrapperPlayServerDestroyEntities(*ids))
+            } catch (ignored: NullPointerException) {}
         }
     }
 
-    private fun staticSpawnParticles() {
+    private fun nonStaticSpawnParticles() {
         val bundle: MutableList<PacketWrapper<*>> = mutableListOf()
         repeat(rateComponent.toEmit(emitterData)) {
             val particleData = ParticleData(random.uuid())
@@ -624,27 +927,29 @@ class Emitter(
             if (distanceSquared < distanceCullingComponent.viewDistance) {
                 currentViewers += player
                 for (packet in bundle) {
-                    player.toUser().sendPacketSilently(packet)
+                    try {
+                        player.toUser().sendPacketSilently(packet)
+                    } catch (ignored: NullPointerException) {}
                 }
             }
         }
     }
 
 
-    private fun nonStaticSpawnParticles(timestampedEmitterData: TimestampedEmitterData) {
+    private fun staticSpawnParticles(timestampedEmitterData: TimestampedEmitterData) {
         val bundle: MutableList<PacketWrapper<*>> = mutableListOf()
-        repeat(timestampedEmitterData.spawns) {
-            val particleData = ParticleData(random.uuid())
+        for (spawn in timestampedEmitterData.spawns) {
+            val particleData = ParticleData(spawn)
             val particle = Particle(particleData)
-            particleData.particle = particle
-            particleData.origin = location.toVector().toVector3d()
-            particleData.billboardConstraints = billboardConstraints
-            particleData.interpolationDelay = updateFrequencyComponent.interpolationDelay
-            particleData.transformationInterpolationDuration = updateFrequencyComponent.initialInterpolationDuration
+//            particleData.particle = particle
+//            particleData.origin = location.toVector().toVector3d()
+//            particleData.billboardConstraints = billboardConstraints
+//            particleData.interpolationDelay = updateFrequencyComponent.interpolationDelay
+//            particleData.transformationInterpolationDuration = updateFrequencyComponent.initialInterpolationDuration
 
-            particleComponents.forEach { it.execute(emitterData, particleData) }
-
-            particle.init()
+//            particleComponents.forEach { it.execute(emitterData, particleData) }
+//
+//            particle.init()
 
             fun end(d: ParticleData = particle.data) {
                 val packets = particle.getAddPacket(d)
@@ -655,25 +960,25 @@ class Emitter(
 
             if (!(environmentData.data["optimize"] != null && environmentData.data["optimize"] == true)) {
                 end()
-                return@repeat
+                continue
             }
 
             val locs = GlobalTicker.emitterCache[id]?.locations?.get(particleData.id)
             if (locs == null) {
                 end()
-                return@repeat
+                continue
             }
 
             val displayData = GlobalTicker.emitterCache[id]?.transformableData?.get(particleData.id)
             if (displayData == null) {
                 end()
-                return@repeat
+                continue
             }
 
             val texturedColor = GlobalTicker.emitterCache[id]?.coloredTextureData?.get(particleData.id)
             if (texturedColor == null) {
                 end()
-                return@repeat
+                continue
             }
 
             val pd = ParticleData(particle.data.id)
@@ -709,7 +1014,9 @@ class Emitter(
             if (distanceSquared < distanceCullingComponent.viewDistance) {
                 currentViewers += player
                 for (packet in bundle) {
-                    player.toUser().sendPacketSilently(packet)
+                    try {
+                        player.toUser().sendPacketSilently(packet)
+                    } catch (ignored: NullPointerException) {}
                 }
             }
         }
