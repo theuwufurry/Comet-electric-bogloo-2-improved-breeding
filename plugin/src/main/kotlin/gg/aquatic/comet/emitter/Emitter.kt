@@ -93,13 +93,15 @@ class Emitter(
 
         if (!internal) {
             if (optimized) {
-                println(
-                    "${unrealizedEmitter.id} took: ${
-                        measureNanoTime {
-                            VirtualRuntime(this).generateCaches()
-                        }.toDouble() / 1_000_000.0
-                    }"
-                )
+                val t = "${unrealizedEmitter.id} took: ${
+                    measureNanoTime {
+                        VirtualRuntime(this).generateCaches()
+                    }.toDouble() / 1_000_000.0
+                }"
+
+                if (DEBUG_DISPLAY_DATA >= 1 || DEBUG_LOCS >= 1) {
+                    println("${unrealizedEmitter.id} took ${t.toDouble() / 1_000_000.0}ms to pregen!")
+                }
             }
         }
 
@@ -522,7 +524,12 @@ class Emitter(
                     return@optimized
                 }
 
-                c.particleActions[particle.data.id]?.firstOrNull { it.time == particle.data.age.toInt() }?.actions?.forEach { it(this@Emitter, particle) }
+                c.particleActions[particle.data.id]?.firstOrNull { it.time == particle.data.age.toInt() }?.actions?.forEach {
+                    it(
+                        this@Emitter,
+                        particle
+                    )
+                }
 
                 var teleportationDuration: Int? = null
                 //match!!
@@ -636,12 +643,12 @@ class Emitter(
                             particle.updatePacket(EntityDataBuilder, true, nd, flags)
                                 ?.let { dataPackets += it }
 
-                            val nnextDatum = transformableData.getOrNull(i + 2)
-
-                            if (nnextDatum != null) {
-                                val dt = nnextDatum.time - nextDatum.time
-                                particle.data.transformationInterpolationDuration = dt
-                            }
+//                            val nnextDatum = transformableData.getOrNull(i + 2)
+//
+//                            if (nnextDatum != null) {
+//                                val dt = nnextDatum.time - nextDatum.time
+//                                particle.data.transformationInterpolationDuration = dt
+//                            }
                         }
                     } ?: run {
                     if (particle.data.age.toInt() == 1) {
@@ -885,7 +892,12 @@ class Emitter(
             val particleData = ParticleData(spawn)
             val particle = Particle(particleData)
 
-            c.particleActions[particle.data.id]?.firstOrNull { it.time == 0 }?.actions?.forEach { it(this@Emitter, particle) }
+            c.particleActions[particle.data.id]?.firstOrNull { it.time == 0 }?.actions?.forEach {
+                it(
+                    this@Emitter,
+                    particle
+                )
+            }
 
             fun end(d: ParticleData = particle.data) {
                 val packets = particle.getAddPacket(d)

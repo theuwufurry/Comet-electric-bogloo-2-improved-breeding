@@ -115,5 +115,5 @@ object GlobalTicker {
     }
 
     const val TIMEOUT_MS = 50
-    const val DEBUG = 1
+    const val DEBUG = 0
 }

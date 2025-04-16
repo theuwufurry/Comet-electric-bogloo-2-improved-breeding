@@ -37,7 +37,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
 
     private val key = Key.key("particlecreator", "default")
 
-    private val DEBUG = 0
+    private val DEBUG = 2
 
     override fun getDataFor(
         entityData: EntityData,
