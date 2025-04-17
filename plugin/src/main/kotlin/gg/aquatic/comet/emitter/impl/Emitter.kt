@@ -72,8 +72,6 @@ class Emitter(
         return Quaterniond().rotateTo(forwardVector, pose.dir)
     }
 
-    private val currentViewers = ConcurrentHashMap.newKeySet<Player>()
-
     init {
         blocked.set(true)
 
@@ -239,11 +237,5 @@ class Emitter(
 
     override fun applyEmitterRotation(input: Quaternionf): Quaternionf {
         return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(emitterRotation).mul(input) else input
-    }
-
-    companion object {
-        val DEBUG_LOCS = 0.5
-        val DEBUG_DISPLAY_DATA = 0.0
-        val DEBUG_TEXTURE_DATA = 0.0
     }
 }

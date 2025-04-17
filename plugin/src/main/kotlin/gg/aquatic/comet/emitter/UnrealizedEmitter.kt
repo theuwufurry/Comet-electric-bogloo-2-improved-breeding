@@ -21,7 +21,6 @@ import gg.aquatic.waves.util.audience.GlobalAudience
 import org.bukkit.Location
 import org.joml.Vector3d
 import java.util.*
-import kotlin.system.measureNanoTime
 
 data class UnrealizedEmitter(
     override val id: String,
@@ -44,26 +43,23 @@ data class UnrealizedEmitter(
         emitterData.world = location.world
         emitterData.location = location
         emitterData.variable.putAll(environmentData.data)
-        val optimized = environmentData.data["optimize"] != null && environmentData.data["optimize"] == true
+        val optimized = checkOptimized(environmentData)
 
         val initialization = {
-            val emitter: AbstractEmitter
-            val t = measureNanoTime {
-                emitter = if (optimized) OptimizedEmitter(
-                    parent,
-                    components,
-                    rateComponent,
-                    distanceCullingComponent,
-                    billboardConstraints, location, emitterData, this, forwardVector, environmentData, audience, false
-                ) else Emitter(
-                    parent,
-                    components,
-                    rateComponent,
-                    distanceCullingComponent,
-                    updateFrequencyComponent,
-                    billboardConstraints, location, emitterData, this, forwardVector, environmentData, audience,
-                )
-            }
+            val emitter: AbstractEmitter = if (optimized) OptimizedEmitter(
+                parent,
+                components,
+                rateComponent,
+                distanceCullingComponent,
+                billboardConstraints, location, emitterData, this, forwardVector, environmentData, audience, false
+            ) else Emitter(
+                parent,
+                components,
+                rateComponent,
+                distanceCullingComponent,
+                updateFrequencyComponent,
+                billboardConstraints, location, emitterData, this, forwardVector, environmentData, audience,
+            )
 
             after(emitter)
 
@@ -71,6 +67,10 @@ data class UnrealizedEmitter(
         }
 
         GlobalTicker.addInitialization(initialization)
+    }
+
+    private fun checkOptimized(data: EnvironmentData): Boolean {
+        return !(data.data["optimize"] != null && data.data["optimize"] == false)
     }
 
     override fun realize(
@@ -95,7 +95,7 @@ data class UnrealizedEmitter(
         emitterData.location = location
         emitterData.variable.putAll(environmentData.data)
 
-        val optimized = environmentData.data["optimize"] != null && environmentData.data["optimize"] == true
+        val optimized = checkOptimized(environmentData)
 
         val e = if (optimized) OptimizedEmitter(
             parent,
