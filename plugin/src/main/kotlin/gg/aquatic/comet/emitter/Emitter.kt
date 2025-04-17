@@ -93,14 +93,13 @@ class Emitter(
 
         if (!internal) {
             if (optimized) {
-                val t = "${unrealizedEmitter.id} took: ${
+                val t =
                     measureNanoTime {
                         VirtualRuntime(this).generateCaches()
                     }.toDouble() / 1_000_000.0
-                }"
 
-                if (DEBUG_DISPLAY_DATA >= 1 || DEBUG_LOCS >= 1) {
-                    println("${unrealizedEmitter.id} took ${t.toDouble() / 1_000_000.0}ms to pregen!")
+                if (DEBUG_DISPLAY_DATA >= 0.5 || DEBUG_LOCS >= 0.5) {
+                    println("${unrealizedEmitter.id} took ${t / 1_000_000.0}ms to pregen!")
                 }
             }
         }
@@ -510,8 +509,6 @@ class Emitter(
         }
 
         for (particle in particles) {
-            particle.data.age++
-
             run optimized@{
                 fun die() {
                     deadParticles += particle
@@ -611,7 +608,7 @@ class Emitter(
                 transformableData.withIndex().firstOrNull { it.value.time == particle.data.age.toInt() }
                     ?.let { (i, cp) ->
                         if (DEBUG_DISPLAY_DATA >= 1) println("=> MATCH DISPLAY : ${particle.data.age.toInt()} $i")
-                        val prevDatum = transformableData[i - 1]
+                        val prevDatum = if (particle.data.age == 0.0) null else transformableData[i - 1]
                         val nextDatum = transformableData.getOrNull(i + 1)
                         if (nextDatum != null) {
                             val nd = ParticleData(particle.data.id)
@@ -636,12 +633,14 @@ class Emitter(
                             flags.display = color != null
                             flags.rotation = (nextDatum.vec.rot != cp.vec.rot)
                             flags.scale = (nextDatum.vec.scale != cp.vec.scale)
-                            flags.transformationInterpolation = (prevDt != cp.time - prevDatum.time)
+                            flags.transformationInterpolation = prevDatum?.let { (prevDt != cp.time - it.time) } ?: true
                             flags.transparency = (nextDatum.vec.alpha != cp.vec.alpha)
                             if (DEBUG_DISPLAY_DATA >= 1) println("  | TRANSPARENCY: ${nextDatum.vec.alpha * 255.0}")
 
                             particle.updatePacket(EntityDataBuilder, true, nd, flags)
-                                ?.let { dataPackets += it }
+                                ?.let {
+                                    dataPackets += it
+                                }
 
 //                            val nnextDatum = transformableData.getOrNull(i + 2)
 //
@@ -701,7 +700,9 @@ class Emitter(
                                 teleportationDuration = teleportationDuration != null
                             )
                         )
-                            ?.let { dataPackets += it }
+                            ?.let {
+                                dataPackets += it
+                            }
                     } else {
                         if (teleportationDuration != null) {
                             val nd = ParticleData(particle.data.id)
@@ -713,12 +714,16 @@ class Emitter(
                                 nd,
                                 UpdateFlags(teleportationDuration = true)
                             )
-                                ?.let { dataPackets += it }
+                                ?.let {
+                                    dataPackets += it
+                                }
                         } else {
                         }
                     }
                 }
             }
+
+            particle.data.age++
         }
 
         val data = c.emitterData.firstOrNull { it.time == time }
@@ -890,6 +895,7 @@ class Emitter(
         val bundle: MutableList<PacketWrapper<*>> = mutableListOf()
         for (spawn in timestampedEmitterData.spawns) {
             val particleData = ParticleData(spawn)
+            particleData.billboardConstraints = billboardConstraints
             val particle = Particle(particleData)
 
             c.particleActions[particle.data.id]?.firstOrNull { it.time == 0 }?.actions?.forEach {
@@ -934,11 +940,12 @@ class Emitter(
             val firstLoc = locs.first()
             pd.teleportationDuration = ((locs[1].time - firstLoc.time)) + 1
             pd.relativePosition = Vector3d(firstLoc.vec.vec.x, firstLoc.vec.vec.y, firstLoc.vec.vec.z)
+            pd.billboardConstraints = billboardConstraints
 
             val firstDisp = displayData.first()
             val secondDisp = displayData[1]
 
-            pd.transformationInterpolationDuration = (secondDisp.time - firstDisp.time) + 1
+            pd.transformationInterpolationDuration = (secondDisp.time - firstDisp.time)// - 1
 
             pd.scale = firstDisp.vec.scale
             pd.rotation = firstDisp.vec.rot
@@ -1027,8 +1034,8 @@ class Emitter(
     }
 
     companion object {
-        val DEBUG_LOCS = 0
-        val DEBUG_DISPLAY_DATA = 0
-        val DEBUG_TEXTURE_DATA = 0
+        val DEBUG_LOCS = 0.5
+        val DEBUG_DISPLAY_DATA = 0.0
+        val DEBUG_TEXTURE_DATA = 0.0
     }
 }

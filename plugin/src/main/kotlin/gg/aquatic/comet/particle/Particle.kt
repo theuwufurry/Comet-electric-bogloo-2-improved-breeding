@@ -122,7 +122,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
 
             entityDataBuilder.getDataFor(
                 newData, flags, false
-            ).let { WrapperPlayServerEntityMetadata(id, it) }
+            )?.let { WrapperPlayServerEntityMetadata(id, it) }
         } else null
     }
 
@@ -194,6 +194,8 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
 
             flags to newData
         } ?: return null
+
+        if (!flags.anyRelevantTrue()) return null
 
         previousEntityData = newData.copy()
 

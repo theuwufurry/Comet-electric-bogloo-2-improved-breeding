@@ -49,23 +49,18 @@ object GlobalTicker {
 //                println("  | eC: ${emitterCache.size}")
 //            }
 
-            println("Thread blocked")
+//            println("Thread blocked")
             return
         }
 
         blocked.set(true)
 
-        val start = System.currentTimeMillis()
-        while(true) {
-            val curr = emitterInitializations.poll() ?: break
-            emitters += curr()
-            if (System.currentTimeMillis() - start > TIMEOUT_MS) break
-        }
-
+//        println("/\\/\\/\\/\\/\\/\\ BEGAN TICK /\\/\\/\\/\\/\\")
         val deadEmitters = HashSet<AbstractEmitter>()
         val playerDeadParticleMap: MutableMap<Player, MutableList<Int>> = mutableMapOf()
         val t = measureNanoTime {
             for (emitter in emitters) {
+//                println("Ticked ${(emitter as Emitter).unrealizedEmitter.id}")
                 val result = emitter.tick()
 
                 if (!result.alive) {
@@ -99,6 +94,16 @@ object GlobalTicker {
         emitters.addAll(emittersToAdd)
         emittersToAdd.clear()
 //        }
+
+        val start = System.currentTimeMillis()
+        while(true) {
+            val curr = emitterInitializations.poll() ?: break
+            val r = curr()
+//            println("Initialized: ${r.unrealizedEmitter.id}")
+            emitters += r
+            if (System.currentTimeMillis() - start > TIMEOUT_MS) break
+        }
+
 
         blocked.set(false)
     }

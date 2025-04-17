@@ -48,7 +48,7 @@ class CachedPath(
         internalLocations.forEach { (k, v) ->
             val b = v.size
             val r = simplfiyLocs(v, locTol)
-            if (DEBUG_LOCS >= 1) {
+            if (DEBUG_LOCS >= 0.5) {
                 println(
                     "--L--\n" + "$b -> ${r.size}"
                 )
@@ -67,7 +67,7 @@ class CachedPath(
             val b = v.size
             val r = simplifyDisplayData(v, dispTol)
 
-            if (DEBUG_DISPLAY_DATA >= 1) {
+            if (DEBUG_DISPLAY_DATA >= 0.5) {
                 println(
                     "--DD--\n" + "$b -> ${r.size}"
                 )
@@ -85,7 +85,7 @@ class CachedPath(
         coloredTextureData.replaceAll { _, v ->
             val b = v.size
             val r = simplifyColors(v, colTol)
-            if (DEBUG_COL_TEX >= 1) {
+            if (DEBUG_COL_TEX >= 0.5) {
                 println("--CD--\n" + "$b -> ${r.size}")
             }
 
@@ -173,9 +173,9 @@ class CachedPath(
 
     companion object {
         // 0 - off, 1 - size, 2 - list
-        val DEBUG_LOCS = 0
-        val DEBUG_DISPLAY_DATA = 0
-        val DEBUG_COL_TEX = 0
+        val DEBUG_LOCS = 0.5
+        val DEBUG_DISPLAY_DATA = 0.5
+        val DEBUG_COL_TEX = 0.0
     }
 }
 

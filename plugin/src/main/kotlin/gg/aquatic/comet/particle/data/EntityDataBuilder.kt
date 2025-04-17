@@ -43,7 +43,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
         entityData: EntityData,
         flags: UpdateFlags,
         initial: Boolean
-    ): List<gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData> {
+    ): List<gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData>? {
         return genData(entityData, flags, initial)
     }
 
@@ -51,7 +51,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
         component: EntityData,
         flags: UpdateFlags,
         initial: Boolean
-    ): List<gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData> {
+    ): List<gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData>? {
         val entityData: MutableList<gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData> =
             mutableListOf()
 
@@ -198,7 +198,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
     }
 
     private fun print(flags: UpdateFlags, entityData: EntityData, initial: Boolean) {
-        if (!flags.anyRelevantTrue()) return
+        if (!flags.anyTrue()) return
         val strB = StringBuilder()
         strB.append("/-- ${if (initial) "I" else ""}- EDB -----\n")
         if (flags.display) {
@@ -207,11 +207,11 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
         }
         if (flags.translation)
             strB.append("| TRANSLATION: ${entityData.translation}\n")
-        if (flags.scale)
+        if (initial || flags.scale)
             strB.append("| SCALE: ${entityData.scale}\n")
         if (flags.teleportationDuration)
             strB.append("| TELEPORTATION DURATION: ${entityData.teleportationDuration}\n")
-        if (flags.transformationInterpolation)
+        if (initial || flags.transformationInterpolation)
             strB.append("| TRANSFORMATION INTERPOLATION DURATION: ${entityData.transformationInterpolationDuration}\n")
         if (flags.transparency)
             strB.append("| TRANSPARENCY: ${entityData.transparency}\n")

@@ -31,6 +31,7 @@ data class UpdateFlags(
      * Does not check transformation duration, as sending them alone is unwanted in all known cases, if this changes, add handling for it
      */
     fun anyRelevantTrue() = display || transparency || translation || rotation || scale || teleportationDuration
+    fun anyTrue() = display || transparency || translation || rotation || scale || teleportationDuration || transformationInterpolation
 
     companion object {
         fun allTrue() = UpdateFlags(true, true, true, true, true, true, true)
