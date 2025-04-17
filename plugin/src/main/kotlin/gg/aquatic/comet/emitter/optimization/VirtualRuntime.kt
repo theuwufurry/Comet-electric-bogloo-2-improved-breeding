@@ -1,20 +1,11 @@
 package gg.aquatic.comet.emitter.optimization
 
-import gg.aquatic.comet.emitter.Emitter
-import gg.aquatic.comet.emitter.GlobalTicker
+import gg.aquatic.comet.emitter.impl.OptimizedEmitter
 
 class VirtualRuntime(
-    initialEmitter: Emitter
+    initialEmitter: OptimizedEmitter
 ) {
-    /*
-    after emitter dies, have it report back:
-        - caches for Location and Display
-        - the Path to travel
-            - timestamped real world positions
-        - timestamped display data
-    put this in GlobalTicker registry in the same way
-     */
-
+    var t = 0
     private val emitters: MutableList<VirtualEmitter> = mutableListOf()
     private val emittersToAdd: MutableList<VirtualEmitter> = mutableListOf()
 
@@ -26,16 +17,25 @@ class VirtualRuntime(
         emittersToAdd += emitter
     }
 
-    fun generateCaches() {
-        while (true) {
+    /**
+     * @return Whether the emitter should still be alive
+     */
+    fun step(realTime: Int): Boolean {
+        var iterations = 0
+        while (iterations < MAX_ITERATIONS) {
+            iterations++
+            t++
             val deadEmitters: MutableList<VirtualEmitter> = mutableListOf()
 
+            var remaining = false
             for (emitter in emitters) {
                 val r = emitter.tick()
                 if (!r.alive) {
                     deadEmitters += emitter
-                    GlobalTicker.emitterCache[emitter.emitterData.id] = emitter.cachedPath()
+                    continue
                 }
+
+                if (!remaining && emitter.particleBirthTimes.values.any { it < realTime + LOOKAHEAD }) remaining = true
             }
 
             emitters.removeAll(deadEmitters)
@@ -43,7 +43,22 @@ class VirtualRuntime(
             emitters += emittersToAdd
             emittersToAdd.clear()
 
-            if (emitters.isEmpty()) break
+            if (emitters.isEmpty()) {
+                return false
+            }
+
+            if (!remaining) break
         }
+
+        return true
+    }
+
+    fun kill() {
+        emitters.forEach { it.kill() }
+    }
+
+    companion object {
+        const val LOOKAHEAD = 3
+        const val MAX_ITERATIONS = 10_000
     }
 }

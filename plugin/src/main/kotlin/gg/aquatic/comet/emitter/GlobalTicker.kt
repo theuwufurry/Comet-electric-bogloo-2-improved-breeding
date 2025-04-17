@@ -4,7 +4,6 @@ import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.emitter.optimization.CachedPath
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
-import gg.aquatic.waves.util.map
 import gg.aquatic.waves.util.toUser
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
@@ -16,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.system.measureNanoTime
 
 object GlobalTicker {
-    private val emitterInitializations:  Queue<() -> Emitter> = ConcurrentLinkedQueue()
+    private val emitterInitializations:  Queue<() -> AbstractEmitter> = ConcurrentLinkedQueue()
 
     private val emitters: Queue<AbstractEmitter> = ConcurrentLinkedQueue()
     private val emittersToAdd: Queue<AbstractEmitter> = ConcurrentLinkedQueue()
@@ -30,7 +29,7 @@ object GlobalTicker {
         }, 1, 1)
     }
 
-    fun addInitialization(initialization: () -> Emitter) {
+    fun addInitialization(initialization: () -> AbstractEmitter) {
         emitterInitializations += initialization
     }
 
@@ -66,6 +65,7 @@ object GlobalTicker {
                 if (!result.alive) {
                     deadEmitters += emitter
                     emitterCache -= emitter.id
+//                    println("Removing ${(emitter as Emitter).unrealizedEmitter.id}")
                 }
 
                 for ((player, ids) in result.deadParticles) {
@@ -88,10 +88,15 @@ object GlobalTicker {
             player.toUser().sendPacketSilently(WrapperPlayServerDestroyEntities(*ids.toIntArray()))
         }
 
+//        println("DeadEmitters: ${deadEmitters.size}")
+//        println("Pre: ${emitters.size}")
         emitters.removeAll(deadEmitters)
+//        println("Post: ${emitters.size}")
 
 //        synchronized(emittersToAdd) {
+//        println("ToAdd: ${emittersToAdd.size}")
         emitters.addAll(emittersToAdd)
+//        println("Post: ${emitters.size}")
         emittersToAdd.clear()
 //        }
 
@@ -104,6 +109,7 @@ object GlobalTicker {
             if (System.currentTimeMillis() - start > TIMEOUT_MS) break
         }
 
+//        println("Post Init: ${emitters.size}")
 
         blocked.set(false)
     }

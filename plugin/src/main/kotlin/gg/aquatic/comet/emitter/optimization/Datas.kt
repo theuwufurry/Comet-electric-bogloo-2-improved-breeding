@@ -3,7 +3,6 @@ package gg.aquatic.comet.emitter.optimization
 import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.api.particle.AbstractParticle
 import gg.aquatic.comet.api.particle.display.DisplayData
-import gg.aquatic.comet.emitter.Emitter
 import gg.aquatic.comet.emitter.optimization.vec.DisplayDataVector
 import gg.aquatic.comet.emitter.optimization.vec.Vec
 import gg.aquatic.comet.emitter.optimization.vec.WrappedPos

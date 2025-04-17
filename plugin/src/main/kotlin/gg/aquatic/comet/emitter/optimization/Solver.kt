@@ -34,7 +34,7 @@ data class OptimizationResult(
  * @param tps Teleport times
  * @param ddTimes Times at which display data updates are already scheduled to happen (teleportation duration updates are cheaper here)
  */
-fun optimize(
+fun optimizeFinished(
     tps: List<Int>,
     ddTimes: List<Int>,
 ): OptimizationResult {

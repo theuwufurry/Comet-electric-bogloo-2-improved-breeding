@@ -11,8 +11,9 @@ import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
-import gg.aquatic.comet.emitter.Emitter
+import gg.aquatic.comet.emitter.GlobalTicker
 import gg.aquatic.comet.emitter.UnrealizedEmitter
+import gg.aquatic.comet.emitter.impl.OptimizedEmitter
 import gg.aquatic.comet.emitter.optimization.vec.DisplayDataVector
 import gg.aquatic.comet.emitter.optimization.vec.DisplayDataVectorCoefficients
 import gg.aquatic.comet.emitter.optimization.vec.WrappedPos
@@ -39,7 +40,7 @@ class VirtualEmitter(
     backerEnvironmentData: EnvironmentData,
     seed: Int,
 ) : AbstractEmitter() {
-    constructor(backer: Emitter, runtime: VirtualRuntime) : this(
+    constructor(backer: OptimizedEmitter, runtime: VirtualRuntime) : this(
         parent = backer.parent,
         unrealizedEmitter = backer.unrealizedEmitter,
         runtime = runtime,
@@ -65,6 +66,7 @@ class VirtualEmitter(
     override val id: UUID = emitterData.id
 
     override val particles: MutableList<Particle> = mutableListOf()
+    val particleBirthTimes: MutableMap<UUID, Int> = mutableMapOf()
     override val location: Location = backerLocation.clone()
     override val forwardVector: Vector3d = backerForwardVector
     override val environmentData: EnvironmentData = backerEnvironmentData.clone()
@@ -79,9 +81,9 @@ class VirtualEmitter(
     override val random: DeterministicRandom = DeterministicRandom(seed)
 
     private val path: CachedPath = CachedPath(
-        (environmentData.data["loc_tol"] as? Number)?.toDouble() ?: 0.05,
-        (environmentData.data["disp_tol"] as? Number)?.toDouble() ?: 0.05,
-        (environmentData.data["col_tol"] as? Number)?.toDouble() ?: 32.0,
+        (environmentData.data["loc_tol"] as? Number)?.toDouble() ?: 0.1,
+        (environmentData.data["disp_tol"] as? Number)?.toDouble() ?: 0.2,
+        (environmentData.data["col_tol"] as? Number)?.toDouble() ?: 48.0,
         (environmentData.data["c_coltex"] as? Boolean) ?: true,
     )
 
@@ -119,64 +121,13 @@ class VirtualEmitter(
     var particleActionsBuffer = mutableMapOf<UUID, TimestampedParticleActions>()
 
     init {
+        GlobalTicker.emitterCache[emitterData.id] = path
         emitterComponents.forEach { it.init(emitterData) }
 
         if (emitterActionsBuffer.isNotEmpty()) {
             path.emitterData.add(TimestampedEmitterData(0, false, emptyList()))
             path.emitterActions += TimestampedEmitterActions(0, emitterActionsBuffer)
             emitterActionsBuffer = mutableListOf()
-        }
-    }
-
-    private fun spawnParticles() {
-        particleActionsBuffer = mutableMapOf()
-        val spawns = mutableListOf<UUID>()
-        repeat(rateComponent.toEmit(emitterData)) {
-            val uuid = random.uuid()
-            val particleData = ParticleData(uuid)
-            spawns += particleData.id
-            val particle = Particle(particleData)
-            particleData.particle = particle
-            particleData.origin = location.toVector().toVector3d()
-            particleData.billboardConstraints = billboardConstraints
-
-            particleComponents.forEach { it.execute(emitterData, particleData) }
-
-            path.hashes[particleData.id] =
-                mutableSetOf<Int>().apply { add(particleData.locHash()) } to mutableSetOf<Int>().apply {
-                    add(particleData.displayHash())
-                }
-
-            path.internalLocations[particleData.id] = mutableListOf<TimestampedPos>().apply {
-                add(TimestampedPos(0, WrappedPos(particleData.pos, 0.0, timeCoefficient)))
-            }
-
-            path.internalTransformableData[particleData.id] = mutableListOf<TimestampedTransformableData>().apply {
-                add(TimestampedTransformableData(0, DisplayDataVector.create(particle, coefficients)))
-            }
-
-            path.coloredTextureData[particleData.id] = mutableListOf<TimestampedColoredTexture>().apply {
-                add(
-                    TimestampedColoredTexture(
-                        0,
-                        (particle.data.color ushr 16) and 0xFF,
-                        (particle.data.color ushr 8) and 0xFF,
-                        particle.data.color and 0xFF,
-                        particle.data.displayData
-                    )
-                )
-            }
-
-            particle.init()
-
-            particles += particle
-        }
-
-        path.emitterData.add(TimestampedEmitterData(time, false, spawns))
-        for ((id, action) in particleActionsBuffer) {
-            if (action.actions.isNotEmpty()) {
-                path.particleActions[id] = mutableListOf(action)
-            }
         }
     }
 
@@ -202,6 +153,8 @@ class VirtualEmitter(
             fun die() {
                 deadParticles += particle
                 particle.data.emitter?.dead = true
+                path.finishedParticles += particle.data.id
+                particleBirthTimes -= particle.data.id
             }
 
             particle.tick()
@@ -272,11 +225,62 @@ class VirtualEmitter(
 
         if (!dead && emitterData.isActive) spawnParticles()
 
+        path.optimizeFinished()
+
         return EmitterTickResult(true)
     }
 
-    fun cachedPath(): CachedPath {
-        return path.optimize()
+    private fun spawnParticles() {
+        particleActionsBuffer = mutableMapOf()
+        val spawns = mutableListOf<UUID>()
+        repeat(rateComponent.toEmit(emitterData)) {
+            val uuid = random.uuid()
+            val particleData = ParticleData(uuid)
+            spawns += particleData.id
+            val particle = Particle(particleData)
+            particleData.particle = particle
+            particleData.origin = location.toVector().toVector3d()
+            particleData.billboardConstraints = billboardConstraints
+
+            particleComponents.forEach { it.execute(emitterData, particleData) }
+
+            path.hashes[particleData.id] =
+                mutableSetOf<Int>().apply { add(particleData.locHash()) } to mutableSetOf<Int>().apply {
+                    add(particleData.displayHash())
+                }
+
+            path.internalLocations[particleData.id] = mutableListOf<TimestampedPos>().apply {
+                add(TimestampedPos(0, WrappedPos(particleData.pos, 0.0, timeCoefficient)))
+            }
+
+            path.internalTransformableData[particleData.id] = mutableListOf<TimestampedTransformableData>().apply {
+                add(TimestampedTransformableData(0, DisplayDataVector.create(particle, coefficients)))
+            }
+
+            path.coloredTextureData[particleData.id] = mutableListOf<TimestampedColoredTexture>().apply {
+                add(
+                    TimestampedColoredTexture(
+                        0,
+                        (particle.data.color ushr 16) and 0xFF,
+                        (particle.data.color ushr 8) and 0xFF,
+                        particle.data.color and 0xFF,
+                        particle.data.displayData
+                    )
+                )
+            }
+
+            particle.init()
+
+            particles += particle
+            particleBirthTimes[particleData.id] = runtime.t
+        }
+
+        path.emitterData.add(TimestampedEmitterData(time, false, spawns))
+        for ((id, action) in particleActionsBuffer) {
+            if (action.actions.isNotEmpty()) {
+                path.particleActions[id] = mutableListOf(action)
+            }
+        }
     }
 
     override val players: List<Player> = emptyList()

@@ -15,7 +15,7 @@ import java.util.UUID
 
 abstract class AbstractEmitter : Parent {
     abstract val id: UUID
-    abstract val particles: List<AbstractParticle>
+    abstract val particles: MutableList<out AbstractParticle>
 
     abstract val location: Location
     abstract val forwardVector: Vector3d

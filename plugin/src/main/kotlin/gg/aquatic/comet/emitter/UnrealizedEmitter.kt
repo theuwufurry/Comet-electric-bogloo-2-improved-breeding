@@ -11,6 +11,8 @@ import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.random.DeterministicRandom
 import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
+import gg.aquatic.comet.emitter.impl.Emitter
+import gg.aquatic.comet.emitter.impl.OptimizedEmitter
 import gg.aquatic.comet.emitter.optimization.VirtualEmitter
 import gg.aquatic.comet.emitter.optimization.VirtualRuntime
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
@@ -42,17 +44,24 @@ data class UnrealizedEmitter(
         emitterData.world = location.world
         emitterData.location = location
         emitterData.variable.putAll(environmentData.data)
+        val optimized = environmentData.data["optimize"] != null && environmentData.data["optimize"] == true
 
         val initialization = {
-            val emitter: Emitter
+            val emitter: AbstractEmitter
             val t = measureNanoTime {
-                emitter = Emitter(
+                emitter = if (optimized) OptimizedEmitter(
+                    parent,
+                    components,
+                    rateComponent,
+                    distanceCullingComponent,
+                    billboardConstraints, location, emitterData, this, forwardVector, environmentData, audience, false
+                ) else Emitter(
                     parent,
                     components,
                     rateComponent,
                     distanceCullingComponent,
                     updateFrequencyComponent,
-                    billboardConstraints, location, emitterData, this, forwardVector, environmentData, audience, false
+                    billboardConstraints, location, emitterData, this, forwardVector, environmentData, audience,
                 )
             }
 
@@ -86,7 +95,23 @@ data class UnrealizedEmitter(
         emitterData.location = location
         emitterData.variable.putAll(environmentData.data)
 
-        val e = Emitter(
+        val optimized = environmentData.data["optimize"] != null && environmentData.data["optimize"] == true
+
+        val e = if (optimized) OptimizedEmitter(
+            parent,
+            components,
+            rateComponent,
+            distanceCullingComponent,
+            billboardConstraints,
+            location,
+            emitterData,
+            this,
+            forwardVector,
+            environmentData,
+            audience,
+            true,
+            seed = random.kotlinRandom.nextInt(),
+        ) else Emitter(
             parent,
             components,
             rateComponent,
@@ -99,7 +124,6 @@ data class UnrealizedEmitter(
             forwardVector,
             environmentData,
             audience,
-            true,
             seed = random.kotlinRandom.nextInt(),
         )
 

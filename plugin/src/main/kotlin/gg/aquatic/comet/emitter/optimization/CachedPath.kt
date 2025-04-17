@@ -1,11 +1,6 @@
 package gg.aquatic.comet.emitter.optimization
 
-import gg.aquatic.comet.api.emitter.AbstractEmitter
-import gg.aquatic.comet.api.particle.AbstractParticle
-import gg.aquatic.comet.api.particle.display.DisplayData
 import gg.aquatic.comet.emitter.optimization.vec.DisplayDataVector
-import gg.aquatic.comet.emitter.optimization.vec.Vec
-import gg.aquatic.comet.emitter.optimization.vec.WrappedPos
 import java.util.*
 import kotlin.math.pow
 import kotlin.system.measureNanoTime
@@ -20,14 +15,15 @@ optimize in between w/ douglas for everything else
  * @param considerColorTex Whether to consider color and textures in optimizations. False is faster.
  */
 class CachedPath(
-    val locTol: Double = 0.05,
-    val dispTol: Double = 0.05,
-    val colTol: Double = 32.0,
-    val considerColorTex: Boolean
+    private val locTol: Double = 0.05,
+    private val dispTol: Double = 0.05,
+    private val colTol: Double = 32.0,
+    private val considerColorTex: Boolean
 ) {
     val emitterData: MutableList<TimestampedEmitterData> = mutableListOf()
     val emitterActions: MutableList<TimestampedEmitterActions> = mutableListOf()
     val particleActions: MutableMap<UUID, MutableList<TimestampedParticleActions>> = mutableMapOf()
+
     /**
      * particle id -> < loc hashes , display hashes >
      */
@@ -44,65 +40,68 @@ class CachedPath(
 
     var coloredTextureData: MutableMap<UUID, MutableList<TimestampedColoredTexture>> = mutableMapOf()
 
-    fun optimize(): CachedPath {
-        internalLocations.forEach { (k, v) ->
-            val b = v.size
-            val r = simplfiyLocs(v, locTol)
-            if (DEBUG_LOCS >= 0.5) {
-                println(
-                    "--L--\n" + "$b -> ${r.size}"
-                )
-            }
+    val finishedParticles = mutableListOf<UUID>()
 
-            if (DEBUG_LOCS >= 2) {
-                for (a in r) {
-                    println(a)
+    fun optimizeFinished(): CachedPath {
+        for (finishedParticle in finishedParticles) {
+            val locs = run locs@{
+                val v = internalLocations[finishedParticle]!!
+                val b = v.size
+                val r = simplfiyLocs(v, locTol)
+                if (DEBUG_LOCS >= 0.5) {
+                    println(
+                        "--L--\n" + "$b -> ${r.size}"
+                    )
                 }
-            }
 
-            locations[k] = r
-        }
-
-        internalTransformableData.forEach { (k, v) ->
-            val b = v.size
-            val r = simplifyDisplayData(v, dispTol)
-
-            if (DEBUG_DISPLAY_DATA >= 0.5) {
-                println(
-                    "--DD--\n" + "$b -> ${r.size}"
-                )
-            }
-
-            if (DEBUG_DISPLAY_DATA >= 2) {
-                for (a in r) {
-                    println(a)
+                if (DEBUG_LOCS >= 2) {
+                    for (a in r) {
+                        println(a)
+                    }
                 }
+
+                locations[finishedParticle] = r
+                r
             }
 
-            transformableData[k] = r
-        }
+            val transformables = run trans@{
+                val v = internalTransformableData[finishedParticle]!!
+                val b = v.size
+                val r = simplifyDisplayData(v, dispTol)
 
-        coloredTextureData.replaceAll { _, v ->
-            val b = v.size
-            val r = simplifyColors(v, colTol)
-            if (DEBUG_COL_TEX >= 0.5) {
-                println("--CD--\n" + "$b -> ${r.size}")
-            }
-
-            if (DEBUG_COL_TEX >= 2) {
-                for (a in r) {
-                    println(a)
+                if (DEBUG_DISPLAY_DATA >= 0.5) {
+                    println(
+                        "--DD--\n" + "$b -> ${r.size}"
+                    )
                 }
+
+                if (DEBUG_DISPLAY_DATA >= 2) {
+                    for (a in r) {
+                        println(a)
+                    }
+                }
+
+                transformableData[finishedParticle] = r
+                r
             }
 
-            r
+            val colorTex = run coltex@{
+                val v = coloredTextureData[finishedParticle]!!
+                val b = v.size
+                val r = simplifyColors(v, colTol)
+                if (DEBUG_COL_TEX >= 0.5) {
+                    println("--CD--\n" + "$b -> ${r.size}")
+                }
 
-        }
+                if (DEBUG_COL_TEX >= 2) {
+                    for (a in r) {
+                        println(a)
+                    }
+                }
 
-        for (id in hashes.keys) {
-            val locs = locations[id]!!
-            val transformables = transformableData[id]!!
-            val colorTex = coloredTextureData[id]!!
+                coloredTextureData[finishedParticle] = r
+                r
+            }
 
             val locTimes = locs.map { it.time }
             val transformableTimes = transformables.map { it.time }
@@ -111,29 +110,19 @@ class CachedPath(
 
             ddTimes += transformableTimes
             if (considerColorTex) ddTimes += colorTexTimes
-            val internalTransformables = internalTransformableData[id]!!
+            val internalTransformables = internalTransformableData[finishedParticle]!!
             val filledTimes = fillTransparency(internalTransformables)
             if (DEBUG_DISPLAY_DATA >= 1) println("  | FILLED: $filledTimes")
             ddTimes += filledTimes
             ddTimes.sort()
 
-//            println("ddTimes.size: ${ddTimes.size}")
             val r: OptimizationResult
             if (DEBUG_LOCS >= 1) println("===============")
             if (DEBUG_LOCS >= 1) println("  | LOC TIMES: $locTimes")
             if (DEBUG_LOCS >= 1) println("  | T TIMES: $transformableTimes")
             if (considerColorTex) if (DEBUG_LOCS >= 1) println("  | TEX TIMES: $colorTexTimes")
             if (DEBUG_LOCS >= 1) println("  | DDTIMES: $ddTimes")
-            val t = measureNanoTime { r = actualize(optimize(locTimes, ddTimes.toList())) }
-
-//            val interval = Interval(
-//                startTime = 0,
-//                endTime = locs.last().time,
-//                locs = locs,
-//                transformables = transformables,
-//            )
-//
-//            val result = interval.optimize()
+            val t = measureNanoTime { r = actualize(optimizeFinished(locTimes, ddTimes.toList())) }
 
             if (DEBUG_LOCS >= 1) println("[[[[[[ OPTIMIZED ]]]]]]")
             if (DEBUG_LOCS >= 1) println(" | TOOK: ${t / 1_000_000.0} ms")
@@ -142,10 +131,10 @@ class CachedPath(
             if (DEBUG_LOCS >= 1) println(" | DD: ${r.ddUpdates}")
             if (DEBUG_LOCS >= 1) println(" | COST: ${r.cost}")
 
-            val internalLocs = internalLocations[id]!!
+            val internalLocs = internalLocations[finishedParticle]!!
             //assemble tp locations
             val mappedLocs = r.tps.map { tpTime -> internalLocs.first { iLoc -> iLoc.time == tpTime } }.toMutableList()
-            locations[id] = mappedLocs
+            locations[finishedParticle] = mappedLocs
 
             val allUpdates = r.updates.toSortedSet()
             allUpdates.addAll(r.ddUpdates)
@@ -158,23 +147,21 @@ class CachedPath(
             val mappedTransformables =
                 allUpdates.map { u -> internalTransformables.first { iTransformable -> iTransformable.time == u } }
                     .toMutableList()
-            transformableData[id] = mappedTransformables
+            transformableData[finishedParticle] = mappedTransformables
+
+            internalLocations.remove(finishedParticle)
+            internalTransformableData.remove(finishedParticle)
         }
 
-        clearInternals()
+        finishedParticles.clear()
 
         return this
     }
 
-    private fun clearInternals() {
-        internalLocations.clear()
-        internalTransformableData.clear()
-    }
-
     companion object {
         // 0 - off, 1 - size, 2 - list
-        val DEBUG_LOCS = 0.5
-        val DEBUG_DISPLAY_DATA = 0.5
+        val DEBUG_LOCS = 0.0
+        val DEBUG_DISPLAY_DATA = 0.0
         val DEBUG_COL_TEX = 0.0
     }
 }
