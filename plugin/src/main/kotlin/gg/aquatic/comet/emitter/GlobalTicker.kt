@@ -19,6 +19,7 @@ object GlobalTicker {
 
     private val emitters: Queue<AbstractEmitter> = ConcurrentLinkedQueue()
     private val emittersToAdd: Queue<AbstractEmitter> = ConcurrentLinkedQueue()
+    private val emittersToKill: Queue<AbstractEmitter> = ConcurrentLinkedQueue()
     private var task: BukkitTask? = null
 
     val emitterCache: MutableMap<UUID, CachedPath> = ConcurrentHashMap()

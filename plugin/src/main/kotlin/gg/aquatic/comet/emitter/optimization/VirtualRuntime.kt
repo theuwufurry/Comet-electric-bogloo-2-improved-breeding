@@ -17,10 +17,14 @@ class VirtualRuntime(
         emittersToAdd += emitter
     }
 
+
+    private var deathTime = -1
+
     /**
      * @return Whether the emitter should still be alive
      */
     fun step(realTime: Int): Boolean {
+        if (deathTime != -1 && realTime >= deathTime) return false
         var iterations = 0
         while (iterations < MAX_ITERATIONS) {
             iterations++
@@ -44,7 +48,8 @@ class VirtualRuntime(
             emittersToAdd.clear()
 
             if (emitters.isEmpty()) {
-                return false
+                deathTime = t
+                break
             }
 
             if (!remaining) break

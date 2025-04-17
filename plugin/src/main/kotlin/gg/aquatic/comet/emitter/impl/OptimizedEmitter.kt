@@ -61,6 +61,7 @@ class OptimizedEmitter(
     override val particles: MutableList<Particle> = mutableListOf()
     private val spawningProcessor = SpawningProcessor(this, distanceCullingComponent)
     private val blocked = AtomicBoolean(false)
+    private val killed = AtomicBoolean(false)
     override var emitterRotation: Quaterniond = calculateEmitterRotation()
 
     fun calculateEmitterRotation(): Quaterniond {
@@ -109,6 +110,8 @@ class OptimizedEmitter(
 
         blocked.set(true)
 
+        if (killed.get()) return EmitterTickResult(false)
+
         if (time == -1 && particles.size == 0) {
             return EmitterTickResult(false)
         }
@@ -128,6 +131,7 @@ class OptimizedEmitter(
 
             if (!shouldLive) {
                 time = -1
+                kill()
                 return EmitterTickResult(false)
             }
         }
@@ -364,6 +368,7 @@ class OptimizedEmitter(
     }
 
     override fun kill() {
+        killed.set(true)
         dead = true
         killParticles(particles)
         particles.clear()
@@ -375,7 +380,7 @@ class OptimizedEmitter(
     }
 
     companion object {
-        val DEBUG_LOCS = 0.5
+        val DEBUG_LOCS = 0.0
         val DEBUG_DISPLAY_DATA = 0.0
         val DEBUG_TEXTURE_DATA = 0.0
     }

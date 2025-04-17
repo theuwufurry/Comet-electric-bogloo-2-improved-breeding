@@ -162,17 +162,6 @@ class Emitter(
         return EmitterTickResult(true, deadParticleIDs)
     }
 
-    private fun killParticles(particlesToKill: List<Particle>) {
-        if (particlesToKill.isEmpty()) return
-        val ids = particlesToKill.map { it.id }.toIntArray()
-        for (player in currentViewers) {
-            try {
-                player.toUser().sendPacketSilently(WrapperPlayServerDestroyEntities(*ids))
-            } catch (ignored: NullPointerException) {
-            }
-        }
-    }
-
     private fun spawnParticles() {
         val bundle: MutableList<PacketWrapper<*>> = mutableListOf()
         repeat(rateComponent.toEmit(emitterData)) {
@@ -244,7 +233,7 @@ class Emitter(
 
     override fun kill() {
         dead = true
-        killParticles(particles)
+        spawningProcessor.killParticles(particles)
         particles.clear()
     }
 
