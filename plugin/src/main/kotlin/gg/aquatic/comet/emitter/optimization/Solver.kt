@@ -42,17 +42,12 @@ fun optimize(
     val numSplits = ceil(tps.size.toDouble() / MAX_INTERVAL.toDouble()).toInt() - 1
     val step = tps.size / (numSplits + 1) + 1
 
-    // 50 / 3 = 16, 48,
-
     val aggregateUpdates = mutableSetOf<Int>()
     val aggregateDDUpdates = mutableSetOf<Int>()
     val aggregateTps = mutableSetOf<Int>()
 
-    println("SIZE: ${tps.size}")
-
     for (i in tps.indices step step) {
         val end = (i + step).coerceAtMost(tps.size - 1)
-        println("  | INDEX: $i -> $end")
         val r = optimizeSplit(tps.subList(i, end), ddTimes)
         aggregateUpdates += r.updates
         aggregateDDUpdates += r.ddUpdates

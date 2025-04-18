@@ -160,7 +160,7 @@ class CachedPath(
 
     companion object {
         // 0 - off, 1 - size, 2 - list
-        val DEBUG_LOCS = 2.0
+        val DEBUG_LOCS = 0.0
         val DEBUG_DISPLAY_DATA = 0.0
         val DEBUG_COL_TEX = 0.0
     }

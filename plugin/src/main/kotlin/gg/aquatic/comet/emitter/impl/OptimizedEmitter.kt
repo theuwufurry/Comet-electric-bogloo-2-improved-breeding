@@ -80,7 +80,6 @@ class OptimizedEmitter(
                 measureNanoTime {
                     runtime = VirtualRuntime(this)
                     runtime.step(0)
-                    println("POST AHH")
                 }.toDouble() / 1_000_000.0
 
             if (DEBUG_DISPLAY_DATA >= 0.5 || DEBUG_LOCS >= 0.5) {
@@ -382,7 +381,7 @@ class OptimizedEmitter(
 
     companion object {
         val DEBUG_LOCS = 0.0
-        val DEBUG_DISPLAY_DATA = 0.5
+        val DEBUG_DISPLAY_DATA = 0.0
         val DEBUG_TEXTURE_DATA = 0.0
     }
 }

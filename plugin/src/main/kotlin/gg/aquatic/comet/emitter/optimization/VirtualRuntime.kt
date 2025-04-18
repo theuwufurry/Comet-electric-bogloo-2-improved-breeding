@@ -36,7 +36,6 @@ class VirtualRuntime(
         while (iterations < MAX_ITERATIONS) {
             iterations++
             t++
-            println("t: $t, real: $realTime, emitters: ${emitters.size}, iterations: $iterations")
             val deadEmitters: MutableList<VirtualEmitter> = mutableListOf()
 
             var remaining = false
