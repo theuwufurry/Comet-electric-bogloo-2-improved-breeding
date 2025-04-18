@@ -1,5 +1,7 @@
 package gg.aquatic.comet.emitter.optimization
 
+import kotlin.math.ceil
+
 /**
  * Utility to solve the minimum packet problem, currently can analyze costs of updating teleportation duration on input teleport times, as well as taking in display data update times and attempting to use those (as their cost is lower) to find optimal packet schedule.
  * Lacking ability to evaluate costs of placing update times at points other than given teleport times, and naively trying to have many display data points to emulate this leads to extremely slow runtimes
@@ -14,6 +16,7 @@ TODO: update costs to match real packets
 const val UPDATE_COST = 4.0
 const val TP_COST = 2.0
 const val ADDON_COST = 0.5
+const val MAX_INTERVAL = 20
 
 /**
  * Optimized result
@@ -29,12 +32,53 @@ data class OptimizationResult(
     val cost: Double
 )
 
+
+fun optimize(
+    tps: List<Int>,
+    ddTimes: List<Int>,
+): OptimizationResult {
+    if (tps.size < MAX_INTERVAL) return optimizeSplit(tps, ddTimes)
+
+    val numSplits = ceil(tps.size.toDouble() / MAX_INTERVAL.toDouble()).toInt() - 1
+    val step = tps.size / (numSplits + 1) + 1
+
+    // 50 / 3 = 16, 48,
+
+    val aggregateUpdates = mutableSetOf<Int>()
+    val aggregateDDUpdates = mutableSetOf<Int>()
+    val aggregateTps = mutableSetOf<Int>()
+
+    println("SIZE: ${tps.size}")
+
+    for (i in tps.indices step step) {
+        val end = (i + step).coerceAtMost(tps.size - 1)
+        println("  | INDEX: $i -> $end")
+        val r = optimizeSplit(tps.subList(i, end), ddTimes)
+        aggregateUpdates += r.updates
+        aggregateDDUpdates += r.ddUpdates
+        aggregateTps += r.tps
+    }
+
+    return OptimizationResult(
+        aggregateUpdates.toList(),
+        aggregateDDUpdates.toList(),
+        aggregateTps.toList(),
+        cost(
+            updates = aggregateUpdates.toList(),
+            tps = aggregateTps.toList(),
+            debug = false,
+            ddTimes = aggregateDDUpdates.toList(),
+            punishing = false
+        )
+    )
+}
+
 /**
  * Optimized teleportation duration updates
  * @param tps Teleport times
  * @param ddTimes Times at which display data updates are already scheduled to happen (teleportation duration updates are cheaper here)
  */
-fun optimizeFinished(
+private fun optimizeSplit(
     tps: List<Int>,
     ddTimes: List<Int>,
 ): OptimizationResult {
@@ -66,7 +110,7 @@ fun optimizeFinished(
                 newTps.sort()
 
                 val c =
-                    cost(ddVariation.first, newTps, false, bestCost, ddVariation.second)
+                    cost(ddVariation.first, newTps, false, bestCost, ddVariation.second, true)
                 if (c < bestCost) {
                     bestCost = c
                     bestVariation = ddVariation
@@ -352,6 +396,7 @@ fun cost(
     debug: Boolean = false,
     best: Double = Double.MAX_VALUE,
     ddTimes: List<Int>,
+    punishing: Boolean
 ): Double {
     if (debug) println("updates: $updates")
     if (debug) println("tps: $tps")
@@ -366,7 +411,7 @@ fun cost(
 
     var cost = updates.size * UPDATE_COST/* + ddTimes.filter { it !in tps }.size * TP_COST*/ + ddTimes.size * ADDON_COST
     if (debug) println("  | cost: $cost")
-    if (cost > best) return Double.MAX_VALUE
+    if (punishing && cost > best) return Double.MAX_VALUE
     var updateStart = tps.first() - 1
 
     for (updateTime in updateTimes) {
@@ -407,7 +452,7 @@ fun cost(
 
         if (!f) {
             cost += duration * TP_COST
-            if (cost > best) return Double.MAX_VALUE
+            if (punishing && cost > best) return Double.MAX_VALUE
         }
 
         if (updateTime >= tps.last()) break

@@ -122,7 +122,7 @@ class CachedPath(
             if (DEBUG_LOCS >= 1) println("  | T TIMES: $transformableTimes")
             if (considerColorTex) if (DEBUG_LOCS >= 1) println("  | TEX TIMES: $colorTexTimes")
             if (DEBUG_LOCS >= 1) println("  | DDTIMES: $ddTimes")
-            val t = measureNanoTime { r = actualize(optimizeFinished(locTimes, ddTimes.toList())) }
+            val t = measureNanoTime { r = actualize(optimize(locTimes, ddTimes.toList())) }
 
             if (DEBUG_LOCS >= 1) println("[[[[[[ OPTIMIZED ]]]]]]")
             if (DEBUG_LOCS >= 1) println(" | TOOK: ${t / 1_000_000.0} ms")
@@ -160,7 +160,7 @@ class CachedPath(
 
     companion object {
         // 0 - off, 1 - size, 2 - list
-        val DEBUG_LOCS = 0.0
+        val DEBUG_LOCS = 2.0
         val DEBUG_DISPLAY_DATA = 0.0
         val DEBUG_COL_TEX = 0.0
     }

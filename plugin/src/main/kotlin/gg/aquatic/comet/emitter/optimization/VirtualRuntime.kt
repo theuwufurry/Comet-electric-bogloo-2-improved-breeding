@@ -24,11 +24,19 @@ class VirtualRuntime(
      * @return Whether the emitter should still be alive
      */
     fun step(realTime: Int): Boolean {
-        if (deathTime != -1 && realTime >= deathTime) return false
+        if (deathTime != -1 && realTime >= deathTime) {
+            return false
+        }
+
+        if (deathTime != -1) {
+            return true
+        }
+
         var iterations = 0
         while (iterations < MAX_ITERATIONS) {
             iterations++
             t++
+            println("t: $t, real: $realTime, emitters: ${emitters.size}, iterations: $iterations")
             val deadEmitters: MutableList<VirtualEmitter> = mutableListOf()
 
             var remaining = false
