@@ -2,6 +2,7 @@ package gg.aquatic.comet.emitter
 
 
 import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.PreInitComponent
 import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.emitter.EmitterData
@@ -24,6 +25,7 @@ import java.util.*
 
 data class UnrealizedEmitter(
     override val id: String,
+    override val preInitComponents: List<PreInitComponent>,
     override val components: List<Component>,
     val rateComponent: RateComponent,
     val distanceCullingComponent: DistanceCullingComponent,
@@ -43,9 +45,10 @@ data class UnrealizedEmitter(
         emitterData.world = location.world
         emitterData.location = location
         emitterData.variable.putAll(environmentData.data)
-        val optimized = checkOptimized(environmentData)
 
         val initialization = {
+            preInitComponents.forEach { it.init(emitterData, environmentData) }
+            val optimized = checkOptimized(environmentData)
             val emitter: AbstractEmitter = if (optimized) OptimizedEmitter(
                 parent,
                 components,
@@ -95,6 +98,7 @@ data class UnrealizedEmitter(
         emitterData.location = location
         emitterData.variable.putAll(environmentData.data)
 
+        preInitComponents.forEach { it.init(emitterData, environmentData) }
         val optimized = checkOptimized(environmentData)
 
         val e = if (optimized) OptimizedEmitter(

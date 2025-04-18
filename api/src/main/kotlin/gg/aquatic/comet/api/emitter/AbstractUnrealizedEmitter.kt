@@ -1,6 +1,7 @@
 package gg.aquatic.comet.api.emitter
 
 import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.PreInitComponent
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.random.DeterministicRandom
@@ -14,6 +15,7 @@ import java.util.*
 abstract class AbstractUnrealizedEmitter {
     abstract val id: String
 
+    abstract val preInitComponents: List<PreInitComponent>
     abstract val components: List<Component>
     abstract val billboardConstraints: BillboardConstraints
     abstract val forwardVector: Vector3d

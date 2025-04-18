@@ -5,16 +5,19 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.CometRegistry.componentParsers
+import gg.aquatic.comet.api.CometRegistry.preInitComponentParsers
 import gg.aquatic.comet.api.CometRegistry.rateComponentParsers
 import gg.aquatic.comet.api.CometRegistry.register
 import gg.aquatic.comet.api.CometRegistry.registerRate
 import gg.aquatic.comet.api.CometRegistry.registerUpdate
 import gg.aquatic.comet.api.CometRegistry.updateFrequencyParsers
 import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.PreInitComponent
 import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.parsing.AbstractParticleJsonParser
+import gg.aquatic.comet.api.parsing.BaseComponentParser
 import gg.aquatic.comet.api.parsing.ComponentParser
 import gg.aquatic.comet.api.parsing.PostInit
 import gg.aquatic.comet.api.parsing.macro.Macro
@@ -87,7 +90,6 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
 
     fun init() {
         for (parser in listOf(
-            EnvironmentDataComponent,
             TimedEmitterLifetimeComponent,
             InfiniteEmitterLifetimeComponent,
             LoopingEmitterLifetimeComponent,
@@ -129,6 +131,12 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
 
             EmitterDeathComponent,
             ParticleDeathComponent
+        )) {
+            parser.register()
+        }
+
+        for (parser in listOf(
+            EnvironmentDataComponent
         )) {
             parser.register()
         }
@@ -213,6 +221,7 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
 
         val componentsObject: JsonObject = rootObject.getAsJsonObject("components") ?: return null
 
+        val preInitComponents: MutableList<PreInitComponent> = mutableListOf()
         val components: MutableList<Component> = mutableListOf()
         var rateComponent: RateComponent? = null
         var distanceCullingComponent: DistanceCullingComponent? = null
@@ -225,6 +234,15 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
                 val component = componentParsers[key]!!.parse(componentElement, macros)
                 if (component != null) {
                     components += component
+
+                    continue
+                }
+            }
+
+            if (key in preInitComponentParsers) {
+                val component = preInitComponentParsers[key]!!.parse(componentElement, macros)
+                if (component != null) {
+                    preInitComponents += component
 
                     continue
                 }
@@ -272,6 +290,7 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
 
         return UnrealizedEmitter(
             id,
+            preInitComponents,
             components,
             rateComponent ?: SteadyRateComponent.default(),
             distanceCullingComponent ?: DistanceCullingComponent.default(),
