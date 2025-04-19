@@ -41,41 +41,34 @@ object GlobalTicker {
     val blocked = AtomicBoolean(false)
     private fun tick() {
         if (blocked.get()) {
-//            if (DEBUG >= 1 && emitters.size > 0) {
-//                println("--- TICK ---")
-//                println("  | eI: ${emitterInitializations.size}")
-//                println("  | e: ${emitters.size}")
-//                println("  | eTA: ${emittersToAdd.size}")
-//                println("  | eC: ${emitterCache.size}")
-//            }
-
-//            println("Thread blocked")
             return
         }
 
         blocked.set(true)
 
-//        println("/\\/\\/\\/\\/\\/\\ BEGAN TICK /\\/\\/\\/\\/\\")
         val deadEmitters = HashSet<AbstractEmitter>()
         val playerDeadParticleMap: MutableMap<Player, MutableList<Int>> = mutableMapOf()
         val t = measureNanoTime {
             for (emitter in emitters) {
-//                println("Ticked ${(emitter as Emitter).unrealizedEmitter.id}")
-                val result = emitter.tick()
+                try {
+                    val result = emitter.tick()
+                    if (!result.alive) {
+                        deadEmitters += emitter
+                        emitterCache -= emitter.id
+                    }
 
-                if (!result.alive) {
+                    for ((player, ids) in result.deadParticles) {
+                        val entry = playerDeadParticleMap[player]
+                        if (entry == null) {
+                            playerDeadParticleMap[player] = ids
+                        } else {
+                            entry.addAll(ids)
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                     deadEmitters += emitter
                     emitterCache -= emitter.id
-//                    println("Removing ${(emitter as Emitter).unrealizedEmitter.id}")
-                }
-
-                for ((player, ids) in result.deadParticles) {
-                    val entry = playerDeadParticleMap[player]
-                    if (entry == null) {
-                        playerDeadParticleMap[player] = ids
-                    } else {
-                        entry.addAll(ids)
-                    }
                 }
             }
         }
@@ -89,28 +82,18 @@ object GlobalTicker {
             player.toUser().sendPacketSilently(WrapperPlayServerDestroyEntities(*ids.toIntArray()))
         }
 
-//        println("DeadEmitters: ${deadEmitters.size}")
-//        println("Pre: ${emitters.size}")
         emitters.removeAll(deadEmitters)
-//        println("Post: ${emitters.size}")
 
-//        synchronized(emittersToAdd) {
-//        println("ToAdd: ${emittersToAdd.size}")
         emitters.addAll(emittersToAdd)
-//        println("Post: ${emitters.size}")
         emittersToAdd.clear()
-//        }
 
         val start = System.currentTimeMillis()
         while(true) {
             val curr = emitterInitializations.poll() ?: break
             val r = curr()
-//            println("Initialized: ${r.unrealizedEmitter.id}")
             emitters += r
             if (System.currentTimeMillis() - start > TIMEOUT_MS) break
         }
-
-//        println("Post Init: ${emitters.size}")
 
         blocked.set(false)
     }

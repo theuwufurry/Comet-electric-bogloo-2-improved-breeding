@@ -41,13 +41,13 @@ data class UnrealizedEmitter(
         audience: AquaticAudience,
         after: (AbstractEmitter) -> Unit,
     ) {
-        val emitterData = EmitterData(UUID.randomUUID())
-        emitterData.world = location.world
-        emitterData.location = location
-        emitterData.variable.putAll(environmentData.data)
-
         val initialization = {
+            val emitterData = EmitterData(UUID.randomUUID())
+            emitterData.world = location.world
+            emitterData.location = location
             preInitComponents.forEach { it.init(emitterData, environmentData) }
+            emitterData.variable.putAll(environmentData.data)
+
             val optimized = checkOptimized(environmentData)
             val emitter: AbstractEmitter = if (optimized) OptimizedEmitter(
                 parent,
@@ -96,9 +96,9 @@ data class UnrealizedEmitter(
         val emitterData = EmitterData(uuid)
         emitterData.world = location.world
         emitterData.location = location
+        preInitComponents.forEach { it.init(emitterData, environmentData) }
         emitterData.variable.putAll(environmentData.data)
 
-        preInitComponents.forEach { it.init(emitterData, environmentData) }
         val optimized = checkOptimized(environmentData)
 
         val e = if (optimized) OptimizedEmitter(
@@ -147,6 +147,7 @@ data class UnrealizedEmitter(
         val emitterData = EmitterData(uuid)
         emitterData.world = location.world
         emitterData.location = location
+        preInitComponents.forEach { it.init(emitterData, environmentData) }
         emitterData.variable.putAll(environmentData.data)
 
         runtime.addEmitter(
