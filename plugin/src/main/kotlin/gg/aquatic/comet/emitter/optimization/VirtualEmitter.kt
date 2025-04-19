@@ -59,14 +59,13 @@ class VirtualEmitter(
     val particleComponents: List<ParticleComponent> =
         components.filterIsInstance<ParticleComponent>().sortedBy { it.priority }
 
-    val emitterData: EmitterData = backerEmitterData.clone().apply {
+    var emitterData: EmitterData = backerEmitterData.clone().apply {
         emitter = this@VirtualEmitter
     }
 
     override val id: UUID = emitterData.id
 
     override val particles: MutableList<Particle> = mutableListOf()
-    val particleBirthTimes: MutableMap<UUID, Int> = mutableMapOf()
     override val location: Location = backerLocation.clone()
     override val forwardVector: Vector3d = backerForwardVector
     override val environmentData: EnvironmentData = backerEnvironmentData.clone()
@@ -131,20 +130,29 @@ class VirtualEmitter(
         }
     }
 
+    private val savedEmitterData: MutableMap<Int, EmitterData> = mutableMapOf()
+
     override fun tick(): EmitterTickResult {
         time++
         parent?.pose?.let { setPose(it) }
         emitterRotation = calculateEmitterRotation()
         emitterActionsBuffer = mutableListOf()
-        emitterComponents.forEach { it.execute(emitterData) }
+
+        val saved = savedEmitterData[time]
+        if (saved != null) {
+            emitterData = saved
+        } else {
+            emitterComponents.forEach { it.execute(emitterData) }
+        }
 
         if (emitterData.dead || (parent != null && parent.dead)) {
             dead = true
             emitterComponents.forEach { it.die(emitterData) }
         }
 
-        if (dead && particles.size == 0) {
+        if (((runtime.catchupTime != null && time <= runtime.catchupTime!!) || runtime.catchupTime == null) && dead && particles.isEmpty()) {
             path.emitterData += TimestampedEmitterData(time, true, emptyList())
+            savedEmitterData.clear()
             return EmitterTickResult(false)
         }
 
@@ -154,7 +162,6 @@ class VirtualEmitter(
                 deadParticles += particle
                 particle.data.emitter?.dead = true
                 path.finishedParticles += particle.data.id
-                particleBirthTimes -= particle.data.id
             }
 
             particle.tick()
@@ -223,7 +230,14 @@ class VirtualEmitter(
 
         deadParticles.clear()
 
-        if (!dead && emitterData.isActive) spawnParticles()
+        savedEmitterData[time] = emitterData.clone()
+        if (((runtime.catchupTime != null && time <= runtime.catchupTime!!) || runtime.catchupTime == null) && !dead && emitterData.isActive) {
+            spawnParticles()
+        }
+
+        if (runtime.catchupTime != null && time >= runtime.catchupTime!! && particles.isEmpty()) {
+            time = runtime.catchupTime!!
+        }
 
         path.optimizeFinished()
 
@@ -272,7 +286,6 @@ class VirtualEmitter(
             particle.init()
 
             particles += particle
-            particleBirthTimes[particleData.id] = runtime.t
         }
 
         path.emitterData.add(TimestampedEmitterData(time, false, spawns))
@@ -298,6 +311,7 @@ class VirtualEmitter(
     }
 
     override fun kill() {
+        savedEmitterData.clear()
         dead = true
         particles.clear()
     }

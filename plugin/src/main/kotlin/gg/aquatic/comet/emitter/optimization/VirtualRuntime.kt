@@ -21,9 +21,29 @@ class VirtualRuntime(
     private var deathTime = -1
 
     /**
+     * Spawn particles until reaching catchupTime
+     */
+    var catchupTime: Int? = null
+
+    /*
+    to spawn particles from a certain point and not spawn anything else, we also need to be able to jump back to a time
+
+    at time T, process all particles that spawn within T + LOOKAHEAD ticks
+    once all particles have been processed, we're done with that tick
+
+    now, everything until T + LOOKAHEAD has been processed until FINISH_TIME, so we don't need to redo that
+    go to T + LOOKAHEAD + 1
+
+    don't rerun emitter components, for the times until FINISH_TIME
+        cache the emitter datas for every time
+
+     */
+
+    /**
      * @return Whether the emitter should still be alive
      */
     fun step(realTime: Int): Boolean {
+        catchupTime = realTime + LOOKAHEAD
         if (deathTime != -1 && realTime >= deathTime) {
             return false
         }
@@ -46,7 +66,7 @@ class VirtualRuntime(
                     continue
                 }
 
-                if (!remaining && emitter.particleBirthTimes.values.any { it < realTime + LOOKAHEAD }) remaining = true
+                if (!remaining && emitter.particles.isNotEmpty()) remaining = true
             }
 
             emitters.removeAll(deadEmitters)
@@ -70,7 +90,7 @@ class VirtualRuntime(
     }
 
     companion object {
-        const val LOOKAHEAD = 3
+        const val LOOKAHEAD = 1
         const val MAX_ITERATIONS = 10_000
     }
 }
