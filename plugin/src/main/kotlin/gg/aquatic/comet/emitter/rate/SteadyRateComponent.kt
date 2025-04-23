@@ -43,7 +43,6 @@ class SteadyRateComponent(
     }
 
     companion object : ComponentParser<SteadyRateComponent> {
-
         override val id: String = "emitter_rate_steady"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): SteadyRateComponent? {

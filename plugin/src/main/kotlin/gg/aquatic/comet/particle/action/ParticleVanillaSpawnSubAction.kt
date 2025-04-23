@@ -30,7 +30,7 @@ class ParticleVanillaSpawnSubAction(
 
         val particlePacket = compiledVanillaParticleData.realize(context) ?: return
 
-        context.otherEmitterData.emitter!!.players.forEach { playerManager.sendPacket(it, particlePacket) }
+        context.otherEmitterData.emitter!!.players.forEach { playerManager.sendPacketSilently(it, particlePacket) }
     }
 
     companion object : ComponentParser<ParticleVanillaSpawnSubAction> {

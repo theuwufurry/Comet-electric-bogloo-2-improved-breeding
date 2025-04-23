@@ -1,7 +1,7 @@
 package gg.aquatic.comet.command
 
+import gg.aquatic.comet.api.emitter.environment.parseEnvironmentData
 import gg.aquatic.comet.api.emitter.parent.EntityParent
-import gg.aquatic.comet.emitter.environment.parseEnvironmentData
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.waves.command.ICommand
 import org.bukkit.Bukkit
@@ -31,13 +31,13 @@ object AtCommand : ICommand {
         val entities = Bukkit.selectEntities(sender, args[1])
         for (entity in entities) {
             val asParent = EntityParent(entity)
-            emitter.realize(asParent, entity.location, data)
+            emitter.realize(asParent, entity.location, data) {}
         }
     }
 
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
         return when (args.size) {
-            2 -> ParticleJsonParser.jsonUnrealizedEmitters.keys.toList()
+            2 -> ParticleJsonParser.jsonUnrealizedEmitters.filter { it.value.isListed && it.key.startsWith(args[1]) }.keys.toList()
             else -> emptyList()
         }
     }

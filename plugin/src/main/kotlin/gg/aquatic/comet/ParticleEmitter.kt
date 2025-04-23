@@ -2,8 +2,9 @@ package gg.aquatic.comet
 
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.CometRegistry
-import gg.aquatic.comet.api.parsing.ResourcepackCreator
+import gg.aquatic.comet.api.parsing.resourcepack.ResourcepackCreator
 import gg.aquatic.comet.command.*
+import gg.aquatic.comet.emitter.GlobalTicker
 import gg.aquatic.comet.hook.IHook
 import gg.aquatic.comet.hook.modelengine.ModelEngineHook
 import gg.aquatic.comet.hook.mythicmobs.MythicMobsHook
@@ -18,7 +19,6 @@ import org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory
 //val debugDust: Particle.DustOptions = Particle.DustOptions(Color.fromRGB(255, 255, 255), 0.6F)
 
 class ParticleEmitter : AbstractParticleEmitter() {
-
     override fun onEnable() {
         INSTANCE = this
 
@@ -33,6 +33,8 @@ class ParticleEmitter : AbstractParticleEmitter() {
         dataFolder.mkdir()
 
         ResourcepackCreator.genPack()
+
+        GlobalTicker.init()
 
         AquaticBaseCommand(
             "comet", "Base command of Comet plugin", mutableListOf(), mutableMapOf(
@@ -58,6 +60,11 @@ class ParticleEmitter : AbstractParticleEmitter() {
   \___|\___/|_|_|_| \___|  \__|  
         """.trimIndent()
         )
+    }
+
+    override fun onDisable() {
+        ParticleJsonParser.onDisable()
+        GlobalTicker.disable()
     }
 
     private fun initializeHooks() {
@@ -87,4 +94,15 @@ class ParticleEmitter : AbstractParticleEmitter() {
 fun <T> T.applyIf(condition: Boolean, action: T.() -> Unit): T {
     if (condition) action()
     return this
+}
+
+data class Result<out R, out E>(
+    val result: R,
+    val errors: List<E>
+) {
+    companion object {
+        infix fun <R, E> R.with(other: List<E>): Result<R, E> {
+            return Result(this, other)
+        }
+    }
 }

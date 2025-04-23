@@ -1,106 +1,169 @@
 package gg.aquatic.comet.emitter
 
 
-import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.PreInitComponent
+import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.emitter.EmitterData
-import gg.aquatic.comet.api.emitter.EmitterTickersHolder
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.api.emitter.parent.Parent
+import gg.aquatic.comet.api.emitter.random.DeterministicRandom
 import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
+import gg.aquatic.comet.emitter.impl.Emitter
+import gg.aquatic.comet.emitter.impl.OptimizedEmitter
+import gg.aquatic.comet.emitter.optimization.VirtualEmitter
+import gg.aquatic.comet.emitter.optimization.VirtualRuntime
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
 import gg.aquatic.waves.util.audience.AquaticAudience
 import gg.aquatic.waves.util.audience.GlobalAudience
-import gg.aquatic.waves.util.toUser
-import io.ktor.util.collections.*
-import org.bukkit.Bukkit
 import org.bukkit.Location
-import org.bukkit.entity.Player
-import org.bukkit.scheduler.BukkitTask
 import org.joml.Vector3d
+import java.util.*
 
 data class UnrealizedEmitter(
+    override val id: String,
+    override val preInitComponents: List<PreInitComponent>,
     override val components: List<Component>,
     val rateComponent: RateComponent,
     val distanceCullingComponent: DistanceCullingComponent,
     val updateFrequencyComponent: UpdateFrequencyComponent,
     override val billboardConstraints: BillboardConstraints,
     override val forwardVector: Vector3d,
+    val isListed: Boolean
 ) : AbstractUnrealizedEmitter() {
-    private val emitters: MutableSet<Emitter> = ConcurrentSet()
-    private var tasks: BukkitTask
+    override fun realize(
+        parent: Parent?,
+        location: Location,
+        environmentData: EnvironmentData,
+        audience: AquaticAudience,
+        after: (AbstractEmitter) -> Unit,
+    ) {
+        val initialization = {
+            val emitterData = EmitterData(UUID.randomUUID())
+            emitterData.world = location.world
+            emitterData.location = location
+            preInitComponents.forEach { it.init(emitterData, environmentData) }
+            emitterData.variable.putAll(environmentData.data)
 
-    init {
-        EmitterTickersHolder.unrealizedEmitters += this
-        tasks = Bukkit.getScheduler().runTaskTimerAsynchronously(AbstractParticleEmitter.INSTANCE, Runnable {
-            tick()
-        }, 1, 1)
-    }
+            val optimized = checkOptimized(environmentData)
+            val emitter: AbstractEmitter = if (optimized) OptimizedEmitter(
+                parent,
+                components,
+                rateComponent,
+                distanceCullingComponent,
+                billboardConstraints, location, emitterData, this, forwardVector, environmentData, audience, false
+            ) else Emitter(
+                parent,
+                components,
+                rateComponent,
+                distanceCullingComponent,
+                updateFrequencyComponent,
+                billboardConstraints, location, emitterData, this, forwardVector, environmentData, audience,
+            )
 
-    override fun kill() {
-        killInstances()
-        tasks.cancel()
-    }
+            after(emitter)
 
-    override fun killInstances() {
-        emitters.forEach { it.kill() }
-    }
-
-    private fun tick() {
-        val deadEmitters = HashSet<Emitter>()
-        val playerDeadParticleMap: MutableMap<Player, MutableList<Int>> = mutableMapOf()
-        for (emitter in emitters) {
-            val result = emitter.tick()
-            if (!result.alive) deadEmitters += emitter
-            for ((player, ids) in result.deadParticles) {
-                val entry = playerDeadParticleMap[player]
-                if (entry == null) {
-                    playerDeadParticleMap[player] = ids
-                } else {
-                    entry.addAll(ids)
-                }
-            }
+            emitter
         }
 
-        for ((player, ids) in playerDeadParticleMap) {
-            if (player.toUser() == null) continue
-            player.toUser().sendPacket(WrapperPlayServerDestroyEntities(*ids.toIntArray()))
-        }
+        GlobalTicker.addInitialization(initialization)
+    }
 
-        emitters.removeAll(deadEmitters)
+    private fun checkOptimized(data: EnvironmentData): Boolean {
+        return !(data.data["optimize"] != null && data.data["optimize"] == false)
     }
 
     override fun realize(
         parent: Parent?,
         location: Location,
         environmentData: EnvironmentData,
-        audience: AquaticAudience
-    ): Emitter {
-        val emitterData = EmitterData()
+        after: (AbstractEmitter) -> Unit,
+    ) {
+        realize(parent, location, environmentData, GlobalAudience(), after)
+    }
+
+    override fun internalRealize(
+        parent: Parent?,
+        location: Location,
+        environmentData: EnvironmentData,
+        audience: AquaticAudience,
+        random: DeterministicRandom,
+        uuid: UUID
+    ): AbstractEmitter {
+        val emitterData = EmitterData(uuid)
         emitterData.world = location.world
         emitterData.location = location
+        preInitComponents.forEach { it.init(emitterData, environmentData) }
         emitterData.variable.putAll(environmentData.data)
-        return Emitter(
+
+        val optimized = checkOptimized(environmentData)
+
+        val e = if (optimized) OptimizedEmitter(
+            parent,
+            components,
+            rateComponent,
+            distanceCullingComponent,
+            billboardConstraints,
+            location,
+            emitterData,
+            this,
+            forwardVector,
+            environmentData,
+            audience,
+            true,
+            seed = random.kotlinRandom.nextInt(),
+        ) else Emitter(
             parent,
             components,
             rateComponent,
             distanceCullingComponent,
             updateFrequencyComponent,
-            billboardConstraints, location, emitterData, this, forwardVector, environmentData, audience
-        ).also {
-            emitters += it
-        }
+            billboardConstraints,
+            location,
+            emitterData,
+            this,
+            forwardVector,
+            environmentData,
+            audience,
+            seed = random.kotlinRandom.nextInt(),
+        )
+
+        GlobalTicker.addEmitter(e)
+
+        return e
     }
 
-    override fun realize(
+    fun virtualRealize(
         parent: Parent?,
         location: Location,
         environmentData: EnvironmentData,
-    ): Emitter {
-        return realize(parent, location, environmentData, GlobalAudience())
+        random: DeterministicRandom,
+        runtime: VirtualRuntime,
+        uuid: UUID,
+    ) {
+        val emitterData = EmitterData(uuid)
+        emitterData.world = location.world
+        emitterData.location = location
+        preInitComponents.forEach { it.init(emitterData, environmentData) }
+        emitterData.variable.putAll(environmentData.data)
+
+        runtime.addEmitter(
+            VirtualEmitter(
+                parent = parent,
+                unrealizedEmitter = this,
+                runtime = runtime,
+                rateComponent = rateComponent,
+                components = components,
+                billboardConstraints = billboardConstraints,
+                backerLocation = location,
+                backerEmitterData = emitterData,
+                backerForwardVector = forwardVector,
+                backerEnvironmentData = environmentData,
+                seed = random.kotlinRandom.nextInt()
+            )
+        )
     }
 }

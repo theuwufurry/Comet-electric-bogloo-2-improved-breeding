@@ -30,11 +30,22 @@ class GradientColorComponent(
             val gradient: MutableList<Pair<Double, CompiledScript>> = mutableListOf()
             val emitterData = EmitterData()
             val (engine, particleData) = particleEngine(emitterData)
-            for (element in jsonObject.getAsJsonArray("data")) {
-                gradient += (element as JsonObject).getAsJsonPrimitive("index").asNumber.toDouble() to engine.compile(
-                    element.expression("color")?.addDependency() ?: return null,
-                    macros
-                )
+            if (jsonObject["data"].isJsonArray) {
+                for (element in jsonObject.getAsJsonArray("data")) {
+                    gradient += (element as JsonObject).getAsJsonPrimitive("index").asNumber.toDouble() to engine.compile(
+                        element.expression("color")?.addDependency() ?: return null,
+                        macros
+                    )
+                }
+            } else if (jsonObject["data"].isJsonObject) {
+                for ((index, colorStr) in jsonObject.getAsJsonObject("data").entrySet()) {
+                    gradient += index.toDouble() to engine.compile(
+                        colorStr.asString.addDependency(),
+                        macros
+                    )
+                }
+            } else {
+                return null
             }
 
             return GradientColorComponent(

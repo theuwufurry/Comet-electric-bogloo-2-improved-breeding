@@ -5,6 +5,7 @@ import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.particle.ParticleData
 import org.openjdk.nashorn.api.scripting.NashornScriptEngine
+import java.util.*
 import javax.script.Compilable
 import javax.script.CompiledScript
 import javax.script.ScriptContext
@@ -12,17 +13,17 @@ import javax.script.ScriptContext
 fun emitterEngine(emitterData: EmitterData): Compilable {
     val engine = AbstractParticleEmitter.scriptEngineFactory.getScriptEngine("-scripting")
     engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("emitter" to emitterData)
-    engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("emitter_variable" to emitterData.variable)
+    engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("emitter_variable" to emitterData.externalVariable)
     return engine as Compilable
 }
 
 fun particleEngine(emitterData: EmitterData): Pair<Compilable, ParticleData> {
     val engine = AbstractParticleEmitter.scriptEngineFactory.getScriptEngine("-scripting")
-    val particleData = ParticleData()
+    val particleData = ParticleData(UUID.randomUUID())
     engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("emitter" to emitterData)
-    engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("emitter_variable" to emitterData.variable)
+    engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("emitter_variable" to emitterData.externalVariable)
     engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("particle" to particleData)
-    engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("particle_variable" to particleData.variable)
+    engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("particle_variable" to particleData.externalVariable)
     return Pair(engine as Compilable, particleData)
 }
 
@@ -37,6 +38,8 @@ fun Compilable.compile(input: String, macros: Map<String, Macro>?, tryAsSimpleSt
             }
         }
     }
+
+    output = output.replace("Math.random()", "emitter.emitter.random.kotlinRandom.nextDouble()")
 
     val compiled = compileOrNull(output)
     if (tryAsSimpleString) {
@@ -60,7 +63,7 @@ fun Compilable.compile(input: String, macros: Map<String, Macro>?, tryAsSimpleSt
         }
     }
 
-    return compiled!!
+    return compile(output)
 }
 
 fun Compilable.compileOrNull(script: String): CompiledScript? {

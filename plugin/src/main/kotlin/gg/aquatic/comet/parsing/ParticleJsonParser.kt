@@ -5,33 +5,33 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.CometRegistry.componentParsers
+import gg.aquatic.comet.api.CometRegistry.preInitComponentParsers
 import gg.aquatic.comet.api.CometRegistry.rateComponentParsers
 import gg.aquatic.comet.api.CometRegistry.register
 import gg.aquatic.comet.api.CometRegistry.registerRate
 import gg.aquatic.comet.api.CometRegistry.registerUpdate
 import gg.aquatic.comet.api.CometRegistry.updateFrequencyParsers
 import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.PreInitComponent
 import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
-import gg.aquatic.comet.api.emitter.EmitterTickersHolder
 import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.parsing.AbstractParticleJsonParser
+import gg.aquatic.comet.api.parsing.BaseComponentParser
 import gg.aquatic.comet.api.parsing.ComponentParser
 import gg.aquatic.comet.api.parsing.PostInit
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.macro.MacrosParser
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
 import gg.aquatic.comet.api.particle.display.DisplayComponent
+import gg.aquatic.comet.emitter.GlobalTicker
 import gg.aquatic.comet.emitter.UnrealizedEmitter
 import gg.aquatic.comet.emitter.action.event.EmitterDeathComponent
 import gg.aquatic.comet.emitter.action.event.EmitterInitComponent
 import gg.aquatic.comet.emitter.action.event.EmitterTickComponent
 import gg.aquatic.comet.emitter.action.event.EmitterTimelineComponent
 import gg.aquatic.comet.emitter.environment.EnvironmentDataComponent
-import gg.aquatic.comet.emitter.lifetime.EmitterLifetimeComponent
-import gg.aquatic.comet.emitter.lifetime.InfiniteEmitterLifetimeComponent
-import gg.aquatic.comet.emitter.lifetime.LoopingEmitterLifetimeComponent
-import gg.aquatic.comet.emitter.lifetime.TimedEmitterLifetimeComponent
+import gg.aquatic.comet.emitter.lifetime.*
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.IntervalUpdateFrequencyComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.ManualUpdateFrequencyComponent
@@ -46,9 +46,11 @@ import gg.aquatic.comet.particle.color.ColorComponent
 import gg.aquatic.comet.particle.color.ConstantColorComponent
 import gg.aquatic.comet.particle.color.GradientColorComponent
 import gg.aquatic.comet.particle.display.model.ConstantModelComponent
+import gg.aquatic.comet.particle.display.model.FlipbookModelComponent
 import gg.aquatic.comet.particle.display.sprite.ConstantSpriteComponent
 import gg.aquatic.comet.particle.display.sprite.ExpressionSpriteComponent
 import gg.aquatic.comet.particle.display.sprite.FlipbookSpriteComponent
+import gg.aquatic.comet.particle.display.sprite.RandomSpriteComponent
 import gg.aquatic.comet.particle.lifetime.ParticleLifetimeComponent
 import gg.aquatic.comet.particle.lifetime.ParticleLifetimeExpressionComponent
 import gg.aquatic.comet.particle.position.AttractorPositionComponent
@@ -64,6 +66,7 @@ import gg.aquatic.comet.particle.transformation.rotation.VelocityRotationCompone
 import gg.aquatic.comet.particle.transformation.scale.ExpressionScaleComponent
 import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
 import gg.aquatic.comet.particle.variable.RandomsInitializerComponent
+import gg.aquatic.comet.snowstorm.SnowstormTranspiler
 import org.joml.Vector3d
 import java.io.File
 import java.io.FileReader
@@ -87,10 +90,10 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
 
     fun init() {
         for (parser in listOf(
-            EnvironmentDataComponent,
             TimedEmitterLifetimeComponent,
             InfiniteEmitterLifetimeComponent,
             LoopingEmitterLifetimeComponent,
+            ExpressionEmitterLifetimeComponent,
 
             ConstantColorComponent,
             GradientColorComponent,
@@ -100,9 +103,10 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
             ConstantSpriteComponent,
             ExpressionSpriteComponent,
             FlipbookSpriteComponent,
-            RandomsInitializerComponent,
+            RandomSpriteComponent,
 
             ConstantModelComponent,
+            FlipbookModelComponent,
 
             InitialExpressionPositionComponent,
             ExpressionPositionComponent,
@@ -131,6 +135,12 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
             parser.register()
         }
 
+        for (parser in listOf(
+            EnvironmentDataComponent
+        )) {
+            parser.register()
+        }
+
         distanceCullingParser = DistanceCullingComponent.id to DistanceCullingComponent
 
         for (parser in listOf(
@@ -149,24 +159,27 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
         }
     }
 
-    lateinit var jsonUnrealizedEmitters: Map<String, UnrealizedEmitter>
+    lateinit var jsonUnrealizedEmitters: MutableMap<String, UnrealizedEmitter>
         private set
 
     override fun parseJsons() {
         val dataFolder = AbstractParticleEmitter.INSTANCE.dataFolder
-        if (!dataFolder.exists()) return
+        dataFolder.mkdirs()
+
+        SnowstormTranspiler.load()
 
         val effectsFolder = File(dataFolder.path + "/effects/")
+        effectsFolder.mkdirs()
         val effects = recursivelyFindJsons(effectsFolder)
 
         val unrealizedEmitters: MutableMap<String, UnrealizedEmitter> = mutableMapOf()
 
-        EmitterTickersHolder.kill()
+        GlobalTicker.killInstances()
 
         for (file in effects) {
             val rootObject = JsonParser.parseReader(FileReader(file)).asJsonObject
 
-            val emitter = parseComponents(rootObject)
+            val emitter = parseComponents(rootObject, file.nameWithoutExtension)
             emitter?.run {
                 unrealizedEmitters += file.nameWithoutExtension to emitter
             } ?: run {
@@ -183,7 +196,7 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
         return jsonUnrealizedEmitters[id]
     }
 
-    private fun recursivelyFindJsons(dir: File): Set<File> {
+    fun recursivelyFindJsons(dir: File): Set<File> {
         val files: MutableSet<File> = mutableSetOf()
         for (file in dir.listFiles()!!) {
             if (file.isDirectory) {
@@ -197,11 +210,18 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
         return files
     }
 
-    private fun parseComponents(rootObject: JsonObject): UnrealizedEmitter? {
+    private fun parseComponents(rootObject: JsonObject, id: String): UnrealizedEmitter? {
         val macros: Map<String, Macro>? = rootObject.getAsJsonObject("macros")?.let { MacrosParser.parseMacros(it) }
+
+        val isListed = let {
+            val elem = rootObject["listed"] ?: return@let true
+            val primitive = if (elem.isJsonPrimitive) elem.asJsonPrimitive else return@let true
+            return@let if (primitive.isBoolean) primitive.asBoolean else true
+        }
 
         val componentsObject: JsonObject = rootObject.getAsJsonObject("components") ?: return null
 
+        val preInitComponents: MutableList<PreInitComponent> = mutableListOf()
         val components: MutableList<Component> = mutableListOf()
         var rateComponent: RateComponent? = null
         var distanceCullingComponent: DistanceCullingComponent? = null
@@ -214,6 +234,15 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
                 val component = componentParsers[key]!!.parse(componentElement, macros)
                 if (component != null) {
                     components += component
+
+                    continue
+                }
+            }
+
+            if (key in preInitComponentParsers) {
+                val component = preInitComponentParsers[key]!!.parse(componentElement, macros)
+                if (component != null) {
+                    preInitComponents += component
 
                     continue
                 }
@@ -260,12 +289,15 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
         ensureNecessaryComponents(components)
 
         return UnrealizedEmitter(
+            id,
+            preInitComponents,
             components,
             rateComponent ?: SteadyRateComponent.default(),
             distanceCullingComponent ?: DistanceCullingComponent.default(),
             updateFrequencyComponent ?: IntervalUpdateFrequencyComponent.default(),
             billboardConstraints ?: BillboardConstraints.CENTER,
-            forwardVector
+            forwardVector,
+            isListed
         )
     }
 
@@ -282,7 +314,11 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
 
     private fun postInit() {
         for ((_, unrealizedEmitter) in jsonUnrealizedEmitters) {
-            unrealizedEmitter.components.forEach { (it as? PostInit)?.realize() }
+            unrealizedEmitter.components.forEach { (it as? PostInit)?.realize(unrealizedEmitter) }
         }
+    }
+
+    fun onDisable() {
+        jsonUnrealizedEmitters.clear()
     }
 }

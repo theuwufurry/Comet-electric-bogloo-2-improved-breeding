@@ -1,6 +1,8 @@
 package gg.aquatic.comet.api.particle
 
 import gg.aquatic.comet.api.emitter.AbstractEmitter
+import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.emitter.VariableMutableMap
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
 import gg.aquatic.comet.api.particle.display.DisplayData
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
@@ -8,10 +10,9 @@ import org.joml.Quaternionf
 import org.joml.Vector3d
 import org.joml.Vector3f
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 
 data class ParticleData(
-    var id: UUID = UUID.randomUUID(),
+    var id: UUID,
     var particle: AbstractParticle? = null,
     var dead: Boolean = false,
     var age: Double = 0.0,
@@ -27,8 +28,9 @@ data class ParticleData(
     var billboardConstraints: BillboardConstraints = BillboardConstraints.CENTER,
     var emitter: AbstractEmitter? = null,
     var acceleration: Vector3d = Vector3d(),
-    var interpolationDelay: Int = -1,
-    var interpolationDuration: Int = 2
+    var interpolationDelay: Int = 0,
+    var transformationInterpolationDuration: Int = 2,
+    var teleportationDuration: Int = 1,
 ) {
     val pos: Vector3d
         get() = Vector3d(origin).add(relativePosition)
@@ -50,11 +52,47 @@ data class ParticleData(
         billboardConstraints = other.billboardConstraints
         acceleration = other.acceleration
         interpolationDelay = other.interpolationDelay
-        interpolationDuration = other.interpolationDuration
+        transformationInterpolationDuration = other.transformationInterpolationDuration
 
-        variable.clear()
-        variable.putAll(other.variable)
+        variable = other.variable
+//        variable.clear()
+//        variable.putAll(other.variable)
     }
 
-    val variable: MutableMap<String, Any> = ConcurrentHashMap()
+    var variable: MutableMap<String, Any> = VariableMutableMap()
+    val externalVariable: MutableMap<String, Any> = EmitterData.MapWrapper(::variable)
+
+    fun locHash(): Int {
+        return arrayOf(origin, relativePosition).contentHashCode()
+    }
+
+    fun displayHash(): Int {
+        return arrayOf(displayData, color, rotation, scale).contentHashCode()
+    }
+
+    fun clone(): ParticleData {
+        return ParticleData(
+            id = id,
+            particle = particle,
+            dead = dead,
+            age = age,
+            maxLife = maxLife,
+            displayData = displayData.copy(),
+            color = color,
+            origin = Vector3d(origin),
+            relativePosition = Vector3d(relativePosition),
+            translation = Vector3f(translation),
+            rotation = Quaternionf(rotation),
+            scale = Vector3f(scale),
+            velocity = Vector3d(velocity),
+            billboardConstraints = billboardConstraints,
+            emitter = emitter,
+            acceleration = Vector3d(acceleration),
+            interpolationDelay = interpolationDelay,
+            transformationInterpolationDuration = transformationInterpolationDuration,
+            teleportationDuration = teleportationDuration
+        ).apply i@{
+            this@i.variable = (this@ParticleData.variable as VariableMutableMap).clone()
+        }
+    }
 }

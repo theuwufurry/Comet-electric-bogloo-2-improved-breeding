@@ -12,7 +12,6 @@ import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.api.particle.display.sprite.SpriteComponent
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
 import javax.script.CompiledScript
-import kotlin.random.Random
 
 class RandomSpriteComponent(
     private val weightedSprites: List<Pair<CompiledScript, CompiledScript>>,
@@ -34,7 +33,7 @@ class RandomSpriteComponent(
             }
 
             val normalizedWeightedSprites = evaluatedWeightedSprites.map { (k, v) -> (k / totalWeight to v) }
-            val random = Random.nextDouble()
+            val random = otherEmitterData.emitter!!.random.kotlinRandom.nextDouble()
 
             var runningWeight = 0.0
             for ((weight, sprite) in normalizedWeightedSprites) {

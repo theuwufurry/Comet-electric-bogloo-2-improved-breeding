@@ -8,6 +8,6 @@ abstract class AbstractEntityDataBuilder {
         entityData: EntityData,
         flags: UpdateFlags,
         initial: Boolean
-    ): List<gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData>
+    ): List<gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData>?
 
 }

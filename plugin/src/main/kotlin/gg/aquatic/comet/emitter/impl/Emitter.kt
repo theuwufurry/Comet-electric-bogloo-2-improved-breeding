@@ -1,0 +1,241 @@
+package gg.aquatic.comet.emitter.impl
+
+import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.emitter.*
+import gg.aquatic.comet.api.emitter.environment.EnvironmentData
+import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
+import gg.aquatic.comet.api.emitter.parent.Parent
+import gg.aquatic.comet.api.emitter.parent.Pose
+import gg.aquatic.comet.api.emitter.parent.pose
+import gg.aquatic.comet.api.emitter.random.DeterministicRandom
+import gg.aquatic.comet.api.emitter.rate.RateComponent
+import gg.aquatic.comet.api.particle.ParticleComponent
+import gg.aquatic.comet.api.particle.ParticleData
+import gg.aquatic.comet.api.particle.data.BillboardConstraints
+import gg.aquatic.comet.emitter.SpawningProcessor
+import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
+import gg.aquatic.comet.particle.Particle
+import gg.aquatic.comet.particle.data.EntityDataBuilder
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
+import gg.aquatic.waves.util.audience.AquaticAudience
+import gg.aquatic.waves.util.toUser
+import org.bukkit.Color
+import org.bukkit.Location
+import org.bukkit.Particle.DustOptions
+import org.bukkit.entity.Player
+import org.bukkit.util.Vector
+import org.joml.Quaterniond
+import org.joml.Quaternionf
+import org.joml.Vector3d
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.random.Random
+
+class Emitter(
+    val parent: Parent? = null,
+    val components: List<Component>,
+    val rateComponent: RateComponent,
+    distanceCullingComponent: DistanceCullingComponent,
+    private val updateFrequencyComponent: UpdateFrequencyComponent,
+    val billboardConstraints: BillboardConstraints,
+    location: Location,
+    val emitterData: EmitterData,
+    val unrealizedEmitter: AbstractUnrealizedEmitter,
+    override val forwardVector: Vector3d,
+    override val environmentData: EnvironmentData,
+    override val audience: AquaticAudience,
+    val seed: Int = Random.nextInt(),
+) : AbstractEmitter() {
+    private val dustOptions =
+        DustOptions(Color.fromRGB(Random.nextInt(255), Random.nextInt(255), Random.nextInt(255)), 0.5f)
+
+    override val id: UUID = emitterData.id
+    val emitterComponents: List<EmitterComponent> =
+        components.filterIsInstance<EmitterComponent>().sortedBy { it.priority }
+    val particleComponents: List<ParticleComponent> =
+        components.filterIsInstance<ParticleComponent>().sortedBy { it.priority }
+
+    override val random: DeterministicRandom = DeterministicRandom(seed)
+
+    override var location = location
+        private set
+
+    //origin can change, rotation can change
+    override val particles: MutableList<Particle> = mutableListOf()
+    private val spawningProcessor = SpawningProcessor(this, distanceCullingComponent)
+    private val blocked = AtomicBoolean(false)
+    override var emitterRotation: Quaterniond = calculateEmitterRotation()
+
+    fun calculateEmitterRotation(): Quaterniond {
+        return Quaterniond().rotateTo(forwardVector, pose.dir)
+    }
+
+    init {
+        blocked.set(true)
+
+        emitterData.emitter = this
+        emitterComponents.forEach { it.init(emitterData) }
+
+        blocked.set(false)
+    }
+
+    private var locMisses = 0
+    private var displayMisses = 0
+    private var particleMisses = 0
+    private var emitterMisses = 0
+
+    override fun tick(): EmitterTickResult {
+        if (blocked.get()) {
+            println("${unrealizedEmitter.id} blocked!")
+            return EmitterTickResult(true)
+        }
+
+        parent?.pose?.let { setPose(it) }
+        emitterRotation = calculateEmitterRotation()
+        emitterComponents.forEach { it.execute(emitterData) }
+
+        if (emitterData.dead || (parent != null && parent.dead)) {
+            dead = true
+            emitterComponents.forEach { it.die(emitterData) }
+        }
+
+        if (dead && particles.size == 0) {
+            if (locMisses > 0 || particleMisses > 0 || emitterMisses > 0 || displayMisses > 0) {
+                println(
+                    """
+                -- ${unrealizedEmitter.id} --
+                $locMisses loc misses
+                $displayMisses display misses
+                $particleMisses particle misses
+                $emitterMisses emitter misses
+            """.trimIndent()
+                )
+            }
+
+            return EmitterTickResult(false)
+        }
+
+        val dataPackets: MutableList<PacketWrapper<*>> = mutableListOf()
+
+        for (particle in particles) {
+            fun die() {
+                spawningProcessor.die(particle)
+                particle.data.emitter?.dead = true
+            }
+
+            particle.tick()
+
+            val shouldUpdate = updateFrequencyComponent.shouldSendUpdate(emitterData, particle.data)
+            shouldUpdate.interpolationDuration?.let { particle.data.transformationInterpolationDuration = it }
+
+            val initialPos = Vector3d(particle.data.origin).add(particle.data.relativePosition)
+
+            particleComponents.forEach { it.execute(emitterData, particle.data) }
+
+            if (initialPos != particle.data.relativePosition) {
+                if (shouldUpdate.shouldUpdate) {
+                    particle.getMovementPacket().let { dataPackets += it }
+                }
+            }
+
+            particle.updatePacket(
+                entityDataBuilder = EntityDataBuilder,
+                shouldUpdate = shouldUpdate.shouldUpdate,
+                flagOverride = null
+            )?.let { dataPackets += it }
+
+            if (particle.data.dead) {
+                particleComponents.forEach { it.die(emitterData, particle.data) }
+                die()
+                continue
+            }
+        }
+
+        val deadParticleIDs: MutableList<Pair<Player, MutableList<Int>>> = spawningProcessor.processDead(dataPackets)
+
+        if (!dead && emitterData.isActive) spawnParticles()
+
+        return EmitterTickResult(true, deadParticleIDs)
+    }
+
+    private fun spawnParticles() {
+        val bundle: MutableList<PacketWrapper<*>> = mutableListOf()
+        repeat(rateComponent.toEmit(emitterData)) {
+            val particleData = ParticleData(random.uuid())
+            val particle = Particle(particleData)
+            particleData.particle = particle
+            particleData.origin = location.toVector().toVector3d()
+            particleData.billboardConstraints = billboardConstraints
+            particleData.interpolationDelay = updateFrequencyComponent.interpolationDelay
+            particleData.transformationInterpolationDuration = updateFrequencyComponent.initialInterpolationDuration
+
+            particleComponents.forEach { it.execute(emitterData, particleData) }
+
+            particle.init()
+
+            fun end(d: ParticleData = particle.data) {
+                val packets = particle.getAddPacket(d)
+                bundle.addAll(packets)
+
+                particles += particle
+            }
+
+            end()
+            return@repeat
+        }
+
+        spawningProcessor.sendSpawns(bundle)
+    }
+
+    override val players: List<Player>
+        get() = spawningProcessor.players
+
+    override fun setPose(pose: Pose) {
+        location.x = pose.pos.x
+        location.y = pose.pos.y
+        location.z = pose.pos.z
+
+        location.direction = Vector(
+            pose.dir.x,
+            pose.dir.y,
+            pose.dir.z
+        )
+    }
+
+    override val pose: Pose
+        get() {
+            return location.pose()
+        }
+
+    override val isPregen: Boolean = false
+    override fun realize(
+        unrealizedEmitter: AbstractUnrealizedEmitter,
+        parent: Parent?,
+        location: Location,
+        environmentData: EnvironmentData,
+        audience: AquaticAudience,
+        random: DeterministicRandom,
+        uuid: UUID
+    ) {
+        unrealizedEmitter.internalRealize(
+            parent,
+            location,
+            environmentData,
+            audience,
+            random,
+            uuid
+        )
+    }
+
+    override fun kill() {
+        dead = true
+        spawningProcessor.killParticles(particles)
+        particles.clear()
+    }
+
+    override fun applyEmitterRotation(input: Quaternionf): Quaternionf {
+        return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(emitterRotation).mul(input) else input
+    }
+}

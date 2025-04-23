@@ -1,6 +1,6 @@
 package gg.aquatic.comet.command
 
-import gg.aquatic.comet.emitter.environment.parseEnvironmentData
+import gg.aquatic.comet.api.emitter.environment.parseEnvironmentData
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.waves.command.ICommand
 import org.bukkit.Bukkit
@@ -84,7 +84,7 @@ object SpawnCommand : ICommand {
         }
 
         val location = Location(world, x, y, z, yaw, pitch)
-        emitter.realize(null, location, data)
+        emitter.realize(null, location, data) {}
     }
 
     private fun handlePos(input: String, origin: Double): Double? {
@@ -97,7 +97,7 @@ object SpawnCommand : ICommand {
 
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
         return when (args.size) {
-            1 -> ParticleJsonParser.jsonUnrealizedEmitters.keys.toList()
+            1 -> ParticleJsonParser.jsonUnrealizedEmitters.filter { it.value.isListed && it.key.startsWith(args[0]) }.keys.toList()
             2 -> Bukkit.getWorlds().map { it.name }.toMutableList().apply { add("~") }
             else -> emptyList()
         }

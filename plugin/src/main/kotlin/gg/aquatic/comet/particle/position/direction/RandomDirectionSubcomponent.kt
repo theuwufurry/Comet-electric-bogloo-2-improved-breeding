@@ -1,5 +1,6 @@
 package gg.aquatic.comet.particle.position.direction
 
+import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.particle.ParticleData
 import org.joml.Quaterniond
@@ -10,8 +11,8 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 class RandomDirectionSubcomponent(
-    private val magnitudeScript: CompiledScript?,
-    private val directionScript: Pair<DirectionSubcomponent, CompiledScript>?,
+    private val magnitudeScript: CompiledScript? = null,
+    private val directionScript: Pair<DirectionSubcomponent, CompiledScript>? = null,
     private val myParticleData: ParticleData,
     private val myEmitterData: EmitterData
 ) : DirectionSubcomponent {
@@ -21,22 +22,22 @@ class RandomDirectionSubcomponent(
         if (myParticleData.age == 0.0) {
             val dir: Vector3d? = directionScript?.first?.dir(otherEmitterData, otherParticleData)
             val spread: Double? = directionScript?.second?.eval() as? Double
-            return randomVector(magnitudeScript?.let { it.eval() as Number }?.toDouble() ?: 1.0, dir, spread)
+            return randomVector(otherEmitterData.emitter!!, magnitudeScript?.let { it.eval() as Number }?.toDouble() ?: 0.0, dir, spread)
         }
 
         return myParticleData.velocity
     }
 
-    private fun randomVector(magnitude: Double): Vector3d {
-        return Vector3d(Math.random() * 2.0 - 1.0, Math.random() * 2.0 - 1.0, Math.random() * 2.0 - 1.0).normalize(
+    private fun randomVector(emitter: AbstractEmitter, magnitude: Double): Vector3d {
+        return Vector3d(emitter.random.kotlinRandom.nextDouble() * 2.0 - 1.0, emitter.random.kotlinRandom.nextDouble() * 2.0 - 1.0, emitter.random.kotlinRandom.nextDouble() * 2.0 - 1.0).normalize(
             magnitude
         )
     }
 
-    private fun randomVector(magnitude: Double, dir: Vector3d?, spread: Double?): Vector3d {
-        if (dir == null || spread == null) return randomVector(magnitude)
-        val randomAngle = Math.random() * Math.PI * 2.0
-        val randomRadius = sqrt(Math.random()) * spread
+    private fun randomVector(emitter: AbstractEmitter, magnitude: Double, dir: Vector3d?, spread: Double?): Vector3d {
+        if (dir == null || spread == null) return randomVector(emitter, magnitude)
+        val randomAngle = emitter.random.kotlinRandom.nextDouble() * Math.PI * 2.0
+        val randomRadius = sqrt(emitter.random.kotlinRandom.nextDouble()) * spread
         val point = Vector3d(cos(randomAngle) * randomRadius, 1.0, sin(randomAngle) * randomRadius)
         return point.rotate(Quaterniond().rotateTo(Vector3d(0.0, 1.0, 0.0), dir)).normalize(magnitude)
     }

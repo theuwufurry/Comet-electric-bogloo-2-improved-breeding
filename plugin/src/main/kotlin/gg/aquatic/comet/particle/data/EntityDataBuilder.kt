@@ -1,5 +1,6 @@
 package gg.aquatic.comet.particle.data
 
+import gg.aquatic.comet.api.parsing.resourcepack.ResourcepackCreator
 import gg.aquatic.comet.api.particle.UpdateFlags
 import gg.aquatic.comet.api.particle.data.AbstractEntityDataBuilder
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
@@ -7,15 +8,14 @@ import gg.aquatic.comet.api.particle.data.EntityData
 import gg.aquatic.comet.api.particle.display.TextDisplayComponent
 import gg.aquatic.comet.api.particle.display.model.ModelData
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.component.ComponentTypes
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityDataTypes
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.ItemStack
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.type.ItemTypes
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Quaternion4f
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
 import org.bukkit.Bukkit
+import org.joml.Quaternionf
+import org.joml.Vector3d
 import org.joml.Vector3f
 
 val PACKET_OFFSET = if (checkVersion()) 1 else 0
@@ -33,13 +33,18 @@ private fun checkVersion(): Boolean {
 }
 
 object EntityDataBuilder : AbstractEntityDataBuilder() {
-    private val key = Key.key("particlecreator", "default")
+    private val defaultRotation = Quaternionf(0f, 0f, 0f, 1f)
+    private val defaultScale = Vector3f(1f)
+
+    private val key = Key.key(ResourcepackCreator.NAMESPACE, ResourcepackCreator.FONT_NAME)
+
+    private val DEBUG = 0
 
     override fun getDataFor(
         entityData: EntityData,
         flags: UpdateFlags,
         initial: Boolean
-    ): List<gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData> {
+    ): List<gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData>? {
         return genData(entityData, flags, initial)
     }
 
@@ -47,7 +52,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
         component: EntityData,
         flags: UpdateFlags,
         initial: Boolean
-    ): List<gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData> {
+    ): List<gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData>? {
         val entityData: MutableList<gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData> =
             mutableListOf()
 
@@ -88,14 +93,10 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
 
             is ModelData -> {
                 if (flags.display) {
-
-                    val stack = ItemStack.builder().type(ItemTypes.getByName(displayData.item)).amount(1).build()
-                    stack.setComponent(ComponentTypes.CUSTOM_MODEL_DATA, displayData.id)
-
                     entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                         22 + PACKET_OFFSET,
                         EntityDataTypes.ITEMSTACK,
-                        stack
+                        ResourcepackCreator.modelMap[displayData.id]!!
                     )
                 }
             }
@@ -126,20 +127,20 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
             component.interpolationDelay
         )
 
-        if (initial || flags.interpolation) {
+        if (initial || flags.transformationInterpolation) {
             entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                 9,
                 EntityDataTypes.INT,
-                component.interpolationDuration
+                component.transformationInterpolationDuration
             )
+        }
 
-            if (PACKET_OFFSET > 0) {
-                entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
-                    10,
-                    EntityDataTypes.INT,
-                    component.interpolationDuration
-                )
-            }
+        if ((initial || flags.teleportationDuration) && PACKET_OFFSET > 0) {
+            entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
+                10,
+                EntityDataTypes.INT,
+                component.teleportationDuration
+            )
         }
 
         if (initial) {
@@ -150,44 +151,37 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
             )
         }
 
-//        if (flags.translation) {
-//            entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
-//                10 + PACKET_OFFSET,
-//                EntityDataTypes.VECTOR3F,
-//                gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3f(
-//                    component.translation.x,
-//                    component.translation.y,
-//                    component.translation.z
-//                )
-//            )
-//        }
-
         if (flags.scale) {
-            entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
-                11 + PACKET_OFFSET,
-                EntityDataTypes.VECTOR3F,
-                gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3f(
-                    component.scale.x,
-                    component.scale.y,
-                    component.scale.z
+            if (!(initial && component.scale == defaultScale)) {
+                entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
+                    11 + PACKET_OFFSET,
+                    EntityDataTypes.VECTOR3F,
+                    gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3f(
+                        component.scale.x,
+                        component.scale.y,
+                        component.scale.z
+                    )
                 )
-            )
+            }
         }
 
         if (flags.rotation) {
-            entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
-                12 + PACKET_OFFSET,
-                EntityDataTypes.QUATERNION,
-                Quaternion4f(component.rotation.x, component.rotation.y, component.rotation.z, component.rotation.w)
-            )
+            if (!(initial && component.rotation == defaultRotation)) {
+                entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
+                    12 + PACKET_OFFSET,
+                    EntityDataTypes.QUATERNION,
+                    Quaternion4f(component.rotation.x, component.rotation.y, component.rotation.z, component.rotation.w)
+                )
+            }
         }
 
         if (flags.rotation || flags.scale) {
-            val offset = if (component.billboardConstraints == BillboardConstraints.CENTER) Vector3f(
+            val offset = Vector3f(
                 -0.0125f,
                 0f,
                 0f
-            ) else Vector3f()
+            )
+
             offset.mul(component.scale).rotate(component.rotation)
             entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                 10 + PACKET_OFFSET,
@@ -200,6 +194,37 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
             )
         }
 
+        if (DEBUG >= 1) print(flags, component, initial)
+
         return entityData
+    }
+
+    private fun print(flags: UpdateFlags, entityData: EntityData, initial: Boolean) {
+        if (!flags.anyTrue()) return
+        val strB = StringBuilder()
+        strB.append("/-- ${if (initial) "I" else ""}- EDB -----\n")
+        if (flags.display) {
+            strB.append("| DISPLAY: ${entityData.displayData}\n")
+            strB.append("|_ COLOR: ${entityData.color}\n")
+        }
+        if (flags.translation)
+            strB.append("| TRANSLATION: ${entityData.translation}\n")
+        if (initial || flags.scale)
+            strB.append("| SCALE: ${entityData.scale}\n")
+        if (flags.teleportationDuration)
+            strB.append("| TELEPORTATION DURATION: ${entityData.teleportationDuration}\n")
+        if (initial || flags.transformationInterpolation)
+            strB.append("| TRANSFORMATION INTERPOLATION DURATION: ${entityData.transformationInterpolationDuration}\n")
+        if (flags.transparency)
+            strB.append("| TRANSPARENCY: ${entityData.transparency}\n")
+        if (flags.rotation)
+            strB.append("| ROTATION: ${entityData.rotation}\n")
+
+        if (flags.teleportationDuration &&
+            !flags.scale && !flags.translation && !flags.display && !flags.transformationInterpolation && !flags.transparency && !flags.rotation) {
+            strB.append("| LONELY!")
+        }
+
+        println(strB)
     }
 }

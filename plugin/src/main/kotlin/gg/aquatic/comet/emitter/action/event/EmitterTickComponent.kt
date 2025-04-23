@@ -2,6 +2,7 @@ package gg.aquatic.comet.emitter.action.event
 
 import com.google.gson.JsonElement
 import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.emitter.EmitterComponent
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.action.ActionContext
@@ -27,8 +28,8 @@ class EmitterTickComponent(
 
     override fun die(otherEmitterData: EmitterData) {}
 
-    override fun realize() {
-        action.subActions.filterIsInstance<PostInit>().forEach { it.realize() }
+    override fun realize(unrealizedEmitter: AbstractUnrealizedEmitter) {
+        action.subActions.filterIsInstance<PostInit>().forEach { it.realize(unrealizedEmitter) }
     }
 
     companion object : BaseComponentParser {

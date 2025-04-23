@@ -3,6 +3,7 @@ package gg.aquatic.comet.api.parsing
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.PreInitComponent
 import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.parsing.macro.Macro
 import org.joml.Vector3d
@@ -18,6 +19,11 @@ interface BaseComponentParser {
     fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component?
 }
 
+interface PreInitComponentParser {
+    val id: String
+    fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): PreInitComponent?
+}
+
 abstract class AbstractParticleJsonParser {
     abstract fun parseJsons()
 
@@ -26,6 +32,11 @@ abstract class AbstractParticleJsonParser {
 
 fun JsonElement.asJsonObjectOrNull(): JsonObject? {
     return if (isJsonObject) asJsonObject else null
+}
+
+fun JsonObject.asJsonObjectOrNull(member: String): JsonObject? {
+    val memberElement = get(member)
+    return if (memberElement != null && memberElement.isJsonObject) memberElement.asJsonObject else null
 }
 
 fun JsonElement.asStringOrNull(): String? {

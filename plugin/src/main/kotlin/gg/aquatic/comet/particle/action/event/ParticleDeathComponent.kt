@@ -2,6 +2,7 @@ package gg.aquatic.comet.particle.action.event
 
 import com.google.gson.JsonElement
 import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.action.ActionContext
 import gg.aquatic.comet.api.parsing.BaseComponentParser
@@ -15,8 +16,8 @@ class ParticleDeathComponent(
     private val action: Action
 ) : ParticleComponent, PostInit {
     override val priority = 0
-    override fun realize() {
-        action.subActions.filterIsInstance<PostInit>().forEach { it.realize() }
+    override fun realize(unrealizedEmitter: AbstractUnrealizedEmitter) {
+        action.subActions.filterIsInstance<PostInit>().forEach { it.realize(unrealizedEmitter) }
     }
 
     override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}

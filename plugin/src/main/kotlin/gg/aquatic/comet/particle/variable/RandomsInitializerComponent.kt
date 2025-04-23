@@ -12,11 +12,12 @@ import gg.aquatic.comet.api.particle.ParticleData
 class RandomsInitializerComponent(private val emitterRandoms: Int, private val particleRandoms: Int) :
     EmitterComponent,
     ParticleComponent {
-    override val priority = 0
+    override val priority = -1
     override fun init(otherEmitterData: EmitterData) {
         for (i in 1..emitterRandoms) {
-            if (i == 1) otherEmitterData.variable["random"] = Math.random()
-            else otherEmitterData.variable["random$i"] = Math.random()
+            if (i == 1) otherEmitterData.variable["random"] =
+                otherEmitterData.emitter!!.random.kotlinRandom.nextDouble()
+            else otherEmitterData.variable["random$i"] = otherEmitterData.emitter!!.random.kotlinRandom.nextDouble()
         }
     }
 
@@ -26,8 +27,10 @@ class RandomsInitializerComponent(private val emitterRandoms: Int, private val p
     override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
         if (otherParticleData.age == 0.0) {
             for (i in 1..particleRandoms) {
-                if (i == 1) otherParticleData.variable["random"] = Math.random()
-                else otherParticleData.variable["random$i"] = Math.random()
+                if (i == 1) otherParticleData.variable["random"] =
+                    otherEmitterData.emitter!!.random.kotlinRandom.nextDouble()
+                else otherParticleData.variable["random$i"] =
+                    otherEmitterData.emitter!!.random.kotlinRandom.nextDouble()
             }
         }
     }

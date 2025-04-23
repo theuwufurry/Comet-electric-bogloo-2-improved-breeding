@@ -19,6 +19,10 @@ import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.Wr
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity
 import java.util.*
 
+/*
+
+ */
+
 open class Particle(override var data: ParticleData) : AbstractParticle() {
     override val id = ParticleIDProvider.id()
     private val uuid = UUID.randomUUID()
@@ -28,9 +32,16 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
     fun init() {
         previousEntityData = EntityData(
             data.displayData,
-            data.color, data.color ushr 24, null,
-            data.translation, data.rotation, data.scale,
-            data.billboardConstraints, data.interpolationDelay, data.interpolationDuration
+            data.color,
+            data.color ushr 24,
+            null,
+            data.translation,
+            data.rotation,
+            data.scale,
+            data.billboardConstraints,
+            data.interpolationDelay,
+            data.transformationInterpolationDuration,
+            data.teleportationDuration
         )
     }
 
@@ -38,7 +49,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
         data.age++
     }
 
-    override fun getAddPacket(): List<PacketWrapper<*>> {
+    override fun getAddPacket(data: ParticleData): List<PacketWrapper<*>> {
         val packet = WrapperPlayServerSpawnEntity(
             id,
             Optional.of(uuid),
@@ -53,34 +64,45 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
             Optional.of(Vector3d())
         )
 
-        val data = EntityDataBuilder.getDataFor(
+        val nd = EntityDataBuilder.getDataFor(
             EntityData(
                 data.displayData,
-                data.color, data.color ushr 24, null,
-                data.translation, data.rotation, data.scale,
-                data.billboardConstraints, data.interpolationDelay, data.interpolationDuration
+                data.color,
+                data.color ushr 24,
+                null,
+                data.translation,
+                data.rotation,
+                data.scale,
+                data.billboardConstraints,
+                data.interpolationDelay,
+                data.transformationInterpolationDuration,
+                data.teleportationDuration
             ), UpdateFlags(
                 display = true,
                 transparency = true,
                 translation = true,
                 rotation = true,
                 scale = true,
-                interpolation = true
+                transformationInterpolation = true,
+                teleportationDuration = true
             ), true
         )
 
-        val entityDataPacket: PacketWrapper<*> = WrapperPlayServerEntityMetadata(id, data)
+        val entityDataPacket: PacketWrapper<*> = WrapperPlayServerEntityMetadata(id, nd)
         return listOf(packet, entityDataPacket)
     }
 
+    //TODO: use correct data for non full update
     override fun updatePacket(
         entityDataBuilder: AbstractEntityDataBuilder,
-        shouldUpdate: Boolean
+        shouldUpdate: Boolean,
+        data: ParticleData,
+        flagOverride: UpdateFlags?,
     ): WrapperPlayServerEntityMetadata? {
-        return if (shouldUpdate) handleFullUpdate(entityDataBuilder)
-        else if (data.interpolationDuration > 1 && previousEntityData.reserveTransparency != null) {
-            val interpolationDuration = data.interpolationDuration - 1
-            val flags = UpdateFlags(false, false, false, false, false, true)
+        return if (shouldUpdate) handleFullUpdate(entityDataBuilder, data, flagOverride)
+        else if (data.transformationInterpolationDuration > 1 && previousEntityData.reserveTransparency != null) {
+            val transformationInterpolationDuration = data.transformationInterpolationDuration - 1
+            val flags = UpdateFlags(false, false, false, false, false, true, false)
 
             val newData =
                 EntityData(
@@ -90,58 +112,90 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                     data.translation,
                     data.rotation,
                     data.scale,
-                    data.billboardConstraints, data.interpolationDelay, interpolationDuration
+                    data.billboardConstraints,
+                    data.interpolationDelay,
+                    transformationInterpolationDuration,
+                    data.teleportationDuration
                 )
 
             previousEntityData = newData.copy()
 
             entityDataBuilder.getDataFor(
                 newData, flags, false
-            ).let { WrapperPlayServerEntityMetadata(id, it) }
+            )?.let { WrapperPlayServerEntityMetadata(id, it) }
         } else null
     }
 
-    private fun handleFullUpdate(entityDataBuilder: AbstractEntityDataBuilder): WrapperPlayServerEntityMetadata? {
-        val flags = UpdateFlags()
-        var transparency = data.color ushr 24
-        var interpolationDuration = data.interpolationDuration
-        flags.display = (previousEntityData.displayData != data.displayData)
-                || ((previousEntityData.color and 0xFFFFFF) != (data.color and 0xFFFFFF))
-        flags.transparency = previousEntityData.transparency != transparency
-        flags.translation = previousEntityData.translation != data.translation
-        flags.rotation = previousEntityData.rotation != data.rotation
-        flags.scale = previousEntityData.scale != data.scale
-        flags.interpolation = previousEntityData.interpolationDuration != data.interpolationDuration
-
-        var reserveTransparency: Int? = null
-        if (interpolationDuration > 1) {
-            if (previousEntityData.reserveTransparency == null) {
-                if (previousEntityData.transparency > 127 && transparency <= 127) {
-                    flags.transparency = true
-                    reserveTransparency = transparency
-                    transparency = 127
-                    interpolationDuration = 0
-                    flags.interpolation = true
-                }
-            } else {
-                interpolationDuration--
-                transparency = previousEntityData.reserveTransparency!!
-                flags.interpolation = true
-            }
-        }
-
-        if (!flags.anyTrue()) return null
-
-        val newData =
-            EntityData(
+    private fun handleFullUpdate(
+        entityDataBuilder: AbstractEntityDataBuilder,
+        data: ParticleData,
+        flagOverride: UpdateFlags?
+    ): WrapperPlayServerEntityMetadata? {
+        val (flags, newData) = flagOverride?.let {
+            flagOverride to EntityData(
                 data.displayData,
                 data.color,
-                transparency, reserveTransparency,
+                data.color ushr 24,
+                null,
                 data.translation,
                 data.rotation,
                 data.scale,
-                data.billboardConstraints, data.interpolationDelay, interpolationDuration
+                data.billboardConstraints,
+                data.interpolationDelay,
+                data.transformationInterpolationDuration,
+                data.teleportationDuration
             )
+        } ?: let {
+            var transparency = data.color ushr 24
+            var interpolationDuration = data.transformationInterpolationDuration
+
+            val flags = UpdateFlags()
+
+            flags.display = ((previousEntityData.displayData != data.displayData)
+                    || ((previousEntityData.color and 0xFFFFFF) != (data.color and 0xFFFFFF)))
+            flags.transparency = (previousEntityData.transparency != transparency)
+            flags.translation = (previousEntityData.translation != data.translation)
+            flags.rotation = (previousEntityData.rotation != data.rotation)
+            flags.scale = (previousEntityData.scale != data.scale)
+            flags.transformationInterpolation =
+                (previousEntityData.transformationInterpolationDuration != data.transformationInterpolationDuration)
+            flags.teleportationDuration = (previousEntityData.teleportationDuration != data.teleportationDuration)
+
+            var reserveTransparency: Int? = null
+            if (interpolationDuration > 1) {
+                if (previousEntityData.reserveTransparency == null) {
+                    if (previousEntityData.transparency > 127 && transparency <= 127) {
+                        flags.transparency = true
+                        reserveTransparency = transparency
+                        transparency = 127
+                        interpolationDuration = 0
+                        flags.transformationInterpolation = true
+                    }
+                } else {
+                    interpolationDuration--
+                    transparency = previousEntityData.reserveTransparency!!
+                    flags.transformationInterpolation = true
+                }
+            }
+
+            if (!flags.anyRelevantTrue()) return@let null
+
+            val newData =
+                EntityData(
+                    data.displayData,
+                    data.color,
+                    transparency, reserveTransparency,
+                    data.translation,
+                    data.rotation,
+                    data.scale,
+                    data.billboardConstraints, data.interpolationDelay,
+                    interpolationDuration, data.teleportationDuration
+                )
+
+            flags to newData
+        } ?: return null
+
+        if (!flags.anyRelevantTrue()) return null
 
         previousEntityData = newData.copy()
 
@@ -177,4 +231,3 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
     override val dead: Boolean
         get() = data.dead
 }
-

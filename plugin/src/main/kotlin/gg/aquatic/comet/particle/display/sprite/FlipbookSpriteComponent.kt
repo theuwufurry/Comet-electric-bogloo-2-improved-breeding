@@ -4,6 +4,7 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.parsing.BaseComponentParser
+import gg.aquatic.comet.api.parsing.asStringOrNull
 import gg.aquatic.comet.api.parsing.compile
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.particleEngine
@@ -30,11 +31,22 @@ class FlipbookSpriteComponent(
             val (engine, particleData) = particleEngine(emitterData)
 
             val sprites: MutableList<Pair<Double, CompiledScript>> = mutableListOf()
-            for (element in jsonObject.getAsJsonArray("sprites")) {
-                sprites += (element as JsonObject).getAsJsonPrimitive("index").asNumber.toDouble() to engine.compile(
-                    element.expression("sprite") ?: return null,
-                    macros, true
-                )
+            if (jsonObject["sprites"].isJsonArray) {
+                for (element in jsonObject.getAsJsonArray("sprites")) {
+                    sprites += (element as JsonObject).getAsJsonPrimitive("index").asNumber.toDouble() to engine.compile(
+                        element.expression("sprite") ?: return null,
+                        macros, true
+                    )
+                }
+            } else if (jsonObject["sprites"].isJsonObject) {
+                for ((index, sprite) in jsonObject["sprites"].asJsonObject.entrySet()) {
+                    sprites += index.toDouble() to engine.compile(
+                        sprite.asStringOrNull() ?: return null,
+                        macros, true
+                    )
+                }
+            } else {
+                return null
             }
 
             return FlipbookSpriteComponent(

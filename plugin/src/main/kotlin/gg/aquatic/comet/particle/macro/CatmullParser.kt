@@ -12,18 +12,27 @@ object CatmullParser : MacroParser {
     override fun parse(name: String, jsonObject: JsonObject): Macro? {
         val times = jsonObject.getAsJsonArray("x").map { it.asDouble }
         val values = jsonObject.getAsJsonArray("y").map { it.asDouble }
+        var range = "0"
+        if (jsonObject.has("range")) {
+            range = jsonObject["range"].asString
+        }
 
         val input: String = jsonObject.getAsJsonPrimitive("input")?.asString ?: return null
-        return Macro("$name.eval($input)", Pair(name, CatmullEvaluator.fromPoints(values, times)))
+        return Macro("$name.eval($input, 0, $range)", Pair(name, CatmullEvaluator.fromPoints(values, times)))
     }
 }
 
 class CatmullEvaluator private constructor(
     private val points: List<Double>,
-    private val times: List<Double>
+    private val times: List<Double>,
 ) {
-    fun eval(inputTime: Double): Double {
-        val usableInputTime = inputTime.coerceIn(times[1], times[times.size - 2])
+    fun eval(inputTime: Double, rangeStart: Double, rangeEnd: Double): Double {
+        var usableInputTime = inputTime
+        if (rangeEnd != 0.0 || rangeStart != 0.0) {
+            usableInputTime = inputTime / (rangeEnd - rangeStart) + rangeStart
+        }
+
+        usableInputTime = usableInputTime.coerceIn(times[1], times[times.size - 2])
 
         for (timeIndex in times.indices) {
             val time = getTime(timeIndex + 1) ?: continue

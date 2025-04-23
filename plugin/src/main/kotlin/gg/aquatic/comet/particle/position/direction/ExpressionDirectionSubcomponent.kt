@@ -6,26 +6,26 @@ import org.joml.Vector3d
 import javax.script.CompiledScript
 
 class ExpressionDirectionSubcomponent(
-    private val xOffset: CompiledScript,
-    private val yOffset: CompiledScript,
-    private val zOffset: CompiledScript,
+    private val xOffset: CompiledScript?,
+    private val yOffset: CompiledScript?,
+    private val zOffset: CompiledScript?,
+    private val magnitude: CompiledScript?,
     val myParticleData: ParticleData,
     val myEmitterData: EmitterData
 ) : DirectionSubcomponent {
     override fun dir(otherEmitterData: EmitterData, otherParticleData: ParticleData): Vector3d {
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
-        return Vector3d(
-            (xOffset.eval() as Number).toDouble(),
-            (yOffset.eval() as Number).toDouble(),
-            (zOffset.eval() as Number).toDouble()
+        val dir = Vector3d(
+            (xOffset?.eval() as? Number)?.toDouble() ?: 0.0,
+            (yOffset?.eval() as? Number)?.toDouble() ?: 0.0,
+            (zOffset?.eval() as? Number)?.toDouble() ?: 0.0,
         )
+
+        magnitude?.let {
+            dir.normalize((it.eval() as Number).toDouble())
+        }
+
+        return dir
     }
 }
-
-//class UnrealizedExpressionDirectionSubcomponent(private val xOffset: String, private val yOffset: String, private val zOffset: String, private val macros: Map<String, Macro>?) : UnrealizedComponent<ExpressionDirectionSubcomponent> {
-//    override fun realizeComponent(emitterData: EmitterData): ExpressionDirectionSubcomponent {
-//        val (engine, particleData) = particleEngine(emitterData)
-//        return ExpressionDirectionSubcomponent(engine.compile(xOffset, macros), engine.compile(yOffset, macros), engine.compile(zOffset, macros), particleData)
-//    }
-//}

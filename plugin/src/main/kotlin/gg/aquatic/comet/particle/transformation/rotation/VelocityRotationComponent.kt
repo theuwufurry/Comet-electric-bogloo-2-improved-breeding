@@ -48,6 +48,7 @@ class VelocityRotationComponent(
             otherParticleData.relativePosition.z.toFloat()
         ).sub(oldPositionMap[otherParticleData.id]).normalize()
 
+
         val yaw = atan2(delta.x, delta.z) + Math.PI.toFloat()
         val pitch = asin(delta.y) + Math.PI.toFloat() * -0.5f
 
