@@ -182,14 +182,17 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
                 0f
             )
 
-            offset.mul(component.scale).rotate(component.rotation)
+            offset
+                .mul(component.scale)
+                .rotate(component.rotation)
+                .add(component.translation)
             entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                 10 + PACKET_OFFSET,
                 EntityDataTypes.VECTOR3F,
                 gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3f(
-                    component.translation.x + offset.x,
-                    component.translation.y + offset.y,
-                    component.translation.z + offset.y
+                    offset.x,
+                    offset.y,
+                    offset.z
                 )
             )
         }

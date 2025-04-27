@@ -32,48 +32,58 @@ class ExpressionRotationComponent(
             val rotations: MutableList<Quaternionf.() -> Unit> = mutableListOf()
 
             for ((id, _) in jsonObject.entrySet()) {
-                when (id) {
-                    "x" -> {
-                        val compiledScript = engine.compile(jsonObject.expression("x") ?: return null, macros)
-                        rotations += {
-                            rotateX((compiledScript.eval() as Number).toFloat())
-                        }
+                if ("x_local" in id) {
+                    val compiledScript = engine.compile(jsonObject.expression(id) ?: return null, macros)
+                    rotations += {
+                        rotateLocalX((compiledScript.eval() as Number).toFloat())
                     }
 
-                    "y" -> {
-                        val compiledScript = engine.compile(jsonObject.expression("y") ?: return null, macros)
-                        rotations += {
-                            rotateY((compiledScript.eval() as Number).toFloat())
-                        }
+                    continue
+                }
+
+                if ("y_local" in id) {
+                    val compiledScript = engine.compile(jsonObject.expression(id) ?: return null, macros)
+                    rotations += {
+                        rotateLocalY((compiledScript.eval() as Number).toFloat())
                     }
 
-                    "z" -> {
-                        val compiledScript = engine.compile(jsonObject.expression("z") ?: return null, macros)
-                        rotations += {
-                            rotateZ((compiledScript.eval() as Number).toFloat())
-                        }
+                    continue
+                }
+
+                if ("z_local" in id) {
+                    val compiledScript = engine.compile(jsonObject.expression(id) ?: return null, macros)
+                    rotations += {
+                        rotateLocalZ((compiledScript.eval() as Number).toFloat())
                     }
 
-                    "x_local" -> {
-                        val compiledScript = engine.compile(jsonObject.expression("x_local") ?: return null, macros)
-                        rotations += {
-                            rotateLocalX((compiledScript.eval() as Number).toFloat())
-                        }
+                    continue
+                }
+
+                if ("x" in id) {
+                    val compiledScript = engine.compile(jsonObject.expression(id) ?: return null, macros)
+                    rotations += {
+                        rotateX((compiledScript.eval() as Number).toFloat())
                     }
 
-                    "y_local" -> {
-                        val compiledScript = engine.compile(jsonObject.expression("y_local") ?: return null, macros)
-                        rotations += {
-                            rotateLocalY((compiledScript.eval() as Number).toFloat())
-                        }
+                    continue
+                }
+
+                if ("y" in id) {
+                    val compiledScript = engine.compile(jsonObject.expression(id) ?: return null, macros)
+                    rotations += {
+                        rotateY((compiledScript.eval() as Number).toFloat())
                     }
 
-                    "z_local" -> {
-                        val compiledScript = engine.compile(jsonObject.expression("z_local") ?: return null, macros)
-                        rotations += {
-                            rotateLocalZ((compiledScript.eval() as Number).toFloat())
-                        }
+                    continue
+                }
+
+                if ("z" in id) {
+                    val compiledScript = engine.compile(jsonObject.expression(id) ?: return null, macros)
+                    rotations += {
+                        rotateZ((compiledScript.eval() as Number).toFloat())
                     }
+
+                    continue
                 }
             }
 
