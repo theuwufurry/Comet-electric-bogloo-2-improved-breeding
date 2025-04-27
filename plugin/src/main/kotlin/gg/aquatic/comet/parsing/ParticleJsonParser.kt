@@ -252,6 +252,8 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
                 billboardConstraints = when (componentElement.asString) {
                     "fixed" -> BillboardConstraints.FIXED
                     "center" -> BillboardConstraints.CENTER
+                    "vertical" -> BillboardConstraints.VERTICAL
+                    "horizontal" -> BillboardConstraints.HORIZONTAL
                     else -> BillboardConstraints.CENTER
                 }
             }
