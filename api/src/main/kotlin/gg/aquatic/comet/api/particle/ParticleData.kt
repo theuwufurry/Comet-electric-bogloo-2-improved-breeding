@@ -35,6 +35,8 @@ data class ParticleData(
     val pos: Vector3d
         get() = Vector3d(origin).add(relativePosition)
 
+    val max_life: Int by ::maxLife
+
     fun copyFrom(other: ParticleData) {
         id = other.id
         particle = other.particle
