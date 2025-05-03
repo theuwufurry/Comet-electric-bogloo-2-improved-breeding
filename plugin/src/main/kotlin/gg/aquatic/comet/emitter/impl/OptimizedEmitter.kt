@@ -213,6 +213,7 @@ class OptimizedEmitter(
                             dD?.let { nd.displayData = dD }
                             nd.scale = nextDatum.vec.scale
                             nd.rotation = nextDatum.vec.rot
+                            nd.translation = nextDatum.vec.translation
 
                             val prevDt = nextDatum.time - cp.time
 
@@ -229,6 +230,7 @@ class OptimizedEmitter(
                             flags.display = color != null
                             flags.rotation = (nextDatum.vec.rot != cp.vec.rot)
                             flags.scale = (nextDatum.vec.scale != cp.vec.scale)
+                            flags.translation = (nextDatum.vec.translation != cp.vec.translation)
                             flags.transformationInterpolation = prevDatum?.let { (prevDt != cp.time - it.time) } ?: true
                             flags.transparency = (nextDatum.vec.alpha != cp.vec.alpha)
                             if (DEBUG_DISPLAY_DATA >= 1) println("  | TRANSPARENCY: ${nextDatum.vec.alpha * 255.0}")
@@ -310,7 +312,7 @@ class OptimizedEmitter(
 
             pd.scale = firstDisp.vec.scale
             pd.rotation = firstDisp.vec.rot
-            pd.rotation = firstDisp.vec.rot
+            pd.translation = firstDisp.vec.translation
 
             val firstTex = texturedColor.first()
 

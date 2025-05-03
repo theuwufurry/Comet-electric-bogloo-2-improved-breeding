@@ -90,6 +90,7 @@ class VirtualEmitter(
         (environmentData.data["c_alpha"] as? Number)?.toDouble() ?: 1.0,
         (environmentData.data["c_rot"] as? Number)?.toFloat() ?: 1f,
         (environmentData.data["c_scale"] as? Number)?.toFloat() ?: 1f,
+        (environmentData.data["c_tr"] as? Number)?.toFloat() ?: 1f,
         (environmentData.data["c_time"] as? Number)?.toDouble() ?: 0.1,
     )
 

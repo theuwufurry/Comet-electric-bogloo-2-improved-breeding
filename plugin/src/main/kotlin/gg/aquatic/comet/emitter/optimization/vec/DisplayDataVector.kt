@@ -13,6 +13,7 @@ class DisplayDataVector private constructor(
     var alpha: Double,
     var rot: Quaternionf,
     var scale: Vector3f,
+    var translation: Vector3f,
     var time: Double,
     private val coefficients: DisplayDataVectorCoefficients,
 ) : Vec {
@@ -37,6 +38,12 @@ class DisplayDataVector private constructor(
             scale = value
         }
 
+    var internalTranslation: Vector3f = Vector3f(translation).mul(coefficients.translation)
+        set(value) {
+            field = Vector3f(value).mul(coefficients.translation)
+            scale = value
+        }
+
     var internalTime = time * coefficients.time
         set(value) {
             field = value * coefficients.time
@@ -44,7 +51,7 @@ class DisplayDataVector private constructor(
         }
 
     override fun clone(): Vec {
-        return DisplayDataVector(alpha, Quaternionf(rot), Vector3f(scale), time, coefficients)
+        return DisplayDataVector(alpha, Quaternionf(rot), Vector3f(scale), Vector3f(translation), time, coefficients)
     }
 
     override fun lengthSquared(): Double {
@@ -77,7 +84,7 @@ class DisplayDataVector private constructor(
                             Math.fma(
                                 dt,
                                 dt,
-                                other.internalScale.distanceSquared(internalScale).toDouble()
+                                other.internalScale.distanceSquared(internalScale).toDouble() + other.internalTranslation.distanceSquared(internalTranslation).toDouble()
                             )
                         )
                     )
@@ -95,6 +102,7 @@ class DisplayDataVector private constructor(
         internalRot.z = rot.z - other.rot.z
         internalRot.w = rot.w - other.rot.w
         internalScale = Vector3f(scale).sub(other.scale)
+        internalTranslation = Vector3f(translation).sub(other.translation)
         internalTime = time - other.time
 
         return this
@@ -105,7 +113,7 @@ class DisplayDataVector private constructor(
         return Math.fma(
             internalTime,
             other.internalTime,
-            internalAlpha * other.internalAlpha + other.internalRot.dot(internalRot) + other.internalScale.dot(internalScale)
+            internalAlpha * other.internalAlpha + other.internalRot.dot(internalRot) + other.internalScale.dot(internalScale) + other.internalTranslation.dot(internalTranslation)
         )
     }
 
@@ -114,6 +122,7 @@ class DisplayDataVector private constructor(
             alpha: Double,
             rot: Quaternionf,
             scale: Vector3f,
+            translation: Vector3f,
             time: Double,
             coefficients: DisplayDataVectorCoefficients,
         ): DisplayDataVector {
@@ -121,6 +130,7 @@ class DisplayDataVector private constructor(
                 alpha,
                 rot,
                 scale,
+                translation,
                 time,
                 coefficients,
             )
@@ -134,6 +144,7 @@ class DisplayDataVector private constructor(
                 particle.data.color.alpha(),
                 particle.data.rotation,
                 particle.data.scale,
+                particle.data.translation,
                 particle.data.age,
                 coefficients,
             )
@@ -144,6 +155,7 @@ class DisplayDataVector private constructor(
         return """
             | Rot: $rot
             | Scale: $scale
+            | Translation: $translation
             | Time: $time
         """.trimIndent()
     }
@@ -153,5 +165,6 @@ class DisplayDataVectorCoefficients(
     val alpha: Double = 1.0,
     val rot: Float = 1f,
     val scale: Float = 1f,
+    val translation: Float = 1f,
     val time: Double = 1.0,
 )

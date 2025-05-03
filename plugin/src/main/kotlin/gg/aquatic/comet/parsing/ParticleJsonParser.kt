@@ -65,6 +65,7 @@ import gg.aquatic.comet.particle.transformation.rotation.RotationComponent
 import gg.aquatic.comet.particle.transformation.rotation.VelocityRotationComponent
 import gg.aquatic.comet.particle.transformation.scale.ExpressionScaleComponent
 import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
+import gg.aquatic.comet.particle.transformation.translation.ExpressionTranslationComponent
 import gg.aquatic.comet.particle.variable.RandomsInitializerComponent
 import gg.aquatic.comet.snowstorm.SnowstormTranspiler
 import org.joml.Vector3d
@@ -115,6 +116,8 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
             SpherePositionComponent,
 
             ExpressionScaleComponent,
+
+            ExpressionTranslationComponent,
 
             ExpressionRotationComponent,
             DirectionRotationComponent,
