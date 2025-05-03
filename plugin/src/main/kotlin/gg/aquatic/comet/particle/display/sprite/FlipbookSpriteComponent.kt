@@ -73,8 +73,9 @@ class FlipbookSpriteComponent(
         }
 
         var i = 0
-        while (i + 1 < spriteScripts.size && inputResult > spriteScripts[i + 1].first) i++
-        otherParticleData.displayData = SpriteData(spriteScripts[i].second.eval() as String)
+        while (i + 1 < spriteScripts.size && inputResult >= spriteScripts[i + 1].first) i++
+        val chosenSprite = spriteScripts[i].second.eval() as String
+        otherParticleData.displayData = SpriteData(chosenSprite)
     }
 
     override fun die(otherEmitterData: EmitterData, otherParticleData: ParticleData) {}

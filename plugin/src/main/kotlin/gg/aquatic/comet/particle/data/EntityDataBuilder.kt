@@ -3,7 +3,6 @@ package gg.aquatic.comet.particle.data
 import gg.aquatic.comet.api.parsing.resourcepack.ResourcepackCreator
 import gg.aquatic.comet.api.particle.UpdateFlags
 import gg.aquatic.comet.api.particle.data.AbstractEntityDataBuilder
-import gg.aquatic.comet.api.particle.data.BillboardConstraints
 import gg.aquatic.comet.api.particle.data.EntityData
 import gg.aquatic.comet.api.particle.display.TextDisplayComponent
 import gg.aquatic.comet.api.particle.display.model.ModelData
@@ -15,7 +14,6 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
 import org.bukkit.Bukkit
 import org.joml.Quaternionf
-import org.joml.Vector3d
 import org.joml.Vector3f
 
 val PACKET_OFFSET = if (checkVersion()) 1 else 0

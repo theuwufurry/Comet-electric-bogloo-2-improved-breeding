@@ -17,7 +17,6 @@ import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.parsing.AbstractParticleJsonParser
-import gg.aquatic.comet.api.parsing.BaseComponentParser
 import gg.aquatic.comet.api.parsing.ComponentParser
 import gg.aquatic.comet.api.parsing.PostInit
 import gg.aquatic.comet.api.parsing.macro.Macro

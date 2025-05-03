@@ -17,9 +17,7 @@ import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComp
 import gg.aquatic.comet.particle.Particle
 import gg.aquatic.comet.particle.data.EntityDataBuilder
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
 import gg.aquatic.waves.util.audience.AquaticAudience
-import gg.aquatic.waves.util.toUser
 import org.bukkit.Color
 import org.bukkit.Location
 import org.bukkit.Particle.DustOptions
@@ -29,7 +27,6 @@ import org.joml.Quaterniond
 import org.joml.Quaternionf
 import org.joml.Vector3d
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.random.Random
 
