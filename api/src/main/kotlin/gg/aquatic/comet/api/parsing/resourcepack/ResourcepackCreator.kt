@@ -86,6 +86,17 @@ object ResourcepackCreator {
         }
 
         uvs.clear()
+
+        val soundsFolder = File(dataFolder.path + "/sounds")
+
+        if (soundsFolder.exists()) {
+            val soundFiles: MutableList<File> = mutableListOf()
+            for (file in soundsFolder.listFiles()!!) {
+                soundFiles += file
+            }
+
+            genSounds(soundFiles)
+        }
     }
 
     private fun genModels(files: List<File>) {
@@ -319,5 +330,30 @@ object ResourcepackCreator {
 
     private fun BufferedImage.ensureFilled(x: Int, y: Int) {
         if (getRGB(x, y) ushr 24 == 0) setRGB(x, y, Color(255, 0, 255, 4).rgb)
+    }
+
+    private fun genSounds(soundFiles: List<File>) {
+        val dataFolder = AbstractParticleEmitter.INSTANCE.dataFolder
+
+        val soundsFolder = File(dataFolder.path + "/output/$RP_NAME/assets/$NAMESPACE/sounds/")
+        soundsFolder.mkdirs()
+
+        val jsonObject = JsonObject()
+
+        for (soundFile in soundFiles) {
+            val soundObj = JsonObject()
+            soundObj.addProperty("category", "master")
+            val soundsArr = JsonArray()
+            soundsArr.add(NAMESPACE + ":" + soundFile.nameWithoutExtension)
+            soundObj.add("sounds", soundsArr)
+            jsonObject.add(soundFile.nameWithoutExtension, soundObj)
+
+            val newSoundFile = File(soundsFolder, soundFile.name)
+            soundFile.copyTo(newSoundFile)
+        }
+
+        val soundTarget = File(dataFolder.path + "/output/$RP_NAME/assets/$NAMESPACE/sounds.json")
+        val gson = GsonBuilder().setPrettyPrinting().create()
+        soundTarget.writeText(gson.toJson(jsonObject))
     }
 }

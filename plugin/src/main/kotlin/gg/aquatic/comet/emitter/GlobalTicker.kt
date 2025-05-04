@@ -39,6 +39,7 @@ object GlobalTicker {
     }
 
     val blocked = AtomicBoolean(false)
+    private var tickTime = 0
     private fun tick() {
         if (blocked.get()) {
             return
@@ -46,11 +47,14 @@ object GlobalTicker {
 
         blocked.set(true)
 
+        tickTime++
+
         val deadEmitters = HashSet<AbstractEmitter>()
         val playerDeadParticleMap: MutableMap<Player, MutableList<Int>> = mutableMapOf()
         val t = measureNanoTime {
             for (emitter in emitters) {
                 try {
+//                    println("tryna tick at $tickTime")
                     val result = emitter.tick()
                     if (!result.alive) {
                         deadEmitters += emitter
@@ -90,6 +94,7 @@ object GlobalTicker {
         val start = System.currentTimeMillis()
         while(true) {
             val curr = emitterInitializations.poll() ?: break
+//            println("initializing at $tickTime")
             val r = curr()
             emitters += r
             if (System.currentTimeMillis() - start > TIMEOUT_MS) break
