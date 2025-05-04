@@ -2,6 +2,7 @@ package gg.aquatic.comet.api.parsing
 
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.js.MathExtras
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.particle.ParticleData
 import org.openjdk.nashorn.api.scripting.NashornScriptEngine
@@ -14,6 +15,7 @@ fun emitterEngine(emitterData: EmitterData): Compilable {
     val engine = AbstractParticleEmitter.scriptEngineFactory.getScriptEngine("-scripting")
     engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("emitter" to emitterData)
     engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("emitter_variable" to emitterData.externalVariable)
+    engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("MathExtras" to MathExtras)
     return engine as Compilable
 }
 
@@ -24,6 +26,7 @@ fun particleEngine(emitterData: EmitterData): Pair<Compilable, ParticleData> {
     engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("emitter_variable" to emitterData.externalVariable)
     engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("particle" to particleData)
     engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("particle_variable" to particleData.externalVariable)
+    engine.getBindings(ScriptContext.ENGINE_SCOPE) += ("MathExtras" to MathExtras)
     return Pair(engine as Compilable, particleData)
 }
 
