@@ -22,6 +22,7 @@ import gg.aquatic.waves.util.audience.GlobalAudience
 import org.bukkit.Location
 import org.joml.Vector3d
 import java.util.*
+import java.util.function.Consumer
 
 data class UnrealizedEmitter(
     override val id: String,
@@ -39,7 +40,7 @@ data class UnrealizedEmitter(
         location: Location,
         environmentData: EnvironmentData,
         audience: AquaticAudience,
-        after: (AbstractEmitter) -> Unit,
+        after: Consumer<AbstractEmitter>,
     ) {
         val initialization = {
             val emitterData = EmitterData(UUID.randomUUID())
@@ -64,7 +65,7 @@ data class UnrealizedEmitter(
                 billboardConstraints, location, emitterData, this, forwardVector, environmentData, audience,
             )
 
-            after(emitter)
+            after.accept(emitter)
 
             emitter
         }
@@ -80,7 +81,7 @@ data class UnrealizedEmitter(
         parent: Parent?,
         location: Location,
         environmentData: EnvironmentData,
-        after: (AbstractEmitter) -> Unit,
+        after: Consumer<AbstractEmitter>,
     ) {
         realize(parent, location, environmentData, GlobalAudience(), after)
     }

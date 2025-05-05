@@ -11,6 +11,8 @@ import gg.aquatic.waves.util.audience.GlobalAudience
 import org.bukkit.Location
 import org.joml.Vector3d
 import java.util.*
+import java.util.function.Consumer
+import java.util.function.Function
 
 abstract class AbstractUnrealizedEmitter {
     abstract val id: String
@@ -24,7 +26,7 @@ abstract class AbstractUnrealizedEmitter {
         parent: Parent? = null,
         location: Location,
         environmentData: EnvironmentData = EnvironmentData(),
-        after: (AbstractEmitter) -> Unit,
+        after: Consumer<AbstractEmitter>,
     )
 
     abstract fun realize(
@@ -32,7 +34,7 @@ abstract class AbstractUnrealizedEmitter {
         location: Location,
         environmentData: EnvironmentData = EnvironmentData(),
         audience: AquaticAudience = GlobalAudience(),
-        after: (AbstractEmitter) -> Unit,
+        after: Consumer<AbstractEmitter>,
     )
 
     abstract fun internalRealize(
