@@ -4,15 +4,31 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonParser
 import com.google.gson.JsonPrimitive
 import gg.aquatic.comet.api.emitter.VariableMutableMap
+import gg.aquatic.comet.api.emitter.VariableMutableMap.Companion.tryAsDatum
 import gg.aquatic.comet.api.parsing.asNumberOrNull
 import java.awt.Color
 
-class EnvironmentData(
+class EnvironmentData (
     val size: Double = 1.0,
-    val data: MutableMap<String, Any> = VariableMutableMap(mutableMapOf())
+    val data: VariableMutableMap = VariableMutableMap(mutableMapOf())
 ) {
     fun clone(): EnvironmentData {
-        return EnvironmentData(size, (data as VariableMutableMap).clone())
+        return EnvironmentData(size, data.clone())
+    }
+
+    companion object {
+        fun create(
+            size: Double = 1.0,
+            map: Map<String, Any> = mapOf(),
+        ): EnvironmentData {
+            val data: MutableMap<String, Datum<*, *>> = mutableMapOf()
+
+            for ((key, element) in map.entries) {
+                element.tryAsDatum()?.let { data[key] = it }
+            }
+
+            return EnvironmentData(size, VariableMutableMap(data))
+        }
     }
 }
 
