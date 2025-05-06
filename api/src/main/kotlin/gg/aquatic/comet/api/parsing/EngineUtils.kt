@@ -56,8 +56,8 @@ fun Compilable.compile(input: String, macros: Map<String, Macro>?, tryAsSimpleSt
                 compiled.eval()
             }
         } catch (ignored: Exception) {
-            val escapedCompiled = compile("\"" + output + "\"")
             try {
+                val escapedCompiled = compile("\"" + output + "\"")
                 escapedCompiled.eval()
                 return escapedCompiled
             } catch (ignored: Exception) {
