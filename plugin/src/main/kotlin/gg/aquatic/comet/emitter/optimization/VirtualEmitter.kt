@@ -39,6 +39,7 @@ class VirtualEmitter(
     backerForwardVector: Vector3d,
     backerEnvironmentData: EnvironmentData,
     seed: Int,
+    private val timeOffset: Int
 ) : AbstractEmitter() {
     constructor(backer: OptimizedEmitter, runtime: VirtualRuntime) : this(
         parent = backer.parent,
@@ -52,6 +53,7 @@ class VirtualEmitter(
         backerForwardVector = Vector3d(backer.forwardVector),
         backerEnvironmentData = backer.environmentData.clone(),
         seed = backer.random.seed,
+        timeOffset = 0
     )
 
     val emitterComponents: List<EmitterComponent> =
@@ -64,6 +66,9 @@ class VirtualEmitter(
     }
 
     override val id: UUID = emitterData.id
+
+    var absoluteTime = timeOffset
+        private set
 
     override val particles: MutableList<Particle> = mutableListOf()
     override val location: Location = backerLocation.clone()
@@ -125,43 +130,98 @@ class VirtualEmitter(
         emitterComponents.forEach { it.init(emitterData) }
 
         if (emitterActionsBuffer.isNotEmpty()) {
-            path.emitterData.add(TimestampedEmitterData(0, false, emptyList()))
-            path.emitterActions += TimestampedEmitterActions(0, emitterActionsBuffer)
+            path.emitterData.add(TimestampedEmitterData(0, absoluteTime, false, emptyList()))
+            path.emitterActions += TimestampedEmitterActions(0, absoluteTime, emitterActionsBuffer)
             emitterActionsBuffer = mutableListOf()
         }
     }
 
     private val savedEmitterData: MutableMap<Int, EmitterData> = mutableMapOf()
 
+    /*
+    time staying at catchup time after caught up
+        when parent dies, time is recorded as death, which is inaccurate since we're at catchup time
+        really when we're done catching up, don't register anything?
+            we can handle those changes on next catchup
+     */
+
     override fun tick(): EmitterTickResult {
+//        println("V.${unrealizedEmitter.id}.TICKED!!")
+        /*
+        process until catchuptime (inclusive)
+        if time is already equal to catchup time, then we've already processed that tick
+         */
+
+        if (runtime.catchupTime != null && absoluteTime >= runtime.catchupTime!! && particles.isEmpty()) {
+//            println("V.${unrealizedEmitter.id} DONE at:$absoluteTime")
+            return EmitterTickResult(true)
+        }
+
         time++
-        parent?.pose?.let { setPose(it) }
+        absoluteTime++
+
+//        println("V.${unrealizedEmitter.id}, TICK t:$time")
+//        parent?.pose?.let { setPose(it) }
+
+        if (parent != null) {
+            if (parent is Particle) {
+                val locs = (parent.data.emitter!! as VirtualEmitter).path.internalLocations[parent.data.id]
+                if (locs != null) {
+                    val matchingLoc = locs.firstOrNull { it.absoluteTime == absoluteTime }
+//                    println("V.${unrealizedEmitter.id}, MATCHING PARENT LOC")
+                    if (matchingLoc != null) {
+                        setPose(
+                            Pose(
+                                matchingLoc.vec.vec,
+                                Vector3d(),
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
         emitterRotation = calculateEmitterRotation()
+
         emitterActionsBuffer = mutableListOf()
 
-        val saved = savedEmitterData[time]
+        val saved = savedEmitterData[absoluteTime]
         if (saved != null) {
             emitterData = saved
         } else {
             emitterComponents.forEach { it.execute(emitterData) }
+//            println("V.${unrealizedEmitter.id}, NEW TICK t:$time at:$absoluteTime")
         }
 
-        if (emitterData.dead || (parent != null && parent.dead)) {
-            dead = true
-            emitterComponents.forEach { it.die(emitterData) }
-        }
+        if (parent != null && parent.dead) {
+            if (parent is Particle) {
+                val lastAbsoluteTime =
+                    (parent.data.emitter!! as VirtualEmitter).path.locations[parent.data.id]!!.last().absoluteTime
+//                println("V.${unrealizedEmitter.id}, LAST PARENT TIME: $lastAbsoluteTime")
+                if (lastAbsoluteTime <= absoluteTime) {
+//                    println("V.${unrealizedEmitter.id}, PARENT DEAD t:$time at:$absoluteTime")
+                    dead = true
+                    emitterComponents.forEach { it.die(emitterData) }
+                } else {
+                    dead = false
+                }
+            }
+        } else {
+            if (emitterData.dead) {
+//                println("V.${unrealizedEmitter.id}, DATA DEAD t:$time at:$absoluteTime")
 
-        if (((runtime.catchupTime != null && time <= runtime.catchupTime!!) || runtime.catchupTime == null) && dead && particles.isEmpty()) {
-            path.emitterData += TimestampedEmitterData(time, true, emptyList())
-            savedEmitterData.clear()
-            return EmitterTickResult(false)
+                dead = true
+                emitterComponents.forEach { it.die(emitterData) }
+            } else {
+                dead = false
+            }
         }
 
         particleActionsBuffer = mutableMapOf()
         for (particle in particles) {
             fun die() {
                 deadParticles += particle
-                particle.data.emitter?.dead = true
+                particle.data.dead = true
                 path.finishedParticles += particle.data.id
             }
 
@@ -178,6 +238,7 @@ class VirtualEmitter(
                 add(
                     TimestampedPos(
                         particle.data.age.toInt(),
+                        absoluteTime,
                         WrappedPos(particle.data.pos, particle.data.age, timeCoefficient)
                     )
                 )
@@ -187,6 +248,7 @@ class VirtualEmitter(
                 add(
                     TimestampedTransformableData(
                         particle.data.age.toInt(),
+                        absoluteTime,
                         DisplayDataVector.create(particle, coefficients)
                     )
                 )
@@ -196,6 +258,7 @@ class VirtualEmitter(
                 add(
                     TimestampedColoredTexture(
                         particle.data.age.toInt(),
+                        absoluteTime,
                         (particle.data.color ushr 16) and 0xFF,
                         (particle.data.color ushr 8) and 0xFF,
                         particle.data.color and 0xFF,
@@ -213,7 +276,7 @@ class VirtualEmitter(
         }
 
         if (emitterActionsBuffer.isNotEmpty()) {
-            path.emitterActions += TimestampedEmitterActions(time, emitterActionsBuffer)
+            path.emitterActions += TimestampedEmitterActions(time, absoluteTime, emitterActionsBuffer)
             emitterActionsBuffer = mutableListOf()
         }
 
@@ -231,13 +294,23 @@ class VirtualEmitter(
 
         deadParticles.clear()
 
-        savedEmitterData[time] = emitterData.clone()
-        if (((runtime.catchupTime != null && time <= runtime.catchupTime!!) || runtime.catchupTime == null) && !dead && emitterData.isActive) {
+        savedEmitterData[absoluteTime] = emitterData.clone()
+        if (((runtime.catchupTime != null && absoluteTime <= runtime.catchupTime!!) || runtime.catchupTime == null) && !dead && emitterData.isActive) {
             spawnParticles()
         }
 
-        if (runtime.catchupTime != null && time >= runtime.catchupTime!! && particles.isEmpty()) {
-            time = runtime.catchupTime!!
+//        println("V.${unrealizedEmitter.id}, PREKILLATTEMPT, catchup: ${runtime.catchupTime}, dead:$dead particles:${particles.isEmpty()}, at:$absoluteTime")
+        if (((runtime.catchupTime != null && absoluteTime <= runtime.catchupTime!!) || runtime.catchupTime == null) && dead && particles.isEmpty()) {
+//            println("V.${unrealizedEmitter.id}, KILLING t:$time at:$absoluteTime")
+            path.emitterData += TimestampedEmitterData(time, absoluteTime, true, emptyList())
+            savedEmitterData.clear()
+            return EmitterTickResult(false)
+        }
+
+        if (runtime.catchupTime != null && absoluteTime > runtime.catchupTime!! && particles.isEmpty()) {
+//            println("V.${unrealizedEmitter.id} CAUGHT UP t:$time at:$absoluteTime")
+            time = runtime.catchupTime!! - timeOffset
+            absoluteTime = runtime.catchupTime!!
         }
 
         path.optimizeFinished()
@@ -246,6 +319,7 @@ class VirtualEmitter(
     }
 
     private fun spawnParticles() {
+//        println("|V.${unrealizedEmitter.id} SPAWNS t:$time at:$absoluteTime")
         particleActionsBuffer = mutableMapOf()
         val spawns = mutableListOf<UUID>()
         repeat(rateComponent.toEmit(emitterData)) {
@@ -253,6 +327,7 @@ class VirtualEmitter(
             val particleData = ParticleData(uuid)
             spawns += particleData.id
             val particle = Particle(particleData)
+            particleData.emitter = this
             particleData.particle = particle
             particleData.origin = location.toVector().toVector3d()
             particleData.billboardConstraints = billboardConstraints
@@ -265,17 +340,18 @@ class VirtualEmitter(
                 }
 
             path.internalLocations[particleData.id] = mutableListOf<TimestampedPos>().apply {
-                add(TimestampedPos(0, WrappedPos(particleData.pos, 0.0, timeCoefficient)))
+                add(TimestampedPos(0, absoluteTime, WrappedPos(particleData.pos, 0.0, timeCoefficient)))
             }
 
             path.internalTransformableData[particleData.id] = mutableListOf<TimestampedTransformableData>().apply {
-                add(TimestampedTransformableData(0, DisplayDataVector.create(particle, coefficients)))
+                add(TimestampedTransformableData(0, absoluteTime, DisplayDataVector.create(particle, coefficients)))
             }
 
             path.coloredTextureData[particleData.id] = mutableListOf<TimestampedColoredTexture>().apply {
                 add(
                     TimestampedColoredTexture(
                         0,
+                        absoluteTime,
                         (particle.data.color ushr 16) and 0xFF,
                         (particle.data.color ushr 8) and 0xFF,
                         particle.data.color and 0xFF,
@@ -289,7 +365,7 @@ class VirtualEmitter(
             particles += particle
         }
 
-        path.emitterData.add(TimestampedEmitterData(time, false, spawns))
+        path.emitterData.add(TimestampedEmitterData(time, absoluteTime, false, spawns))
         for ((id, action) in particleActionsBuffer) {
             if (action.actions.isNotEmpty()) {
                 path.particleActions[id] = mutableListOf(action)
@@ -336,7 +412,8 @@ class VirtualEmitter(
             environmentData,
             random,
             runtime,
-            uuid
+            uuid,
+            absoluteTime
         )
     }
 }

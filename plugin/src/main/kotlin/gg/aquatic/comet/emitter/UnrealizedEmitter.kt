@@ -144,6 +144,7 @@ data class UnrealizedEmitter(
         random: DeterministicRandom,
         runtime: VirtualRuntime,
         uuid: UUID,
+        timeOffset: Int,
     ) {
         val emitterData = EmitterData(uuid)
         emitterData.world = location.world
@@ -163,7 +164,8 @@ data class UnrealizedEmitter(
                 backerEmitterData = emitterData,
                 backerForwardVector = forwardVector,
                 backerEnvironmentData = environmentData,
-                seed = random.kotlinRandom.nextInt()
+                seed = random.kotlinRandom.nextInt(),
+                timeOffset
             )
         )
     }

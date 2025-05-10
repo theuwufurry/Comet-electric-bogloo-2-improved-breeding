@@ -68,10 +68,11 @@ class SpawnEmitterSubAction(
             vEm?.let {
                 if (space == EmitterSpace.PARENT_PARTICLE) {
                     (it.particleActionsBuffer[context.otherParticleData!!.id] ?: run {
-                        val a = TimestampedParticleActions(context.otherParticleData!!.age.toInt(), mutableListOf())
+                        val a = TimestampedParticleActions(context.otherParticleData!!.age.toInt(), it.absoluteTime, mutableListOf())
                         it.particleActionsBuffer[context.otherParticleData!!.id] = a
                         a
                     }).let { actionsBuffer ->
+//                        println("O.PASPAWNING ${unrealizedEmitter.id} at ${it.absoluteTime}")
                         actionsBuffer.actions += { em, pd ->
                             em.realize(
                                 unrealizedEmitter,
@@ -86,6 +87,7 @@ class SpawnEmitterSubAction(
                     }
                 } else {
                     it.emitterActionsBuffer.let { actionsBuffer ->
+//                        println("O.EMSPAWNING ${unrealizedEmitter.id} at ${it.absoluteTime}")
                         actionsBuffer += { em ->
                             em.realize(
                                 unrealizedEmitter,

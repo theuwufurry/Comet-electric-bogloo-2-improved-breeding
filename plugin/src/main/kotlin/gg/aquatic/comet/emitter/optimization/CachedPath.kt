@@ -149,8 +149,8 @@ class CachedPath(
                     .toMutableList()
             transformableData[finishedParticle] = mappedTransformables
 
-            internalLocations.remove(finishedParticle)
-            internalTransformableData.remove(finishedParticle)
+//            internalLocations.remove(finishedParticle)
+//            internalTransformableData.remove(finishedParticle)
         }
 
         finishedParticles.clear()

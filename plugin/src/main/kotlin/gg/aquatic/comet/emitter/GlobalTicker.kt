@@ -57,6 +57,7 @@ object GlobalTicker {
 //                    println("tryna tick at $tickTime")
                     val result = emitter.tick()
                     if (!result.alive) {
+//                        println("GLOBAL.EMITTERDEAD!")
                         deadEmitters += emitter
                         emitterCache -= emitter.id
                     }

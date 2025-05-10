@@ -120,7 +120,7 @@ class Emitter(
         for (particle in particles) {
             fun die() {
                 spawningProcessor.die(particle)
-                particle.data.emitter?.dead = true
+                particle.data.dead = true
             }
 
             particle.tick()

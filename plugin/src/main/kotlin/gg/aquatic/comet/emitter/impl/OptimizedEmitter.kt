@@ -110,13 +110,11 @@ class OptimizedEmitter(
 
         blocked.set(true)
 
+//        println("O.${unrealizedEmitter.id}: TICK t:$time")
+
         if (killed.get()) return EmitterTickResult(false)
 
-        if (time == -1 && particles.size == 0) {
-            return EmitterTickResult(false)
-        }
-
-        if (time != -1) time++
+        time++
 
         if (!internal) {
             val shouldLive: Boolean
@@ -130,8 +128,16 @@ class OptimizedEmitter(
             }
 
             if (!shouldLive) {
-                time = -1
-                kill()
+//                println("O.${unrealizedEmitter.id} RUNTIME DEAD at $time")
+                if (particles.size == 0) {
+//                    println("O.${unrealizedEmitter.id} RUNTIME DEAD SUCCESSFUL at $time")
+                    dead = true
+                    kill()
+                    return EmitterTickResult(false)
+                }
+            }
+        } else {
+            if (dead && particles.size == 0) {
                 return EmitterTickResult(false)
             }
         }
@@ -197,7 +203,8 @@ class OptimizedEmitter(
                         }
                     }
                 val (color: Int?, dD: DisplayData?) =
-                    (cachedEmitterPath.coloredTextureData[particle.data.id] ?: return@optimized).firstOrNull { it.time == particle.data.age.toInt() }
+                    (cachedEmitterPath.coloredTextureData[particle.data.id]
+                        ?: return@optimized).firstOrNull { it.time == particle.data.age.toInt() }
                         ?.let { it.color to it.displayData } ?: (null to null)
                 val transformableData = cachedEmitterPath.transformableData[particle.data.id] ?: return@optimized
 
@@ -249,7 +256,8 @@ class OptimizedEmitter(
         val data = cachedEmitterPath.emitterData.firstOrNull { it.time == time }
         if (data != null) {
             if (data.dead) {
-                time = -1
+//                println("O.${unrealizedEmitter.id} DATA DEAD at $time")
+                dead = true
             }
 
             spawnParticles(data)
@@ -267,6 +275,8 @@ class OptimizedEmitter(
     }
 
     private fun spawnParticles(timestampedEmitterData: TimestampedEmitterData) {
+//        if (timestampedEmitterData.spawns.isNotEmpty()) println("O.${unrealizedEmitter.id} SPAWNING t:$time")
+
         val bundle: MutableList<PacketWrapper<*>> = mutableListOf()
         for (spawn in timestampedEmitterData.spawns) {
             val particleData = ParticleData(spawn)

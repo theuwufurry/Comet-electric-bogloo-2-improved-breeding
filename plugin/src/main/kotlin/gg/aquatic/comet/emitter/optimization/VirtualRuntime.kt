@@ -37,13 +37,20 @@ class VirtualRuntime(
     don't rerun emitter components, for the times until FINISH_TIME
         cache the emitter datas for every time
 
+
+    to keep runtime relative time,
+        keep track of ticks, can't have centralized data on runtime since different particles might be at diff states
+        pass along starting time to new virtual emitters
      */
 
     /**
      * @return Whether the emitter should still be alive
      */
     fun step(realTime: Int): Boolean {
+        if (emitters.isEmpty()) return false
+
         catchupTime = realTime + LOOKAHEAD
+//        println("RUNTIME: catchupTime:$catchupTime")
         if (deathTime != -1 && realTime >= deathTime) {
             return false
         }
@@ -54,6 +61,7 @@ class VirtualRuntime(
 
         var iterations = 0
         while (iterations < MAX_ITERATIONS) {
+//            println("== DOING VIRTUAL ITERATION ==")
             iterations++
             t++
             val deadEmitters: MutableList<VirtualEmitter> = mutableListOf()
@@ -75,8 +83,9 @@ class VirtualRuntime(
             emittersToAdd.clear()
 
             if (emitters.isEmpty()) {
-                deathTime = t
-                break
+                return false
+//                deathTime = t
+//                break
             }
 
             if (!remaining) break

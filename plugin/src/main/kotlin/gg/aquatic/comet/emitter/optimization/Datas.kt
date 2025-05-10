@@ -16,6 +16,7 @@ abstract class TimestampedData(
 
 class TimestampedPos(
     time: Int,
+    val absoluteTime: Int,
     override val vec: WrappedPos
 ) : TimestampedData(time) {
     override fun toString(): String {
@@ -28,6 +29,7 @@ class TimestampedPos(
 
 class TimestampedColoredTexture(
     val time: Int,
+    val absoluteTime: Int,
     private val r: Int,
     private val g: Int,
     private val b: Int,
@@ -52,6 +54,7 @@ class TimestampedColoredTexture(
 
 class TimestampedTransformableData(
     time: Int,
+    val absoluteTime: Int,
     override val vec: DisplayDataVector
 ) : TimestampedData(time) {
     override fun toString(): String {
@@ -64,16 +67,19 @@ class TimestampedTransformableData(
 
 class TimestampedEmitterData(
     val time: Int,
+    val absoluteTime: Int,
     val dead: Boolean,
     val spawns: List<UUID>,
 )
 
 class TimestampedParticleActions(
     val time: Int,
+    val absoluteTime: Int,
     val actions: MutableList<(AbstractEmitter, AbstractParticle) -> Unit>,
 )
 
 class TimestampedEmitterActions(
     val time: Int,
+    val absoluteTime: Int,
     val actions: MutableList<(AbstractEmitter) -> Unit>,
 )
