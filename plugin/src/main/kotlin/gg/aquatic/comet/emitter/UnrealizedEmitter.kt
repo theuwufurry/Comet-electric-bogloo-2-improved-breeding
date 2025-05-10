@@ -33,7 +33,7 @@ data class UnrealizedEmitter(
     val updateFrequencyComponent: UpdateFrequencyComponent,
     override val billboardConstraints: BillboardConstraints,
     override val forwardVector: Vector3d,
-    val isListed: Boolean
+    val isListed: Boolean,
 ) : AbstractUnrealizedEmitter() {
     override fun realize(
         parent: Parent?,
