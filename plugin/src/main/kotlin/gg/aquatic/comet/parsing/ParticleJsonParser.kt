@@ -46,6 +46,7 @@ import gg.aquatic.comet.particle.color.ColorComponent
 import gg.aquatic.comet.particle.color.ConstantColorComponent
 import gg.aquatic.comet.particle.color.GradientColorComponent
 import gg.aquatic.comet.particle.display.model.ConstantModelComponent
+import gg.aquatic.comet.particle.display.model.ExpressionModelComponent
 import gg.aquatic.comet.particle.display.model.FlipbookModelComponent
 import gg.aquatic.comet.particle.display.sprite.ConstantSpriteComponent
 import gg.aquatic.comet.particle.display.sprite.ExpressionSpriteComponent
@@ -109,6 +110,7 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
             RandomSpriteComponent,
 
             ConstantModelComponent,
+            ExpressionModelComponent,
             FlipbookModelComponent,
 
             InitialExpressionPositionComponent,
