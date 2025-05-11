@@ -5,10 +5,12 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import gg.aquatic.comet.api.AbstractParticleEmitter
+import gg.aquatic.comet.api.parsing.asStringOrNull
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.component.ComponentTypes
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.ItemStack
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.type.ItemTypes
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.nbt.NBTInt
+import kotlinx.serialization.json.JsonPrimitive
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.File
@@ -127,8 +129,7 @@ object ResourcepackCreator {
 
         for (file in files) {
             val model = File(file.path + "/" + file.nameWithoutExtension + ".json")
-            val texture = File(file.path + "/" + file.nameWithoutExtension + ".png")
-            if (!model.exists() || !texture.exists()) continue
+            if (!model.exists()) continue
 
             val newModel = File(modelFolder.path + "/" + model.name)
             model.copyTo(newModel)
@@ -136,14 +137,24 @@ object ResourcepackCreator {
             val rootObject = JsonParser.parseReader(FileReader(newModel)).asJsonObject
             val texturesObject = rootObject.getAsJsonObject("textures")
 
-            texturesObject.remove("0")
-            texturesObject.addProperty("0", "item/$NAMESPACE/" + file.nameWithoutExtension)
-            texturesObject.remove("particle")
-            texturesObject.addProperty("particle", "item/$NAMESPACE/" + file.nameWithoutExtension)
+            val newTexturesObj = JsonObject()
+            for ((key, value) in texturesObject.entrySet()) {
+                val asStr = value.asStringOrNull() ?: continue
+                newTexturesObj.addProperty(key, "item/$NAMESPACE/$asStr")
+
+                val tex = File(file.path + "/" + asStr + ".png")
+                if (tex.exists()) {
+                    val newFileLoc = File(texturesFolder.path + "/" + asStr + ".png")
+                    if (!newFileLoc.exists()) {
+                        tex.copyTo(newFileLoc)
+                    }
+                }
+            }
+
+            rootObject.remove("textures")
+            rootObject.add("textures", newTexturesObj)
 
             newModel.writeText(gson.toJson(rootObject))
-
-            texture.copyTo(File(texturesFolder.path + "/" + texture.name))
 
             val override = JsonObject()
             val predicate = JsonObject()
