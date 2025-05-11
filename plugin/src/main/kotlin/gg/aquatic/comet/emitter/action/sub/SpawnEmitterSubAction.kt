@@ -1,15 +1,13 @@
 package gg.aquatic.comet.emitter.action.sub
 
 import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.action.ActionContext
 import gg.aquatic.comet.api.emitter.action.SubAction
 import gg.aquatic.comet.api.emitter.parent.EmitterSpace
-import gg.aquatic.comet.api.parsing.ComponentParser
-import gg.aquatic.comet.api.parsing.PostInit
-import gg.aquatic.comet.api.parsing.compile
-import gg.aquatic.comet.api.parsing.emitterEngine
+import gg.aquatic.comet.api.parsing.*
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.emitter.UnrealizedEmitter
 import gg.aquatic.comet.emitter.optimization.TimestampedParticleActions
@@ -18,6 +16,8 @@ import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.expression
 import org.bukkit.Location
 import org.bukkit.util.Vector
+import org.joml.Quaterniond
+import org.joml.Vector3d
 
 /*
 emitter can be in:
@@ -33,6 +33,7 @@ class SpawnEmitterSubAction(
     private val unrealizedEmitterIDs: List<String>,
     private val space: EmitterSpace,
     private val magnitude: Float,
+    private val rot: Vector3d?
 ) : SubAction, PostInit {
     private lateinit var unrealizedEmitters: List<UnrealizedEmitter>
 
@@ -45,6 +46,10 @@ class SpawnEmitterSubAction(
 
     override fun execute(context: ActionContext) {
         val pose = context.pose ?: throw NullPointerException("Cannot use Spawn Emitter SubAction in this event!")
+
+        if (rot != null) {
+            pose.dir.rotate(Quaterniond().rotateXYZ(rot.x, rot.y, rot.z))
+        }
 
         val vEm =
             if (context.otherEmitterData.emitter!!.isPregen) context.otherEmitterData.emitter!! as VirtualEmitter else null
@@ -137,6 +142,16 @@ class SpawnEmitterSubAction(
                 ids
             }
 
+            val rot = jsonObject["rot"]?.let {
+                if (!it.isJsonObject) return@let null
+                it as JsonObject
+                Vector3d(
+                    it["x"]?.asNumberOrNull()?.toDouble()?.let { a -> Math.toRadians(a) } ?: 0.0,
+                    it["y"]?.asNumberOrNull()?.toDouble()?.let { a -> Math.toRadians(a) } ?: 0.0,
+                    it["z"]?.asNumberOrNull()?.toDouble()?.let { a -> Math.toRadians(a) } ?: 0.0,
+                )
+            }
+
             val offsetMagnitude = jsonObject.getAsJsonPrimitive("offset")?.asNumber?.toFloat() ?: 0f
             val space = when (jsonObject.getAsJsonPrimitive("space")?.asString) {
                 "parent_emitter" -> EmitterSpace.PARENT_EMITTER
@@ -144,7 +159,7 @@ class SpawnEmitterSubAction(
                 else -> EmitterSpace.WORLD
             }
 
-            return SpawnEmitterSubAction(unrealizedEmitterIDs, space, offsetMagnitude)
+            return SpawnEmitterSubAction(unrealizedEmitterIDs, space, offsetMagnitude, rot)
         }
     }
 }
