@@ -8,17 +8,18 @@ import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.component.ComponentTypes
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.ItemStack
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.type.ItemTypes
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.nbt.NBTInt
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.File
 import java.io.FileReader
 import javax.imageio.ImageIO
-import kotlin.random.Random
 
 object ResourcepackCreator {
     private const val RP_NAME = "Particle Creator"
     private const val RP_IMAGE = "pack.png"
     private const val RP_META = "pack.mcmeta"
+    private const val ITEM = "amethyst_shard"
     const val NAMESPACE = "p"
     const val FONT_NAME = "d"
     private const val PARTICLES_PNG = "particles.png"
@@ -116,11 +117,13 @@ object ResourcepackCreator {
         val texturesObj = JsonObject()
 
         val itemsObj = JsonObject()
-        itemsObj.addProperty("parent", "item/structure_block")
-        texturesObj.addProperty("layer0", "item/structure_block")
+        itemsObj.addProperty("parent", "item/generated")
+        texturesObj.addProperty("layer0", "item/$ITEM")
         itemsObj.add("textures", texturesObj)
 
         val overridesArr = JsonArray()
+
+        var count = 100
 
         for (file in files) {
             val model = File(file.path + "/" + file.nameWithoutExtension + ".json")
@@ -144,9 +147,10 @@ object ResourcepackCreator {
 
             val override = JsonObject()
             val predicate = JsonObject()
-            val index = Random.nextInt(1024, Integer.MAX_VALUE)
-            val stack = ItemStack.builder().type(ItemTypes.getByName("structure_block")).amount(1).build()
+            val index = count++
+            val stack = ItemStack.builder().type(ItemTypes.getByName("$ITEM")).amount(1).build()
             stack.setComponent(ComponentTypes.CUSTOM_MODEL_DATA, index)
+            stack.orCreateTag.setTag("CustomModelData", NBTInt(index))
 
             modelMap += file.nameWithoutExtension to stack
 
@@ -158,7 +162,7 @@ object ResourcepackCreator {
 
         itemsObj.add("overrides", overridesArr)
 
-        val itemTarget = File(itemFolder.path + "/structure_block.json")
+        val itemTarget = File(itemFolder.path + "/$ITEM.json")
         itemTarget.writeText(gson.toJson(itemsObj))
     }
 
