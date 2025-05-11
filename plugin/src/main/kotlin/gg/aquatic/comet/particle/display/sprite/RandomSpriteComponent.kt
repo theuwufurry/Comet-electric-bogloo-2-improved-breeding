@@ -2,11 +2,8 @@ package gg.aquatic.comet.particle.display.sprite
 
 import com.google.gson.JsonElement
 import gg.aquatic.comet.api.emitter.EmitterData
-import gg.aquatic.comet.api.parsing.BaseComponentParser
-import gg.aquatic.comet.api.parsing.asStringOrNull
-import gg.aquatic.comet.api.parsing.compile
+import gg.aquatic.comet.api.parsing.*
 import gg.aquatic.comet.api.parsing.macro.Macro
-import gg.aquatic.comet.api.parsing.particleEngine
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.api.particle.display.sprite.SpriteComponent
@@ -55,21 +52,53 @@ class RandomSpriteComponent(
     companion object : BaseComponentParser {
         override val id: String = "random_sprite"
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): RandomSpriteComponent {
-            val jsonObject = jsonElement.asJsonObject
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): RandomSpriteComponent? {
             val emitterData = EmitterData()
             val (engine, particleData) = particleEngine(emitterData)
-
             val weightedSprites: MutableList<Pair<CompiledScript, CompiledScript>> = mutableListOf()
-            for ((weight, sprite) in jsonObject.entrySet()) {
-                val spriteString = sprite.asStringOrNull() ?: continue
-                weightedSprites += (engine.compile(weight, macros, true) to engine.compile(spriteString, macros, true))
-            }
 
-            return RandomSpriteComponent(
-                weightedSprites,
-                particleData, emitterData
-            )
+            if (jsonElement.isJsonObject) {
+                val jsonObject = jsonElement.asJsonObject
+                if (jsonObject.has("sprite") && jsonObject.has("min") && jsonObject.has("max")) {
+                    val sprite = jsonObject["sprite"]!!.asStringOrNull() ?: return null
+                    val min = jsonObject["min"]!!.asNumberOrNull()?.toInt() ?: return null
+                    val max = jsonObject["max"]!!.asNumberOrNull()?.toInt() ?: return null
+                    if (max < min) return null
+
+                    for (i in min..max) {
+                        weightedSprites += engine.compile("1") to engine.compile("\"$sprite.$i\"")
+                    }
+
+                    return RandomSpriteComponent(
+                        weightedSprites,
+                        particleData, emitterData
+                    )
+                } else {
+                    for ((weight, sprite) in jsonObject.entrySet()) {
+                        val spriteString = sprite.asStringOrNull() ?: continue
+                        weightedSprites += (engine.compile(weight, macros, true) to engine.compile(spriteString, macros, true))
+                    }
+
+                    return RandomSpriteComponent(
+                        weightedSprites,
+                        particleData, emitterData
+                    )
+                }
+            } else {
+                val jsonArr = jsonElement.asJsonArray
+
+                for (jsonElem in jsonArr) {
+                    val obj = jsonElem.asJsonObjectOrNull() ?: continue
+                    val weightStr = obj["weight"]?.asStringOrNull() ?: continue
+                    val spriteString = obj["sprite"]?.asStringOrNull() ?: continue
+                    weightedSprites += (engine.compile(weightStr, macros, true) to engine.compile(spriteString, macros, true))
+                }
+
+                return RandomSpriteComponent(
+                    weightedSprites,
+                    particleData, emitterData
+                )
+            }
         }
     }
 }
