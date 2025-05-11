@@ -23,6 +23,7 @@ abstract class AbstractUnrealizedEmitter {
     abstract val forwardVector: Vector3d
 
     abstract val isDoubleSided: Boolean
+    abstract val lookahead: Int
 
     abstract fun realize(
         parent: Parent? = null,

@@ -19,6 +19,7 @@ import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.parsing.AbstractParticleJsonParser
 import gg.aquatic.comet.api.parsing.ComponentParser
 import gg.aquatic.comet.api.parsing.PostInit
+import gg.aquatic.comet.api.parsing.asNumberOrNull
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.macro.MacrosParser
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
@@ -87,6 +88,8 @@ fun JsonElement.expression(): String? {
 
 object ParticleJsonParser : AbstractParticleJsonParser() {
     lateinit var distanceCullingParser: Pair<String, ComponentParser<DistanceCullingComponent>>
+
+    private const val DEFAULT_LOOKAHEAD = 1
 
     fun init() {
         for (parser in listOf(
@@ -227,6 +230,8 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
             return@let if (primitive.isBoolean) primitive.asBoolean else false
         }
 
+        val lookahead = rootObject["lookahead"]?.asNumberOrNull()?.toInt() ?: DEFAULT_LOOKAHEAD
+
         val componentsObject: JsonObject = rootObject.getAsJsonObject("components") ?: return null
 
         val preInitComponents: MutableList<PreInitComponent> = mutableListOf()
@@ -308,7 +313,8 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
             billboardConstraints ?: BillboardConstraints.CENTER,
             forwardVector,
             isListed,
-            isDoubleSided
+            isDoubleSided,
+            lookahead
         )
     }
 

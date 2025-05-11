@@ -35,6 +35,7 @@ data class UnrealizedEmitter(
     override val forwardVector: Vector3d,
     val isListed: Boolean,
     override val isDoubleSided: Boolean,
+    override val lookahead: Int,
 ) : AbstractUnrealizedEmitter() {
     override fun realize(
         parent: Parent?,

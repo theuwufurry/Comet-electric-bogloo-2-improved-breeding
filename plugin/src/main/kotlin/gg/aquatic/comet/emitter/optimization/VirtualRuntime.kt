@@ -3,7 +3,7 @@ package gg.aquatic.comet.emitter.optimization
 import gg.aquatic.comet.emitter.impl.OptimizedEmitter
 
 class VirtualRuntime(
-    initialEmitter: OptimizedEmitter
+    private val initialEmitter: OptimizedEmitter
 ) {
     var t = 0
     private val emitters: MutableList<VirtualEmitter> = mutableListOf()
@@ -49,7 +49,7 @@ class VirtualRuntime(
     fun step(realTime: Int): Boolean {
         if (emitters.isEmpty()) return false
 
-        catchupTime = realTime + LOOKAHEAD
+        catchupTime = realTime + initialEmitter.unrealizedEmitter.lookahead
 //        println("RUNTIME: catchupTime:$catchupTime")
         if (deathTime != -1 && realTime >= deathTime) {
             return false
@@ -99,7 +99,6 @@ class VirtualRuntime(
     }
 
     companion object {
-        const val LOOKAHEAD = 1
         const val MAX_ITERATIONS = 10_000
     }
 }
