@@ -205,6 +205,18 @@ class VirtualEmitter(
                 } else {
                     dead = false
                 }
+            } else if (parent is VirtualEmitter) {
+                if (parent.path.emitterData.isNotEmpty()) {
+                    if (parent.path.emitterData.last().dead && parent.path.emitterData.last().absoluteTime <= absoluteTime) {
+//                        println("V.${unrealizedEmitter.id}, PARENT DEAD t:$time at:$absoluteTime")
+                        dead = true
+                        emitterComponents.forEach { it.die(emitterData) }
+                    }
+                }
+            } else {
+//                println("V.${unrealizedEmitter.id}, PARENT DEAD t:$time at:$absoluteTime")
+                dead = true
+                emitterComponents.forEach { it.die(emitterData) }
             }
         } else {
             if (emitterData.dead) {

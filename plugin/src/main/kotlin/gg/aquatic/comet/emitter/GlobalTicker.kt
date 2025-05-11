@@ -51,6 +51,7 @@ object GlobalTicker {
 
         val deadEmitters = HashSet<AbstractEmitter>()
         val playerDeadParticleMap: MutableMap<Player, MutableList<Int>> = mutableMapOf()
+//        println("emitters: ${emitters.size}")
         val t = measureNanoTime {
             for (emitter in emitters) {
                 try {
