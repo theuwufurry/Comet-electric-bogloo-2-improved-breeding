@@ -33,7 +33,8 @@ class SpawnEmitterSubAction(
     private val unrealizedEmitterIDs: List<String>,
     private val space: EmitterSpace,
     private val magnitude: Float,
-    private val rot: Vector3d?
+    private val rot: Vector3d?,
+    private val invert: Boolean
 ) : SubAction, PostInit {
     private lateinit var unrealizedEmitters: List<UnrealizedEmitter>
 
@@ -47,10 +48,6 @@ class SpawnEmitterSubAction(
     override fun execute(context: ActionContext) {
         val pose = context.pose ?: throw NullPointerException("Cannot use Spawn Emitter SubAction in this event!")
 
-        if (rot != null) {
-            pose.dir.rotate(Quaterniond().rotateXYZ(rot.x, rot.y, rot.z))
-        }
-
         val vEm =
             if (context.otherEmitterData.emitter!!.isPregen) context.otherEmitterData.emitter!! as VirtualEmitter else null
 
@@ -58,6 +55,14 @@ class SpawnEmitterSubAction(
             EmitterSpace.PARENT_EMITTER -> context.otherEmitterData.emitter!!
             EmitterSpace.PARENT_PARTICLE -> context.otherParticleData!!.particle
             else -> null
+        }
+
+        if (rot != null) {
+            pose.dir.rotate(Quaterniond().rotateXYZ(rot.x, rot.y, rot.z))
+        }
+
+        if (invert) {
+            pose.dir.mul(-1.0)
         }
 
         for (unrealizedEmitter in unrealizedEmitters) {
@@ -73,7 +78,11 @@ class SpawnEmitterSubAction(
             vEm?.let {
                 if (space == EmitterSpace.PARENT_PARTICLE) {
                     (it.particleActionsBuffer[context.otherParticleData!!.id] ?: run {
-                        val a = TimestampedParticleActions(context.otherParticleData!!.age.toInt(), it.absoluteTime, mutableListOf())
+                        val a = TimestampedParticleActions(
+                            context.otherParticleData!!.age.toInt(),
+                            it.absoluteTime,
+                            mutableListOf()
+                        )
                         it.particleActionsBuffer[context.otherParticleData!!.id] = a
                         a
                     }).let { actionsBuffer ->
@@ -152,6 +161,8 @@ class SpawnEmitterSubAction(
                 )
             }
 
+            val invert = jsonObject["invert"]?.asBooleanOrNull() ?: false
+
             val offsetMagnitude = jsonObject.getAsJsonPrimitive("offset")?.asNumber?.toFloat() ?: 0f
             val space = when (jsonObject.getAsJsonPrimitive("space")?.asString) {
                 "parent_emitter" -> EmitterSpace.PARENT_EMITTER
@@ -159,7 +170,7 @@ class SpawnEmitterSubAction(
                 else -> EmitterSpace.WORLD
             }
 
-            return SpawnEmitterSubAction(unrealizedEmitterIDs, space, offsetMagnitude, rot)
+            return SpawnEmitterSubAction(unrealizedEmitterIDs, space, offsetMagnitude, rot, invert)
         }
     }
 }
