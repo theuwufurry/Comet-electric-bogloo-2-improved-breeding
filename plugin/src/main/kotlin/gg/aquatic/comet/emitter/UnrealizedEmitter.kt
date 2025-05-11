@@ -34,6 +34,7 @@ data class UnrealizedEmitter(
     override val billboardConstraints: BillboardConstraints,
     override val forwardVector: Vector3d,
     val isListed: Boolean,
+    override val isDoubleSided: Boolean,
 ) : AbstractUnrealizedEmitter() {
     override fun realize(
         parent: Parent?,

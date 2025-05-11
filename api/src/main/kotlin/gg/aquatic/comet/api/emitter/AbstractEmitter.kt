@@ -17,6 +17,8 @@ abstract class AbstractEmitter : Parent {
     abstract val id: UUID
     abstract val particles: MutableList<out AbstractParticle>
 
+    abstract val unrealizedEmitter: AbstractUnrealizedEmitter
+
     abstract val location: Location
     abstract val forwardVector: Vector3d
     abstract val environmentData: EnvironmentData

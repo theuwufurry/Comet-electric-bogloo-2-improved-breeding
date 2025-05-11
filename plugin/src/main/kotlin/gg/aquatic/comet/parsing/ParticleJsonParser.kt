@@ -221,6 +221,12 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
             return@let if (primitive.isBoolean) primitive.asBoolean else true
         }
 
+        val isDoubleSided = let {
+            val elem = rootObject["double_sided"] ?: return@let false
+            val primitive = if (elem.isJsonPrimitive) elem.asJsonPrimitive else return@let false
+            return@let if (primitive.isBoolean) primitive.asBoolean else false
+        }
+
         val componentsObject: JsonObject = rootObject.getAsJsonObject("components") ?: return null
 
         val preInitComponents: MutableList<PreInitComponent> = mutableListOf()
@@ -301,7 +307,8 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
             updateFrequencyComponent ?: IntervalUpdateFrequencyComponent.default(),
             billboardConstraints ?: BillboardConstraints.CENTER,
             forwardVector,
-            isListed
+            isListed,
+            isDoubleSided
         )
     }
 

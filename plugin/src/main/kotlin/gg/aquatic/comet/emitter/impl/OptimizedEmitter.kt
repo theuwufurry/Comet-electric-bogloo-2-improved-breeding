@@ -45,7 +45,7 @@ class OptimizedEmitter(
     val billboardConstraints: BillboardConstraints,
     location: Location,
     val emitterData: EmitterData,
-    val unrealizedEmitter: AbstractUnrealizedEmitter,
+    override val unrealizedEmitter: AbstractUnrealizedEmitter,
     override val forwardVector: Vector3d,
     override val environmentData: EnvironmentData,
     override val audience: AquaticAudience,
@@ -221,6 +221,7 @@ class OptimizedEmitter(
                             nd.scale = nextDatum.vec.scale
                             nd.rotation = nextDatum.vec.rot
                             nd.translation = nextDatum.vec.translation
+                            nd.emitter = this
 
                             val prevDt = nextDatum.time - cp.time
 
@@ -242,7 +243,7 @@ class OptimizedEmitter(
                             flags.transparency = (nextDatum.vec.alpha != cp.vec.alpha)
                             if (DEBUG_DISPLAY_DATA >= 1) println("  | TRANSPARENCY: ${nextDatum.vec.alpha * 255.0}")
 
-                            particle.updatePacket(EntityDataBuilder, true, nd, flags)
+                            particle.updatePackets(EntityDataBuilder, true, nd, flags)
                                 ?.let {
                                     dataPackets += it
                                 }
@@ -280,6 +281,7 @@ class OptimizedEmitter(
         val bundle: MutableList<PacketWrapper<*>> = mutableListOf()
         for (spawn in timestampedEmitterData.spawns) {
             val particleData = ParticleData(spawn)
+            particleData.emitter = this
             particleData.billboardConstraints = billboardConstraints
             val particle = Particle(particleData)
 
@@ -329,6 +331,7 @@ class OptimizedEmitter(
             pd.color = firstTex.color
             pd.color = pd.color or ((firstDisp.vec.alpha * 255.0).toInt() shl 24)
             pd.displayData = firstTex.displayData
+            pd.emitter = this
 
             val packets = particle.getAddPacket(pd)
             bundle.addAll(packets)

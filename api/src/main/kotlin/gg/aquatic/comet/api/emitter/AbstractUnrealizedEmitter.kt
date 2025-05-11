@@ -22,6 +22,8 @@ abstract class AbstractUnrealizedEmitter {
     abstract val billboardConstraints: BillboardConstraints
     abstract val forwardVector: Vector3d
 
+    abstract val isDoubleSided: Boolean
+
     abstract fun realize(
         parent: Parent? = null,
         location: Location,

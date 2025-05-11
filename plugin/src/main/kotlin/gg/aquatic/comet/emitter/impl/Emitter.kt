@@ -21,7 +21,6 @@ import gg.aquatic.waves.util.audience.AquaticAudience
 import org.bukkit.Color
 import org.bukkit.Location
 import org.bukkit.Particle.DustOptions
-import org.bukkit.World
 import org.bukkit.entity.Player
 import org.bukkit.util.Vector
 import org.joml.Quaterniond
@@ -40,7 +39,7 @@ class Emitter(
     val billboardConstraints: BillboardConstraints,
     location: Location,
     val emitterData: EmitterData,
-    val unrealizedEmitter: AbstractUnrealizedEmitter,
+    override val unrealizedEmitter: AbstractUnrealizedEmitter,
     override val forwardVector: Vector3d,
     override val environmentData: EnvironmentData,
     override val audience: AquaticAudience,
@@ -138,11 +137,12 @@ class Emitter(
                 }
             }
 
-            particle.updatePacket(
+            dataPackets += particle.updatePackets(
                 entityDataBuilder = EntityDataBuilder,
                 shouldUpdate = shouldUpdate.shouldUpdate,
                 flagOverride = null
-            )?.let { dataPackets += it }
+            )
+//            ).let { dataPackets += it }
 
             if (particle.data.dead) {
                 particleComponents.forEach { it.die(emitterData, particle.data) }

@@ -29,7 +29,7 @@ import java.util.*
 
 class VirtualEmitter(
     val parent: Parent? = null,
-    val unrealizedEmitter: AbstractUnrealizedEmitter,
+    override val unrealizedEmitter: AbstractUnrealizedEmitter,
     val runtime: VirtualRuntime,
     val rateComponent: RateComponent,
     components: List<Component>,

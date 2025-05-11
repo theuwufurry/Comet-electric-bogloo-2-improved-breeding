@@ -22,10 +22,10 @@ class SpawningProcessor(
         val playerManager = PacketEvents.getAPI().playerManager
 
         emitter.particles.removeAll(deadParticles)
-        val rawDeadParticleIDs = deadParticles.map { it.id }.toMutableList()
+        val rawDeadParticleIDs = deadParticles.flatMap { it.entityIDs }.toMutableList()
         val deadParticleIDs: MutableList<Pair<Player, MutableList<Int>>> = mutableListOf()
         val particleIDs: MutableList<Int> by lazy {
-            emitter.particles.map { it.id }.toMutableList().also { it.addAll(rawDeadParticleIDs) }
+            emitter.particles.flatMap { it.entityIDs }.toMutableList().also { it.addAll(rawDeadParticleIDs) }
         }
         val chunkViewers = emitter.location.chunk.trackedByPlayers()
 
@@ -73,7 +73,7 @@ class SpawningProcessor(
 
     fun killParticles(particlesToKill: List<Particle>) {
         if (particlesToKill.isEmpty()) return
-        val ids = particlesToKill.map { it.id }.toIntArray()
+        val ids = particlesToKill.flatMap { it.entityIDs }.toIntArray()
         for (player in currentViewers) {
             try {
                 player.toUser().sendPacketSilently(WrapperPlayServerDestroyEntities(*ids))

@@ -2,7 +2,6 @@ package gg.aquatic.comet.api.particle
 
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.particle.data.AbstractEntityDataBuilder
-import gg.aquatic.comet.api.particle.data.EntityData
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport
@@ -10,10 +9,11 @@ import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.Wr
 abstract class AbstractParticle() : Parent {
     abstract var data: ParticleData
     abstract val id: Int
+    abstract val entityIDs: List<Int>
     abstract fun tick()
     abstract fun getAddPacket(data: ParticleData = this.data): List<PacketWrapper<*>>
 
-    abstract fun updatePacket(entityDataBuilder: AbstractEntityDataBuilder, shouldUpdate: Boolean, data: ParticleData = this.data, flagOverride: UpdateFlags?): WrapperPlayServerEntityMetadata?
+    abstract fun updatePackets(entityDataBuilder: AbstractEntityDataBuilder, shouldUpdate: Boolean, data: ParticleData = this.data, flagOverride: UpdateFlags?): List<PacketWrapper<*>>
 
     abstract fun getMovementPacket(): WrapperPlayServerEntityTeleport
 }

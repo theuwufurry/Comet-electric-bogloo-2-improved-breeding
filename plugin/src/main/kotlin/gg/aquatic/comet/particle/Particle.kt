@@ -2,6 +2,7 @@ package gg.aquatic.comet.particle
 
 import gg.aquatic.comet.api.ParticleIDProvider
 import gg.aquatic.comet.api.emitter.parent.Pose
+import gg.aquatic.comet.api.emitter.random.DeterministicRandom
 import gg.aquatic.comet.api.particle.AbstractParticle
 import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.api.particle.UpdateFlags
@@ -17,6 +18,7 @@ import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity
+import org.joml.Quaternionf
 import java.util.*
 
 /*
@@ -26,6 +28,20 @@ import java.util.*
 open class Particle(override var data: ParticleData) : AbstractParticle() {
     override val id = ParticleIDProvider.id()
     private val uuid = UUID.randomUUID()
+
+    private val invertedIDs: Pair<Int, UUID> by lazy {
+        val dr = DeterministicRandom(id + uuid.hashCode())
+        return@lazy dr.kotlinRandom.nextInt() to dr.uuid()
+    }
+
+    override val entityIDs: List<Int>
+        get() {
+            return if (data.emitter != null && data.emitter!!.unrealizedEmitter.isDoubleSided) {
+                listOf(id, invertedIDs.first)
+            } else {
+                listOf(id)
+            }
+        }
 
     private lateinit var previousEntityData: EntityData
 
@@ -89,18 +105,73 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
         )
 
         val entityDataPacket: PacketWrapper<*> = WrapperPlayServerEntityMetadata(id, nd)
-        return listOf(packet, entityDataPacket)
+
+        if (data.emitter != null && data.emitter!!.unrealizedEmitter.isDoubleSided) {
+            val invertedSpawn = WrapperPlayServerSpawnEntity(
+                invertedIDs.first,
+                Optional.of(invertedIDs.second),
+                if (data.displayData is SpriteData || data.displayData is TextDisplayComponent) EntityTypes.TEXT_DISPLAY else EntityTypes.ITEM_DISPLAY,
+                Vector3d(
+                    data.origin.x + data.relativePosition.x,
+                    data.origin.y + data.relativePosition.y,
+                    data.origin.z + data.relativePosition.z
+                ),
+                0f, 0f, 0f,
+                0,
+                Optional.of(Vector3d())
+            )
+
+            val inverted = EntityDataBuilder.getDataFor(
+                EntityData(
+                    data.displayData,
+                    data.color,
+                    data.color ushr 24,
+                    null,
+                    data.translation,
+                    data.rotation.flipped(),
+                    data.scale,
+                    data.billboardConstraints,
+                    data.interpolationDelay,
+                    data.transformationInterpolationDuration,
+                    data.teleportationDuration
+                ), UpdateFlags(
+                    display = true,
+                    transparency = true,
+                    translation = true,
+                    rotation = true,
+                    scale = true,
+                    transformationInterpolation = true,
+                    teleportationDuration = true
+                ), true
+            )
+
+            val invertedPacket: PacketWrapper<*> = WrapperPlayServerEntityMetadata(invertedIDs.first, inverted)
+
+            return listOf(packet, entityDataPacket, invertedSpawn, invertedPacket)
+        } else {
+            return listOf(packet, entityDataPacket)
+        }
     }
 
     //TODO: use correct data for non full update
-    override fun updatePacket(
+    override fun updatePackets(
         entityDataBuilder: AbstractEntityDataBuilder,
         shouldUpdate: Boolean,
         data: ParticleData,
         flagOverride: UpdateFlags?,
-    ): WrapperPlayServerEntityMetadata? {
-        return if (shouldUpdate) handleFullUpdate(entityDataBuilder, data, flagOverride)
-        else if (data.transformationInterpolationDuration > 1 && previousEntityData.reserveTransparency != null) {
+    ): List<PacketWrapper<*>> {
+        return if (shouldUpdate) {
+            val result = mutableListOf<WrapperPlayServerEntityMetadata>()
+            handleFullUpdate(entityDataBuilder, data, flagOverride)?.let { result += it }
+
+            if (data.emitter != null && data.emitter!!.unrealizedEmitter.isDoubleSided) {
+                val invertedData = data.clone()
+                invertedData.rotation = invertedData.rotation.flipped()
+                handleFullUpdate(entityDataBuilder, invertedData, flagOverride, invertedIDs.first)?.let { result += it }
+            }
+
+            result
+        } else if (data.transformationInterpolationDuration > 1 && previousEntityData.reserveTransparency != null) {
             val transformationInterpolationDuration = data.transformationInterpolationDuration - 1
             val flags = UpdateFlags(false, false, false, false, false, true, false)
 
@@ -120,16 +191,40 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
 
             previousEntityData = newData.copy()
 
+            val result = mutableListOf<PacketWrapper<*>>()
+
+            if (data.emitter != null && data.emitter!!.unrealizedEmitter.isDoubleSided) {
+                val invertedData = EntityData(
+                    data.displayData,
+                    data.color,
+                    previousEntityData.reserveTransparency!!, null,
+                    data.translation,
+                    data.rotation.flipped(),
+                    data.scale,
+                    data.billboardConstraints,
+                    data.interpolationDelay,
+                    transformationInterpolationDuration,
+                    data.teleportationDuration
+                )
+
+                entityDataBuilder.getDataFor(
+                    invertedData, flags, false
+                )?.let { WrapperPlayServerEntityMetadata(invertedIDs.first, it) }?.let { result += it }
+            }
+
             entityDataBuilder.getDataFor(
                 newData, flags, false
-            )?.let { WrapperPlayServerEntityMetadata(id, it) }
-        } else null
+            )?.let { WrapperPlayServerEntityMetadata(id, it) }?.let { result += it }
+
+            result
+        } else listOf()
     }
 
     private fun handleFullUpdate(
         entityDataBuilder: AbstractEntityDataBuilder,
         data: ParticleData,
-        flagOverride: UpdateFlags?
+        flagOverride: UpdateFlags?,
+        entityID: Int = id
     ): WrapperPlayServerEntityMetadata? {
         val (flags, newData) = flagOverride?.let {
             flagOverride to EntityData(
@@ -201,7 +296,17 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
 
         return entityDataBuilder.getDataFor(
             newData, flags, false
-        ).let { WrapperPlayServerEntityMetadata(id, it) }
+        ).let { WrapperPlayServerEntityMetadata(entityID, it) }
+    }
+
+    private fun Quaternionf.flipped(): Quaternionf {
+        if (data.emitter == null) return this
+        val inverse = Quaternionf(data.emitter!!.emitterRotation).invert()
+        val newThis = Quaternionf(inverse)
+            .mul(this)
+            .rotateLocalY(Math.PI.toFloat())
+
+        return Quaternionf(data.emitter!!.emitterRotation).mul(newThis)
     }
 
     override fun getMovementPacket(): WrapperPlayServerEntityTeleport {
