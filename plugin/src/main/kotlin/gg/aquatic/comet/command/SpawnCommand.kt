@@ -11,6 +11,10 @@ import org.joml.Vector3d
 
 object SpawnCommand : ICommand {
     override fun run(sender: CommandSender, args: Array<out String>) {
+        if (!sender.hasPermission("comet.admin")) {
+            sender.sendMessage("You don't have permission to do that!")
+            return
+        }
         // comet spawn <id> <world> <x> <y> <z> <yaw>
         if (args.size < 6) {
             sender.sendMessage("Usage: /comet spawn <id> <world> <x> <y> <z> <yaw> <pitch> {data}")

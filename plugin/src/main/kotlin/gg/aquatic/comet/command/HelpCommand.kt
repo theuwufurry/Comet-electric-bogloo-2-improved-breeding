@@ -5,6 +5,11 @@ import org.bukkit.command.CommandSender
 
 object HelpCommand : ICommand {
     override fun run(sender: CommandSender, args: Array<out String>) {
+        if (!sender.hasPermission("comet.admin")) {
+            sender.sendMessage("You don't have permission to do that!")
+            return
+        }
+
         sender.sendMessage(
             """
             /comet spawn <id> <world> <x> <y> <z> <yaw>

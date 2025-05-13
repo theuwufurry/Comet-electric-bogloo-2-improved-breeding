@@ -9,6 +9,10 @@ import org.bukkit.command.CommandSender
 
 object AtCommand : ICommand {
     override fun run(sender: CommandSender, args: Array<out String>) {
+        if (!sender.hasPermission("comet.admin")) {
+            sender.sendMessage("You don't have permission to do that!")
+            return
+        }
         //comet at <entity> <id>
         if (args.size < 3) {
             sender.sendMessage("Usage: /comet at <entity> <id> {data}")
