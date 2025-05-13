@@ -1,7 +1,6 @@
 package gg.aquatic.comet.api.emitter
 
 import gg.aquatic.comet.api.emitter.environment.*
-import java.awt.Color
 import java.util.concurrent.ConcurrentHashMap
 
 class VariableMutableMap(
@@ -13,7 +12,6 @@ class VariableMutableMap(
 
     override val entries: MutableSet<MutableMap.MutableEntry<String, Any>>
         get() = EntrySetView(this)
-//        get() = backingMap.map { (k, v) -> VariableEntry(k, v, this) }.toMutableSet()
     override val keys: MutableSet<String>
         get() = backingMap.keys
     override val size: Int
