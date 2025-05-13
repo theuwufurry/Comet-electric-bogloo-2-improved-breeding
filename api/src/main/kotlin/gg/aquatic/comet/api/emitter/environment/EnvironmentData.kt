@@ -4,7 +4,6 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonParser
 import com.google.gson.JsonPrimitive
 import gg.aquatic.comet.api.emitter.VariableMutableMap
-import gg.aquatic.comet.api.emitter.VariableMutableMap.Companion.tryAsDatum
 import gg.aquatic.comet.api.parsing.asNumberOrNull
 import java.awt.Color
 
@@ -21,7 +20,7 @@ class EnvironmentData (
             size: Double = 1.0,
             map: Map<String, Any> = mapOf(),
         ): EnvironmentData {
-            val data: MutableMap<String, Datum<*, *>> = mutableMapOf()
+            val data: MutableMap<String, Datum<*>> = mutableMapOf()
 
             for ((key, element) in map.entries) {
                 element.tryAsDatum()?.let { data[key] = it }
@@ -32,44 +31,7 @@ class EnvironmentData (
     }
 }
 
-interface Datum<V, T : Datum<V, T>> {
-    val value: V
-    fun clone(): T
-}
-
-class DatumColor(
-    override val value: Color
-) : Datum<Color, DatumColor> {
-    override fun clone(): DatumColor {
-        return DatumColor(Color(value.red, value.green, value.blue, value.alpha))
-    }
-}
-
-class DatumStr(
-    override val value: String
-) : Datum<String, DatumStr> {
-    override fun clone(): DatumStr {
-        return DatumStr(value)
-    }
-}
-
-class DatumNum(
-    override val value: Number
-) : Datum<Number, DatumNum> {
-    override fun clone(): DatumNum {
-        return DatumNum(value)
-    }
-}
-
-class DatumBool(
-    override val value: Boolean
-) : Datum<Boolean, DatumBool> {
-    override fun clone(): DatumBool {
-        return DatumBool(value)
-    }
-}
-
-fun tryParseAsColor(key: String, element: JsonElement, data: MutableMap<String, Datum<*, *>>): Boolean {
+fun tryParseAsColor(key: String, element: JsonElement, data: MutableMap<String, Datum<*>>): Boolean {
     if (!(element.isJsonPrimitive && element.asJsonPrimitive.isString)) return false
     val color = element.asString?.toRGBA() ?: return false
 
@@ -108,7 +70,7 @@ fun String.toRGBA(): Color? {
 fun String.parseEnvironmentData(): EnvironmentData {
     val root = JsonParser.parseString(this).asJsonObject
     val size = root["size"]?.asNumberOrNull()?.toDouble() ?: 1.0
-    val data: MutableMap<String, Datum<*, *>> = mutableMapOf()
+    val data: MutableMap<String, Datum<*>> = mutableMapOf()
 
     for ((key, element) in root.entrySet()) {
         if (!tryParseAsColor(key, element, data)) {

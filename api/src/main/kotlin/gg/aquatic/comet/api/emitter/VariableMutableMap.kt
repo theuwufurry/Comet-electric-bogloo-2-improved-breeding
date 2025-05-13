@@ -1,14 +1,11 @@
 package gg.aquatic.comet.api.emitter
 
-import gg.aquatic.comet.api.emitter.environment.Datum
-import gg.aquatic.comet.api.emitter.environment.DatumColor
-import gg.aquatic.comet.api.emitter.environment.DatumNum
-import gg.aquatic.comet.api.emitter.environment.DatumStr
+import gg.aquatic.comet.api.emitter.environment.*
 import java.awt.Color
 import java.util.concurrent.ConcurrentHashMap
 
 class VariableMutableMap(
-    private val backingMap: MutableMap<String, Datum<*, *>> = ConcurrentHashMap()
+    private val backingMap: MutableMap<String, Datum<*>> = ConcurrentHashMap()
 ) : MutableMap<String, Any> {
     fun clone(): VariableMutableMap {
         return VariableMutableMap(backingMap.mapValues { it.value.clone() }.toMutableMap())
@@ -38,7 +35,7 @@ class VariableMutableMap(
 
     override fun putAll(from: Map<out String, Any>) {
         for ((k, v) in from) {
-            if (v is Datum<*, *>) {
+            if (v is Datum<*>) {
                 backingMap[k] = v
             } else {
                 v.tryAsDatum()?.let {
@@ -49,7 +46,7 @@ class VariableMutableMap(
     }
 
     override fun put(key: String, value: Any): Any? {
-        if (value is Datum<*, *>) {
+        if (value is Datum<*>) {
             return backingMap.put(key, value)
         }
 
@@ -75,7 +72,7 @@ class VariableMutableMap(
 
     class VariableEntry(
         override val key: String,
-        override val value: Datum<*, *>,
+        override val value: Datum<*>,
         val map: VariableMutableMap,
     ) : MutableMap.MutableEntry<String, Any> {
         override fun setValue(newValue: Any): Any {
@@ -95,7 +92,7 @@ class VariableMutableMap(
             val backingIterator = mapInstance.backingMap.entries.iterator()
 
             return object : MutableIterator<MutableMap.MutableEntry<String, Any>> {
-                private var currentBackingEntry: MutableMap.MutableEntry<String, Datum<*, *>>? = null
+                private var currentBackingEntry: MutableMap.MutableEntry<String, Datum<*>>? = null
 
                 override fun hasNext(): Boolean = backingIterator.hasNext()
 
@@ -132,15 +129,6 @@ class VariableMutableMap(
                 return mapInstance.backingMap.remove(element.key) != null
             }
             return false
-        }
-    }
-
-    companion object {
-        fun Any.tryAsDatum(): Datum<*, *>? {
-            if (this is Number) return DatumNum(this)
-            if (this is String) return DatumStr(this)
-            if (this is Color) return DatumColor(this)
-            return null
         }
     }
 

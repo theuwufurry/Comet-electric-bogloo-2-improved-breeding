@@ -10,7 +10,7 @@ import gg.aquatic.comet.api.parsing.asJsonObjectOrNull
 import gg.aquatic.comet.api.parsing.macro.Macro
 
 class EnvironmentDataComponent(
-    val data: Map<String, Datum<*, *>> = mapOf()
+    val data: Map<String, Datum<*>> = mapOf()
 ) : PreInitComponent {
     override fun init(otherEmitterData: EmitterData, environmentData: EnvironmentData) {
         for ((key, value) in data) {
@@ -23,7 +23,7 @@ class EnvironmentDataComponent(
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): PreInitComponent? {
             val root = jsonElement.asJsonObjectOrNull() ?: return null
-            val data: MutableMap<String, Datum<*, *>> = mutableMapOf()
+            val data: MutableMap<String, Datum<*>> = mutableMapOf()
 
             for ((key, element) in root.entrySet()) {
                 if (!tryParseAsColor(key, element, data)) {

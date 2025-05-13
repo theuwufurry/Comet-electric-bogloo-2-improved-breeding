@@ -12,7 +12,7 @@ object MathExtras {
         private val max: Double,
         private val amount: Int,
         private var count: Int = 0,
-    ): Datum<IntervalRandom, IntervalRandom> {
+    ): Datum<IntervalRandom> {
         override val value = this
 
         private val range = max - min
