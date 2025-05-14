@@ -4,7 +4,7 @@ import org.joml.Vector3d
 import org.joml.Vector3f
 import java.awt.Color
 
-val classDatumMap = mutableMapOf<Class<*>, DatumParser<*>>(
+val classDatumMap = mutableListOf<Pair<Class<*>, DatumParser<*>>>(
     Boolean::class.java to object : DatumParser<Boolean> {
         override fun parse(value: Boolean): Datum<Boolean> {
             return DatumBool(value)
@@ -38,8 +38,13 @@ val classDatumMap = mutableMapOf<Class<*>, DatumParser<*>>(
 )
 
 inline fun <reified T: Any> T.tryAsDatum(): Datum<T>? {
-    val parser = (classDatumMap[T::class.java] ?: return null) as DatumParser<T>
-    return parser.parse(this)
+    for ((clazz, parser) in classDatumMap) {
+        if (clazz.isInstance(this)) {
+            return (parser as DatumParser<T>).parse(this)
+        }
+    }
+
+    return null
 }
 
 interface Datum<V> {
