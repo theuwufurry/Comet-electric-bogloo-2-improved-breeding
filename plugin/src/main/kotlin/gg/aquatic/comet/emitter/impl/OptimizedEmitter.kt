@@ -226,7 +226,13 @@ class OptimizedEmitter(
 
                             val prevDt = nextDatum.time - cp.time
 
-                            nd.transformationInterpolationDuration = prevDt
+                            if (prevDt == 1 && nextDatum.vec.alpha * 255.0 <= 127.0 && cp.vec.alpha * 255.0 > 127.0) {
+                                nd.transformationInterpolationDuration = -2
+                            }else if (prevDt == 1 && cp.vec.alpha * 255.0 <= 127.0 && nextDatum.vec.alpha * 255.0 > 127.0) {
+                                nd.transformationInterpolationDuration = -2
+                            } else {
+                                nd.transformationInterpolationDuration = prevDt
+                            }
 
                             //TODO: make sure transparency works
                             val flags = UpdateFlags()
