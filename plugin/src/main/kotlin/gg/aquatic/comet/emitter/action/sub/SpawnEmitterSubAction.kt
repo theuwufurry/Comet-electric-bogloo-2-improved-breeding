@@ -27,6 +27,10 @@ emitter can be in:
     - particle space - available in particle context, binds to particle
 
     pass Parent interface with a getLocation type function
+
+
+mounted emitters need custom handling to convert from tp -> translation
+mounted emitters with changing yaw/rotation need constant tp component, meaning can't have optimized
  */
 
 class SpawnEmitterSubAction(

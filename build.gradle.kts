@@ -8,8 +8,8 @@ group = "gg.aquatic"
 version = "1.6.0"
 
 repositories {
-    maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
     mavenCentral()
+    maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
     maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
     maven { url = uri("https://repo.codemc.io/repository/maven-snapshots/") }
     maven {

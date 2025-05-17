@@ -1,6 +1,7 @@
 package gg.aquatic.comet.emitter
 
 import gg.aquatic.comet.api.emitter.AbstractEmitter
+import gg.aquatic.comet.api.packet.PassengerManager
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.particle.Particle
 import gg.aquatic.waves.chunk.trackedByPlayers
@@ -18,7 +19,7 @@ class SpawningProcessor(
     private val currentViewers = ConcurrentHashMap.newKeySet<Player>()
     private val deadParticles: MutableList<Particle> = mutableListOf()
 
-    fun processDead(dataPackets: MutableList<PacketWrapper<*>>): MutableList<Pair<Player, MutableList<Int>>> {
+    fun process(dataPackets: MutableList<PacketWrapper<*>>): MutableList<Pair<Player, MutableList<Int>>> {
         val playerManager = PacketEvents.getAPI().playerManager
 
         emitter.particles.removeAll(deadParticles)
@@ -73,8 +74,10 @@ class SpawningProcessor(
 
     fun killParticles(particlesToKill: List<Particle>) {
         if (particlesToKill.isEmpty()) return
-        val ids = particlesToKill.flatMap { it.entityIDs }.toIntArray()
+        val ls = particlesToKill.flatMap { it.entityIDs }
+        val ids = ls.toIntArray()
         for (player in currentViewers) {
+            PassengerManager.passengerMap[player.entityId]?.removeAll(ls)
             try {
                 player.toUser().sendPacketSilently(WrapperPlayServerDestroyEntities(*ids))
             } catch (ignored: NullPointerException) {

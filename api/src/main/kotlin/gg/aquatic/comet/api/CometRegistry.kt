@@ -2,6 +2,7 @@ package gg.aquatic.comet.api
 
 import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
+import gg.aquatic.comet.api.emitter.YawPitch
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.api.emitter.parent.Parent
@@ -15,6 +16,7 @@ import gg.aquatic.waves.util.audience.AquaticAudience
 import gg.aquatic.waves.util.audience.GlobalAudience
 import org.bukkit.Location
 import java.util.function.Consumer
+import java.util.function.Supplier
 
 object CometRegistry {
     val macroParsers: MutableMap<String, MacroParser> = mutableMapOf()
@@ -50,16 +52,18 @@ object CometRegistry {
      * @return False if emitter not found by ID, true on success.
      */
     @JvmOverloads
-    fun realize(
+    fun spawn(
         id: String,
         parent: Parent? = null,
         location: Location,
         environmentData: EnvironmentData = EnvironmentData(),
         audience: AquaticAudience = GlobalAudience(),
+        mount: Mount? = null,
+        yawpitchSupplier: Supplier<YawPitch>? = null,
         after: Consumer<AbstractEmitter> = Consumer {  },
     ): Boolean {
         (unrealizedEmitterByID(id) ?: return false).realize(
-            parent, location, environmentData, audience, after
+            parent, location, environmentData, audience, mount, yawpitchSupplier, after
         )
 
         return true

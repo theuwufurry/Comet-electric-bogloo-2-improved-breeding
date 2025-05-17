@@ -42,7 +42,8 @@ class ParticleEmitter : AbstractParticleEmitter() {
                 "spawn" to SpawnCommand,
                 "clear" to ClearParticlesCommand,
                 "help" to HelpCommand,
-                "at" to AtCommand
+                "at" to AtCommand,
+                "mount" to MountedSpawnCommand,
             ),
             listOf()
         ).register("comet")

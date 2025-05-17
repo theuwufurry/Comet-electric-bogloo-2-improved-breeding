@@ -2,6 +2,7 @@ package gg.aquatic.comet.emitter
 
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.emitter.AbstractEmitter
+import gg.aquatic.comet.api.packet.PassengerManager
 import gg.aquatic.comet.emitter.optimization.CachedPath
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
 import gg.aquatic.waves.util.toUser
@@ -25,7 +26,7 @@ object GlobalTicker {
     val emitterCache: MutableMap<UUID, CachedPath> = ConcurrentHashMap()
 
     fun init() {
-        task = Bukkit.getScheduler().runTaskTimerAsynchronously(AbstractParticleEmitter.INSTANCE, Runnable {
+        task = Bukkit.getScheduler().runTaskTimer(AbstractParticleEmitter.INSTANCE, Runnable {
             tick()
         }, 1, 1)
     }
@@ -85,6 +86,7 @@ object GlobalTicker {
 
         for ((player, ids) in playerDeadParticleMap) {
             if (player.toUser() == null) continue
+            PassengerManager.passengerMap[player.entityId]?.removeAll(ids)
             player.toUser().sendPacketSilently(WrapperPlayServerDestroyEntities(*ids.toIntArray()))
         }
 

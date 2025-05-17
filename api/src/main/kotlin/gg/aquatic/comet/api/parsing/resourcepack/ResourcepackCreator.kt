@@ -36,7 +36,7 @@ object ResourcepackCreator {
     img_${x_coord}_${y_coord}_${x_size}_${y_size}
      */
     fun initTextures(texturesFolder: File) {
-        val defaultParticles = File(texturesFolder, "particles.png")
+        val defaultParticles = File(texturesFolder, PARTICLES_PNG)
         if (!defaultParticles.exists()) {
             defaultParticles.writeBytes(AbstractParticleEmitter.INSTANCE.getResource(PARTICLES_PNG)!!.readAllBytes())
         }

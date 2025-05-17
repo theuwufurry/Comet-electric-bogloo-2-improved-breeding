@@ -173,6 +173,7 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
         val dataFolder = AbstractParticleEmitter.INSTANCE.dataFolder
         dataFolder.mkdirs()
 
+        PassengerOffsets.load()
         SnowstormTranspiler.load()
 
         val effectsFolder = File(dataFolder.path + "/effects/")

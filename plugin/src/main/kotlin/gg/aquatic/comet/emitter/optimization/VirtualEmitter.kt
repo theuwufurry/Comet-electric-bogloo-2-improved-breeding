@@ -1,6 +1,7 @@
 package gg.aquatic.comet.emitter.optimization
 
 import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.Mount
 import gg.aquatic.comet.api.emitter.*
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.parent.Parent
@@ -26,6 +27,7 @@ import org.joml.Quaterniond
 import org.joml.Quaternionf
 import org.joml.Vector3d
 import java.util.*
+import java.util.function.Supplier
 
 class VirtualEmitter(
     val parent: Parent? = null,
@@ -39,7 +41,9 @@ class VirtualEmitter(
     backerForwardVector: Vector3d,
     backerEnvironmentData: EnvironmentData,
     seed: Int,
-    private val timeOffset: Int
+    private val timeOffset: Int,
+    override val mount: Mount?,
+    override val yawpitchSupplier: Supplier<YawPitch>?,
 ) : AbstractEmitter() {
     constructor(backer: OptimizedEmitter, runtime: VirtualRuntime) : this(
         parent = backer.parent,
@@ -53,7 +57,9 @@ class VirtualEmitter(
         backerForwardVector = Vector3d(backer.forwardVector),
         backerEnvironmentData = backer.environmentData.clone(),
         seed = backer.random.seed,
-        timeOffset = 0
+        timeOffset = 0,
+        mount = backer.mount,
+        yawpitchSupplier = backer.yawpitchSupplier,
     )
 
     val emitterComponents: List<EmitterComponent> =
@@ -425,7 +431,9 @@ class VirtualEmitter(
             random,
             runtime,
             uuid,
-            absoluteTime
+            absoluteTime,
+            mount,
+            yawpitchSupplier
         )
     }
 }

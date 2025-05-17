@@ -21,7 +21,6 @@ import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.waves.util.audience.AquaticAudience
 import org.bukkit.Color
 import org.bukkit.Location
-import org.bukkit.Particle.DustOptions
 import org.bukkit.entity.Player
 import org.bukkit.util.Vector
 import org.joml.Quaterniond
@@ -32,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
 import kotlin.random.Random
 
-class Emitter(
+class MountedUnoptimizedEmitter(
     val parent: Parent? = null,
     val components: List<Component>,
     val rateComponent: RateComponent,
@@ -46,10 +45,11 @@ class Emitter(
     override val environmentData: EnvironmentData,
     override val audience: AquaticAudience,
     val seed: Int = Random.nextInt(),
+    override val mount: Mount,
     override val yawpitchSupplier: Supplier<YawPitch>?,
 ) : AbstractEmitter() {
     private val dustOptions =
-        DustOptions(Color.fromRGB(Random.nextInt(255), Random.nextInt(255), Random.nextInt(255)), 0.5f)
+        org.bukkit.Particle.DustOptions(Color.fromRGB(Random.nextInt(255), Random.nextInt(255), Random.nextInt(255)), 0.5f)
 
     override val id: UUID = emitterData.id
     val emitterComponents: List<EmitterComponent> =
@@ -88,13 +88,11 @@ class Emitter(
 
     override fun tick(): EmitterTickResult {
         if (blocked.get()) {
-//            println("${unrealizedEmitter.id} blocked!")
+            println("${unrealizedEmitter.id} blocked!")
             return EmitterTickResult(true)
         }
 
-        parent?.pose?.let {
-            setPose(it)
-        }
+        parent?.pose?.let { setPose(it) }
         emitterRotation = calculateEmitterRotation()
         emitterComponents.forEach { it.execute(emitterData) }
 
@@ -230,12 +228,10 @@ class Emitter(
             audience,
             random,
             uuid,
-            null,
+            mount,
             yawpitchSupplier
         )
     }
-
-    override val mount: Mount? = null
 
     override fun kill() {
         dead = true

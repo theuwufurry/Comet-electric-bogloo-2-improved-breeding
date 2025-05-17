@@ -1,6 +1,8 @@
 package gg.aquatic.comet.particle.color
 
 import com.google.gson.JsonElement
+import gg.aquatic.comet.ParticleEmitter
+import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.parsing.BaseComponentParser
 import gg.aquatic.comet.api.parsing.compile
@@ -39,7 +41,10 @@ class ConstantColorComponent(
         otherParticleData.color = if (otherParticleData.age == 0.0) {
             myEmitterData.copyFrom(otherEmitterData)
             myParticleData.copyFrom(otherParticleData)
-            (colorScript.eval() as Color).rgb
+            (colorScript.eval() as? Color)?.rgb ?: run {
+                AbstractParticleEmitter.INSTANCE.logger.warning("Issue evaluating 'color' expressions in 'constant_color' component in ${otherEmitterData.emitter?.unrealizedEmitter?.id}")
+                otherParticleData.color
+            }
         } else {
             otherParticleData.color
         }

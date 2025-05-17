@@ -1,5 +1,6 @@
 package gg.aquatic.comet.api.emitter
 
+import gg.aquatic.comet.api.Mount
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
@@ -12,6 +13,7 @@ import org.joml.Quaterniond
 import org.joml.Quaternionf
 import org.joml.Vector3d
 import java.util.UUID
+import java.util.function.Supplier
 
 abstract class AbstractEmitter : Parent {
     abstract val id: UUID
@@ -42,6 +44,10 @@ abstract class AbstractEmitter : Parent {
     abstract val random: DeterministicRandom
 
     abstract val isPregen: Boolean
+
+    abstract val mount: Mount?
+
+    abstract val yawpitchSupplier: Supplier<YawPitch>?
 
     abstract fun realize(
         unrealizedEmitter: AbstractUnrealizedEmitter,

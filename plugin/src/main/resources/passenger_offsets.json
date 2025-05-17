@@ -1,0 +1,652 @@
+{
+  "minecraft:allay": {
+    "x": 0.0,
+    "y": 0.6,
+    "z": 0.0
+  },
+  "minecraft:area_effect_cloud": {
+    "x": 0.0,
+    "y": 0.5,
+    "z": 0.0
+  },
+  "minecraft:armadillo": {
+    "x": 0.0,
+    "y": 0.65,
+    "z": 0.0
+  },
+  "minecraft:armor_stand": {
+    "x": 0.0,
+    "y": 1.975,
+    "z": 0.0
+  },
+  "minecraft:arrow": {
+    "x": 0.0,
+    "y": 0.5,
+    "z": 0.0
+  },
+  "minecraft:axolotl": {
+    "x": 0.0,
+    "y": 0.42,
+    "z": 0.0
+  },
+  "minecraft:bat": {
+    "x": 0.0,
+    "y": 0.9,
+    "z": 0.0
+  },
+  "minecraft:bee": {
+    "x": 0.0,
+    "y": 0.6,
+    "z": 0.0
+  },
+  "minecraft:blaze": {
+    "x": 0.0,
+    "y": 1.8,
+    "z": 0.0
+  },
+  "minecraft:block_display": {
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0
+  },
+  "minecraft:boat": {
+    "x": 0.0,
+    "y": 0.5625,
+    "z": 0.0
+  },
+  "minecraft:bogged": {
+    "x": 0.0,
+    "y": 1.99,
+    "z": 0.0
+  },
+  "minecraft:breeze": {
+    "x": 0.0,
+    "y": 1.77,
+    "z": 0.0
+  },
+  "minecraft:breeze_wind_charge": {
+    "x": 0.0,
+    "y": 0.3125,
+    "z": 0.0
+  },
+  "minecraft:camel": {
+    "x": 0.0,
+    "y": 2.375,
+    "z": 0.0
+  },
+  "minecraft:cat": {
+    "x": 0.0,
+    "y": 0.5125,
+    "z": 0.0
+  },
+  "minecraft:cave_spider": {
+    "x": 0.0,
+    "y": 0.5,
+    "z": 0.0
+  },
+  "minecraft:chest_boat": {
+    "x": 0.0,
+    "y": 0.5625,
+    "z": 0.0
+  },
+  "minecraft:chest_minecart": {
+    "x": 0.0,
+    "y": 0.1875,
+    "z": 0.0
+  },
+  "minecraft:chicken": {
+    "x": 0.0,
+    "y": 0.7,
+    "z": 0.1
+  },
+  "minecraft:cod": {
+    "x": 0.0,
+    "y": 0.3,
+    "z": 0.0
+  },
+  "minecraft:command_block_minecart": {
+    "x": 0.0,
+    "y": 0.1875,
+    "z": 0.0
+  },
+  "minecraft:cow": {
+    "x": 0.0,
+    "y": 1.36875,
+    "z": 0.0
+  },
+  "minecraft:creeper": {
+    "x": 0.0,
+    "y": 1.7,
+    "z": 0.0
+  },
+  "minecraft:dolphin": {
+    "x": 0.0,
+    "y": 0.6,
+    "z": 0.0
+  },
+  "minecraft:donkey": {
+    "x": 0.0,
+    "y": 1.1125,
+    "z": 0.0
+  },
+  "minecraft:dragon_fireball": {
+    "x": 0.0,
+    "y": 1.0,
+    "z": 0.0
+  },
+  "minecraft:drowned": {
+    "x": 0.0,
+    "y": 2.0125,
+    "z": 0.0
+  },
+  "minecraft:egg": {
+    "x": 0.0,
+    "y": 0.25,
+    "z": 0.0
+  },
+  "minecraft:elder_guardian": {
+    "x": 0.0,
+    "y": 2.350625,
+    "z": 0.0
+  },
+  "minecraft:end_crystal": {
+    "x": 0.0,
+    "y": 2.0,
+    "z": 0.0
+  },
+  "minecraft:ender_dragon": {
+    "x": 0.0,
+    "y": 3.0,
+    "z": 0.0
+  },
+  "minecraft:ender_pearl": {
+    "x": 0.0,
+    "y": 0.25,
+    "z": 0.0
+  },
+  "minecraft:enderman": {
+    "x": 0.0,
+    "y": 2.80625,
+    "z": 0.0
+  },
+  "minecraft:endermite": {
+    "x": 0.0,
+    "y": 0.2375,
+    "z": 0.0
+  },
+  "minecraft:evoker": {
+    "x": 0.0,
+    "y": 2.0,
+    "z": 0.0
+  },
+  "minecraft:evoker_fangs": {
+    "x": 0.0,
+    "y": 0.8,
+    "z": 0.0
+  },
+  "minecraft:experience_bottle": {
+    "x": 0.0,
+    "y": 0.25,
+    "z": 0.0
+  },
+  "minecraft:experience_orb": {
+    "x": 0.0,
+    "y": 0.5,
+    "z": 0.0
+  },
+  "minecraft:eye_of_ender": {
+    "x": 0.0,
+    "y": 0.25,
+    "z": 0.0
+  },
+  "minecraft:falling_block": {
+    "x": 0.0,
+    "y": 0.98,
+    "z": 0.0
+  },
+  "minecraft:firework_rocket": {
+    "x": 0.0,
+    "y": 0.25,
+    "z": 0.0
+  },
+  "minecraft:fox": {
+    "x": 0.0,
+    "y": 0.6375,
+    "z": 0.25
+  },
+  "minecraft:frog": {
+    "x": 0.0,
+    "y": 0.375,
+    "z": 0.25
+  },
+  "minecraft:furnace_minecart": {
+    "x": 0.0,
+    "y": 0.1875,
+    "z": 0.0
+  },
+  "minecraft:ghast": {
+    "x": 0.0,
+    "y": 4.0625,
+    "z": 0.0
+  },
+  "minecraft:giant": {
+    "x": 0.0,
+    "y": 12.0,
+    "z": 0.0
+  },
+  "minecraft:glow_item_frame": {
+    "x": 0.0,
+    "y": 0.5,
+    "z": 0.0
+  },
+  "minecraft:glow_squid": {
+    "x": 0.0,
+    "y": 0.8,
+    "z": 0.0
+  },
+  "minecraft:goat": {
+    "x": 0.0,
+    "y": 1.1125,
+    "z": 0.0
+  },
+  "minecraft:guardian": {
+    "x": 0.0,
+    "y": 0.975,
+    "z": 0.0
+  },
+  "minecraft:hoglin": {
+    "x": 0.0,
+    "y": 1.49375,
+    "z": 0.0
+  },
+  "minecraft:hopper_minecart": {
+    "x": 0.0,
+    "y": 0.1875,
+    "z": 0.0
+  },
+  "minecraft:horse": {
+    "x": 0.0,
+    "y": 1.44375,
+    "z": 0.0
+  },
+  "minecraft:husk": {
+    "x": 0.0,
+    "y": 2.075,
+    "z": 0.0
+  },
+  "minecraft:illusioner": {
+    "x": 0.0,
+    "y": 2.0,
+    "z": 0.0
+  },
+  "minecraft:interaction": {
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0
+  },
+  "minecraft:iron_golem": {
+    "x": 0.0,
+    "y": 2.7,
+    "z": 0.0
+  },
+  "minecraft:item": {
+    "x": 0.0,
+    "y": 0.25,
+    "z": 0.0
+  },
+  "minecraft:item_display": {
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0
+  },
+  "minecraft:item_frame": {
+    "x": 0.0,
+    "y": 0.5,
+    "z": 0.0
+  },
+  "minecraft:ominous_item_spawner": {
+    "x": 0.0,
+    "y": 0.25,
+    "z": 0.0
+  },
+  "minecraft:fireball": {
+    "x": 0.0,
+    "y": 1.0,
+    "z": 0.0
+  },
+  "minecraft:leash_knot": {
+    "x": 0.0,
+    "y": 0.5,
+    "z": 0.0
+  },
+  "minecraft:lightning_bolt": {
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0
+  },
+  "minecraft:llama": {
+    "x": 0.0,
+    "y": 1.37,
+    "z": 0.3
+  },
+  "minecraft:llama_spit": {
+    "x": 0.0,
+    "y": 0.25,
+    "z": 0.0
+  },
+  "minecraft:magma_cube": {
+    "x": 0.0,
+    "y": 0.52,
+    "z": 0.0
+  },
+  "minecraft:marker": {
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0
+  },
+  "minecraft:minecart": {
+    "x": 0.0,
+    "y": 0.1875,
+    "z": 0.0
+  },
+  "minecraft:mooshroom": {
+    "x": 0.0,
+    "y": 1.36875,
+    "z": 0.0
+  },
+  "minecraft:mule": {
+    "x": 0.0,
+    "y": 1.2125,
+    "z": 0.0
+  },
+  "minecraft:ocelot": {
+    "x": 0.0,
+    "y": 0.6375,
+    "z": 0.0
+  },
+  "minecraft:painting": {
+    "x": 0.0,
+    "y": 0.5,
+    "z": 0.0
+  },
+  "minecraft:panda": {
+    "x": 0.0,
+    "y": 1.25,
+    "z": 0.0
+  },
+  "minecraft:parrot": {
+    "x": 0.0,
+    "y": 0.4625,
+    "z": 0.0
+  },
+  "minecraft:phantom": {
+    "x": 0.0,
+    "y": 0.3375,
+    "z": 0.0
+  },
+  "minecraft:pig": {
+    "x": 0.0,
+    "y": 0.86875,
+    "z": 0.0
+  },
+  "minecraft:piglin": {
+    "x": 0.0,
+    "y": 2.0125,
+    "z": 0.0
+  },
+  "minecraft:piglin_brute": {
+    "x": 0.0,
+    "y": 2.0125,
+    "z": 0.0
+  },
+  "minecraft:pillager": {
+    "x": 0.0,
+    "y": 2.0,
+    "z": 0.0
+  },
+  "minecraft:polar_bear": {
+    "x": 0.0,
+    "y": 1.4,
+    "z": 0.0
+  },
+  "minecraft:potion": {
+    "x": 0.0,
+    "y": 0.25,
+    "z": 0.0
+  },
+  "minecraft:pufferfish": {
+    "x": 0.0,
+    "y": 0.7,
+    "z": 0.0
+  },
+  "minecraft:rabbit": {
+    "x": 0.0,
+    "y": 0.5,
+    "z": 0.0
+  },
+  "minecraft:ravager": {
+    "x": 0.0,
+    "y": 2.2625,
+    "z": 0.0625
+  },
+  "minecraft:salmon": {
+    "x": 0.0,
+    "y": 0.4,
+    "z": 0.0
+  },
+  "minecraft:sheep": {
+    "x": 0.0,
+    "y": 1.2375,
+    "z": 0.0
+  },
+  "minecraft:shulker": {
+    "x": 0.0,
+    "y": 1.0,
+    "z": 0.0
+  },
+  "minecraft:shulker_bullet": {
+    "x": 0.0,
+    "y": 0.3125,
+    "z": 0.0
+  },
+  "minecraft:silverfish": {
+    "x": 0.0,
+    "y": 0.2375,
+    "z": 0.0
+  },
+  "minecraft:skeleton": {
+    "x": 0.0,
+    "y": 1.99,
+    "z": 0.0
+  },
+  "minecraft:skeleton_horse": {
+    "x": 0.0,
+    "y": 1.31875,
+    "z": 0.0
+  },
+  "minecraft:slime": {
+    "x": 0.0,
+    "y": 0.52,
+    "z": 0.0
+  },
+  "minecraft:small_fireball": {
+    "x": 0.0,
+    "y": 0.3125,
+    "z": 0.0
+  },
+  "minecraft:sniffer": {
+    "x": 0.0,
+    "y": 2.09375,
+    "z": 0.0
+  },
+  "minecraft:snow_golem": {
+    "x": 0.0,
+    "y": 1.9,
+    "z": 0.0
+  },
+  "minecraft:snowball": {
+    "x": 0.0,
+    "y": 0.25,
+    "z": 0.0
+  },
+  "minecraft:spawner_minecart": {
+    "x": 0.0,
+    "y": 0.1875,
+    "z": 0.0
+  },
+  "minecraft:spectral_arrow": {
+    "x": 0.0,
+    "y": 0.5,
+    "z": 0.0
+  },
+  "minecraft:spider": {
+    "x": 0.0,
+    "y": 0.765,
+    "z": 0.0
+  },
+  "minecraft:squid": {
+    "x": 0.0,
+    "y": 0.8,
+    "z": 0.0
+  },
+  "minecraft:stray": {
+    "x": 0.0,
+    "y": 1.99,
+    "z": 0.0
+  },
+  "minecraft:strider": {
+    "x": 0.0,
+    "y": 1.7,
+    "z": 0.0
+  },
+  "minecraft:tadpole": {
+    "x": 0.0,
+    "y": 0.3,
+    "z": 0.0
+  },
+  "minecraft:text_display": {
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0
+  },
+  "minecraft:tnt": {
+    "x": 0.0,
+    "y": 0.98,
+    "z": 0.0
+  },
+  "minecraft:tnt_minecart": {
+    "x": 0.0,
+    "y": 0.1875,
+    "z": 0.0
+  },
+  "minecraft:trader_llama": {
+    "x": 0.0,
+    "y": 1.37,
+    "z": 0.3
+  },
+  "minecraft:trident": {
+    "x": 0.0,
+    "y": 0.5,
+    "z": 0.0
+  },
+  "minecraft:tropical_fish": {
+    "x": 0.0,
+    "y": 0.4,
+    "z": 0.0
+  },
+  "minecraft:turtle": {
+    "x": 0.0,
+    "y": 0.55625,
+    "z": 0.25
+  },
+  "minecraft:vex": {
+    "x": 0.0,
+    "y": 0.7375,
+    "z": 0.0
+  },
+  "minecraft:villager": {
+    "x": 0.0,
+    "y": 1.95,
+    "z": 0.0
+  },
+  "minecraft:vindicator": {
+    "x": 0.0,
+    "y": 2.0,
+    "z": 0.0
+  },
+  "minecraft:wandering_trader": {
+    "x": 0.0,
+    "y": 1.95,
+    "z": 0.0
+  },
+  "minecraft:warden": {
+    "x": 0.0,
+    "y": 3.15,
+    "z": 0.0
+  },
+  "minecraft:wind_charge": {
+    "x": 0.0,
+    "y": 0.3125,
+    "z": 0.0
+  },
+  "minecraft:witch": {
+    "x": 0.0,
+    "y": 2.2625,
+    "z": 0.0
+  },
+  "minecraft:wither": {
+    "x": 0.0,
+    "y": 3.5,
+    "z": 0.0
+  },
+  "minecraft:wither_skeleton": {
+    "x": 0.0,
+    "y": 2.4,
+    "z": 0.0
+  },
+  "minecraft:wither_skull": {
+    "x": 0.0,
+    "y": 0.3125,
+    "z": 0.0
+  },
+  "minecraft:wolf": {
+    "x": 0.0,
+    "y": 0.81875,
+    "z": 0.0625
+  },
+  "minecraft:zoglin": {
+    "x": 0.0,
+    "y": 1.49375,
+    "z": 0.0
+  },
+  "minecraft:zombie": {
+    "x": 0.0,
+    "y": 2.0125,
+    "z": 0.0
+  },
+  "minecraft:zombie_horse": {
+    "x": 0.0,
+    "y": 1.31875,
+    "z": 0.0
+  },
+  "minecraft:zombie_villager": {
+    "x": 0.0,
+    "y": 2.125,
+    "z": 0.0
+  },
+  "minecraft:zombified_piglin": {
+    "x": 0.0,
+    "y": 2.0,
+    "z": 0.0
+  },
+  "minecraft:player": {
+    "x": 0.0,
+    "y": 1.8,
+    "z": 0.0
+  },
+  "minecraft:fishing_bobber": {
+    "x": 0.0,
+    "y": 0.25,
+    "z": 0.0
+  }
+}

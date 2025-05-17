@@ -1,6 +1,7 @@
 package gg.aquatic.comet.api.emitter
 
 import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.Mount
 import gg.aquatic.comet.api.PreInitComponent
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.parent.Parent
@@ -9,10 +10,11 @@ import gg.aquatic.comet.api.particle.data.BillboardConstraints
 import gg.aquatic.waves.util.audience.AquaticAudience
 import gg.aquatic.waves.util.audience.GlobalAudience
 import org.bukkit.Location
+import org.joml.Vector2f
 import org.joml.Vector3d
 import java.util.*
 import java.util.function.Consumer
-import java.util.function.Function
+import java.util.function.Supplier
 
 abstract class AbstractUnrealizedEmitter {
     abstract val id: String
@@ -29,7 +31,9 @@ abstract class AbstractUnrealizedEmitter {
         parent: Parent? = null,
         location: Location,
         environmentData: EnvironmentData = EnvironmentData(),
-        after: Consumer<AbstractEmitter>,
+        mount: Mount? = null,
+        yawpitchSupplier: Supplier<YawPitch>? = null,
+        after: Consumer<AbstractEmitter> = Consumer<AbstractEmitter> { },
     )
 
     abstract fun realize(
@@ -37,7 +41,9 @@ abstract class AbstractUnrealizedEmitter {
         location: Location,
         environmentData: EnvironmentData = EnvironmentData(),
         audience: AquaticAudience = GlobalAudience(),
-        after: Consumer<AbstractEmitter>,
+        mount: Mount? = null,
+        yawpitchSupplier: Supplier<YawPitch>? = null,
+        after: Consumer<AbstractEmitter> = Consumer<AbstractEmitter> { },
     )
 
     abstract fun internalRealize(
@@ -47,5 +53,15 @@ abstract class AbstractUnrealizedEmitter {
         audience: AquaticAudience,
         random: DeterministicRandom,
         uuid: UUID,
+        mount: Mount?,
+        yawpitchSupplier: Supplier<YawPitch>?
     ): AbstractEmitter
 }
+
+typealias YawPitch = Vector2f
+
+val YawPitch.yaw: Float
+    get() = this.x
+
+val YawPitch.pitch: Float
+    get() = this.y

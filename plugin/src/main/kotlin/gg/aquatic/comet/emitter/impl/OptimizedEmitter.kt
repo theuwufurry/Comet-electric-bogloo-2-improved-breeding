@@ -1,10 +1,8 @@
 package gg.aquatic.comet.emitter.impl
 
 import gg.aquatic.comet.api.Component
-import gg.aquatic.comet.api.emitter.AbstractEmitter
-import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
-import gg.aquatic.comet.api.emitter.EmitterData
-import gg.aquatic.comet.api.emitter.EmitterTickResult
+import gg.aquatic.comet.api.Mount
+import gg.aquatic.comet.api.emitter.*
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
@@ -34,6 +32,7 @@ import org.joml.Quaternionf
 import org.joml.Vector3d
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.Supplier
 import kotlin.random.Random
 import kotlin.system.measureNanoTime
 
@@ -51,6 +50,7 @@ class OptimizedEmitter(
     override val audience: AquaticAudience,
     private val internal: Boolean,
     seed: Int = Random.nextInt(),
+    override val yawpitchSupplier: Supplier<YawPitch>?,
 ) : AbstractEmitter() {
     override val id: UUID = emitterData.id
     override val random: DeterministicRandom = DeterministicRandom(seed)
@@ -264,7 +264,7 @@ class OptimizedEmitter(
             spawnParticles(data)
         }
 
-        val deadParticleIDs: MutableList<Pair<Player, MutableList<Int>>> = spawningProcessor.processDead(dataPackets)
+        val deadParticleIDs: MutableList<Pair<Player, MutableList<Int>>> = spawningProcessor.process(dataPackets)
 
         blocked.set(false)
 
@@ -378,9 +378,13 @@ class OptimizedEmitter(
             environmentData,
             audience,
             random,
-            uuid
+            uuid,
+            null,
+            yawpitchSupplier
         )
     }
+
+    override val mount: Mount? = null
 
     override fun kill() {
         killed.set(true)

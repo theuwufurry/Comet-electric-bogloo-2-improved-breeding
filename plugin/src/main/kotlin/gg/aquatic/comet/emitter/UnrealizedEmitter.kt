@@ -2,10 +2,12 @@ package gg.aquatic.comet.emitter
 
 
 import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.Mount
 import gg.aquatic.comet.api.PreInitComponent
 import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.emitter.YawPitch
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.api.emitter.parent.Parent
@@ -13,6 +15,7 @@ import gg.aquatic.comet.api.emitter.random.DeterministicRandom
 import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
 import gg.aquatic.comet.emitter.impl.Emitter
+import gg.aquatic.comet.emitter.impl.MountedUnoptimizedEmitter
 import gg.aquatic.comet.emitter.impl.OptimizedEmitter
 import gg.aquatic.comet.emitter.optimization.VirtualEmitter
 import gg.aquatic.comet.emitter.optimization.VirtualRuntime
@@ -23,6 +26,22 @@ import org.bukkit.Location
 import org.joml.Vector3d
 import java.util.*
 import java.util.function.Consumer
+import java.util.function.Supplier
+
+/*
+mNO: optimized : 1 : 2
+mNo: basic not optimized : 2
+mnO: basic optimized
+mno: basic not optimized
+MNO: optimized : 1 : 2
+MNo: basic not optimized : 1 : 2
+MnO: optimized : 1
+Mno: unoptimized : 1
+
+technologies needed:
+1 convert teleport to translation
+2 add rot to tp packets
+ */
 
 data class UnrealizedEmitter(
     override val id: String,
@@ -42,6 +61,8 @@ data class UnrealizedEmitter(
         location: Location,
         environmentData: EnvironmentData,
         audience: AquaticAudience,
+        mount: Mount?,
+        yawpitchSupplier: Supplier<YawPitch>?,
         after: Consumer<AbstractEmitter>,
     ) {
         val initialization = {
@@ -52,20 +73,42 @@ data class UnrealizedEmitter(
             emitterData.variable.putAll(environmentData.data)
 
             val optimized = checkOptimized(environmentData)
-            val emitter: AbstractEmitter = if (optimized) OptimizedEmitter(
-                parent,
-                components,
-                rateComponent,
-                distanceCullingComponent,
-                billboardConstraints, location, emitterData, this, forwardVector, environmentData, audience, false
-            ) else Emitter(
-                parent,
-                components,
-                rateComponent,
-                distanceCullingComponent,
-                updateFrequencyComponent,
-                billboardConstraints, location, emitterData, this, forwardVector, environmentData, audience,
-            )
+            val mounted = mount != null
+
+            val emitter: AbstractEmitter = if (mounted) {
+                MountedUnoptimizedEmitter(
+                    parent,
+                    components,
+                    rateComponent,
+                    distanceCullingComponent,
+                    updateFrequencyComponent,
+                    billboardConstraints,
+                    location,
+                    emitterData,
+                    this,
+                    forwardVector,
+                    environmentData,
+                    audience,
+                    mount = mount!!,
+                    yawpitchSupplier = yawpitchSupplier
+                )
+            } else {
+                if (optimized) OptimizedEmitter(
+                    parent,
+                    components,
+                    rateComponent,
+                    distanceCullingComponent,
+                    billboardConstraints, location, emitterData, this, forwardVector, environmentData, audience, false, yawpitchSupplier = yawpitchSupplier
+                ) else Emitter(
+                    parent,
+                    components,
+                    rateComponent,
+                    distanceCullingComponent,
+                    updateFrequencyComponent,
+                    billboardConstraints, location, emitterData, this, forwardVector, environmentData, audience, yawpitchSupplier = yawpitchSupplier
+                )
+
+            }
 
             after.accept(emitter)
 
@@ -83,9 +126,11 @@ data class UnrealizedEmitter(
         parent: Parent?,
         location: Location,
         environmentData: EnvironmentData,
+        mount: Mount?,
+        yawpitchSupplier: Supplier<YawPitch>?,
         after: Consumer<AbstractEmitter>,
     ) {
-        realize(parent, location, environmentData, GlobalAudience(), after)
+        realize(parent, location, environmentData, GlobalAudience(), mount, yawpitchSupplier, after)
     }
 
     override fun internalRealize(
@@ -94,7 +139,9 @@ data class UnrealizedEmitter(
         environmentData: EnvironmentData,
         audience: AquaticAudience,
         random: DeterministicRandom,
-        uuid: UUID
+        uuid: UUID,
+        mount: Mount?,
+        yawpitchSupplier: Supplier<YawPitch>?
     ): AbstractEmitter {
         val emitterData = EmitterData(uuid)
         emitterData.world = location.world
@@ -103,8 +150,27 @@ data class UnrealizedEmitter(
         emitterData.variable.putAll(environmentData.data)
 
         val optimized = checkOptimized(environmentData)
+        val mounted = mount != null
 
-        val e = if (optimized) OptimizedEmitter(
+        val e = if (mounted) {
+            MountedUnoptimizedEmitter(
+                parent,
+                components,
+                rateComponent,
+                distanceCullingComponent,
+                updateFrequencyComponent,
+                billboardConstraints,
+                location,
+                emitterData,
+                this,
+                forwardVector,
+                environmentData,
+                audience,
+                seed = random.kotlinRandom.nextInt(),
+                mount!!,
+                yawpitchSupplier
+            )
+        } else if (optimized) OptimizedEmitter(
             parent,
             components,
             rateComponent,
@@ -118,6 +184,7 @@ data class UnrealizedEmitter(
             audience,
             true,
             seed = random.kotlinRandom.nextInt(),
+            yawpitchSupplier
         ) else Emitter(
             parent,
             components,
@@ -132,6 +199,7 @@ data class UnrealizedEmitter(
             environmentData,
             audience,
             seed = random.kotlinRandom.nextInt(),
+            yawpitchSupplier = yawpitchSupplier
         )
 
         GlobalTicker.addEmitter(e)
@@ -147,6 +215,8 @@ data class UnrealizedEmitter(
         runtime: VirtualRuntime,
         uuid: UUID,
         timeOffset: Int,
+        mount: Mount?,
+        yawpitchSupplier: Supplier<YawPitch>?,
     ) {
         val emitterData = EmitterData(uuid)
         emitterData.world = location.world
@@ -167,7 +237,9 @@ data class UnrealizedEmitter(
                 backerForwardVector = forwardVector,
                 backerEnvironmentData = environmentData,
                 seed = random.kotlinRandom.nextInt(),
-                timeOffset
+                timeOffset,
+                mount = mount,
+                yawpitchSupplier = yawpitchSupplier
             )
         )
     }

@@ -1,8 +1,12 @@
 package gg.aquatic.comet.particle
 
 import gg.aquatic.comet.api.ParticleIDProvider
+import gg.aquatic.comet.api.emitter.YawPitch
 import gg.aquatic.comet.api.emitter.parent.Pose
+import gg.aquatic.comet.api.emitter.pitch
 import gg.aquatic.comet.api.emitter.random.DeterministicRandom
+import gg.aquatic.comet.api.emitter.yaw
+import gg.aquatic.comet.api.packet.PassengerManager
 import gg.aquatic.comet.api.particle.AbstractParticle
 import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.api.particle.UpdateFlags
@@ -17,13 +21,10 @@ import gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3d
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetPassengers
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity
 import org.joml.Quaternionf
 import java.util.*
-
-/*
-
- */
 
 open class Particle(override var data: ParticleData) : AbstractParticle() {
     override val id = ParticleIDProvider.id()
@@ -66,16 +67,29 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
     }
 
     override fun getAddPacket(data: ParticleData): List<PacketWrapper<*>> {
-        val packet = WrapperPlayServerSpawnEntity(
+        val result = mutableListOf<PacketWrapper<*>>()
+
+        val mount = data.emitter?.mount
+
+        val spawnPos = mount?.let {
+            Vector3d(
+                mount.pos.x,
+                mount.pos.y,
+                mount.pos.z,
+            )
+        } ?: Vector3d(
+            data.origin.x + data.relativePosition.x,
+            data.origin.y + data.relativePosition.y,
+            data.origin.z + data.relativePosition.z
+        )
+
+        val yawpitch = data.emitter?.yawpitchSupplier?.get() ?: YawPitch(0f, 0f)
+        result += WrapperPlayServerSpawnEntity(
             id,
             Optional.of(uuid),
             if (data.displayData is SpriteData || data.displayData is TextDisplayComponent) EntityTypes.TEXT_DISPLAY else EntityTypes.ITEM_DISPLAY,
-            Vector3d(
-                data.origin.x + data.relativePosition.x,
-                data.origin.y + data.relativePosition.y,
-                data.origin.z + data.relativePosition.z
-            ),
-            0f, 0f, 0f,
+            spawnPos,
+            yawpitch.pitch, yawpitch.yaw, 0f,
             0,
             Optional.of(Vector3d())
         )
@@ -104,19 +118,23 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
             ), true
         )
 
-        val entityDataPacket: PacketWrapper<*> = WrapperPlayServerEntityMetadata(id, nd)
+        result += WrapperPlayServerEntityMetadata(id, nd)
+
+
+        if (mount != null) {
+            val ls = PassengerManager.passengerMap.getOrPut(data.emitter!!.mount!!.entityID) { mutableListOf() }
+            ls += id
+            result += WrapperPlayServerSetPassengers(data.emitter!!.mount!!.entityID, ls.toIntArray())
+        }
 
         if (data.emitter != null && data.emitter!!.unrealizedEmitter.isDoubleSided) {
-            val invertedSpawn = WrapperPlayServerSpawnEntity(
+            val yawpitch = data.emitter?.yawpitchSupplier?.get() ?: YawPitch(0f, 0f)
+            result += WrapperPlayServerSpawnEntity(
                 invertedIDs.first,
                 Optional.of(invertedIDs.second),
                 if (data.displayData is SpriteData || data.displayData is TextDisplayComponent) EntityTypes.TEXT_DISPLAY else EntityTypes.ITEM_DISPLAY,
-                Vector3d(
-                    data.origin.x + data.relativePosition.x,
-                    data.origin.y + data.relativePosition.y,
-                    data.origin.z + data.relativePosition.z
-                ),
-                0f, 0f, 0f,
+                spawnPos,
+                yawpitch.pitch, yawpitch.yaw, 0f,
                 0,
                 Optional.of(Vector3d())
             )
@@ -145,11 +163,11 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                 ), true
             )
 
-            val invertedPacket: PacketWrapper<*> = WrapperPlayServerEntityMetadata(invertedIDs.first, inverted)
+            result += WrapperPlayServerEntityMetadata(invertedIDs.first, inverted)
 
-            return listOf(packet, entityDataPacket, invertedSpawn, invertedPacket)
+            return result
         } else {
-            return listOf(packet, entityDataPacket)
+            return result
         }
     }
 
@@ -161,7 +179,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
         flagOverride: UpdateFlags?,
     ): List<PacketWrapper<*>> {
         return if (shouldUpdate) {
-            val result = mutableListOf<WrapperPlayServerEntityMetadata>()
+            val result = mutableListOf<PacketWrapper<*>>()
             handleFullUpdate(entityDataBuilder, data, flagOverride)?.let { result += it }
 
             if (data.emitter != null && data.emitter!!.unrealizedEmitter.isDoubleSided) {
@@ -310,13 +328,14 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
     }
 
     override fun getMovementPacket(): WrapperPlayServerEntityTeleport {
+        val yawpitch = data.emitter?.yawpitchSupplier?.get() ?: YawPitch(0f, 0f)
         return WrapperPlayServerEntityTeleport(
             id, Location(
                 Vector3d(
                     data.origin.x + data.relativePosition.x,
                     data.origin.y + data.relativePosition.y,
                     data.origin.z + data.relativePosition.z
-                ), 0f, 0f
+                ), yawpitch.yaw, yawpitch.pitch
             ), true
         )
     }
