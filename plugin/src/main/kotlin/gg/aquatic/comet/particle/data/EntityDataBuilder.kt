@@ -195,6 +195,16 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
             )
         }
 
+        if (initial && component.lightData != null) {
+            entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
+                15 + PACKET_OFFSET,
+                EntityDataTypes.INT,
+                (component.lightData!!.blocklight shl 4) or (component.lightData!!.skylight shl 20)
+            )
+
+            component.lightData
+        }
+
         if (DEBUG >= 1) print(flags, component, initial)
 
         return entityData

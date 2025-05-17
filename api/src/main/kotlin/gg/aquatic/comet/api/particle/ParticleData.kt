@@ -31,6 +31,7 @@ data class ParticleData(
     var interpolationDelay: Int = 0,
     var transformationInterpolationDuration: Int = 2,
     var teleportationDuration: Int = 1,
+    var light: LightData? = null
 ) {
     val pos: Vector3d
         get() = Vector3d(origin).add(relativePosition)
@@ -98,3 +99,5 @@ data class ParticleData(
         }
     }
 }
+
+data class LightData(val skylight: Int, val blocklight: Int)

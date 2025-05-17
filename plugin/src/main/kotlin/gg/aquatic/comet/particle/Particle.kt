@@ -58,7 +58,8 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
             data.billboardConstraints,
             data.interpolationDelay,
             data.transformationInterpolationDuration,
-            data.teleportationDuration
+            data.teleportationDuration,
+            data.light
         )
     }
 
@@ -106,7 +107,8 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                 data.billboardConstraints,
                 data.interpolationDelay,
                 data.transformationInterpolationDuration,
-                data.teleportationDuration
+                data.teleportationDuration,
+                data.light
             ), UpdateFlags(
                 display = true,
                 transparency = true,
@@ -128,7 +130,6 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
         }
 
         if (data.emitter != null && data.emitter!!.unrealizedEmitter.isDoubleSided) {
-            val yawpitch = data.emitter?.yawpitchSupplier?.get() ?: YawPitch(0f, 0f)
             result += WrapperPlayServerSpawnEntity(
                 invertedIDs.first,
                 Optional.of(invertedIDs.second),
@@ -151,7 +152,8 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                     data.billboardConstraints,
                     data.interpolationDelay,
                     data.transformationInterpolationDuration,
-                    data.teleportationDuration
+                    data.teleportationDuration,
+                    data.light
                 ), UpdateFlags(
                     display = true,
                     transparency = true,
@@ -204,7 +206,8 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                     data.billboardConstraints,
                     data.interpolationDelay,
                     transformationInterpolationDuration,
-                    data.teleportationDuration
+                    data.teleportationDuration,
+                    data.light
                 )
 
             previousEntityData = newData.copy()
@@ -222,7 +225,8 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                     data.billboardConstraints,
                     data.interpolationDelay,
                     transformationInterpolationDuration,
-                    data.teleportationDuration
+                    data.teleportationDuration,
+                    data.light
                 )
 
                 entityDataBuilder.getDataFor(
@@ -256,7 +260,8 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                 data.billboardConstraints,
                 data.interpolationDelay,
                 data.transformationInterpolationDuration,
-                data.teleportationDuration
+                data.teleportationDuration,
+                data.light
             )
         } ?: let {
             var transparency = data.color ushr 24
@@ -302,7 +307,8 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                     data.rotation,
                     data.scale,
                     data.billboardConstraints, data.interpolationDelay,
-                    interpolationDuration, data.teleportationDuration
+                    interpolationDuration, data.teleportationDuration,
+                    data.light
                 )
 
             flags to newData

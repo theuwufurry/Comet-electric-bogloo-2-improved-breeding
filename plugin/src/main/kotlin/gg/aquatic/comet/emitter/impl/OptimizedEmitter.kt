@@ -221,6 +221,7 @@ class OptimizedEmitter(
                             nd.scale = nextDatum.vec.scale
                             nd.rotation = nextDatum.vec.rot
                             nd.translation = nextDatum.vec.translation
+                            nd.light = nextDatum.vec.lightData
                             nd.emitter = this
 
                             val prevDt = nextDatum.time - cp.time
@@ -332,6 +333,7 @@ class OptimizedEmitter(
             pd.color = pd.color or ((firstDisp.vec.alpha * 255.0).toInt() shl 24)
             pd.displayData = firstTex.displayData
             pd.emitter = this
+            pd.light = firstDisp.vec.lightData
 
             val packets = particle.getAddPacket(pd)
             bundle.addAll(packets)

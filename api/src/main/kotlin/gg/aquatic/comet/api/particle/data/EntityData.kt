@@ -1,5 +1,6 @@
 package gg.aquatic.comet.api.particle.data
 
+import gg.aquatic.comet.api.particle.LightData
 import gg.aquatic.comet.api.particle.display.DisplayData
 import org.joml.Quaternionf
 import org.joml.Vector3f
@@ -16,6 +17,7 @@ data class EntityData(
     val interpolationDelay: Int,
     val transformationInterpolationDuration: Int,
     val teleportationDuration: Int,
+    val lightData: LightData?,
 ) {
     fun copy(): EntityData {
         return EntityData(
@@ -30,6 +32,7 @@ data class EntityData(
             interpolationDelay,
             transformationInterpolationDuration,
             teleportationDuration,
+            lightData,
         )
     }
 }

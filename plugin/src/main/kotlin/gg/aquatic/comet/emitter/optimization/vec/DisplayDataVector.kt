@@ -1,5 +1,6 @@
 package gg.aquatic.comet.emitter.optimization.vec
 
+import gg.aquatic.comet.api.particle.LightData
 import gg.aquatic.comet.emitter.optimization.alpha
 import gg.aquatic.comet.particle.Particle
 import org.joml.Quaternionf
@@ -14,6 +15,7 @@ class DisplayDataVector private constructor(
     var rot: Quaternionf,
     var scale: Vector3f,
     var translation: Vector3f,
+    var lightData: LightData?,
     var time: Double,
     private val coefficients: DisplayDataVectorCoefficients,
 ) : Vec {
@@ -51,7 +53,7 @@ class DisplayDataVector private constructor(
         }
 
     override fun clone(): Vec {
-        return DisplayDataVector(alpha, Quaternionf(rot), Vector3f(scale), Vector3f(translation), time, coefficients)
+        return DisplayDataVector(alpha, Quaternionf(rot), Vector3f(scale), Vector3f(translation), lightData?.copy(), time, coefficients)
     }
 
     override fun lengthSquared(): Double {
@@ -118,11 +120,12 @@ class DisplayDataVector private constructor(
     }
 
     companion object {
-        fun create(
+        private fun create(
             alpha: Double,
             rot: Quaternionf,
             scale: Vector3f,
             translation: Vector3f,
+            light: LightData?,
             time: Double,
             coefficients: DisplayDataVectorCoefficients,
         ): DisplayDataVector {
@@ -131,6 +134,7 @@ class DisplayDataVector private constructor(
                 rot,
                 scale,
                 translation,
+                light,
                 time,
                 coefficients,
             )
@@ -145,6 +149,7 @@ class DisplayDataVector private constructor(
                 particle.data.rotation,
                 particle.data.scale,
                 particle.data.translation,
+                particle.data.light,
                 particle.data.age,
                 coefficients,
             )
