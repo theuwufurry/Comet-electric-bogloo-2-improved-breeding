@@ -224,6 +224,11 @@ data class UnrealizedEmitter(
         preInitComponents.forEach { it.init(emitterData, environmentData) }
         emitterData.variable.putAll(environmentData.data)
 
+        val optimized = checkOptimized(environmentData)
+        if (!optimized) {
+            return
+        }
+
         runtime.addEmitter(
             VirtualEmitter(
                 parent = parent,

@@ -66,8 +66,11 @@ class VirtualRuntime(
             t++
             val deadEmitters: MutableList<VirtualEmitter> = mutableListOf()
 
+//            println("catchupTime: $catchupTime")
+
             var remaining = false
             for (emitter in emitters) {
+//                println("ticking ${emitter.unrealizedEmitter.id}")
                 val r = emitter.tick()
                 if (!r.alive) {
                     deadEmitters += emitter
