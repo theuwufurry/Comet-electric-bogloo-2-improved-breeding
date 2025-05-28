@@ -132,7 +132,7 @@ class AttractorPositionComponent(
                     val length = delta.length()
                     if (length < 0.00001) continue
 
-                    val totalFactor = attractor.mass
+                    val totalFactor = factor * attractor.mass
                     attractor.radius?.let {
                         if (totalFactor >= length - it) {
                             onHit(
