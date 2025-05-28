@@ -14,7 +14,7 @@ optimize in between w/ douglas for everything else
 /**
  * @param considerColorTex Whether to consider color and textures in optimizations. False is faster.
  */
-class CachedPath(
+data class CachedPath(
     private val locTol: Double = 0.05,
     private val dispTol: Double = 0.05,
     private val colTol: Double = 32.0,

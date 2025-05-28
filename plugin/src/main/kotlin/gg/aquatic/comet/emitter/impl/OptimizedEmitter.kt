@@ -383,7 +383,7 @@ class OptimizedEmitter(
         unrealizedEmitter.internalRealize(
             parent,
             location,
-            environmentData,
+            environmentData.clone(),
             audience,
             random,
             uuid,

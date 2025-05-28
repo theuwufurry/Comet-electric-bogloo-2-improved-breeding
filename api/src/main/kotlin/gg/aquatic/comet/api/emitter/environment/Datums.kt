@@ -56,7 +56,7 @@ interface DatumParser<V> {
     fun parse(value: V): Datum<V>?
 }
 
-class DatumColor(
+data class DatumColor(
     override val value: Color
 ) : Datum<Color> {
     override fun clone(): DatumColor {
@@ -64,7 +64,7 @@ class DatumColor(
     }
 }
 
-class DatumStr(
+data class DatumStr(
     override val value: String
 ) : Datum<String> {
     override fun clone(): DatumStr {
@@ -72,7 +72,7 @@ class DatumStr(
     }
 }
 
-class DatumNum(
+data class DatumNum(
     override val value: Number
 ) : Datum<Number> {
     override fun clone(): DatumNum {
@@ -80,7 +80,7 @@ class DatumNum(
     }
 }
 
-class DatumBool(
+data class DatumBool(
     override val value: Boolean
 ) : Datum<Boolean> {
     override fun clone(): DatumBool {
@@ -88,7 +88,7 @@ class DatumBool(
     }
 }
 
-class DatumVector3d(
+data class DatumVector3d(
     override val value: Vector3d
 ) : Datum<Vector3d> {
     override fun clone(): Datum<Vector3d> {
@@ -96,7 +96,7 @@ class DatumVector3d(
     }
 }
 
-class DatumVector3f(
+data class DatumVector3f(
     override val value: Vector3f
 ) : Datum<Vector3f> {
     override fun clone(): Datum<Vector3f> {

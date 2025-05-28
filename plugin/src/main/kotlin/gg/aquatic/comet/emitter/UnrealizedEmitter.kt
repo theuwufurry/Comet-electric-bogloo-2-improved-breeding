@@ -119,7 +119,7 @@ data class UnrealizedEmitter(
     }
 
     private fun checkOptimized(data: EnvironmentData): Boolean {
-        return !(data.data["optimize"] != null && data.data["optimize"] == false)
+        return !(data.data["optimize"] != null && data.data["optimize"] is Boolean && data.data["optimize"] == false)
     }
 
     override fun realize(

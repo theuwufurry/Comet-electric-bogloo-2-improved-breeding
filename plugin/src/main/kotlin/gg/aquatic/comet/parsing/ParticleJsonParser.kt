@@ -326,7 +326,6 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
     }
 
     private fun ensureNecessaryComponents(components: MutableList<Component>) {
-        ConstantSpriteComponent
         if (components.none { it is ScaleComponent }) components += ScaleComponent.default()
         if (components.none { it is RotationComponent }) components += RotationComponent.default()
         if (components.none { it is PositionComponent }) components += PositionComponent.default()

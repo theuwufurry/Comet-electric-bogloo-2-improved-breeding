@@ -68,6 +68,10 @@ class VariableMutableMap(
         return backingMap.containsKey(key)
     }
 
+    override fun toString(): String {
+        return backingMap.toString()
+    }
+
     class VariableEntry(
         override val key: String,
         override val value: Datum<*>,

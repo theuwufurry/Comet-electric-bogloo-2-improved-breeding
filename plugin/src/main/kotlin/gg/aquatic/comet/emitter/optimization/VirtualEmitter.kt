@@ -39,7 +39,7 @@ class VirtualEmitter(
     backerLocation: Location,
     backerEmitterData: EmitterData,
     backerForwardVector: Vector3d,
-    backerEnvironmentData: EnvironmentData,
+    private val backerEnvironmentData: EnvironmentData,
     seed: Int,
     private val timeOffset: Int,
     override val mount: Mount?,
@@ -79,7 +79,8 @@ class VirtualEmitter(
     override val particles: MutableList<Particle> = mutableListOf()
     override val location: Location = backerLocation.clone()
     override val forwardVector: Vector3d = backerForwardVector
-    override val environmentData: EnvironmentData = backerEnvironmentData.clone()
+    override val environmentData: EnvironmentData
+        get() = EnvironmentData(backerEnvironmentData.size, emitterData.variable as VariableMutableMap)
     override var emitterRotation: Quaterniond = calculateEmitterRotation()
 
     fun calculateEmitterRotation(): Quaterniond {
@@ -427,7 +428,7 @@ class VirtualEmitter(
         (unrealizedEmitter as UnrealizedEmitter).virtualRealize(
             parent,
             location,
-            environmentData,
+            environmentData.clone(),
             random,
             runtime,
             uuid,

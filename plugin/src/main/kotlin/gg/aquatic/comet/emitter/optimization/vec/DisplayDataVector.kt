@@ -166,7 +166,7 @@ class DisplayDataVector private constructor(
     }
 }
 
-class DisplayDataVectorCoefficients(
+data class DisplayDataVectorCoefficients(
     val alpha: Double = 1.0,
     val rot: Float = 1f,
     val scale: Float = 1f,

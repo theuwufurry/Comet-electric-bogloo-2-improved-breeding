@@ -7,7 +7,7 @@ import gg.aquatic.comet.api.emitter.VariableMutableMap
 import gg.aquatic.comet.api.parsing.asNumberOrNull
 import java.awt.Color
 
-class EnvironmentData (
+data class EnvironmentData (
     val size: Double = 1.0,
     val data: VariableMutableMap = VariableMutableMap(mutableMapOf())
 ) {
