@@ -1,7 +1,6 @@
-package gg.aquatic.comet.parsing
+package gg.aquatic.comet.api
 
 import com.google.gson.JsonParser
-import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.type.EntityTypes
 import org.joml.Vector3d
 

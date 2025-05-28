@@ -1,7 +1,5 @@
-package gg.aquatic.comet.mount
+package gg.aquatic.comet.api
 
-import gg.aquatic.comet.api.Mount
-import gg.aquatic.comet.parsing.PassengerOffsets
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.type.EntityTypes
 import org.bukkit.entity.Entity
 import org.joml.Vector3d

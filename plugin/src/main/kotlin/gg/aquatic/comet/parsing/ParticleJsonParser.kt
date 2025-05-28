@@ -12,6 +12,7 @@ import gg.aquatic.comet.api.CometRegistry.registerRate
 import gg.aquatic.comet.api.CometRegistry.registerUpdate
 import gg.aquatic.comet.api.CometRegistry.updateFrequencyParsers
 import gg.aquatic.comet.api.Component
+import gg.aquatic.comet.api.PassengerOffsets
 import gg.aquatic.comet.api.PreInitComponent
 import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
