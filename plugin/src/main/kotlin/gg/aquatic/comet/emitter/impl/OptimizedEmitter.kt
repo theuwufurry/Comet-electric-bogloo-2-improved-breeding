@@ -33,6 +33,7 @@ import org.joml.Vector3d
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
+import kotlin.contracts.contract
 import kotlin.random.Random
 import kotlin.system.measureNanoTime
 
@@ -113,6 +114,8 @@ class OptimizedEmitter(
 //        println("O.${unrealizedEmitter.id}: TICK t:$time")
 
         if (killed.get()) return EmitterTickResult(false)
+
+        spawningProcessor.tick()
 
         time++
 
@@ -390,6 +393,92 @@ class OptimizedEmitter(
             null,
             yawpitchSupplier
         )
+    }
+
+    override fun getSpawnPackets(): List<PacketWrapper<*>> {
+        val packets = mutableListOf<PacketWrapper<*>>()
+        for (particle in particles) {
+            val locs = cachedEmitterPath.locations[particle.data.id] ?: continue
+            run u@{
+                var loc: Vector3d? = null
+                var data: ParticleData? = null
+                var teleportationDuration: Int? = null
+                locs.withIndex().firstOrNull { it.value.time >= particle.data.age.toInt() }
+                    ?.let { (i, cp) ->
+                        if (i == locs.size - 1) {
+                            return@u
+                        }
+
+                        val nextPos = locs.getOrNull(i + 1)
+                        if (nextPos != null) {
+                            loc = Vector3d(
+                                nextPos.vec.vec.x,
+                                nextPos.vec.vec.y,
+                                nextPos.vec.vec.z,
+                            )
+
+                            val nnextPos = locs.getOrNull(i + 2)
+                            if (nnextPos != null) {
+                                val dt = nnextPos.time - nextPos.time
+                                if (dt != nextPos.time - cp.time) {
+                                    teleportationDuration = dt + 1
+                                }
+                            }
+                        }
+                    }
+                val (color: Int?, dD: DisplayData?) =
+                    (cachedEmitterPath.coloredTextureData[particle.data.id]
+                        ?: return@u).firstOrNull { it.time >= particle.data.age.toInt() }
+                        ?.let { it.color to it.displayData } ?: (null to null)
+                val transformableData = cachedEmitterPath.transformableData[particle.data.id] ?: return@u
+
+                transformableData.withIndex().firstOrNull { it.value.time >= particle.data.age.toInt() }
+                    ?.let { (i, cp) ->
+                        val nextDatum = transformableData.getOrNull(i + 1)
+                        if (nextDatum != null) {
+                            val nd = ParticleData(particle.data.id)
+                            color?.let { nd.color = it }
+                            nd.color = nd.color or ((nextDatum.vec.alpha * 255.0).toInt() shl 24)
+                            dD?.let { nd.displayData = dD }
+                            nd.scale = nextDatum.vec.scale
+                            nd.rotation = nextDatum.vec.rot
+                            nd.translation = nextDatum.vec.translation
+                            nd.light = nextDatum.vec.lightData
+                            nd.emitter = this
+
+                            val prevDt = nextDatum.time - cp.time
+
+                            if (prevDt == 1 && nextDatum.vec.alpha * 255.0 <= 127.0 && cp.vec.alpha * 255.0 > 127.0) {
+                                nd.transformationInterpolationDuration = -2
+                            } else if (prevDt == 1 && cp.vec.alpha * 255.0 <= 127.0 && nextDatum.vec.alpha * 255.0 > 127.0) {
+                                nd.transformationInterpolationDuration = -2
+                            } else {
+                                nd.transformationInterpolationDuration = prevDt
+                            }
+
+                            if (teleportationDuration != null) {
+                                nd.teleportationDuration = teleportationDuration!!
+                            }
+
+                            if (DEBUG_DISPLAY_DATA >= 1) println("  | TRANSPARENCY: ${nextDatum.vec.alpha * 255.0}")
+
+                            data = nd
+                        }
+                    }
+
+                if (loc == null || data == null) {
+                    println("SOMETHING WENT WRONG!")
+                    return@u
+                }
+
+                data!!.relativePosition = Vector3d()
+                data!!.origin = loc!!
+
+                packets += particle.getAddPacket(data!!)
+            }
+        }
+
+        return packets
     }
 
     override val mount: Mount? = null

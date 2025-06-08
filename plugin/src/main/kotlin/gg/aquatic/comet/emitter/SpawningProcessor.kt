@@ -19,6 +19,41 @@ class SpawningProcessor(
     private val currentViewers = ConcurrentHashMap.newKeySet<Player>()
     private val deadParticles: MutableList<Particle> = mutableListOf()
 
+    private val removedViewers = HashSet<Player>()
+    private val addedViewers = HashSet<Player>()
+
+    fun tick() {
+        removedViewers.clear()
+        addedViewers.clear()
+
+        val chunkViewers = emitter.location.chunk.trackedByPlayers()
+
+        for (currentViewer in currentViewers) {
+            val distanceSquared = currentViewer.eyeLocation.distanceSquared(emitter.location)
+            if (!currentViewer.isOnline || distanceSquared > distanceCullingComponent.viewDistance || currentViewer !in chunkViewers || !emitter.audience.canBeApplied(
+                    currentViewer
+                )
+            ) {
+                removedViewers += currentViewer
+                continue
+            }
+        }
+
+        currentViewers -= removedViewers
+
+        for (chunkViewer in chunkViewers) {
+            val distanceSquared = chunkViewer.eyeLocation.distanceSquared(emitter.location)
+            if (distanceSquared < distanceCullingComponent.viewDistance && chunkViewer !in currentViewers && emitter.audience.canBeApplied(
+                    chunkViewer
+                )
+            ) {
+                addedViewers += chunkViewer
+            }
+        }
+
+        currentViewers += addedViewers
+    }
+
     fun process(dataPackets: MutableList<PacketWrapper<*>>): MutableList<Pair<Player, MutableList<Int>>> {
         val playerManager = PacketEvents.getAPI().playerManager
 
@@ -28,36 +63,30 @@ class SpawningProcessor(
         val particleIDs: MutableList<Int> by lazy {
             emitter.particles.flatMap { it.entityIDs }.toMutableList().also { it.addAll(rawDeadParticleIDs) }
         }
-        val chunkViewers = emitter.location.chunk.trackedByPlayers()
 
-        val playersToRemove = HashSet<Player>()
         for (currentViewer in currentViewers) {
-            if (currentViewer !in chunkViewers || !currentViewer.isOnline) {
-                playersToRemove += currentViewer
-            }
-        }
-
-        for (player in playersToRemove) {
-            currentViewers -= player
-        }
-
-        for (player in emitter.location.chunk.trackedByPlayers()) {
-            if (player in playersToRemove) continue
-            val distanceSquared = player.eyeLocation.distanceSquared(emitter.location)
-            if (currentViewers.contains(player)) {
-                if (distanceSquared > distanceCullingComponent.viewDistance || !emitter.audience.canBeApplied(player)) {
-                    deadParticleIDs += player to particleIDs
-                    currentViewers -= player
+            deadParticleIDs += currentViewer to rawDeadParticleIDs
+            for (packet in dataPackets) {
+                try {
+                    playerManager.sendPacketSilently(currentViewer, packet)
+                } catch (ignored: NullPointerException) {
                 }
             }
+        }
 
-            if (!emitter.audience.canBeApplied(player) || player !in currentViewers) continue
+        for (viewer in removedViewers) {
+            deadParticleIDs += viewer to particleIDs
+        }
 
-            if (distanceSquared <= distanceCullingComponent.viewDistance) {
-                deadParticleIDs += player to rawDeadParticleIDs
-                for (packet in dataPackets) {
+        if (emitter.unrealizedEmitter.persistent) {
+            val spawnPackets: List<PacketWrapper<*>> by lazy {
+                emitter.getSpawnPackets()
+            }
+
+            for (viewer in addedViewers) {
+                for (spawnPacket in spawnPackets) {
                     try {
-                        playerManager.sendPacketSilently(player, packet)
+                        viewer.toUser().sendPacketSilently(spawnPacket)
                     } catch (ignored: NullPointerException) {
                     }
                 }
@@ -86,20 +115,16 @@ class SpawningProcessor(
     }
 
     fun sendSpawns(bundle: MutableList<PacketWrapper<*>>) {
-        for (player in emitter.location.chunk.trackedByPlayers()) {
-            if (!emitter.audience.canBeApplied(player)) continue
-            val distanceSquared = player.eyeLocation.distanceSquared(emitter.location)
-            if (distanceSquared < distanceCullingComponent.viewDistance) {
-                currentViewers += player
-                for (packet in bundle) {
-                    try {
-                        player.toUser().sendPacketSilently(packet)
-                    } catch (ignored: NullPointerException) {
-                    }
+        for (player in currentViewers) {
+            for (packet in bundle) {
+                try {
+                    player.toUser().sendPacketSilently(packet)
+                } catch (ignored: NullPointerException) {
                 }
             }
         }
     }
+
     val players: List<Player>
         get() {
             val maxDistance = distanceCullingComponent.viewDistance

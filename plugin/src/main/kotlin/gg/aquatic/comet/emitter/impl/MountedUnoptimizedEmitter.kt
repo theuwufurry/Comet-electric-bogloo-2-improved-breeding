@@ -92,6 +92,8 @@ class MountedUnoptimizedEmitter(
             return EmitterTickResult(true)
         }
 
+        spawningProcessor.tick()
+
         parent?.pose?.let { setPose(it) }
         emitterRotation = calculateEmitterRotation()
         emitterComponents.forEach { it.execute(emitterData) }
@@ -231,6 +233,10 @@ class MountedUnoptimizedEmitter(
             mount,
             yawpitchSupplier
         )
+    }
+
+    override fun getSpawnPackets(): List<PacketWrapper<*>> {
+        return particles.flatMap { it.getAddPacket() }
     }
 
     override fun kill() {

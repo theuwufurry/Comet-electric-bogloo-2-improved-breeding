@@ -6,6 +6,7 @@ import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.api.emitter.random.DeterministicRandom
 import gg.aquatic.comet.api.particle.AbstractParticle
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.waves.util.audience.AquaticAudience
 import org.bukkit.Location
 import org.bukkit.entity.Player
@@ -48,6 +49,8 @@ abstract class AbstractEmitter : Parent {
     abstract val mount: Mount?
 
     abstract val yawpitchSupplier: Supplier<YawPitch>?
+
+    abstract fun getSpawnPackets(): List<PacketWrapper<*>>
 
     abstract fun realize(
         unrealizedEmitter: AbstractUnrealizedEmitter,

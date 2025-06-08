@@ -231,6 +231,12 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
             return@let if (primitive.isBoolean) primitive.asBoolean else true
         }
 
+        val persistent = let {
+            val elem = rootObject["persistent"] ?: return@let false
+            val primitive = if (elem.isJsonPrimitive) elem.asJsonPrimitive else return@let false
+            return@let if (primitive.isBoolean) primitive.asBoolean else false
+        }
+
         val isDoubleSided = let {
             val elem = rootObject["double_sided"] ?: return@let false
             val primitive = if (elem.isJsonPrimitive) elem.asJsonPrimitive else return@let false
@@ -321,7 +327,8 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
             forwardVector,
             isListed,
             isDoubleSided,
-            lookahead
+            lookahead,
+            persistent
         )
     }
 

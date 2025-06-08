@@ -19,6 +19,7 @@ import gg.aquatic.comet.emitter.optimization.vec.DisplayDataVector
 import gg.aquatic.comet.emitter.optimization.vec.DisplayDataVectorCoefficients
 import gg.aquatic.comet.emitter.optimization.vec.WrappedPos
 import gg.aquatic.comet.particle.Particle
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.waves.util.audience.AquaticAudience
 import org.bukkit.Location
 import org.bukkit.entity.Player
@@ -436,6 +437,10 @@ class VirtualEmitter(
             mount,
             yawpitchSupplier
         )
+    }
+
+    override fun getSpawnPackets(): List<PacketWrapper<*>> {
+        return emptyList()
     }
 }
 

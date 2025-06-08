@@ -18,6 +18,7 @@ import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComp
 import gg.aquatic.comet.particle.Particle
 import gg.aquatic.comet.particle.data.EntityDataBuilder
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity
 import gg.aquatic.waves.util.audience.AquaticAudience
 import org.bukkit.Color
 import org.bukkit.Location
@@ -91,6 +92,8 @@ class Emitter(
 //            println("${unrealizedEmitter.id} blocked!")
             return EmitterTickResult(true)
         }
+
+        spawningProcessor.tick()
 
         parent?.pose?.let {
             setPose(it)
@@ -236,6 +239,10 @@ class Emitter(
     }
 
     override val mount: Mount? = null
+
+    override fun getSpawnPackets(): List<PacketWrapper<*>> {
+        return particles.flatMap { it.getAddPacket() }
+    }
 
     override fun kill() {
         dead = true

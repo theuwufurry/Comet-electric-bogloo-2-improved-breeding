@@ -44,11 +44,10 @@ data class EmitterData(
 
         override fun containsValue(value: Any): Boolean = backer().containsValue(value)
 
-        override fun get(key: String): Any? = backer()[key] // or mapGetter().get(key)
+        override fun get(key: String): Any? = backer()[key]
 
         override fun isEmpty(): Boolean = backer().isEmpty()
 
-        // Entries, Keys, Values return the views/collections from the *current* map
         override val entries: MutableSet<MutableMap.MutableEntry<String, Any>>
             get() = backer().entries
 
@@ -66,20 +65,16 @@ data class EmitterData(
 
         override fun remove(key: String): Any? = backer().remove(key)
 
-        // You might also want to delegate equals, hashCode, and toString
         override fun equals(other: Any?): Boolean {
             if (other === this) return true
-            // Delegate equals comparison to the map currently being pointed to
             return backer() == other
         }
 
         override fun hashCode(): Int {
-            // Delegate hashCode to the map currently being pointed to
             return backer().hashCode()
         }
 
         override fun toString(): String {
-            // Delegate toString to the map currently being pointed to
             return backer().toString()
         }
     }

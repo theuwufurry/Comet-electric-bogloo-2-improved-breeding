@@ -27,6 +27,11 @@ abstract class AbstractUnrealizedEmitter {
     abstract val isDoubleSided: Boolean
     abstract val lookahead: Int
 
+    /**
+     * Whether the particle is spawned for incoming players
+     */
+    abstract val persistent: Boolean
+
     abstract fun realize(
         parent: Parent? = null,
         location: Location,
