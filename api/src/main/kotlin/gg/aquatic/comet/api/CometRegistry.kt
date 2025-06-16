@@ -6,6 +6,7 @@ import gg.aquatic.comet.api.emitter.YawPitch
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.api.emitter.parent.Parent
+import gg.aquatic.comet.api.emitter.parent.pose
 import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.parsing.AbstractParticleJsonParser
 import gg.aquatic.comet.api.parsing.BaseComponentParser
@@ -63,7 +64,7 @@ object CometRegistry {
         after: Consumer<AbstractEmitter> = Consumer {  },
     ): Boolean {
         (unrealizedEmitterByID(id) ?: return false).realize(
-            parent, location, environmentData, audience, mount, yawpitchSupplier, after
+            parent, location.pose(), environmentData, audience, mount, yawpitchSupplier, after
         )
 
         return true

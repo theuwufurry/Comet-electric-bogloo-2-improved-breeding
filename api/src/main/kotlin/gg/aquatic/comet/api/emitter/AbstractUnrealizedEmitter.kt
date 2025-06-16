@@ -5,6 +5,7 @@ import gg.aquatic.comet.api.Mount
 import gg.aquatic.comet.api.PreInitComponent
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.parent.Parent
+import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.api.emitter.random.DeterministicRandom
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
 import gg.aquatic.waves.util.audience.AquaticAudience
@@ -34,7 +35,7 @@ abstract class AbstractUnrealizedEmitter {
 
     abstract fun realize(
         parent: Parent? = null,
-        location: Location,
+        pose: Pose,
         environmentData: EnvironmentData = EnvironmentData(),
         mount: Mount? = null,
         yawpitchSupplier: Supplier<YawPitch>? = null,
@@ -43,7 +44,7 @@ abstract class AbstractUnrealizedEmitter {
 
     abstract fun realize(
         parent: Parent? = null,
-        location: Location,
+        pose: Pose,
         environmentData: EnvironmentData = EnvironmentData(),
         audience: AquaticAudience = GlobalAudience(),
         mount: Mount? = null,
@@ -53,7 +54,7 @@ abstract class AbstractUnrealizedEmitter {
 
     abstract fun internalRealize(
         parent: Parent? = null,
-        location: Location,
+        pose: Pose,
         environmentData: EnvironmentData = EnvironmentData(),
         audience: AquaticAudience,
         random: DeterministicRandom,

@@ -7,7 +7,6 @@ import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
-import gg.aquatic.comet.api.emitter.parent.pose
 import gg.aquatic.comet.api.emitter.random.DeterministicRandom
 import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.particle.ParticleComponent
@@ -18,14 +17,10 @@ import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComp
 import gg.aquatic.comet.particle.Particle
 import gg.aquatic.comet.particle.data.EntityDataBuilder
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity
 import gg.aquatic.waves.util.audience.AquaticAudience
 import org.bukkit.Color
-import org.bukkit.Location
 import org.bukkit.Particle.DustOptions
 import org.bukkit.entity.Player
-import org.bukkit.util.Vector
-import org.joml.Quaterniond
 import org.joml.Quaternionf
 import org.joml.Vector3d
 import java.util.*
@@ -40,7 +35,7 @@ class Emitter(
     distanceCullingComponent: DistanceCullingComponent,
     private val updateFrequencyComponent: UpdateFrequencyComponent,
     val billboardConstraints: BillboardConstraints,
-    location: Location,
+    override var pose: Pose,
     val emitterData: EmitterData,
     override val unrealizedEmitter: AbstractUnrealizedEmitter,
     override val forwardVector: Vector3d,
@@ -60,18 +55,10 @@ class Emitter(
 
     override val random: DeterministicRandom = DeterministicRandom(seed)
 
-    override var location = location
-        private set
-
     //origin can change, rotation can change
     override val particles: MutableList<Particle> = mutableListOf()
     private val spawningProcessor = SpawningProcessor(this, distanceCullingComponent)
     private val blocked = AtomicBoolean(false)
-    override var emitterRotation: Quaterniond = calculateEmitterRotation()
-
-    fun calculateEmitterRotation(): Quaterniond {
-        return Quaterniond().rotateTo(forwardVector, pose.dir)
-    }
 
     init {
         blocked.set(true)
@@ -96,9 +83,9 @@ class Emitter(
         spawningProcessor.tick()
 
         parent?.pose?.let {
-            setPose(it)
+            pose = it
         }
-        emitterRotation = calculateEmitterRotation()
+
         emitterComponents.forEach { it.execute(emitterData) }
 
         if (emitterData.dead || (parent != null && parent.dead)) {
@@ -173,7 +160,7 @@ class Emitter(
             val particle = Particle(particleData)
             particleData.emitter = this
             particleData.particle = particle
-            particleData.origin = location.toVector().toVector3d()
+            particleData.origin = pose.pos
             particleData.billboardConstraints = billboardConstraints
             particleData.interpolationDelay = updateFrequencyComponent.interpolationDelay
             particleData.transformationInterpolationDuration = updateFrequencyComponent.initialInterpolationDuration
@@ -199,28 +186,12 @@ class Emitter(
     override val players: List<Player>
         get() = spawningProcessor.players
 
-    override fun setPose(pose: Pose) {
-        location.x = pose.pos.x
-        location.y = pose.pos.y
-        location.z = pose.pos.z
-
-        location.direction = Vector(
-            pose.dir.x,
-            pose.dir.y,
-            pose.dir.z
-        )
-    }
-
-    override val pose: Pose
-        get() {
-            return location.pose()
-        }
 
     override val isPregen: Boolean = false
     override fun realize(
         unrealizedEmitter: AbstractUnrealizedEmitter,
         parent: Parent?,
-        location: Location,
+        pose: Pose,
         environmentData: EnvironmentData,
         audience: AquaticAudience,
         random: DeterministicRandom,
@@ -228,7 +199,7 @@ class Emitter(
     ) {
         unrealizedEmitter.internalRealize(
             parent,
-            location,
+            pose,
             environmentData,
             audience,
             random,
@@ -251,6 +222,6 @@ class Emitter(
     }
 
     override fun applyEmitterRotation(input: Quaternionf): Quaternionf {
-        return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(emitterRotation).mul(input) else input
+        return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(pose.rot.x, pose.rot.y, pose.rot.z, pose.rot.w).mul(input) else input
     }
 }

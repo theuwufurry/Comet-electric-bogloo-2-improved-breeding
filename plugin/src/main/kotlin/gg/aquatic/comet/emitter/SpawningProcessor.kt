@@ -26,10 +26,10 @@ class SpawningProcessor(
         removedViewers.clear()
         addedViewers.clear()
 
-        val chunkViewers = emitter.location.chunk.trackedByPlayers()
+        val chunkViewers = emitter.pose.location.chunk.trackedByPlayers()
 
         for (currentViewer in currentViewers) {
-            val distanceSquared = currentViewer.eyeLocation.distanceSquared(emitter.location)
+            val distanceSquared = currentViewer.eyeLocation.distanceSquared(emitter.pose.location)
             if (!currentViewer.isOnline || distanceSquared > distanceCullingComponent.viewDistance || currentViewer !in chunkViewers || !emitter.audience.canBeApplied(
                     currentViewer
                 )
@@ -42,7 +42,7 @@ class SpawningProcessor(
         currentViewers -= removedViewers
 
         for (chunkViewer in chunkViewers) {
-            val distanceSquared = chunkViewer.eyeLocation.distanceSquared(emitter.location)
+            val distanceSquared = chunkViewer.eyeLocation.distanceSquared(emitter.pose.location)
             if (distanceSquared < distanceCullingComponent.viewDistance && chunkViewer !in currentViewers && emitter.audience.canBeApplied(
                     chunkViewer
                 )
@@ -128,8 +128,8 @@ class SpawningProcessor(
     val players: List<Player>
         get() {
             val maxDistance = distanceCullingComponent.viewDistance
-            return emitter.location.chunk.trackedByPlayers()
+            return emitter.pose.location.chunk.trackedByPlayers()
                 .filter { emitter.audience.canBeApplied(it) }
-                .filter { it.eyeLocation.distanceSquared(emitter.location) < maxDistance }
+                .filter { it.eyeLocation.distanceSquared(emitter.pose.location) < maxDistance }
         }
 }

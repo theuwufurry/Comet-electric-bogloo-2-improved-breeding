@@ -7,6 +7,8 @@ import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.action.ActionContext
 import gg.aquatic.comet.api.emitter.action.SubAction
 import gg.aquatic.comet.api.emitter.parent.EmitterSpace
+import gg.aquatic.comet.api.emitter.parent.NORMAL
+import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.api.parsing.*
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.emitter.UnrealizedEmitter
@@ -62,20 +64,20 @@ class SpawnEmitterSubAction(
         }
 
         if (rot != null) {
-            pose.dir.rotate(Quaterniond().rotateXYZ(rot.x, rot.y, rot.z))
-        }
-
-        if (invert) {
-            pose.dir.mul(-1.0)
+            pose.rot.mul(Quaterniond().rotateXYZ(rot.x, rot.y, rot.z))
         }
 
         for (unrealizedEmitter in unrealizedEmitters) {
-            val location = Location(
-                context.otherEmitterData.world,
-                pose.pos.x + pose.dir.x * context.otherEmitterData.emitter!!.random.kotlinRandom.nextDouble() * magnitude,
-                pose.pos.y + pose.dir.y * context.otherEmitterData.emitter!!.random.kotlinRandom.nextDouble() * magnitude,
-                pose.pos.z + pose.dir.z * context.otherEmitterData.emitter!!.random.kotlinRandom.nextDouble() * magnitude
-            ).apply { direction = Vector(pose.dir.x, pose.dir.y, pose.dir.z) }
+            val rotatedNormal = NORMAL.rotate(pose.rot)
+            val subPose = Pose(
+                pose.world,
+                Vector3d(
+                pose.pos.x + rotatedNormal.x * context.otherEmitterData.emitter!!.random.kotlinRandom.nextDouble() * magnitude,
+                pose.pos.y + rotatedNormal.y * context.otherEmitterData.emitter!!.random.kotlinRandom.nextDouble() * magnitude,
+                pose.pos.z + rotatedNormal.z * context.otherEmitterData.emitter!!.random.kotlinRandom.nextDouble() * magnitude,
+                ),
+                pose.rot
+            )
 
             val uuid = context.otherEmitterData.emitter!!.random.uuid()
 
@@ -95,7 +97,7 @@ class SpawnEmitterSubAction(
                             em.realize(
                                 unrealizedEmitter,
                                 pd,
-                                location,
+                                subPose,
                                 em.environmentData,
                                 em.audience,
                                 em.random,
@@ -110,7 +112,7 @@ class SpawnEmitterSubAction(
                             em.realize(
                                 unrealizedEmitter,
                                 if (space != EmitterSpace.WORLD) em else null,
-                                location,
+                                subPose,
                                 em.environmentData,
                                 em.audience,
                                 em.random,
@@ -124,7 +126,7 @@ class SpawnEmitterSubAction(
             context.otherEmitterData.emitter!!.realize(
                 unrealizedEmitter,
                 parent,
-                location,
+                subPose,
                 context.otherEmitterData.emitter!!.environmentData,
                 context.otherEmitterData.emitter!!.audience,
                 context.otherEmitterData.emitter!!.random,

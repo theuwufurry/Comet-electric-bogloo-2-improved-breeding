@@ -11,6 +11,7 @@ import gg.aquatic.comet.api.emitter.YawPitch
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.api.emitter.parent.Parent
+import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.api.emitter.random.DeterministicRandom
 import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
@@ -59,7 +60,7 @@ data class UnrealizedEmitter(
 ) : AbstractUnrealizedEmitter() {
     override fun realize(
         parent: Parent?,
-        location: Location,
+        pose: Pose,
         environmentData: EnvironmentData,
         audience: AquaticAudience,
         mount: Mount?,
@@ -68,8 +69,8 @@ data class UnrealizedEmitter(
     ) {
         val initialization = {
             val emitterData = EmitterData(UUID.randomUUID())
-            emitterData.world = location.world
-            emitterData.location = location
+            emitterData.world = pose.world
+            emitterData.location = pose.location
             preInitComponents.forEach { it.init(emitterData, environmentData) }
             emitterData.variable.putAll(environmentData.data)
 
@@ -84,7 +85,7 @@ data class UnrealizedEmitter(
                     distanceCullingComponent,
                     updateFrequencyComponent,
                     billboardConstraints,
-                    location,
+                    pose,
                     emitterData,
                     this,
                     forwardVector,
@@ -99,14 +100,14 @@ data class UnrealizedEmitter(
                     components,
                     rateComponent,
                     distanceCullingComponent,
-                    billboardConstraints, location, emitterData, this, forwardVector, environmentData, audience, false, yawpitchSupplier = yawpitchSupplier
+                    billboardConstraints, pose, emitterData, this, forwardVector, environmentData, audience, false, yawpitchSupplier = yawpitchSupplier
                 ) else Emitter(
                     parent,
                     components,
                     rateComponent,
                     distanceCullingComponent,
                     updateFrequencyComponent,
-                    billboardConstraints, location, emitterData, this, forwardVector, environmentData, audience, yawpitchSupplier = yawpitchSupplier
+                    billboardConstraints, pose, emitterData, this, forwardVector, environmentData, audience, yawpitchSupplier = yawpitchSupplier
                 )
 
             }
@@ -125,18 +126,19 @@ data class UnrealizedEmitter(
 
     override fun realize(
         parent: Parent?,
-        location: Location,
+        pose: Pose,
         environmentData: EnvironmentData,
         mount: Mount?,
         yawpitchSupplier: Supplier<YawPitch>?,
         after: Consumer<AbstractEmitter>,
     ) {
-        realize(parent, location, environmentData, GlobalAudience(), mount, yawpitchSupplier, after)
+        println("a pose: $pose")
+        realize(parent, pose, environmentData, GlobalAudience(), mount, yawpitchSupplier, after)
     }
 
     override fun internalRealize(
         parent: Parent?,
-        location: Location,
+        pose: Pose,
         environmentData: EnvironmentData,
         audience: AquaticAudience,
         random: DeterministicRandom,
@@ -145,8 +147,8 @@ data class UnrealizedEmitter(
         yawpitchSupplier: Supplier<YawPitch>?
     ): AbstractEmitter {
         val emitterData = EmitterData(uuid)
-        emitterData.world = location.world
-        emitterData.location = location
+        emitterData.world = pose.world
+        emitterData.location = pose.location
         preInitComponents.forEach { it.init(emitterData, environmentData) }
         emitterData.variable.putAll(environmentData.data)
 
@@ -161,7 +163,7 @@ data class UnrealizedEmitter(
                 distanceCullingComponent,
                 updateFrequencyComponent,
                 billboardConstraints,
-                location,
+                pose,
                 emitterData,
                 this,
                 forwardVector,
@@ -177,7 +179,7 @@ data class UnrealizedEmitter(
             rateComponent,
             distanceCullingComponent,
             billboardConstraints,
-            location,
+            pose,
             emitterData,
             this,
             forwardVector,
@@ -193,7 +195,7 @@ data class UnrealizedEmitter(
             distanceCullingComponent,
             updateFrequencyComponent,
             billboardConstraints,
-            location,
+            pose,
             emitterData,
             this,
             forwardVector,
@@ -210,7 +212,7 @@ data class UnrealizedEmitter(
 
     fun virtualRealize(
         parent: Parent?,
-        location: Location,
+        pose: Pose,
         environmentData: EnvironmentData,
         random: DeterministicRandom,
         runtime: VirtualRuntime,
@@ -220,8 +222,8 @@ data class UnrealizedEmitter(
         yawpitchSupplier: Supplier<YawPitch>?,
     ) {
         val emitterData = EmitterData(uuid)
-        emitterData.world = location.world
-        emitterData.location = location
+        emitterData.world = pose.world
+        emitterData.location = pose.location
         preInitComponents.forEach { it.init(emitterData, environmentData) }
         emitterData.variable.putAll(environmentData.data)
 
@@ -238,7 +240,7 @@ data class UnrealizedEmitter(
                 rateComponent = rateComponent,
                 components = components,
                 billboardConstraints = billboardConstraints,
-                backerLocation = location,
+                backerPose = pose,
                 backerEmitterData = emitterData,
                 backerForwardVector = forwardVector,
                 backerEnvironmentData = environmentData,

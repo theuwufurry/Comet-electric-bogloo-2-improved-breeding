@@ -43,7 +43,7 @@ class OptimizedEmitter(
     val rateComponent: RateComponent,
     distanceCullingComponent: DistanceCullingComponent,
     val billboardConstraints: BillboardConstraints,
-    location: Location,
+    override var pose: Pose,
     val emitterData: EmitterData,
     override val unrealizedEmitter: AbstractUnrealizedEmitter,
     override val forwardVector: Vector3d,
@@ -55,24 +55,19 @@ class OptimizedEmitter(
 ) : AbstractEmitter() {
     override val id: UUID = emitterData.id
     override val random: DeterministicRandom = DeterministicRandom(seed)
-    override var location = location
-        private set
 
     //origin can change, rotation can change
     override val particles: MutableList<Particle> = mutableListOf()
     private val spawningProcessor = SpawningProcessor(this, distanceCullingComponent)
     private val blocked = AtomicBoolean(false)
     private val killed = AtomicBoolean(false)
-    override var emitterRotation: Quaterniond = calculateEmitterRotation()
-
-    fun calculateEmitterRotation(): Quaterniond {
-        return Quaterniond().rotateTo(forwardVector, pose.dir)
-    }
 
     private val cachedEmitterPath: CachedPath
     private val runtime: VirtualRuntime?
 
     init {
+        println("b pose: $pose")
+
         blocked.set(true)
         emitterData.emitter = this
 
@@ -356,28 +351,12 @@ class OptimizedEmitter(
     override val players: List<Player>
         get() = spawningProcessor.players
 
-    override fun setPose(pose: Pose) {
-        location.x = pose.pos.x
-        location.y = pose.pos.y
-        location.z = pose.pos.z
-
-        location.direction = Vector(
-            pose.dir.x,
-            pose.dir.y,
-            pose.dir.z
-        )
-    }
-
-    override val pose: Pose
-        get() {
-            return location.pose()
-        }
-
     override val isPregen: Boolean = false
+
     override fun realize(
         unrealizedEmitter: AbstractUnrealizedEmitter,
         parent: Parent?,
-        location: Location,
+        pose: Pose,
         environmentData: EnvironmentData,
         audience: AquaticAudience,
         random: DeterministicRandom,
@@ -385,7 +364,7 @@ class OptimizedEmitter(
     ) {
         unrealizedEmitter.internalRealize(
             parent,
-            location,
+            pose,
             environmentData.clone(),
             audience,
             random,
@@ -492,7 +471,7 @@ class OptimizedEmitter(
     }
 
     override fun applyEmitterRotation(input: Quaternionf): Quaternionf {
-        return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(emitterRotation).mul(input) else input
+        return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(pose.rot.x, pose.rot.y, pose.rot.z, pose.rot.w).mul(input) else input
     }
 
     companion object {

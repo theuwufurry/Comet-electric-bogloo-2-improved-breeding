@@ -31,6 +31,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
 import kotlin.random.Random
 
+/**
+ * TODO: Handle restrictions for mounted emitters and share remaining logic between this and regular emitters
+ */
 class MountedUnoptimizedEmitter(
     val parent: Parent? = null,
     val components: List<Component>,
@@ -38,7 +41,7 @@ class MountedUnoptimizedEmitter(
     distanceCullingComponent: DistanceCullingComponent,
     private val updateFrequencyComponent: UpdateFrequencyComponent,
     val billboardConstraints: BillboardConstraints,
-    location: Location,
+    override var pose: Pose,
     val emitterData: EmitterData,
     override val unrealizedEmitter: AbstractUnrealizedEmitter,
     override val forwardVector: Vector3d,
@@ -59,18 +62,10 @@ class MountedUnoptimizedEmitter(
 
     override val random: DeterministicRandom = DeterministicRandom(seed)
 
-    override var location = location
-        private set
-
     //origin can change, rotation can change
     override val particles: MutableList<Particle> = mutableListOf()
     private val spawningProcessor = SpawningProcessor(this, distanceCullingComponent)
     private val blocked = AtomicBoolean(false)
-    override var emitterRotation: Quaterniond = calculateEmitterRotation()
-
-    fun calculateEmitterRotation(): Quaterniond {
-        return Quaterniond().rotateTo(forwardVector, pose.dir)
-    }
 
     init {
         blocked.set(true)
@@ -94,8 +89,7 @@ class MountedUnoptimizedEmitter(
 
         spawningProcessor.tick()
 
-        parent?.pose?.let { setPose(it) }
-        emitterRotation = calculateEmitterRotation()
+        parent?.pose?.let { pose = it }
         emitterComponents.forEach { it.execute(emitterData) }
 
         if (emitterData.dead || (parent != null && parent.dead)) {
@@ -170,7 +164,7 @@ class MountedUnoptimizedEmitter(
             val particle = Particle(particleData)
             particleData.emitter = this
             particleData.particle = particle
-            particleData.origin = location.toVector().toVector3d()
+            particleData.origin = pose.pos
             particleData.billboardConstraints = billboardConstraints
             particleData.interpolationDelay = updateFrequencyComponent.interpolationDelay
             particleData.transformationInterpolationDuration = updateFrequencyComponent.initialInterpolationDuration
@@ -196,28 +190,12 @@ class MountedUnoptimizedEmitter(
     override val players: List<Player>
         get() = spawningProcessor.players
 
-    override fun setPose(pose: Pose) {
-        location.x = pose.pos.x
-        location.y = pose.pos.y
-        location.z = pose.pos.z
-
-        location.direction = Vector(
-            pose.dir.x,
-            pose.dir.y,
-            pose.dir.z
-        )
-    }
-
-    override val pose: Pose
-        get() {
-            return location.pose()
-        }
-
     override val isPregen: Boolean = false
+
     override fun realize(
         unrealizedEmitter: AbstractUnrealizedEmitter,
         parent: Parent?,
-        location: Location,
+        pose: Pose,
         environmentData: EnvironmentData,
         audience: AquaticAudience,
         random: DeterministicRandom,
@@ -225,7 +203,7 @@ class MountedUnoptimizedEmitter(
     ) {
         unrealizedEmitter.internalRealize(
             parent,
-            location,
+            pose,
             environmentData,
             audience,
             random,
@@ -246,6 +224,6 @@ class MountedUnoptimizedEmitter(
     }
 
     override fun applyEmitterRotation(input: Quaternionf): Quaternionf {
-        return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(emitterRotation).mul(input) else input
+        return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(pose.rot.x, pose.rot.y, pose.rot.z, pose.rot.w).mul(input) else input
     }
 }

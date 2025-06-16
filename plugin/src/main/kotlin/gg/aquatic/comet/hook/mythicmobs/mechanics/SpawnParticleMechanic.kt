@@ -1,6 +1,7 @@
 package gg.aquatic.comet.hook.mythicmobs.mechanics
 
 import gg.aquatic.comet.ParticleEmitter
+import gg.aquatic.comet.api.emitter.parent.pose
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.waves.util.audience.FilterAudience
 import io.lumine.mythic.api.adapters.AbstractLocation
@@ -29,7 +30,7 @@ class SpawnParticleMechanic(
         val emitter = ParticleJsonParser.jsonUnrealizedEmitters[emitterId.get()]
         emitter?.realize(
             parent = null,
-            location = location,
+            pose = location.pose(),
             audience = aquaticAudience
         ) {}
 

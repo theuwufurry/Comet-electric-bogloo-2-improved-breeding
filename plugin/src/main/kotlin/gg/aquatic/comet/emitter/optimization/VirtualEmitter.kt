@@ -37,7 +37,7 @@ class VirtualEmitter(
     val rateComponent: RateComponent,
     components: List<Component>,
     val billboardConstraints: BillboardConstraints,
-    backerLocation: Location,
+    backerPose: Pose,
     backerEmitterData: EmitterData,
     backerForwardVector: Vector3d,
     private val backerEnvironmentData: EnvironmentData,
@@ -53,7 +53,7 @@ class VirtualEmitter(
         rateComponent = backer.rateComponent,
         components = backer.components,
         billboardConstraints = backer.billboardConstraints,
-        backerLocation = backer.location.clone(),
+        backerPose = backer.pose,
         backerEmitterData = backer.emitterData.clone(),
         backerForwardVector = Vector3d(backer.forwardVector),
         backerEnvironmentData = backer.environmentData.clone(),
@@ -78,15 +78,10 @@ class VirtualEmitter(
         private set
 
     override val particles: MutableList<Particle> = mutableListOf()
-    override val location: Location = backerLocation.clone()
+    override var pose: Pose = backerPose.clone()
     override val forwardVector: Vector3d = backerForwardVector
     override val environmentData: EnvironmentData
         get() = EnvironmentData(backerEnvironmentData.size, emitterData.variable as VariableMutableMap)
-    override var emitterRotation: Quaterniond = calculateEmitterRotation()
-
-    fun calculateEmitterRotation(): Quaterniond {
-        return Quaterniond().rotateTo(forwardVector, pose.dir)
-    }
 
     private val deadParticles: MutableList<Particle> = mutableListOf()
 
@@ -117,11 +112,6 @@ class VirtualEmitter(
         }
 
     }
-
-    override val pose: Pose
-        get() {
-            return location.pose()
-        }
 
     override val isPregen: Boolean = true
     private var time = 0
@@ -178,18 +168,15 @@ class VirtualEmitter(
                     val matchingLoc = locs.firstOrNull { it.absoluteTime == absoluteTime }
 //                    println("V.${unrealizedEmitter.id}, MATCHING PARENT LOC")
                     if (matchingLoc != null) {
-                        setPose(
-                            Pose(
-                                matchingLoc.vec.vec,
-                                Vector3d(),
-                            )
+                        pose = Pose(
+                            pose.world,
+                            matchingLoc.vec.vec,
+                            Quaterniond()
                         )
                     }
                 }
             }
         }
-
-        emitterRotation = calculateEmitterRotation()
 
         emitterActionsBuffer = mutableListOf()
 
@@ -349,7 +336,7 @@ class VirtualEmitter(
             val particle = Particle(particleData)
             particleData.emitter = this
             particleData.particle = particle
-            particleData.origin = location.toVector().toVector3d()
+            particleData.origin = pose.pos
             particleData.billboardConstraints = billboardConstraints
 
             particleComponents.forEach { it.execute(emitterData, particleData) }
@@ -395,18 +382,6 @@ class VirtualEmitter(
 
     override val players: List<Player> = emptyList()
 
-    override fun setPose(pose: Pose) {
-        location.x = pose.pos.x
-        location.y = pose.pos.y
-        location.z = pose.pos.z
-
-        location.direction = Vector(
-            pose.dir.x,
-            pose.dir.y,
-            pose.dir.z
-        )
-    }
-
     override fun kill() {
         savedEmitterData.clear()
         dead = true
@@ -414,13 +389,13 @@ class VirtualEmitter(
     }
 
     override fun applyEmitterRotation(input: Quaternionf): Quaternionf {
-        return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(emitterRotation).mul(input) else input
+        return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(pose.rot.x, pose.rot.y, pose.rot.z, pose.rot.w).mul(input) else input
     }
 
     override fun realize(
         unrealizedEmitter: AbstractUnrealizedEmitter,
         parent: Parent?,
-        location: Location,
+        pose: Pose,
         environmentData: EnvironmentData,
         audience: AquaticAudience,
         random: DeterministicRandom,
@@ -428,7 +403,7 @@ class VirtualEmitter(
     ) {
         (unrealizedEmitter as UnrealizedEmitter).virtualRealize(
             parent,
-            location,
+            pose,
             environmentData.clone(),
             random,
             runtime,

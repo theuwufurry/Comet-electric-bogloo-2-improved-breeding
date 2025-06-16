@@ -5,6 +5,7 @@ import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.action.ActionContext
 import gg.aquatic.comet.api.emitter.parent.Pose
+import gg.aquatic.comet.api.emitter.parent.noRollQuaternion
 import gg.aquatic.comet.api.parsing.BaseComponentParser
 import gg.aquatic.comet.api.parsing.PostInit
 import gg.aquatic.comet.api.parsing.compile
@@ -71,7 +72,7 @@ class MotionPositionComponent(
                 initialVelocityComponent?.dir(
                     otherEmitterData,
                     otherParticleData
-                )?.mul(otherEmitterData.emitter!!.environmentData.size)?.rotate(myEmitterData.emitter!!.emitterRotation)
+                )?.mul(otherEmitterData.emitter!!.environmentData.size)?.rotate(myEmitterData.emitter!!.pose.rot)
                     ?: Vector3d()
             )
             return
@@ -108,8 +109,9 @@ class MotionPositionComponent(
                         otherEmitterData,
                         otherParticleData,
                         Pose(
+                            otherParticleData.emitter!!.pose.world,
                             Vector3d(newPos).add(otherParticleData.origin),
-                            correction.direction
+                            correction.direction.noRollQuaternion(),
                         )
                     )
                 )

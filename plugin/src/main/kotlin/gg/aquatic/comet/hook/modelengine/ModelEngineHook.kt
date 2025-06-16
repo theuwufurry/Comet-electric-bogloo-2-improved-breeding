@@ -3,6 +3,7 @@ package gg.aquatic.comet.hook.modelengine
 import com.ticxo.modelengine.api.ModelEngineAPI
 import com.ticxo.modelengine.api.animation.property.IAnimationProperty
 import com.ticxo.modelengine.api.animation.script.ScriptReader
+import gg.aquatic.comet.api.emitter.parent.pose
 import gg.aquatic.comet.hook.IHook
 import gg.aquatic.comet.parsing.ParticleJsonParser
 
@@ -32,7 +33,7 @@ object ModelEngineHook : IHook {
             val emitter = ParticleJsonParser.jsonUnrealizedEmitters[emitterId] ?: return
 
             property.model.getBone(bone).ifPresent { modelBone ->
-                emitter.realize(null, modelBone.location) {}
+                emitter.realize(null, modelBone.location.pose()) {}
             }
         }
     }

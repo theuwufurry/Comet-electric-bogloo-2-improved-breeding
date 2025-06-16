@@ -29,8 +29,8 @@ class SoundSubAction(
             val pitch = (pitchExpr.eval() as Number).toFloat()
 
             virtual.emitterActionsBuffer += { em ->
-                em.location.world!!.playSound(
-                    em.location,
+                em.pose.location.world!!.playSound(
+                    em.pose.location,
                     soundID,
                     volume, pitch
                 )

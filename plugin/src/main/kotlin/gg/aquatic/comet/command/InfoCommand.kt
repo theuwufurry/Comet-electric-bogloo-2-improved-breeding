@@ -47,7 +47,7 @@ object InfoCommand : ICommand {
         if (verbose) {
             strBuilder.append("type <-> id\n")
             for (emitter in emitters) {
-                strBuilder.append(" - ${emitter.unrealizedEmitter.id} : ${emitter.location.x.roundToInt()}, ${emitter.location.y.roundToInt()}, ${emitter.location.z.roundToInt()} : ${emitter.id} \n")
+                strBuilder.append(" - ${emitter.unrealizedEmitter.id} : ${emitter.pose.location.x.roundToInt()}, ${emitter.pose.location.y.roundToInt()}, ${emitter.pose.location.z.roundToInt()} : ${emitter.id} \n")
             }
         }
 

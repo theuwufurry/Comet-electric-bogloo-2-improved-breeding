@@ -23,6 +23,7 @@ import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.Wr
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetPassengers
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity
+import org.joml.Quaterniond
 import org.joml.Quaternionf
 import java.util.*
 
@@ -325,12 +326,12 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
 
     private fun Quaternionf.flipped(): Quaternionf {
         if (data.emitter == null) return this
-        val inverse = Quaternionf(data.emitter!!.emitterRotation).invert()
+        val inverse = Quaternionf(data.emitter!!.pose.rot).invert()
         val newThis = Quaternionf(inverse)
             .mul(this)
             .rotateLocalY(Math.PI.toFloat())
 
-        return Quaternionf(data.emitter!!.emitterRotation).mul(newThis)
+        return Quaternionf(data.emitter!!.pose.rot).mul(newThis)
     }
 
     override fun getMovementPacket(): WrapperPlayServerEntityTeleport {
@@ -349,12 +350,13 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
     override val pose: Pose
         get() {
             return Pose(
+                data.emitter!!.pose.world,
                 org.joml.Vector3d(
                     data.origin.x + data.relativePosition.x,
                     data.origin.y + data.relativePosition.y,
                     data.origin.z + data.relativePosition.z
                 ),
-                org.joml.Vector3d()
+                Quaterniond()
             )
         }
 

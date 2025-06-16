@@ -22,17 +22,14 @@ abstract class AbstractEmitter : Parent {
 
     abstract val unrealizedEmitter: AbstractUnrealizedEmitter
 
-    abstract val location: Location
     abstract val forwardVector: Vector3d
     abstract val environmentData: EnvironmentData
-
-    abstract var emitterRotation: Quaterniond
 
     abstract fun tick(): EmitterTickResult
 
     abstract val players: List<Player>
 
-    abstract fun setPose(pose: Pose)
+    abstract override var pose: Pose
 
     abstract fun kill()
 
@@ -55,7 +52,7 @@ abstract class AbstractEmitter : Parent {
     abstract fun realize(
         unrealizedEmitter: AbstractUnrealizedEmitter,
         parent: Parent? = null,
-        location: Location,
+        pose: Pose,
         environmentData: EnvironmentData = EnvironmentData(),
         audience: AquaticAudience,
         random: DeterministicRandom,
