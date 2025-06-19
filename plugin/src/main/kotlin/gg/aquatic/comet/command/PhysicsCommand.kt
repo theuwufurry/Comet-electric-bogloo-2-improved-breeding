@@ -10,7 +10,8 @@ import org.bukkit.Particle
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitTask
-import org.joml.*
+import org.joml.Quaterniond
+import org.joml.Vector3d
 import kotlin.math.roundToInt
 
 object PhysicsCommand : ICommand {
@@ -60,22 +61,10 @@ object PhysicsCommand : ICommand {
             omega = Vector3d(l),
         )
 
-        val qrb2 = CubeQuat2Method(
-            pos = Vector3d(origin),
-            v = Vector3d(v0),
-            width = dims.x,
-            height = dims.y,
-            length = dims.z,
-            q = Quaterniond(),
-            omega = Vector3d(l),
-        )
-
-
         task?.cancel()
 
         task = Bukkit.getScheduler().runTaskTimer(AbstractParticleEmitter.INSTANCE, Runnable {
-            repeat ((0.05 / TIME_STEP).roundToInt()) { qrb.step() }
-            repeat ((0.05 / TIME_STEP).roundToInt()) { qrb2.step() }
+            repeat((0.05 / TIME_STEP).roundToInt()) { qrb.step() }
 
             val transformedVerticesQ = qrb.vertices.map(qrb::transformedVertex)
             val edgesQ = CubeQuatMethod.edges(transformedVerticesQ)
@@ -105,39 +94,6 @@ object PhysicsCommand : ICommand {
                             qrb.pos.z + start.z + delta.z * t,
                         ),
                         5, Particle.DustOptions(Color.BLUE, 0.2f)
-                    )
-                    t += 0.1
-                }
-            }
-
-            val transformedVerticesQ2 = qrb2.vertices.map(qrb2::transformedVertex)
-            val edgesQ2 = CubeQuat2Method.edges(transformedVerticesQ2)
-
-            for (vertex in transformedVerticesQ2) {
-                world.spawnParticle(
-                    Particle.REDSTONE, Location(
-                        world,
-                        qrb2.pos.x + vertex.x,
-                        qrb2.pos.y + vertex.y,
-                        qrb2.pos.z + vertex.z,
-                    ),
-                    5, Particle.DustOptions(Color.YELLOW, 0.3f)
-                )
-            }
-
-            for ((start, end) in edgesQ2) {
-                val d = end.distance(start)
-                val delta = Vector3d(end).sub(start).normalize()
-                var t = 0.0
-                while (t < d) {
-                    world.spawnParticle(
-                        Particle.REDSTONE, Location(
-                            world,
-                            qrb2.pos.x + start.x + delta.x * t,
-                            qrb2.pos.y + start.y + delta.y * t,
-                            qrb2.pos.z + start.z + delta.z * t,
-                        ),
-                        5, Particle.DustOptions(Color.PURPLE, 0.2f)
                     )
                     t += 0.1
                 }
@@ -236,7 +192,7 @@ class CubeQuatMethod(
             .add(Quaterniond(dK2Q).scale(2.0))
             .add(Quaterniond(dK3Q).scale(2.0))
             .add(dK4Q)
-            .scale(TIME_STEP / 6.0)
+            .mul(TIME_STEP / 6.0)
 
         println("dq: ${fDQ.lengthSquared()} : 1")
 
@@ -285,92 +241,5 @@ class CubeQuatMethod(
         }
 
         const val TIME_STEP = 0.05
-    }
-}
-
-class CubeQuat2Method(
-    var pos: Vector3d,
-    var v: Vector3d,
-
-    val q: Quaterniond,
-
-    val omega: Vector3d,
-
-    val width: Double,
-    val height: Double,
-    val length: Double,
-) {
-    /**
-     * Local space
-     */
-    val vertices: List<Vector3d> = listOf(
-        Vector3d(-width / 2, -height / 2, -length / 2),
-        Vector3d(-width / 2, -height / 2, length / 2),
-        Vector3d(width / 2, -height / 2, length / 2),
-        Vector3d(width / 2, -height / 2, -length / 2),
-
-        Vector3d(-width / 2, height / 2, -length / 2),
-        Vector3d(-width / 2, height / 2, length / 2),
-        Vector3d(width / 2, height / 2, length / 2),
-        Vector3d(width / 2, height / 2, -length / 2),
-    )
-
-    fun transformedVertex(vertex: Vector3d): Vector3d {
-        return Vector3d(vertex).rotate(q)
-    }
-
-    val volume = width * height * length
-
-    val inertia: Vector3d = Vector3d(
-        height * height + length * length,
-        width * width + length * length,
-        width * width + height * height,
-    ).mul(volume / 12.0)
-
-    private var i = 0
-
-    fun step() {
-//        println("2: ${i++}: omega n: ${omega.length()}")
-//
-        pos.add(Vector3d(v).mul(TIME_STEP))
-
-        val dO = Vector3d(
-            (inertia.y - inertia.z) / inertia.x * omega.y * omega.z,/* + T.x/inertia.x*/
-            (inertia.z - inertia.x) / inertia.y * omega.z * omega.x,/* + T.y/inertia.y*/
-            (inertia.x - inertia.y) / inertia.z * omega.x * omega.y,/* + T.z/inertia.z*/
-        ).mul(TIME_STEP)
-
-        omega.add(dO)
-
-
-
-        val dq = Quaterniond(q).mul(Quaterniond(omega.x, omega.y, omega.z, 0.0)).mul(0.5).mul(TIME_STEP)
-//        println("2: do: ${dO.length()} fdq: ${dq.length()}")
-        println("dq: ${dq.lengthSquared()} : 2")
-
-        q.add(dq.x, dq.y, dq.z, dq.w)
-
-        q.normalize()
-    }
-
-    companion object {
-        fun edges(vertices: List<Vector3d>): List<Pair<Vector3d, Vector3d>> {
-            assert(vertices.size == 8)
-
-            return listOf(
-                vertices[0] to vertices[1],
-                vertices[1] to vertices[2],
-                vertices[2] to vertices[3],
-                vertices[3] to vertices[0],
-                vertices[4] to vertices[5],
-                vertices[5] to vertices[6],
-                vertices[6] to vertices[7],
-                vertices[7] to vertices[4],
-                vertices[0] to vertices[4],
-                vertices[1] to vertices[5],
-                vertices[2] to vertices[6],
-                vertices[3] to vertices[7],
-            )
-        }
     }
 }
