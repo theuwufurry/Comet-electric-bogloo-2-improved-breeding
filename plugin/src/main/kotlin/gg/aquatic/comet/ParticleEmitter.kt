@@ -45,7 +45,8 @@ class ParticleEmitter : AbstractParticleEmitter() {
                 "at" to AtCommand,
                 "mount" to MountedSpawnCommand,
                 "info" to InfoCommand,
-                "kill" to KillCommand
+                "kill" to KillCommand,
+                "physics" to PhysicsCommand,
             ),
             listOf()
         ).register("comet")
