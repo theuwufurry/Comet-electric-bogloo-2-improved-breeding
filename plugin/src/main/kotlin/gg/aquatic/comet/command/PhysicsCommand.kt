@@ -1,12 +1,13 @@
 package gg.aquatic.comet.command
 
 import gg.aquatic.comet.api.AbstractParticleEmitter
-import gg.aquatic.comet.command.CubeQuatMethod.Companion.TIME_STEP
+import gg.aquatic.comet.command.physics.Body
+import gg.aquatic.comet.command.physics.Body.Companion.TIME_STEP
+import gg.aquatic.comet.command.physics.Cuboid
 import gg.aquatic.waves.command.ICommand
-import org.bukkit.Bukkit
-import org.bukkit.Color
-import org.bukkit.Location
-import org.bukkit.Particle
+import io.ktor.network.sockets.*
+import org.bukkit.*
+import org.bukkit.Particle.DustOptions
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitTask
@@ -16,14 +17,20 @@ import kotlin.math.roundToInt
 
 object PhysicsCommand : ICommand {
     private var task: BukkitTask? = null
+    val bodies = mutableListOf<Body>()
 
     override fun run(sender: CommandSender, args: Array<out String>) {
         if (sender !is Player) return
 
-        val world = sender.world
+        if (args[1] == "clear") {
+            bodies.forEach { it.kill() }
+            bodies.clear()
 
-        if (args.size < 11) {
-            sender.sendMessage("Usage: /comet physics cube <vx> <vy> <vz> <width> <height> <length> <lx> <ly> <lz>")
+            return
+        }
+
+        if (args.size < 14) {
+            sender.sendMessage("Usage: /comet physics cube <vx> <vy> <vz> <width> <height> <length> <lx> <ly> <lz> <ax> <ay> <az>")
             return
         }
 
@@ -31,6 +38,7 @@ object PhysicsCommand : ICommand {
             sender.sendMessage("Usage: /comet physics cube <vx> <vy> <vz> <width> <height> <length> <lx> <ly> <lz>")
             return
         }
+
 
         val v0 = Vector3d(
             args[2].toDouble(),
@@ -50,55 +58,135 @@ object PhysicsCommand : ICommand {
             args[10].toDouble(),
         )
 
+        val rot0 = Vector3d(
+            args[11].toDouble(),
+            args[12].toDouble(),
+            args[13].toDouble(),
+        )
+
         val origin = sender.location.toVector().toVector3d()
-        val qrb = CubeQuatMethod(
+        val rb = Cuboid(
+            world = sender.world,
             pos = Vector3d(origin),
-            v = Vector3d(v0),
+            velocity = Vector3d(v0),
             width = dims.x,
             height = dims.y,
             length = dims.z,
-            q = Quaterniond(),
+            q = Quaterniond().rotateXYZ(rot0.x, rot0.y, rot0.z),
             omega = Vector3d(l),
         )
 
-        task?.cancel()
+        bodies += rb
 
-        task = Bukkit.getScheduler().runTaskTimer(AbstractParticleEmitter.INSTANCE, Runnable {
-            repeat((0.05 / TIME_STEP).roundToInt()) { qrb.step() }
+        if (task == null) {
+            task = Bukkit.getScheduler().runTaskTimer(AbstractParticleEmitter.INSTANCE, Runnable {
+                repeat((0.05 / TIME_STEP).roundToInt()) {
+                    for (body in bodies) {
+                        body.step()
+                    }
 
-            val transformedVerticesQ = qrb.vertices.map(qrb::transformedVertex)
-            val edgesQ = CubeQuatMethod.edges(transformedVerticesQ)
+                    if (bodies.size > 1) {
+                        for (i in 0..<bodies.size) {
+                            for (j in (i + 1)..<bodies.size) {
+                                val first = bodies[i]
+                                val second = bodies[j]
 
-            for (vertex in transformedVerticesQ) {
-                world.spawnParticle(
-                    Particle.REDSTONE, Location(
-                        world,
-                        qrb.pos.x + vertex.x,
-                        qrb.pos.y + vertex.y,
-                        qrb.pos.z + vertex.z,
-                    ),
-                    5, Particle.DustOptions(Color.RED, 0.3f)
-                )
-            }
+                                val result = first.collides(second) ?: continue
+                                val (point, norm, depth) = result
+                                //depth * M1
+                                //depth * M2
+                                //M1 + M2 = T
+                                //depth * M1 + depth * M2 = 1
 
-            for ((start, end) in edgesQ) {
-                val d = end.distance(start)
-                val delta = Vector3d(end).sub(start).normalize()
-                var t = 0.0
-                while (t < d) {
-                    world.spawnParticle(
-                        Particle.REDSTONE, Location(
-                            world,
-                            qrb.pos.x + start.x + delta.x * t,
-                            qrb.pos.y + start.y + delta.y * t,
-                            qrb.pos.z + start.z + delta.z * t,
-                        ),
-                        5, Particle.DustOptions(Color.BLUE, 0.2f)
-                    )
-                    t += 0.1
+                                val massImpact = 1.0 / first.mass + 1.0 / second.mass
+                                first.pos.sub(Vector3d(norm).mul(depth / massImpact / first.mass))
+                                second.pos.add(Vector3d(norm).mul(depth / massImpact / second.mass))
+
+                                sender.world.debugConnect(point, Vector3d(point).add(norm), DustOptions(Color.BLUE, 0.3f))
+
+                                val vr = Vector3d(second.velocity).sub(first.velocity)
+                                println(vr.dot(norm))
+//                                println("between $i and $j point: $point norm: $norm depth: $depth vr: $vr")
+
+                                val firstLocalPoint = first.globalToLocal(point)
+                                val firstLocalNorm = Vector3d(norm).negate().rotate(Quaterniond(first.q).conjugate()).normalize()
+                                val secondLocalPoint = second.globalToLocal(point)
+                                val secondLocalNorm = Vector3d(norm).rotate(Quaterniond(second.q).conjugate()).normalize()
+
+                                val firstAngularImpact =
+                                    Vector3d(firstLocalPoint)
+                                        .cross(firstLocalNorm)
+                                        .mul(first.inverseInertia)
+                                        .cross(firstLocalPoint)
+                                        .dot(firstLocalNorm)
+                                val secondAngularImpact =
+                                    Vector3d(secondLocalPoint)
+                                        .cross(secondLocalNorm)
+                                        .mul(second.inverseInertia)
+                                        .cross(secondLocalPoint)
+                                        .dot(secondLocalNorm)
+                                val angularImpact = firstAngularImpact + secondAngularImpact
+
+////
+                                val J =
+                                    vr.dot(norm) * -(1.0 + 1.0) / (massImpact + angularImpact)
+
+                                val firstDV = Vector3d(norm).mul(J / first.mass)
+                                first.velocity.sub(firstDV)
+                                first.omega.add(Vector3d(firstLocalPoint).cross(Vector3d(firstLocalNorm).mul(J)).mul(first.inverseInertia))
+
+                                val secondDV = Vector3d(norm).mul(J / second.mass)
+                                second.velocity.add(secondDV)
+                                second.omega.add(Vector3d(secondLocalPoint).cross(Vector3d(secondLocalNorm).mul(J)).mul(second.inverseInertia))
+
+//                                println("mass impact: $massImpact angular impact: $angularImpact firstDV: $firstDV secondDV: $secondDV")
+
+                                sender.world.spawnParticle(
+                                    Particle.REDSTONE,
+                                    Location(
+                                        sender.world,
+                                        point.x, point.y, point.z,
+                                    ),
+                                    5, Particle.DustOptions(Color.RED, 0.8f)
+                                )
+                            }
+                        }
+                    }
                 }
-            }
-        }, 1, 1)
+//            val transformedVerticesQ = rb!!.vertices
+//            val edgesQ = rb!!.edges
+//
+//            for (vertex in transformedVerticesQ) {
+//                world.spawnParticle(
+//                    Particle.REDSTONE, Location(
+//                        world,
+//                        vertex.x,
+//                        vertex.y,
+//                        vertex.z,
+//                    ),
+//                    5, Particle.DustOptions(Color.RED, 0.6f)
+//                )
+//            }
+//
+//            for ((start, end) in edgesQ) {
+//                val d = end.distance(start)
+//                val delta = Vector3d(end).sub(start).normalize()
+//                var t = 0.0
+//                while (t < d) {
+//                    world.spawnParticle(
+//                        Particle.REDSTONE, Location(
+//                            world,
+//                            start.x + delta.x * t,
+//                            start.y + delta.y * t,
+//                            start.z + delta.z * t,
+//                        ),
+//                        5, Particle.DustOptions(Color.BLUE, 0.4f)
+//                    )
+//                    t += 0.1
+//                }
+//            }
+            }, 1, 1)
+        }
     }
 
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
@@ -120,126 +208,22 @@ object PhysicsCommand : ICommand {
     }
 }
 
-class CubeQuatMethod(
-    var pos: Vector3d,
-    var v: Vector3d,
+private fun World.debugConnect(start: Vector3d, end: Vector3d, options: DustOptions) {
+    val dir = Vector3d(end).sub(start).normalize()!!
+    if (!dir.isFinite) return
+    var t = 0.0
+    while (t < end.distance(start)) {
+        t += 0.1
 
-    val q: Quaterniond,
-
-    val omega: Vector3d,
-
-    val width: Double,
-    val height: Double,
-    val length: Double,
-) {
-    /**
-     * Local space
-     */
-    val vertices: List<Vector3d> = listOf(
-        Vector3d(-width / 2, -height / 2, -length / 2),
-        Vector3d(-width / 2, -height / 2, length / 2),
-        Vector3d(width / 2, -height / 2, length / 2),
-        Vector3d(width / 2, -height / 2, -length / 2),
-
-        Vector3d(-width / 2, height / 2, -length / 2),
-        Vector3d(-width / 2, height / 2, length / 2),
-        Vector3d(width / 2, height / 2, length / 2),
-        Vector3d(width / 2, height / 2, -length / 2),
-    )
-
-    fun transformedVertex(vertex: Vector3d): Vector3d {
-        return Vector3d(vertex).rotate(q)
-    }
-
-    val volume = width * height * length
-
-    val inertia: Vector3d = Vector3d(
-        height * height + length * length,
-        width * width + length * length,
-        width * width + height * height,
-    ).mul(volume / 12.0)
-
-    private var i = 0
-
-    fun step() {
-//        println("${i++}: omega n: ${omega.length()}")
-//
-        pos.add(Vector3d(v).mul(TIME_STEP))
-
-        val h2 = TIME_STEP / 2.0
-
-        val (dK1Q, dK1O) = calcDerivatives(q, omega)
-
-        val k2Q = Quaterniond(q).add(Quaterniond(dK1Q).scale(h2)).normalize()
-        val k2O = Vector3d(omega).add(Vector3d(dK1O).mul(h2))
-        val (dK2Q, dK2O) = calcDerivatives(k2Q, k2O)
-
-        val k3Q = Quaterniond(q).add(Quaterniond(dK2Q).scale(h2)).normalize()
-        val k3O = Vector3d(omega).add(Vector3d(dK2O).mul(h2))
-        val (dK3Q, dK3O) = calcDerivatives(k3Q, k3O)
-
-        val k4Q = Quaterniond(q).add(Quaterniond(dK3Q).scale(TIME_STEP)).normalize()
-        val k4O = Vector3d(omega).add(Vector3d(dK3O).mul(TIME_STEP))
-        val (dK4Q, dK4O) = calcDerivatives(k4Q, k4O)
-
-        val fDO = Vector3d(dK1O)
-            .add(Vector3d(dK2O).mul(2.0))
-            .add(Vector3d(dK3O).mul(2.0))
-            .add(dK4O)
-            .mul(TIME_STEP / 6.0)
-
-        val fDQ = Quaterniond(dK1Q)
-            .add(Quaterniond(dK2Q).scale(2.0))
-            .add(Quaterniond(dK3Q).scale(2.0))
-            .add(dK4Q)
-            .mul(TIME_STEP / 6.0)
-
-        println("dq: ${fDQ.lengthSquared()} : 1")
-
-        omega.add(fDO)
-        q.add(fDQ)
-
-        q.normalize()
-    }
-
-    /**
-     * @return dq/dt and dOmega/dt
-     */
-    private fun calcDerivatives(
-        q: Quaterniond,
-        o: Vector3d
-    ): Pair<Quaterniond, Vector3d> {
-        val dO = Vector3d(
-            (inertia.y - inertia.z) / inertia.x * o.y * o.z,/* + T.x/inertia.x*/
-            (inertia.z - inertia.x) / inertia.y * o.z * o.x,/* + T.y/inertia.y*/
-            (inertia.x - inertia.y) / inertia.z * o.x * o.y,/* + T.z/inertia.z*/
+        spawnParticle(
+            Particle.REDSTONE,
+            Location(
+                this,
+                start.x + dir.x * t,
+                start.y + dir.y * t,
+                start.z + dir.z * t,
+            ),
+            5, options,
         )
-
-        val dQ = Quaterniond(q).mul(Quaterniond(o.x, o.y, o.z, 0.0)).mul(0.5)
-
-        return Quaterniond(dQ.x, dQ.y, dQ.z, dQ.w) to dO
-    }
-
-    companion object {
-        fun edges(vertices: List<Vector3d>): List<Pair<Vector3d, Vector3d>> {
-            assert(vertices.size == 8)
-
-            return listOf(
-                vertices[0] to vertices[1],
-                vertices[1] to vertices[2],
-                vertices[2] to vertices[3],
-                vertices[3] to vertices[0],
-                vertices[4] to vertices[5],
-                vertices[5] to vertices[6],
-                vertices[6] to vertices[7],
-                vertices[7] to vertices[4],
-                vertices[0] to vertices[4],
-                vertices[1] to vertices[5],
-                vertices[2] to vertices[6],
-                vertices[3] to vertices[7],
-            )
-        }
-
-        const val TIME_STEP = 0.05
     }
 }
