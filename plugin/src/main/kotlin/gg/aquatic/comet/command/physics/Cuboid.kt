@@ -1,5 +1,7 @@
 package gg.aquatic.comet.command.physics
 
+import gg.aquatic.comet.ParticleEmitter
+import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.command.physics.Body.Companion.TIME_STEP
 import gg.aquatic.comet.command.physics.Body.Companion.support
 import org.bukkit.*
@@ -9,6 +11,10 @@ import org.joml.Quaterniond
 import org.joml.Quaternionf
 import org.joml.Vector3d
 import org.joml.Vector3f
+import java.util.*
+import kotlin.math.abs
+import kotlin.math.absoluteValue
+import kotlin.math.sign
 
 class Cuboid(
     val world: World,
@@ -22,7 +28,10 @@ class Cuboid(
     val width: Double,
     val height: Double,
     val length: Double,
+    val density: Double,
+    override val hasGravity: Boolean,
 ) : Body {
+    override val id = UUID.randomUUID()
 
     val scale = Vector3d(width, height, length)
 
@@ -99,20 +108,20 @@ class Cuboid(
     }
 
     private val volume = width * height * length
-    override val mass = volume
+    override val mass = volume * density
     private var torque = Vector3d()
 
     private val inertia: Vector3d = Vector3d(
         height * height + length * length,
         width * width + length * length,
         width * width + height * height,
-    ).mul(volume / 12.0)
+    ).mul(density * volume / 12.0)
 
     override val inverseInertia: Vector3d = Vector3d(
         1.0 / (height * height + length * length),
         1.0 / (width * width + length * length),
         1.0 / (width * width + height * height),
-    ).div(volume / 12.0)
+    ).div(density * volume / 12.0)
 
     override fun step() {
         pos.add(Vector3d(velocity).mul(TIME_STEP))
@@ -246,9 +255,6 @@ class Cuboid(
         velocity.add(linear)
     }
 
-    /**
-     * @return whether a collision occured, collision norm, collision depth
-     */
     override fun collides(other: Body): CollisionResult? {
         // map from difference to MINE to OTHER
         val originals = mutableMapOf<Vector3d, Pair<Vector3d, Vector3d>>()
@@ -258,6 +264,8 @@ class Cuboid(
             val b = other.support(Vector3d(dir).negate())
             val diff = Vector3d(a).sub(b)
             originals[diff] = a to b
+
+//            println("DIFF: $diff FROM: $a $b")
 
             return diff
         }
@@ -311,114 +319,75 @@ class Cuboid(
                 )
 
                 repeat(100) {
-                    val dn = closestNormal(shape)
+                    val dn = closestNormal(Vector3d(), shape)
                     if (dn != null) {
-                        val (dis, norm, face) = dn
+                        val (dis, norm, faces) = dn
+
                         val sup = minkowski(norm)
 
                         val dis2 = sup.dot(norm)
-//                        println("sup: $sup norm: $norm")
-                        if (dis2 - dis < 0.001) {
-//                            println("COLLISION, l_norm: ${Vector3d(norm).rotate(Quaterniond(q).conjugate())}, depth: $dis2")
+                        if (dis2 - dis < 0.0000001) {
+                            var coefficients: Vector3d? = null
+                            var closestFace: Triple<Vector3d, Vector3d, Vector3d>? = null
+//                            println("faces.size: ${faces.size}")
+                            for (face in faces) {
+                                val r = toBarycentric(Vector3d(), face.first, face.second, face.third, true)
+                                if (r != null) {
+                                    coefficients = r
+                                    closestFace = face
+                                }
+                            }
 
-                            val (a3, b3, c3) = face
+                            if (coefficients == null) {
+                                throw IllegalStateException("No coefficients found")
+//                                AbstractParticleEmitter.INSTANCE.logger.warning("No coefficients found")
+//                                coefficients = toBarycentric(Vector3d(), faces[0].first, faces[0].second, faces[0].third, false)!!
+//                                closestFace = faces[0]
+                            }
+
+                            val (a3, b3, c3) = closestFace!!
                             val (a3mine, a3other) = originals[a3]!!
                             val (b3mine, b3other) = originals[b3]!!
                             val (c3mine, c3other) = originals[c3]!!
 
-//                            val ls = listOf(
-//                                a3mine, a3other,
-//                                b3mine, b3other,
-//                                c3mine, c3other,
-//                            )
-//
-//                            world.spawnParticle(
-//                                Particle.REDSTONE,
-//                                Location(
-//                                    world,
-//                                    a3mine.x, a3mine.y, a3mine.z,
-//                                ),
-//                                5, Particle.DustOptions(Color.ORANGE, 1f)
-//                            )
-//
-//                            world.spawnParticle(
-//                                Particle.REDSTONE,
-//                                Location(
-//                                    world,
-//                                    b3mine.x, b3mine.y, b3mine.z,
-//                                ),
-//                                5, Particle.DustOptions(Color.ORANGE, 1f)
-//                            )
-//
-//                            world.spawnParticle(
-//                                Particle.REDSTONE,
-//                                Location(
-//                                    world,
-//                                    c3mine.x, c3mine.y, c3mine.z,
-//                                ),
-//                                5, Particle.DustOptions(Color.ORANGE, 1f)
-//                            )
-//
-//
-//                            world.spawnParticle(
-//                                Particle.REDSTONE,
-//                                Location(
-//                                    world,
-//                                    a3other.x, a3other.y, a3other.z,
-//                                ),
-//                                5, Particle.DustOptions(Color.GRAY, 1f)
-//                            )
-//
-//                            world.spawnParticle(
-//                                Particle.REDSTONE,
-//                                Location(
-//                                    world,
-//                                    b3other.x, b3other.y, b3other.z,
-//                                ),
-//                                5, Particle.DustOptions(Color.GRAY, 1f)
-//                            )
-//
-//                            world.spawnParticle(
-//                                Particle.REDSTONE,
-//                                Location(
-//                                    world,
-//                                    c3other.x, c3other.y, c3other.z,
-//                                ),
-//                                5, Particle.DustOptions(Color.GRAY, 1f)
-//                            )
-
-                            val (aC, bC, cC) = toBarycentric(Vector3d(), a3, b3, c3)
+                            val aC = coefficients.x
+                            val bC = coefficients.y
+                            val cC = coefficients.z
+                            val doDebug = aC + bC + cC > 1.001
                             val myInt =
                                 Vector3d(a3mine).mul(aC).add(Vector3d(b3mine).mul(bC)).add(Vector3d(c3mine).mul(cC))
                             val otherInt =
                                 Vector3d(a3other).mul(aC).add(Vector3d(b3other).mul(bC)).add(Vector3d(c3other).mul(cC))
-
-//                            world.spawnParticle(
-//                                Particle.REDSTONE,
-//                                Location(
-//                                    world,
-//                                    myInt.x, myInt.y, myInt.z,
-//                                ),
-//                                5, Particle.DustOptions(Color.GREEN, 1f)
-//                            )
-//
-//                            world.spawnParticle(
-//                                Particle.REDSTONE,
-//                                Location(
-//                                    world,
-//                                    otherInt.x, otherInt.y, otherInt.z,
-//                                ),
-//                                5, Particle.DustOptions(Color.YELLOW, 1f)
-//                            )
-                            //project origin onto my face and their face in minkowski space and then use barycentric to find world space
+                            if (doDebug) {
+                                println(
+                                    """
+                                    minkowski:
+                                     - a: $a3
+                                     - b: $b3
+                                     - c: $c3
+                                    mine: $myInt
+                                     - a: $a3mine C: $aC
+                                     - b: $b3mine C: $bC
+                                     - c: $c3mine C: $cC
+                                    other: $otherInt
+                                     - a: $a3other C: $aC
+                                     - b: $b3other C: $bC
+                                     - c: $c3other C: $cC
+                                    shape:${"\n"}${shape.joinToString(separator = "FACE:\n") { " - a: ${it.first}\n - b: ${it.second}\n - c: ${it.third}\n" }}
+                                """.trimIndent()
+                                )
+                            }
 
                             return CollisionResult(
-                                Vector3d(myInt).mul(0.5).add(Vector3d(otherInt).mul(0.5)),
+                                myInt,
+                                otherInt,
                                 norm,
-                                dis2
+                                dis2,
+                                shape,
+                                closestFace,
+                                originals,
                             )
                         } else {
-//                            println("adding point: $sup")
                             addPoint(shape, sup)
                         }
                     } else {
@@ -464,72 +433,15 @@ class Cuboid(
                         if (dNorm == Vector3d() || !dNorm.isFinite) return null
                         val (closestMine, closestOther) = originals[vertexClosest!!]!!
 
-//                        world.spawnParticle(
-//                            Particle.REDSTONE,
-//                            Location(
-//                                world,
-//                                closestMine.x, closestMine.y, closestMine.z
-//                            ), 5, DustOptions(Color.RED, 1f)
-//                        )
-//
-//                        world.spawnParticle(
-//                            Particle.REDSTONE,
-//                            Location(
-//                                world,
-//                                closestOther.x, closestOther.y, closestOther.z
-//                            ), 5, DustOptions(Color.BLUE, 1f)
-//                        )
-
-//                        world.spawnParticle(
-//                            Particle.REDSTONE,
-//                            Location(
-//                                world,
-//                                a2mine.x, a2mine.y, a2mine.z
-//                            ), 5, DustOptions(Color.YELLOW, 1f)
-//                        )
-//
-//                        world.spawnParticle(
-//                            Particle.REDSTONE,
-//                            Location(
-//                                world,
-//                                b2mine.x, b2mine.y, b2mine.z
-//                            ), 5, DustOptions(Color.YELLOW, 1f)
-//                        )
-//
-//                        world.spawnParticle(
-//                            Particle.REDSTONE,
-//                            Location(
-//                                world,
-//                                c2mine.x, c2mine.y, c2mine.z
-//                            ), 5, DustOptions(Color.YELLOW, 1f)
-//                        )
-//
-//                        world.spawnParticle(
-//                            Particle.REDSTONE,
-//                            Location(
-//                                world,
-//                                a2other.x, a2other.y, a2other.z
-//                            ), 5, DustOptions(Color.GRAY, 1f)
-//                        )
-//
-//                        world.spawnParticle(
-//                            Particle.REDSTONE,
-//                            Location(
-//                                world,
-//                                b2other.x, b2other.y, b2other.z
-//                            ), 5, DustOptions(Color.GRAY, 1f)
-//                        )
-//
-//                        world.spawnParticle(
-//                            Particle.REDSTONE,
-//                            Location(
-//                                world,
-//                                c2other.x, c2other.y, c2other.z
-//                            ), 5, DustOptions(Color.GRAY, 1f)
-//                        )
-
-//                        println("COLLISION, l_norm: ${Vector3d(dNorm).rotate(Quaterniond(q).conjugate())}, depth: $dClosest")
-                        return CollisionResult(closestMine, dNorm, dClosest)
+                        return CollisionResult(
+                            closestMine,
+                            closestOther,
+                            dNorm,
+                            dClosest,
+                            shape,
+                            Triple(vertexClosest, vertexClosest, vertexClosest),
+                            originals,
+                        )
                     }
                 }
 
@@ -610,40 +522,11 @@ class Cuboid(
         }
     }
 
-    private fun closestNormal(shape: List<Triple<Vector3d, Vector3d, Vector3d>>): ClosestResult? {
-        var dClosest = Double.MAX_VALUE
-        var nClosest = Vector3d()
-        var closestFace: Triple<Vector3d, Vector3d, Vector3d>? = null
 
-        for ((a, b, c) in shape) {
-            val ab = Vector3d(b).sub(a)
-            val ac = Vector3d(c).sub(a)
-
-            val n = Vector3d(ab).cross(ac).normalize()
-            if (!n.isFinite) {
-                //a,b,c are collinear, resolution vector is just 1d epa aka whichever direction is closest to origin
-                return null
-            }
-
-            val d = Vector3d(n).dot(a)
-//            println("  - a: $a b: $b c: $c n: $n d: $d")
-
-            if (d < dClosest) {
-                dClosest = d
-                nClosest = n
-                closestFace = Triple(a, b, c)
-            }
-        }
-
-        assert(nClosest.lengthSquared() > 0.0)
-
-        return ClosestResult(dClosest, nClosest, closestFace!!)
-    }
-
-    private data class ClosestResult(
+    data class ClosestResult(
         val distance: Double,
         val normal: Vector3d,
-        val face: Triple<Vector3d, Vector3d, Vector3d>,
+        val faces: List<Triple<Vector3d, Vector3d, Vector3d>>,
     )
 
     private fun addPoint(shape: MutableList<Triple<Vector3d, Vector3d, Vector3d>>, point: Vector3d) {
@@ -722,34 +605,10 @@ class Cuboid(
         for ((uniqueStart, uniqueEnd) in uniqueEdges) {
             shape += Triple(uniqueStart, uniqueEnd, point)
         }
-    }
 
-    private fun toBarycentric(
-        point: Vector3d,
-        a: Vector3d,
-        b: Vector3d,
-        c: Vector3d,
-    ): Triple<Double, Double, Double> {
-        //first make sure point is on same plane as a,b,c
-        val ab = Vector3d(b).sub(a)
-        val ac = Vector3d(c).sub(a)
-        val bc = Vector3d(c).sub(b)
-
-        val arp = Vector3d(point).sub(a)
-        val n = Vector3d(ab).cross(ac).normalize()
-        val d = Vector3d(arp).sub(Vector3d(n).mul(n.dot(arp))).add(a)
-
-        val da = Vector3d(d).sub(a)
-        val db = Vector3d(d).sub(b)
-        val dc = Vector3d(d).sub(c)
-
-        val total = 0.5 * Vector3d(ab).cross(ac).length()
-
-        val cA = 0.5 * Vector3d(da).cross(ab).length() / total
-        val cB = 0.5 * Vector3d(db).cross(bc).length() / total
-        val cC = 0.5 * Vector3d(dc).cross(ac).length() / total
-//
-        return Triple(cB, cC, cA)
+        if (!shape.isConvex()) {
+            println("CONCAVE SHAPE")
+        }
     }
 
     companion object {
@@ -760,6 +619,128 @@ class Cuboid(
 //            Material.DIAMOND_BLOCK,
 //            Material.CHERRY_WOOD
         )
+
+        fun toBarycentric(
+            point: Vector3d,
+            a: Vector3d,
+            b: Vector3d,
+            c: Vector3d,
+            failhard: Boolean = false,
+        ): Vector3d? {
+            //first make sure point is on same plane as a,b,c
+            val ab = Vector3d(b).sub(a)
+            val bc = Vector3d(c).sub(b)
+            val ca = Vector3d(a).sub(c)
+
+            val arp = Vector3d(point).sub(a)
+            val n = Vector3d(ab).cross(ca).normalize()
+//            val fac = if (n.dot(point))
+            val d = Vector3d(arp).sub(Vector3d(n).mul(n.dot(arp))).add(a)
+
+            val da = Vector3d(d).sub(a)
+            val db = Vector3d(d).sub(b)
+            val dc = Vector3d(d).sub(c)
+
+            val total = 0.5 * Vector3d(ab).cross(ca).length()
+
+            val dabA = 0.5 * Vector3d(da).cross(ab).length()
+            val cA = dabA / total
+            val dbcA = 0.5 * Vector3d(db).cross(bc).length()
+            val cB = dbcA / total
+            val dcaA = 0.5 * Vector3d(dc).cross(ca).length()
+            val cC = dcaA / total
+
+            if (cA + cB + cC > 1.001) {
+//                println("WARNING: cA: $cA cB: $cB cC: $cC SUM: ${cA + cB + cC}\ntotal area: $total dab: $dabA dbc: $dbcA dca: $dcaA")
+                if (failhard) return null
+            }
+//
+            return Vector3d(cB, cC, cA)
+        }
+
+        fun closestNormal(point: Vector3d, shape: List<Triple<Vector3d, Vector3d, Vector3d>>): ClosestResult? {
+//            println("CLOSEST NORMAL")
+            var dClosest = Double.MAX_VALUE
+            var nClosest = Vector3d()
+            var closestFaces: MutableList<Triple<Vector3d, Vector3d, Vector3d>> = mutableListOf()
+
+            var winding: Double? = null
+
+            for ((a, b, c) in shape) {
+                val relPoint = Vector3d(point).sub(a)
+                val ab = Vector3d(b).sub(a)
+                val ac = Vector3d(c).sub(a)
+
+                val n = Vector3d(ab).cross(ac).normalize()
+                if (!n.isFinite) {
+                    //a,b,c are collinear, resolution vector is just 1d epa aka whichever direction is closest to origin
+                    return null
+                }
+
+                val d = Vector3d(n).dot(relPoint)
+//                println("d: $d winding: $winding")
+                if (winding == null) winding = sign(d)
+                else if (sign(d) != winding) println("WINDING MISMATCH")
+//                println("  - a: $a b: $b c: $c n: $n d: $d")
+//                println("d: $d")
+//            println("  - a: $a b: $b c: $c n: $n d: $d")
+
+                if (abs(d.absoluteValue - dClosest) < 0.0000001) {
+                    closestFaces += Triple(a, b, c)
+                } else if (d.absoluteValue < dClosest) {
+                    dClosest = d.absoluteValue
+                    nClosest = n
+                    closestFaces = mutableListOf(Triple(a, b, c))
+                }
+            }
+
+            assert(nClosest.lengthSquared() > 0.0)
+
+            return ClosestResult(dClosest, nClosest, closestFaces)
+        }
+
+        fun List<Triple<Vector3d, Vector3d, Vector3d>>.isConvex(): Boolean {
+            if (this.size < 4) {
+                return true
+            }
+
+            val allVertices = this.flatMap { listOf(it.first, it.second, it.third) }.toSet()
+
+            if (allVertices.size < 4) {
+                return true
+            }
+
+            val epsilon = 1e-7
+
+            for (triangle in this) {
+                val p1 = triangle.first
+                val p2 = triangle.second
+                val p3 = triangle.third
+
+                val edge1 = p2.sub(p1, Vector3d())
+                val edge2 = p3.sub(p1, Vector3d())
+
+                val normal = edge1.cross(edge2, Vector3d())
+
+                if (normal.lengthSquared() < epsilon) {
+                    continue
+                }
+
+                normal.normalize()
+
+                for (vertex in allVertices) {
+                    val vectorToVertex = vertex.sub(p1, Vector3d())
+
+                    val distance = vectorToVertex.dot(normal)
+
+                    if (distance > epsilon) {
+                        return false
+                    }
+                }
+            }
+
+            return true
+        }
     }
 }
 

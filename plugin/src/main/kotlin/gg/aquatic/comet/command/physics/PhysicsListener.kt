@@ -2,10 +2,7 @@ package gg.aquatic.comet.command.physics
 
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.command.PhysicsCommand
-import org.bukkit.Bukkit
-import org.bukkit.Color
-import org.bukkit.Location
-import org.bukkit.Particle
+import org.bukkit.*
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerInteractEvent
@@ -40,6 +37,9 @@ object PhysicsListener : Listener {
             5, Particle.DustOptions(Color.YELLOW, 0.5f)
         )
 
-        body.applyImpulse(intersection, normal, Vector3d(dir).normalize(2.5))
+        val type = event.player.inventory.itemInMainHand.type
+        if (type == Material.END_ROD) {
+            body.applyImpulse(intersection, normal, Vector3d(dir).normalize(2.5))
+        }
     }
 }

@@ -45,25 +45,56 @@ object EPACommand : ICommand {
             shape += Triple(c0, a0, d0)
 
             task = Bukkit.getScheduler().runTaskTimer(AbstractParticleEmitter.INSTANCE, Runnable {
+                run {
+                    val (distance, normal, faces) = Cuboid.closestNormal(origin!!, shape)!!
+                    val face = faces.first()
+                    val (a, b, c) = face
+                    val coefficients = Cuboid.toBarycentric(origin!!, a, b, c)!!
+                    val aC = coefficients.x
+                    val bC = coefficients.y
+                    val cC = coefficients.z
+                    val loc = Vector3d(a).mul(aC).add(Vector3d(b).mul(bC)).add(Vector3d(c).mul(cC))
+
+                    world.spawnParticle(
+                        Particle.REDSTONE,
+                        Location(
+                            world,
+                            origin!!.x,
+                            origin!!.y,
+                            origin!!.z
+                        ), 1, DustOptions(Color.WHITE, 1f)
+                    )
+
+                    world.spawnParticle(
+                        Particle.REDSTONE,
+                        Location(
+                            world,
+                            loc.x,
+                            loc.y,
+                            loc.z
+                        ), 1, DustOptions(Color.YELLOW, 1f)
+                    )
+                }
+
                 for ((a, b, c) in shape) {
                     world.spawnParticle(
                         Particle.REDSTONE,
                         Location(world, a.x, a.y, a.z),
-                        5,
+                        1,
                         DustOptions(Color.RED, 0.5f)
                     )
 
                     world.spawnParticle(
                         Particle.REDSTONE,
                         Location(world, b.x, b.y, b.z),
-                        5,
+                        1,
                         DustOptions(Color.RED, 0.5f)
                     )
 
                     world.spawnParticle(
                         Particle.REDSTONE,
                         Location(world, c.x, c.y, c.z),
-                        5,
+                        1,
                         DustOptions(Color.RED, 0.5f)
                     )
 
@@ -93,8 +124,8 @@ object EPACommand : ICommand {
                             world.spawnParticle(
                                 Particle.REDSTONE,
                                 Location(world, bp.x, bp.y, bp.z),
-                                5,
-                                DustOptions(Color.GREEN, 0.5f)
+                                1,
+                                DustOptions(Color.GREEN, 0.3f)
                             )
                         }
                     }
@@ -171,13 +202,17 @@ object EPACommand : ICommand {
             } else {
 //                val newP = sender.eyeLocation.toVector().toVector3d()
 
-                addPoint(shape, Vector3d(origin).add(
-                    Vector3d(
-                        Random.nextDouble(-1.0, 1.0),
-                        Random.nextDouble(-1.0, 1.0),
-                        Random.nextDouble(-1.0, 1.0)
-                    ).normalize(2.0)
-                ), world)
+                repeat(10) {
+                    addPoint(
+                        shape, Vector3d(origin).add(
+                            Vector3d(
+                                Random.nextDouble(-1.0, 1.0),
+                                Random.nextDouble(-1.0, 1.0),
+                                Random.nextDouble(-1.0, 1.0)
+                            ).normalize(2.0)
+                        ), world
+                    )
+                }
             }
         }
     }
@@ -300,7 +335,7 @@ private fun World.connect(start: Vector3d, end: Vector3d, options: DustOptions) 
                 start.y + delta.y * t,
                 start.z + delta.z * t,
             ),
-            5, options
+            1, options
         )
         t += 0.1
     }

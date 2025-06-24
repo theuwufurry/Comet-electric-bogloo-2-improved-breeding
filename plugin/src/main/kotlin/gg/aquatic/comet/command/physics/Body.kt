@@ -2,8 +2,10 @@ package gg.aquatic.comet.command.physics
 
 import org.joml.Quaterniond
 import org.joml.Vector3d
+import java.util.UUID
 
 interface Body {
+    val id: UUID
     val pos: Vector3d
     val velocity: Vector3d
 
@@ -14,6 +16,8 @@ interface Body {
     val inverseInertia: Vector3d
     val q: Quaterniond
     val omega: Vector3d
+
+    val hasGravity: Boolean
 
     fun globalToLocal(vec: Vector3d): Vector3d
 
@@ -57,7 +61,11 @@ interface Body {
 }
 
 data class CollisionResult(
-    val point: Vector3d,
+    val firstPoint: Vector3d,
+    val secondPoint: Vector3d,
     val norm: Vector3d,
     val depth: Double,
+    val minkowski: List<Triple<Vector3d, Vector3d, Vector3d>>,
+    val closest: Triple<Vector3d, Vector3d, Vector3d>,
+    val originals: Map<Vector3d, Pair<Vector3d, Vector3d>>,
 )
