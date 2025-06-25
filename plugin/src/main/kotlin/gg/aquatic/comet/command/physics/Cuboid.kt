@@ -1,20 +1,16 @@
 package gg.aquatic.comet.command.physics
 
-import gg.aquatic.comet.ParticleEmitter
-import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.command.physics.Body.Companion.TIME_STEP
-import gg.aquatic.comet.command.physics.Body.Companion.support
 import org.bukkit.*
 import org.bukkit.entity.BlockDisplay
+import org.bukkit.util.BoundingBox
 import org.bukkit.util.Transformation
 import org.joml.Quaterniond
 import org.joml.Quaternionf
 import org.joml.Vector3d
 import org.joml.Vector3f
 import java.util.*
-import kotlin.math.abs
-import kotlin.math.absoluteValue
-import kotlin.math.sign
+import kotlin.math.*
 
 class Cuboid(
     val world: World,
@@ -79,6 +75,36 @@ class Cuboid(
             )
         }
 
+    override val boundingBox: BoundingBox
+        get() {
+            var xMin = Double.MAX_VALUE
+            var xMax = -Double.MAX_VALUE
+            var yMin = Double.MAX_VALUE
+            var yMax = -Double.MAX_VALUE
+            var zMin = Double.MAX_VALUE
+            var zMax = -Double.MAX_VALUE
+
+            val myVertices = vertices
+
+            for (vertex in myVertices) {
+                xMin = min(xMin, vertex.x)
+                xMax = max(xMax, vertex.x)
+                yMin = min(yMin, vertex.y)
+                yMax = max(yMax, vertex.y)
+                zMin = min(zMin, vertex.z)
+                zMax = max(zMax, vertex.z)
+            }
+
+            xMin += (velocity.x * TIME_STEP).coerceAtMost(0.0)
+            xMax += (velocity.x * TIME_STEP).coerceAtLeast(0.0)
+            yMin += (velocity.y * TIME_STEP).coerceAtMost(0.0)
+            yMax += (velocity.y * TIME_STEP).coerceAtLeast(0.0)
+            zMin += (velocity.z * TIME_STEP).coerceAtMost(0.0)
+            zMax += (velocity.z * TIME_STEP).coerceAtLeast(0.0)
+
+            return BoundingBox(xMin, yMin, zMin, xMax, yMax, zMax)
+        }
+
     private val display: BlockDisplay = world.spawnEntity(
         Location(world, pos.x, pos.y, pos.z),
         org.bukkit.entity.EntityType.BLOCK_DISPLAY
@@ -108,7 +134,7 @@ class Cuboid(
     }
 
     private val volume = width * height * length
-    override val mass = volume * density
+    override val inverseMass = 1.0 / (volume * density)
     private var torque = Vector3d()
 
     private val inertia: Vector3d = Vector3d(
@@ -241,7 +267,7 @@ class Cuboid(
         val localNormal = normal.rotate(Quaterniond(q).conjugate()).normalize()!!
         val localPoint = globalToLocal(point)
 
-        val j = Vector3d(normal).dot(impulse) / (1.0 / mass + (Vector3d(localPoint).cross(localNormal).mul(
+        val j = Vector3d(normal).dot(impulse) / (inverseMass + (Vector3d(localPoint).cross(localNormal).mul(
             inverseInertia
         ).cross(localPoint).dot(localNormal)))
 
@@ -251,8 +277,25 @@ class Cuboid(
 
         omega.add(Vector3d(inverseInertia).mul(t))
 
-        val linear = Vector3d(normal).mul(j / mass)
+        val linear = Vector3d(normal).mul(j * inverseMass)
         velocity.add(linear)
+    }
+
+    override fun support(dir: Vector3d): Vector3d {
+        val vertices = vertices
+        var maxDot = -Double.MAX_VALUE
+        var maxVertex = vertices[0]
+
+        for (vertex in vertices) {
+            val dot = vertex.dot(dir)
+
+            if (dot > maxDot) {
+                maxDot = dot
+                maxVertex = vertex
+            }
+        }
+
+        return maxVertex
     }
 
     override fun collides(other: Body): CollisionResult? {
