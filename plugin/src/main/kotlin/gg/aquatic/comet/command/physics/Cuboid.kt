@@ -1,5 +1,6 @@
 package gg.aquatic.comet.command.physics
 
+import gg.aquatic.comet.applyIf
 import gg.aquatic.comet.command.physics.Body.Companion.TIME_STEP
 import org.bukkit.*
 import org.bukkit.entity.BlockDisplay
@@ -298,6 +299,200 @@ class Cuboid(
         return maxVertex
     }
 
+    override fun collides(blockBody: BlockBody): CollisionResult? {
+        val otherAxiss = listOf(
+            Vector3d(1.0, 0.0, 0.0),
+            Vector3d(0.0, 1.0, 0.0),
+            Vector3d(0.0, 0.0, 1.0),
+        )
+
+        val myAxiss = listOf(
+            Vector3d(1.0, 0.0, 0.0).rotate(q).normalize(),
+            Vector3d(0.0, 1.0, 0.0).rotate(q).normalize(),
+            Vector3d(0.0, 0.0, 1.0).rotate(q).normalize(),
+        )
+
+        val edgeAxiss = listOf(
+            Vector3d(otherAxiss[0]).cross(myAxiss[0]).normalize(),
+            Vector3d(otherAxiss[0]).cross(myAxiss[1]).normalize(),
+            Vector3d(otherAxiss[0]).cross(myAxiss[2]).normalize(),
+            Vector3d(otherAxiss[1]).cross(myAxiss[0]).normalize(),
+            Vector3d(otherAxiss[1]).cross(myAxiss[1]).normalize(),
+            Vector3d(otherAxiss[1]).cross(myAxiss[2]).normalize(),
+            Vector3d(otherAxiss[2]).cross(myAxiss[0]).normalize(),
+            Vector3d(otherAxiss[2]).cross(myAxiss[1]).normalize(),
+            Vector3d(otherAxiss[2]).cross(myAxiss[2]).normalize(),
+        )
+
+        val axiss = mutableListOf<Vector3d>()
+        axiss += otherAxiss
+        axiss += myAxiss
+        axiss += edgeAxiss
+
+        val myVertices = vertices
+        val otherVertices = listOf(
+            Vector3d(blockBody.boundingBox.minX, blockBody.boundingBox.minY, blockBody.boundingBox.minZ),
+            Vector3d(blockBody.boundingBox.minX, blockBody.boundingBox.minY, blockBody.boundingBox.maxZ),
+            Vector3d(blockBody.boundingBox.minX, blockBody.boundingBox.maxY, blockBody.boundingBox.minZ),
+            Vector3d(blockBody.boundingBox.minX, blockBody.boundingBox.maxY, blockBody.boundingBox.maxZ),
+            Vector3d(blockBody.boundingBox.maxX, blockBody.boundingBox.minY, blockBody.boundingBox.minZ),
+            Vector3d(blockBody.boundingBox.maxX, blockBody.boundingBox.minY, blockBody.boundingBox.maxZ),
+            Vector3d(blockBody.boundingBox.maxX, blockBody.boundingBox.maxY, blockBody.boundingBox.minZ),
+            Vector3d(blockBody.boundingBox.maxX, blockBody.boundingBox.maxY, blockBody.boundingBox.maxZ),
+        )
+
+        var minOverlap = Double.MAX_VALUE
+        var minAxis: Vector3d? = null
+        var order = false
+
+        for (axis in axiss) {
+            var otherMin = Double.MAX_VALUE
+            var otherMax = -Double.MAX_VALUE
+
+            var myMin = Double.MAX_VALUE
+            var myMax = -Double.MAX_VALUE
+
+            for (vertex in myVertices) {
+                val s = vertex.dot(axis)
+                myMin = min(myMin, s)
+                myMax = max(myMax, s)
+            }
+
+            for (vertex in otherVertices) {
+                val s = vertex.dot(axis)
+                otherMin = min(otherMin, s)
+                otherMax = max(otherMax, s)
+            }
+
+            val myOrder: Boolean = myMin > otherMin
+            val overlap = if (myMin < otherMax && myMax > otherMin) {
+                if (myMax > otherMax) otherMax - myMin
+                else myMax - otherMin
+            } else 0.0
+
+            if (overlap <= 0.0) {
+                return null
+            }
+
+            if (overlap < minOverlap) {
+                minAxis = axis
+                minOverlap = overlap
+                order = myOrder
+            }
+        }
+
+        assert(minAxis != null)
+
+        if (minAxis in edgeAxiss) {
+            //edge-edge
+            //depending on the order, find most penetrating point(s) on each body, then choose the edges from that
+            println("EDGE-EDGE")
+            println("  - AXIS: $minAxis")
+            println("  - OVERLAP: $minOverlap")
+            println("  - ORDER: $order")
+            val index = edgeAxiss.indexOf(minAxis)
+            val firstAxis = when (index) {
+                in 0..2 -> otherAxiss[0]
+                in 3..5 -> otherAxiss[1]
+                in 6..8 -> otherAxiss[2]
+                else -> throw IllegalStateException("Axis not found in edge axiss - impossible")
+            }
+
+            val secondAxis = when (index) {
+                0, 3, 6 -> myAxiss[0]
+                1, 4, 7 -> myAxiss[1]
+                2, 5, 8 -> myAxiss[2]
+                else -> throw IllegalStateException("Axis not found in edge axiss - impossible")
+            }
+
+            println("first axis: $firstAxis second axis: $secondAxis")
+
+            val myEdges = edges
+
+            val possibleBlockEdges = mutableListOf<Pair<Vector3d, Vector3d>>()
+            val possibleEdges = mutableListOf<Pair<Vector3d, Vector3d>>()
+
+            for (blockEdge in blockBody.edges) {
+                val dir = Vector3d(blockEdge.second).sub(blockEdge.first).normalize()
+                println("block edge dir: $dir")
+                if (dir.distance(firstAxis) < 0.00001 || Vector3d(dir).negate().distance(firstAxis) < 0.00001) {
+                    possibleBlockEdges += blockEdge
+                    println("ADDED!")
+                }
+            }
+
+            for (edge in myEdges) {
+                val dir = Vector3d(edge.second).sub(edge.first).normalize()
+                println("my edge dir: $dir")
+                if (dir.distance(secondAxis) < 0.00001 || Vector3d(dir).negate().distance(secondAxis) < 0.00001) {
+                    possibleEdges += edge
+                    println("ADDED!")
+                }
+            }
+
+            println("${possibleBlockEdges.size} possible block edges and ${possibleEdges.size} possible my edges")
+
+            var closestResult: Triple<Vector3d, Vector3d, Double> = Triple(Vector3d(), Vector3d(), Double.MAX_VALUE)
+            for (possibleBlockEdge in possibleBlockEdges) {
+                for (possibleEdge in possibleEdges) {
+                    val result =
+                        closestPointsBetweenSegments(possibleBlockEdge.first, possibleBlockEdge.second, possibleEdge.first, possibleEdge.second)
+                    if (result == null) {
+                        println("parallel!")
+                        continue
+                    }
+
+                    println("trying ${possibleBlockEdge.first} -> $firstAxis ${possibleEdge.first} -> $secondAxis distance: ${result.third}")
+                    if (result.third < closestResult.third) {
+                        closestResult = result
+                    }
+                }
+            }
+
+            if (closestResult.third == Double.MAX_VALUE) {
+                println("ALL PARALLEL??!?!")
+                return null
+            }
+
+            val averagePoint = Vector3d(closestResult.first).mul(0.5).add(Vector3d(closestResult.second).mul(0.5))
+            return CollisionResult(averagePoint, if (order) minAxis!! else Vector3d(minAxis!!).negate(), minOverlap)
+        } else {
+            //face-vertex
+            println("FACE-VERTEX")
+            println("  - AXIS: $minAxis")
+            println("  - OVERLAP: $minOverlap")
+            println("  - ORDER: $order")
+            val antiNormal = if (order) Vector3d(minAxis).negate() else Vector3d(minAxis)
+
+            var furthestDistance = -Double.MAX_VALUE
+            var furtherVertex: Vector3d? = null
+
+            if (myAxiss.contains(minAxis)) {
+                //other has incident
+                for (vertex in otherVertices) {
+                    val d = vertex.dot(antiNormal)
+                    if (d > furthestDistance) {
+                        furthestDistance = d
+                        furtherVertex = vertex
+                    }
+                }
+
+                return CollisionResult(furtherVertex!!, Vector3d(minAxis!!).negate(), minOverlap)
+            } else {
+                //i have incident
+                for (vertex in myVertices) {
+                    val d = vertex.dot(antiNormal)
+                    if (d > furthestDistance) {
+                        furthestDistance = d
+                        furtherVertex = vertex
+                    }
+                }
+
+                return CollisionResult(furtherVertex!!, minAxis!!, minOverlap)
+            }
+        }
+    }
+
     override fun collides(other: Body): CollisionResult? {
         // map from difference to MINE to OTHER
         val originals = mutableMapOf<Vector3d, Pair<Vector3d, Vector3d>>()
@@ -319,7 +514,7 @@ class Cuboid(
         val d = Vector3d(a).negate()
 
         var i = 0
-        repeat(100) {
+        repeat(64) {
             i++
             a = minkowski(d)
             if (a.dot(d) < 0.0) {
@@ -361,7 +556,7 @@ class Cuboid(
                     if (winding) Triple(cP, aP, dP) else Triple(cP, dP, aP),
                 )
 
-                repeat(100) {
+                repeat(64) {
                     val dn = closestNormal(Vector3d(), shape)
                     if (dn != null) {
                         val (dis, norm, faces) = dn
@@ -423,7 +618,6 @@ class Cuboid(
 
                             return CollisionResult(
                                 myInt,
-                                otherInt,
                                 norm,
                                 dis2,
                                 shape,
@@ -474,11 +668,10 @@ class Cuboid(
                         }
 
                         if (dNorm == Vector3d() || !dNorm.isFinite) return null
-                        val (closestMine, closestOther) = originals[vertexClosest!!]!!
+                        val (closestMine, _) = originals[vertexClosest!!]!!
 
                         return CollisionResult(
                             closestMine,
-                            closestOther,
                             dNorm,
                             dClosest,
                             shape,
@@ -657,10 +850,6 @@ class Cuboid(
     companion object {
         private val VALID_MATERIALS = listOf(
             Material.GLASS
-//            Material.CHERRY_PLANKS,
-//            Material.BLACKSTONE,
-//            Material.DIAMOND_BLOCK,
-//            Material.CHERRY_WOOD
         )
 
         fun toBarycentric(
@@ -742,6 +931,105 @@ class Cuboid(
             return ClosestResult(dClosest, nClosest, closestFaces)
         }
 
+        private fun Vector3d.inside(
+            xRange: ClosedRange<Double>,
+            yRange: ClosedRange<Double>,
+            zRange: ClosedRange<Double>,
+        ): Boolean {
+            return x in xRange && y in yRange && z in zRange
+        }
+
+        /**
+         * Finds closest distance between two lines defined by a0, a and b0, b
+         * @return closest point on segment a, closest point on segment b, distance, null if parallel
+         */
+        fun closestPointsBetweenSegments(
+            a0: Vector3d,
+            a1: Vector3d,
+            b0: Vector3d,
+            b1: Vector3d
+        ): Triple<Vector3d, Vector3d, Double>? {
+            val a = Vector3d(a1).sub(a0).normalize()
+            val b = Vector3d(b1).sub(b0).normalize()
+
+            val axRange = (min(a0.x, a1.x) - EPSILON)..(max(a0.x, a1.x) + EPSILON)
+            val ayRange = (min(a0.y, a1.y) - EPSILON)..(max(a0.y, a1.y) + EPSILON)
+            val azRange = (min(a0.z, a1.z) - EPSILON)..(max(a0.z, a1.z) + EPSILON)
+            val bxRange = (min(b0.x, b1.x) - EPSILON)..(max(b0.x, b1.x) + EPSILON)
+            val byRange = (min(b0.y, b1.y) - EPSILON)..(max(b0.y, b1.y) + EPSILON)
+            val bzRange = (min(b0.z, b1.z) - EPSILON)..(max(b0.z, b1.z) + EPSILON)
+
+            //closest points is either on the lines, on a vertex and a line, or between 2 vertices
+            //if line-line is valid, then that's the answer
+            //then check vertex-line
+            //if vertex-line is valid then that's the answer
+            //otherwise check vertex-vertex
+            //check line-line
+            val (onLLA, onLLB, llD) = closestPointsBetweenLines(a0, a, b0, b) ?: return null
+
+            if (onLLA.inside(axRange, ayRange, azRange) && onLLB.inside(bxRange, byRange, bzRange)) return Triple(onLLA, onLLB, llD)
+
+            //test vertex-line:
+            //a0-b, a1-b, b0-a, b1-a
+            //return closest valid, because if it's valid then it must be closer than it is to a vertex, otherwise try vertex-vertex
+            val vls = mutableListOf<Triple<Vector3d, Vector3d, Double>>()
+
+            closestPointOnLine(b0, b, a0).let { if (it.first.inside(bxRange, byRange, bzRange)) vls += Triple(a0, it.first, it.second) }
+            closestPointOnLine(b0, b, a1).let { if (it.first.inside(bxRange, byRange, bzRange)) vls += Triple(a1, it.first, it.second) }
+            closestPointOnLine(a0, a, b0).let { if (it.first.inside(axRange, ayRange, azRange)) vls += Triple(it.first, b0, it.second) }
+            closestPointOnLine(a0, a, b1).let { if (it.first.inside(axRange, ayRange, azRange)) vls += Triple(it.first, b1, it.second) }
+
+            val vlMin = vls.minByOrNull { it.third }
+
+            val vvs = listOf(
+                Triple(a0, b0, a0.distance(b0)),
+                Triple(a0, b1, a0.distance(b1)),
+                Triple(a1, b0, a1.distance(b0)),
+                Triple(a1, b1, a1.distance(b1)),
+            )
+
+            val vvsMin = vvs.minBy { it.third }
+
+            if (vlMin == null) return vvsMin
+            return if (vvsMin.third < vlMin.third) vvsMin else vlMin
+        }
+
+        /**
+         * Finds closest distance between two lines defined by a0, a and b0, b
+         * @return closest point on line a, closest point on line b, distance, null if parallel
+         */
+        private fun closestPointsBetweenLines(
+            a0: Vector3d,
+            a: Vector3d,
+            b0: Vector3d,
+            b: Vector3d
+        ): Triple<Vector3d, Vector3d, Double>? {
+            val an = Vector3d(a).normalize()
+            val bn = Vector3d(b).normalize()
+            val cn = Vector3d(an).cross(bn).normalize()
+            if (!cn.isFinite) return null
+
+            val d = Vector3d(b0).sub(a0)
+
+            val r = Vector3d(d).sub(Vector3d(a).mul(d.dot(a))).sub(Vector3d(cn).mul(d.dot(cn)))
+            if (r.length() < 0.0000001) return null
+            val bClosest = Vector3d(b0).sub(Vector3d(b).mul(r.length() / b.dot(Vector3d(r).normalize())))
+            val c = Vector3d(cn).mul(Vector3d(d).sub(Vector3d(a).mul(d.dot(a))).dot(cn))
+
+            return Triple(Vector3d(bClosest).sub(c), bClosest, c.length())
+        }
+
+        /**
+         * Closest point on a line to another point
+         * @return the closest point, the distance
+         */
+        private fun closestPointOnLine(x0: Vector3d, x: Vector3d, p: Vector3d): Pair<Vector3d, Double> {
+            val xn = Vector3d(x).normalize()
+            val closestPoint = Vector3d(x0).add(Vector3d(x).mul(Vector3d(p).sub(x0).dot(xn)))
+
+            return closestPoint to closestPoint.distance(p)
+        }
+
         fun List<Triple<Vector3d, Vector3d, Vector3d>>.isConvex(): Boolean {
             if (this.size < 4) {
                 return true
@@ -787,4 +1075,4 @@ class Cuboid(
     }
 }
 
-private const val EPSILON = 0.0001
+private const val EPSILON = 1e-7

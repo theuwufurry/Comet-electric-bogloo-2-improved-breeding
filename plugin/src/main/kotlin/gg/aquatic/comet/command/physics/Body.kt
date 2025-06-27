@@ -34,6 +34,7 @@ interface Body  {
     fun intersect(origin: Vector3d, end: Vector3d): List<Pair<Vector3d, Vector3d>>
 
     fun collides(other: Body): CollisionResult?
+    fun collides(blockBody: BlockBody): CollisionResult?
 
     fun kill()
 
@@ -49,14 +50,13 @@ interface Body  {
     }
 }
 
-data class CollisionResult(
-    val firstPoint: Vector3d,
-    val secondPoint: Vector3d,
+data class CollisionResult (
+    val point: Vector3d,
     val norm: Vector3d,
     val depth: Double,
-    val minkowski: List<Triple<Vector3d, Vector3d, Vector3d>>,
-    val closest: Triple<Vector3d, Vector3d, Vector3d>,
-    val originals: Map<Vector3d, Pair<Vector3d, Vector3d>>,
+    val minkowski: List<Triple<Vector3d, Vector3d, Vector3d>>? = null,
+    val closest: Triple<Vector3d, Vector3d, Vector3d>? = null,
+    val originals: Map<Vector3d, Pair<Vector3d, Vector3d>>? = null,
 )
 
 class BlockBody(val block: Block) : Body {
@@ -64,17 +64,37 @@ class BlockBody(val block: Block) : Body {
     override val velocity: Vector3d = Vector3d()
     override val vertices = block.collisionShape.boundingBoxes.flatMap {
         listOf(
-            Vector3d(block.x + it.minX, block.y + it.minY, block.z + it.maxZ),
             Vector3d(block.x + it.minX, block.y + it.minY, block.z + it.minZ),
-            Vector3d(block.x + it.minX, block.y + it.maxY, block.z + it.maxZ),
-            Vector3d(block.x + it.minX, block.y + it.maxY, block.z + it.minZ),
+            Vector3d(block.x + it.minX, block.y + it.minY, block.z + it.maxZ),
             Vector3d(block.x + it.maxX, block.y + it.minY, block.z + it.maxZ),
             Vector3d(block.x + it.maxX, block.y + it.minY, block.z + it.minZ),
+
+            Vector3d(block.x + it.minX, block.y + it.maxY, block.z + it.minZ),
+            Vector3d(block.x + it.minX, block.y + it.maxY, block.z + it.maxZ),
             Vector3d(block.x + it.maxX, block.y + it.maxY, block.z + it.maxZ),
             Vector3d(block.x + it.maxX, block.y + it.maxY, block.z + it.minZ),
         )
     }
-    override val edges: List<Pair<Vector3d, Vector3d>> = listOf()
+    override val edges: List<Pair<Vector3d, Vector3d>>
+        get() {
+            return listOf(
+                //bottom face
+                vertices[0] to vertices[1],
+                vertices[1] to vertices[2],
+                vertices[2] to vertices[3],
+                vertices[3] to vertices[0],
+                //top face
+                vertices[4] to vertices[5],
+                vertices[5] to vertices[6],
+                vertices[6] to vertices[7],
+                vertices[7] to vertices[4],
+                //connection
+                vertices[0] to vertices[4],
+                vertices[1] to vertices[5],
+                vertices[2] to vertices[6],
+                vertices[3] to vertices[7],
+            )
+        }
     override val boundingBox: BoundingBox = block.boundingBox
     override val inverseMass: Double = 0.0
     override val inverseInertia: Vector3d = Vector3d()
@@ -90,8 +110,8 @@ class BlockBody(val block: Block) : Body {
 
     override fun step() { }
 
-
     override fun collides(other: Body): CollisionResult? { return null }
+    override fun collides(blockBody: BlockBody): CollisionResult? { return null }
 
     override fun kill() { }
 

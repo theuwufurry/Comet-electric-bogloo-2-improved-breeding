@@ -4,6 +4,7 @@ import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.CometRegistry
 import gg.aquatic.comet.api.parsing.resourcepack.ResourcepackCreator
 import gg.aquatic.comet.command.*
+import gg.aquatic.comet.command.physics.ClosestLinesCommand
 import gg.aquatic.comet.command.physics.EPACommand
 import gg.aquatic.comet.command.physics.PhysicsListener
 import gg.aquatic.comet.emitter.GlobalTicker
@@ -50,6 +51,7 @@ class ParticleEmitter : AbstractParticleEmitter() {
                 "kill" to KillCommand,
                 "physics" to PhysicsCommand,
                 "epa" to EPACommand,
+                "lines" to ClosestLinesCommand,
             ),
             listOf()
         ).register("comet")
