@@ -195,7 +195,7 @@ object PhysicsCommand : ICommand {
                                     val vr = Vector3d(second.velocity).sub(first.velocity).dot(norm) +
                                             Vector3d(second.omega).cross(secondLocalPoint).dot(secondLocalNorm) -
                                             Vector3d(first.omega).cross(firstLocalPoint).dot(firstLocalNorm)
-                                    println("$itr VR: $vr mass impact: $massImpact")
+//                                    println("$itr VR: $vr mass impact: $massImpact")
 
                                     val firstAngularImpact =
                                         Vector3d(firstLocalPoint)
@@ -203,14 +203,14 @@ object PhysicsCommand : ICommand {
                                             .mul(first.inverseInertia)
                                             .cross(firstLocalPoint)
                                             .dot(firstLocalNorm)
-                                    println("first angular impact: $firstAngularImpact")
+//                                    println("first angular impact: $firstAngularImpact")
                                     val secondAngularImpact =
                                         Vector3d(secondLocalPoint)
                                             .cross(secondLocalNorm)
                                             .mul(second.inverseInertia)
                                             .cross(secondLocalPoint)
                                             .dot(secondLocalNorm)
-                                    println("first angular impact: $secondAngularImpact")
+//                                    println("first angular impact: $secondAngularImpact")
                                     val angularImpact = firstAngularImpact + secondAngularImpact
 
                                     val bias = BIAS / TIME_STEP * (abs(depth) - SLOP).coerceAtLeast(0.0)
@@ -220,7 +220,7 @@ object PhysicsCommand : ICommand {
                                             0.0
                                         )
 
-                                    println("J: $J")
+                                    println("J$i: $J")
 
                                     val curJSum = contact.jSum
                                     contact.jSum = (curJSum + J).coerceAtLeast(0.0)
@@ -228,7 +228,7 @@ object PhysicsCommand : ICommand {
 
                                     val firstDV = Vector3d(norm).mul(J * first.inverseMass)
                                     first.velocity.sub(firstDV)
-                                    println("firstDV: $firstDV")
+//                                    println("firstDV: $firstDV")
                                     first.omega.add(
                                         Vector3d(firstLocalPoint).cross(Vector3d(firstLocalNorm).mul(J))
                                             .mul(first.inverseInertia)
@@ -236,7 +236,7 @@ object PhysicsCommand : ICommand {
 
                                     val secondDV = Vector3d(norm).mul(J * second.inverseMass)
                                     second.velocity.add(secondDV)
-                                    println("secondDV: $secondDV")
+//                                    println("secondDV: $secondDV")
                                     second.omega.add(
                                         Vector3d(secondLocalPoint).cross(Vector3d(secondLocalNorm).mul(J))
                                             .mul(second.inverseInertia)
