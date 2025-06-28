@@ -76,6 +76,7 @@ class ParticleEmitter : AbstractParticleEmitter() {
     override fun onDisable() {
         ParticleJsonParser.onDisable()
         GlobalTicker.disable()
+        PhysicsCommand.onDisable()
     }
 
     private fun initializeHooks() {

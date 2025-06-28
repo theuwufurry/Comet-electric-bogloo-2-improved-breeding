@@ -1,11 +1,15 @@
 package gg.aquatic.comet.command.physics
 
 import gg.aquatic.comet.applyIf
+import gg.aquatic.comet.command.PhysicsCommand
 import gg.aquatic.comet.command.physics.Body.Companion.TIME_STEP
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.World
 import org.bukkit.entity.BlockDisplay
+import org.bukkit.entity.Display
+import org.bukkit.entity.EntityType
+import org.bukkit.entity.TextDisplay
 import org.bukkit.util.BoundingBox
 import org.bukkit.util.Transformation
 import org.joml.Quaterniond
@@ -113,6 +117,8 @@ class Cuboid(
         org.bukkit.entity.EntityType.BLOCK_DISPLAY
     ) as BlockDisplay
 
+    private var debugDisplay: TextDisplay? = null
+
     private fun createTransformation(): Transformation {
         val scale = Vector3f(scale.x.toFloat(), scale.y.toFloat(), scale.z.toFloat())
         val rot = Quaternionf(q.x.toFloat(), q.y.toFloat(), q.z.toFloat(), q.w.toFloat())
@@ -134,6 +140,7 @@ class Cuboid(
 
     override fun kill() {
         display.remove()
+        debugDisplay?.remove()
     }
 
     private val volume = width * height * length
@@ -192,6 +199,27 @@ class Cuboid(
 
         display.transformation = createTransformation()
         display.teleport(Location(world, pos.x, pos.y, pos.z))
+
+        handleDebug()
+    }
+
+    private var previousDebugLevel = 0
+    private fun handleDebug() {
+        if (PhysicsCommand.DEBUG_LEVEL > 0 && previousDebugLevel == 0) {
+            debugDisplay = world.spawnEntity(display.location, EntityType.TEXT_DISPLAY) as TextDisplay
+            debugDisplay!!.text = "V: $velocity"
+            debugDisplay!!.billboard = Display.Billboard.CENTER
+        } else if (PhysicsCommand.DEBUG_LEVEL == 0 && previousDebugLevel > 0) {
+            debugDisplay?.remove()
+            debugDisplay = null
+        }
+
+        if (debugDisplay != null) {
+            debugDisplay!!.teleport(display.location)
+            debugDisplay!!.text = "V: $velocity"
+        }
+
+        previousDebugLevel = PhysicsCommand.DEBUG_LEVEL
     }
 
     private fun calcDerivatives(
@@ -302,6 +330,11 @@ class Cuboid(
     }
 
     override fun collides(blockBody: BlockBody): CollisionResult? {
+        val ignoredAxiss = mutableListOf<Vector3d>(
+//            Vector3d(1.0, 0.0, 0.0),
+//            Vector3d(0.0, 0.0, 1.0),
+        )
+
         val otherAxiss = listOf(
             Vector3d(1.0, 0.0, 0.0),
             Vector3d(0.0, 1.0, 0.0),
@@ -314,17 +347,25 @@ class Cuboid(
             Vector3d(0.0, 0.0, 1.0).rotate(q).normalize(),
         )
 
-        val edgeAxiss = listOf(
-            Vector3d(otherAxiss[0]).cross(myAxiss[0]).normalize(),
-            Vector3d(otherAxiss[0]).cross(myAxiss[1]).normalize(),
-            Vector3d(otherAxiss[0]).cross(myAxiss[2]).normalize(),
-            Vector3d(otherAxiss[1]).cross(myAxiss[0]).normalize(),
-            Vector3d(otherAxiss[1]).cross(myAxiss[1]).normalize(),
-            Vector3d(otherAxiss[1]).cross(myAxiss[2]).normalize(),
-            Vector3d(otherAxiss[2]).cross(myAxiss[0]).normalize(),
-            Vector3d(otherAxiss[2]).cross(myAxiss[1]).normalize(),
-            Vector3d(otherAxiss[2]).cross(myAxiss[2]).normalize(),
+        val otherEdges = listOf(
+            Vector3d(1.0, 0.0, 0.0),
+            Vector3d(0.0, 1.0, 0.0),
+            Vector3d(0.0, 0.0, 1.0),
         )
+
+        val myEdges = listOf(
+            Vector3d(1.0, 0.0, 0.0).rotate(q).normalize(),
+            Vector3d(0.0, 1.0, 0.0).rotate(q).normalize(),
+            Vector3d(0.0, 0.0, 1.0).rotate(q).normalize(),
+        )
+
+        val (edgeAxiss, ignoredEdgeAxiss) = genCrosses(otherEdges, myEdges, listOf(
+//            Vector3d(1.0, 0.0, 0.0),
+//            Vector3d(0.0, 1.0, 0.0),
+//            Vector3d(0.0, 0.0, 1.0),
+        ))
+
+        ignoredAxiss += ignoredEdgeAxiss
 
         val axiss = mutableListOf<Vector3d>()
         axiss += otherAxiss
@@ -376,6 +417,8 @@ class Cuboid(
                 return null
             }
 
+            if (axis in ignoredAxiss) continue
+
             if (overlap < minOverlap) {
                 minAxis = axis
                 minOverlap = overlap
@@ -383,29 +426,15 @@ class Cuboid(
             }
         }
 
-        assert(minAxis != null)
+        check(minAxis != null)
 
         if (minAxis in edgeAxiss) {
             //edge-edge
             //depending on the order, find most penetrating point(s) on each body, then choose the edges from that
-            println("EDGE-EDGE")
-            println("  - AXIS: $minAxis")
-            println("  - OVERLAP: $minOverlap")
-            println("  - ORDER: $order")
-//            val index = edgeAxiss.indexOf(minAxis)
-//            val firstAxis = when (index) {
-//                in 0..2 -> otherAxiss[0]
-//                in 3..5 -> otherAxiss[1]
-//                in 6..8 -> otherAxiss[2]
-//                else -> throw IllegalStateException("Axis not found in edge axiss - impossible")
-//            }
-//
-//            val secondAxis = when (index) {
-//                0, 3, 6 -> myAxiss[0]
-//                1, 4, 7 -> myAxiss[1]
-//                2, 5, 8 -> myAxiss[2]
-//                else -> throw IllegalStateException("Axis not found in edge axiss - impossible")
-//            }
+//            println("EDGE-EDGE")
+//            println("  - AXIS: $minAxis")
+//            println("  - OVERLAP: $minOverlap")
+//            println("  - ORDER: $order")
 
             var myDeepestVertices = mutableListOf<Vector3d>()
             var myDeepestDistance = -Double.MAX_VALUE
@@ -413,10 +442,13 @@ class Cuboid(
 
             for (vertex in myVertices) {
                 val d = vertex.dot(myOrderedAxis)
+//                println("my $vertex d: $d deepest: $myDeepestDistance")
                 if (abs(d - myDeepestDistance) < EPSILON) {
+//                    println("MERGER!")
                     myDeepestVertices += vertex
                     continue
                 } else if (d > myDeepestDistance) {
+//                    println("NEW LARGEST!")
                     myDeepestDistance = d
                     myDeepestVertices = mutableListOf(vertex)
                 }
@@ -428,6 +460,7 @@ class Cuboid(
 
             for (vertex in otherVertices) {
                 val d = vertex.dot(otherOrderedAxis)
+//                println("other $vertex d: $d deepest: $otherDeepestDistance")
                 if (abs(d - otherDeepestDistance) < EPSILON) {
                     otherDeepestVertices += vertex
                     continue
@@ -440,8 +473,8 @@ class Cuboid(
 //            println("myDeepestVertices : $myDeepestDistance : $myDeepestVertices")
 //            println("otherDeepestVertices : $otherDeepestDistance : $otherDeepestVertices")
 
-            assert(myDeepestVertices.size == 2)
-            assert(otherDeepestVertices.size == 2)
+            check(myDeepestVertices.size == 2)
+            check(otherDeepestVertices.size == 2)
 
             val r = closestPointsBetweenSegments(
                 myDeepestVertices[0],
@@ -450,24 +483,30 @@ class Cuboid(
                 otherDeepestVertices[1]
             ) ?: throw IllegalStateException("PARALLEL FUCK UP!")
 
+//            println("   * myDeepestVertices: ${myDeepestVertices[0]}")
+//            println("   * myDeepestVertices: ${myDeepestVertices[1]}")
+//            println("   * otherDeepestVertices: ${otherDeepestVertices[0]}")
+//            println("   * otherDeepestVertices: ${otherDeepestVertices[1]}")
+//            println("   * DISTANCE: ${r.third}")
+
             return CollisionResult(
                 Vector3d(r.first).mul(0.5).add(Vector3d(r.second).mul(0.5)),
-                if (order) minAxis!! else Vector3d(minAxis!!).negate(),
+                if (order) minAxis else Vector3d(minAxis).negate(),
                 r.third
             )
         } else {
             //face-vertex
-            println("FACE-VERTEX")
-            println("  - AXIS: $minAxis")
-            println("  - OVERLAP: $minOverlap")
-            println("  - ORDER: $order")
+//            println("FACE-VERTEX")
+//            println("  - AXIS: $minAxis")
+//            println("  - OVERLAP: $minOverlap")
+//            println("  - ORDER: $order")
 
             var furthestDistance = -Double.MAX_VALUE
             var furtherVertex: Vector3d? = null
 
             if (myAxiss.contains(minAxis)) {
                 val antiNormal = if (!order) Vector3d(minAxis).negate() else Vector3d(minAxis)
-                println("OTHER AXIS")
+//                println("OTHER AXIS")
                 //other has incident
                 for (vertex in otherVertices) {
                     val d = vertex.dot(antiNormal)
@@ -480,7 +519,7 @@ class Cuboid(
                 return CollisionResult(furtherVertex!!, Vector3d(minAxis).applyIf(!order) { negate() }, minOverlap)
             } else {
                 val antiNormal = if (order) Vector3d(minAxis).negate() else Vector3d(minAxis)
-                println("MY AXIS")
+//                println("MY AXIS")
                 //i have incident
                 for (vertex in myVertices) {
                     val d = vertex.dot(antiNormal)
@@ -549,7 +588,7 @@ class Cuboid(
 
                 val winding = abc.dot(dP) < 0.0 //TRUE: COUNTERCLOCKWISE, FALSE: CLOCKWISE
 //                println("WINDING: ${if (winding) "COUNTERCLOCKWISE" else "CLOCKWISE"}")
-                assert(winding == (dab.dot(cP) < 0.0) == (dbc.dot(aP) < 0.0) == (dca.dot(bP) < 0.0)) //EVERYTHING MUST BE WOUND THE SAME WAY
+                check(winding == (dab.dot(cP) < 0.0) == (dbc.dot(aP) < 0.0) == (dca.dot(bP) < 0.0)) //EVERYTHING MUST BE WOUND THE SAME WAY
 
                 val shape = mutableListOf(
                     if (winding) Triple(aP, cP, bP) else Triple(aP, bP, cP),
@@ -928,7 +967,7 @@ class Cuboid(
                 }
             }
 
-            assert(nClosest.lengthSquared() > 0.0)
+            check(nClosest.lengthSquared() > 0.0)
 
             return ClosestResult(dClosest, nClosest, closestFaces)
         }
@@ -1102,7 +1141,25 @@ class Cuboid(
 
             return true
         }
+
+        /**
+         * @return the crosses, the ignored crosses
+         */
+        private fun genCrosses(dirs1: List<Vector3d>, dirs2: List<Vector3d>, ignored: List<Vector3d>): Pair<List<Vector3d>, List<Vector3d>> {
+            val ils = mutableListOf<Vector3d>()
+            val ls = mutableListOf<Vector3d>()
+            for (dir1 in dirs1) {
+                val isIgnored1 = dir1 in ignored
+                for (dir2 in dirs2) {
+                    val r = Vector3d(dir1).cross(dir2).normalize()
+                    if (isIgnored1 || dir2 in ignored) ils += r
+                    ls += r
+                }
+            }
+
+            return ls to ils
+        }
     }
 }
 
-private const val EPSILON = 1e-7
+private const val EPSILON = 1e-11

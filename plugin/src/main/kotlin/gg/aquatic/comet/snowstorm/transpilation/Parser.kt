@@ -146,7 +146,7 @@ class Parser(
             current++
             val expr = expression()
             current++
-            assert(tokens[current].type == RIGHT_PAREN)
+            check(tokens[current].type == RIGHT_PAREN)
             return GroupingExpr(expr)
         }
 

@@ -10,7 +10,7 @@ object CurveDeserializer {
         obj: JsonObject,
         deserializedParticleEffect: DeserializedParticleEffect
     ): CatmullCurve {
-        assert(obj["type"].asString == "catmull")
+        check(obj["type"].asString == "catmull_rom") { "Object type must be catmull_rom!" }
 
         val nodesArray = obj["nodes"].asJsonArray
         val times: MutableList<Double> = mutableListOf()

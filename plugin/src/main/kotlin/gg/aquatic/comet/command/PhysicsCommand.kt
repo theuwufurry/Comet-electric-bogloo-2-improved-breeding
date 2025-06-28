@@ -36,7 +36,7 @@ object PhysicsCommand : ICommand {
      * point, direction
      */
     private var contacts = mutableListOf<Contact>()
-    private var DEBUG_LEVEL = 0
+    var DEBUG_LEVEL = 0
 
     override fun run(sender: CommandSender, args: Array<out String>) {
         if (sender !is Player) return
@@ -195,7 +195,6 @@ object PhysicsCommand : ICommand {
                                     val vr = Vector3d(second.velocity).sub(first.velocity).dot(norm) +
                                             Vector3d(second.omega).cross(secondLocalPoint).dot(secondLocalNorm) -
                                             Vector3d(first.omega).cross(firstLocalPoint).dot(firstLocalNorm)
-//                                    println("$itr VR: $vr mass impact: $massImpact")
 
                                     val firstAngularImpact =
                                         Vector3d(firstLocalPoint)
@@ -220,7 +219,6 @@ object PhysicsCommand : ICommand {
                                             0.0
                                         )
 
-                                    println("J$i: $J")
 
                                     val curJSum = contact.jSum
                                     contact.jSum = (curJSum + J).coerceAtLeast(0.0)
@@ -228,7 +226,6 @@ object PhysicsCommand : ICommand {
 
                                     val firstDV = Vector3d(norm).mul(J * first.inverseMass)
                                     first.velocity.sub(firstDV)
-//                                    println("firstDV: $firstDV")
                                     first.omega.add(
                                         Vector3d(firstLocalPoint).cross(Vector3d(firstLocalNorm).mul(J))
                                             .mul(first.inverseInertia)
@@ -236,11 +233,22 @@ object PhysicsCommand : ICommand {
 
                                     val secondDV = Vector3d(norm).mul(J * second.inverseMass)
                                     second.velocity.add(secondDV)
-//                                    println("secondDV: $secondDV")
                                     second.omega.add(
                                         Vector3d(secondLocalPoint).cross(Vector3d(secondLocalNorm).mul(J))
                                             .mul(second.inverseInertia)
                                     )
+
+//                                    if (J > 1.0) {
+//                                        println("STRONG COLLISION! ITR: $itr")
+//                                        println("  - NORM: $norm DEPTH: $depth POINT: $point")
+//                                        println("  - J: $J")
+//                                        println("    * VR: $vr")
+//                                        println("    * BIAS: $bias")
+//                                        println("    * MASSIMPACT: $massImpact")
+//                                        println("    * ANGULARIMPACT: $angularImpact")
+//                                        println("  - firstDV: $firstDV")
+//                                        println("  - secondDV: $secondDV")
+//                                    }
                                 }
                             }
 //                        }
@@ -263,7 +271,7 @@ object PhysicsCommand : ICommand {
                         sender.world.debugConnect(
                             point,
                             Vector3d(point).add(norm),
-                            DustOptions(Color.BLUE, 0.3f)
+                            DustOptions(Color.BLUE, 0.2f)
                         )
 
                         sender.world.spawnParticle(
@@ -272,7 +280,7 @@ object PhysicsCommand : ICommand {
                                 sender.world,
                                 point.x, point.y, point.z,
                             ),
-                            1, Particle.DustOptions(Color.RED, 0.8f)
+                            1, Particle.DustOptions(Color.RED, 0.4f)
                         )
 
                         val minkowskiDebugOrigin = Vector3d(point).add(0.0, 3.0, 0.0)
@@ -455,6 +463,11 @@ object PhysicsCommand : ICommand {
             10 -> listOf("<lz>")
             else -> emptyList()
         }
+    }
+
+    fun onDisable() {
+        bodies.forEach { it.kill() }
+        bodies.clear()
     }
 }
 
