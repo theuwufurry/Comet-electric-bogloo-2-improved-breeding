@@ -400,79 +400,154 @@ object PhysicsCommand : ICommand {
             return
         }
 
-        for (i in 2..<args.size) {
-            
+        if (args[1] == "cube") {
+            var v0 = Vector3d(0.0)
+            var dims = Vector3d(1.0)
+            var l = Vector3d(0.0)
+            var rot0 = Vector3d(0.0)
+
+            var density = 1.0
+            var hasGravity = true
+
+            var i = 2
+            while (i < args.size) {
+                val arg = args[i]
+
+                if (arg == "--velocity" || arg == "-v") {
+                    val buf = mutableListOf<Double>()
+                    i++
+                    while (i < args.size) {
+                        val arg2 = args[i]
+                        val d = arg2.toDoubleOrNull()
+                        if (d == null) {
+                            i--;
+                            break
+                        }
+
+                        buf += d
+
+                        if (buf.size == 3) {
+                            v0 = Vector3d(buf[0], buf[1], buf[2])
+                            break
+                        }
+
+                        i++
+                    }
+                }
+
+                if (arg == "--dims" || arg == "-d") {
+                    val buf = mutableListOf<Double>()
+                    i++
+                    while (i < args.size) {
+                        val arg2 = args[i]
+                        val d = arg2.toDoubleOrNull()
+                        if (d == null) {
+                            i--;
+                            break
+                        }
+
+                        buf += d
+
+                        if (buf.size == 3) {
+                            dims = Vector3d(buf[0], buf[1], buf[2])
+                            break
+                        }
+
+                        i++
+                    }
+                }
+
+                if (arg == "--omega" || arg == "-o") {
+                    val buf = mutableListOf<Double>()
+                    i++
+                    while (i < args.size) {
+                        val arg2 = args[i]
+                        val d = arg2.toDoubleOrNull()
+                        if (d == null) {
+                            i--;
+                            break
+                        }
+
+                        buf += d
+
+                        if (buf.size == 3) {
+                            l = Vector3d(buf[0], buf[1], buf[2])
+                            break
+                        }
+
+                        i++
+                    }
+                }
+
+                if (arg == "--rot" || arg == "-r") {
+                    val buf = mutableListOf<Double>()
+                    i++
+                    while (i < args.size) {
+                        val arg2 = args[i]
+                        val d = arg2.toDoubleOrNull()
+                        if (d == null) {
+                            i--;
+                            break
+                        }
+
+                        buf += d
+
+                        if (buf.size == 3) {
+                            rot0 = Vector3d(buf[0], buf[1], buf[2])
+                            break
+                        }
+
+                        i++
+                    }
+                }
+
+                if (arg == "--density") {
+                    i++
+                    while (i < args.size) {
+                        i++
+                        val arg2 = args[i]
+                        val d = arg2.toDoubleOrNull()
+                        if (d == null) {
+                            i--
+                            break
+                        }
+
+                        density = d
+                    }
+                }
+
+                if (arg == "--gravity" || arg == "-g") {
+                    hasGravity = true
+                }
+
+                if (arg == "--no-gravity" || arg == "-ng") {
+                    hasGravity = false
+                }
+
+                i++
+            }
+
+            val origin = sender.location.toVector().toVector3d()
+            val rb = Cuboid(
+                world = sender.world,
+                pos = Vector3d(origin),
+                velocity = Vector3d(v0),
+                width = dims.x,
+                height = dims.y,
+                length = dims.z,
+                q = Quaterniond().rotateXYZ(rot0.x, rot0.y, rot0.z),
+                omega = Vector3d(l),
+                density = density,
+                hasGravity = hasGravity,
+            )
+
+            val ls = globalBodies.getOrPut(sender.world) { mutableListOf() }
+            ls += rb
         }
-
-        if (args.size < 16) {
-            sender.sendMessage("Usage: /comet physics cube <vx> <vy> <vz> <width> <height> <length> <lx> <ly> <lz> <ax> <ay> <az> <density> <gravity>")
-            return
-        }
-
-        if (args[1] != "cube") {
-            sender.sendMessage("Usage: /comet physics cube <vx> <vy> <vz> <width> <height> <length> <lx> <ly> <lz> <density> <gravity>")
-            return
-        }
-
-        val v0 = Vector3d(
-            args[2].toDouble(),
-            args[3].toDouble(),
-            args[4].toDouble(),
-        )
-
-        val dims = Vector3d(
-            args[5].toDouble(),
-            args[6].toDouble(),
-            args[7].toDouble(),
-        )
-
-        val l = Vector3d(
-            args[8].toDouble(),
-            args[9].toDouble(),
-            args[10].toDouble(),
-        )
-
-        val rot0 = Vector3d(
-            args[11].toDouble(),
-            args[12].toDouble(),
-            args[13].toDouble(),
-        )
-
-        val density = args[14].toDouble()
-        val hasGravity = args[15].toBoolean()
-
-        val origin = sender.location.toVector().toVector3d()
-        val rb = Cuboid(
-            world = sender.world,
-            pos = Vector3d(origin),
-            velocity = Vector3d(v0),
-            width = dims.x,
-            height = dims.y,
-            length = dims.z,
-            q = Quaterniond().rotateXYZ(rot0.x, rot0.y, rot0.z),
-            omega = Vector3d(l),
-            density = density,
-            hasGravity = hasGravity,
-        )
-
-        val ls = globalBodies.getOrPut(sender.world) { mutableListOf() }
-        ls += rb
     }
 
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
-        return when (args.size) {
-            1 -> listOf("cube", "clear", "freeze", "step")
-            2 -> listOf("<vx>")
-            3 -> listOf("<vy>")
-            4 -> listOf("<vz>")
-            5 -> listOf("<width>")
-            6 -> listOf("<height>")
-            7 -> listOf("<length>")
-            8 -> listOf("<lx>")
-            9 -> listOf("<ly>")
-            10 -> listOf("<lz>")
-            else -> emptyList()
-        }
+        return emptyList()
     }
 
     fun onDisable() {
