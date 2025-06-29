@@ -56,6 +56,7 @@ class ParticleEmitter : AbstractParticleEmitter() {
             listOf()
         ).register("comet")
 
+        PhysicsCommand.init()
         PhysicsListener.init()
 
         initializeHooks()

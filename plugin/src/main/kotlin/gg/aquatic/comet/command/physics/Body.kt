@@ -1,5 +1,6 @@
 package gg.aquatic.comet.command.physics
 
+import org.bukkit.World
 import org.bukkit.block.Block
 import org.bukkit.util.BoundingBox
 import org.joml.Quaterniond
@@ -9,6 +10,8 @@ import java.util.UUID
 interface Body  {
     val id: UUID
     val velocity: Vector3d
+
+    val world: World
 
     val vertices: List<Vector3d>
     val edges: List<Pair<Vector3d, Vector3d>>
@@ -33,8 +36,8 @@ interface Body  {
      */
     fun intersect(origin: Vector3d, end: Vector3d): List<Pair<Vector3d, Vector3d>>
 
-    fun collides(other: Body): CollisionResult?
-    fun collides(blockBody: BlockBody): CollisionResult?
+    fun collidesGJKEPA(other: Body): CollisionResult?
+    fun collidesSAT(blockBody: Body): CollisionResult?
 
     fun kill()
 
@@ -60,19 +63,20 @@ data class CollisionResult (
 )
 
 class BlockBody(val block: Block) : Body {
+    override val world: World = block.world
     override val id: UUID = UUID.randomUUID()
     override val velocity: Vector3d = Vector3d()
     override val vertices = block.collisionShape.boundingBoxes.flatMap {
         listOf(
-            Vector3d(block.x + it.minX, block.y + it.minY, block.z + it.minZ),
-            Vector3d(block.x + it.minX, block.y + it.minY, block.z + it.maxZ),
-            Vector3d(block.x + it.maxX, block.y + it.minY, block.z + it.maxZ),
-            Vector3d(block.x + it.maxX, block.y + it.minY, block.z + it.minZ),
+            Vector3d(block.x + it.minX - 10, block.y + it.minY, block.z + it.minZ - 10),
+            Vector3d(block.x + it.minX - 10, block.y + it.minY, block.z + it.maxZ + 10),
+            Vector3d(block.x + it.maxX + 10, block.y + it.minY, block.z + it.maxZ + 10),
+            Vector3d(block.x + it.maxX + 10, block.y + it.minY, block.z + it.minZ - 10),
 
-            Vector3d(block.x + it.minX, block.y + it.maxY, block.z + it.minZ),
-            Vector3d(block.x + it.minX, block.y + it.maxY, block.z + it.maxZ),
-            Vector3d(block.x + it.maxX, block.y + it.maxY, block.z + it.maxZ),
-            Vector3d(block.x + it.maxX, block.y + it.maxY, block.z + it.minZ),
+            Vector3d(block.x + it.minX - 10, block.y + it.maxY, block.z + it.minZ - 10),
+            Vector3d(block.x + it.minX - 10, block.y + it.maxY, block.z + it.maxZ + 10),
+            Vector3d(block.x + it.maxX + 10, block.y + it.maxY, block.z + it.maxZ + 10),
+            Vector3d(block.x + it.maxX + 10, block.y + it.maxY, block.z + it.minZ - 10),
         )
     }
     override val edges: List<Pair<Vector3d, Vector3d>>
@@ -110,8 +114,8 @@ class BlockBody(val block: Block) : Body {
 
     override fun step() { }
 
-    override fun collides(other: Body): CollisionResult? { return null }
-    override fun collides(blockBody: BlockBody): CollisionResult? { return null }
+    override fun collidesGJKEPA(other: Body): CollisionResult? { return null }
+    override fun collidesSAT(blockBody: Body): CollisionResult? { return null }
 
     override fun kill() { }
 

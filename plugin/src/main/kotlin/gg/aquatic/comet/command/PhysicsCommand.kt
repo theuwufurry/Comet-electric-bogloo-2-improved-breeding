@@ -23,10 +23,10 @@ import kotlin.math.roundToInt
 import kotlin.random.Random
 
 object PhysicsCommand : ICommand {
-    private var task: BukkitTask? = null
+    private lateinit var task: BukkitTask
     private var time = 0
     private val DEBUG_FREQUENCY = 2
-    val bodies = mutableListOf<Body>()
+    val globalBodies = mutableMapOf<World, MutableList<Body>>()
     private var frozen = false
     private var steps = 0
     private var untilCollision = false
@@ -35,8 +35,332 @@ object PhysicsCommand : ICommand {
     /**
      * point, direction
      */
-    private var contacts = mutableListOf<Contact>()
+    private var globalContacts = mutableMapOf<World, MutableList<Contact>>()
     var DEBUG_LEVEL = 0
+
+    fun init() {
+        task = Bukkit.getScheduler().runTaskTimer(AbstractParticleEmitter.INSTANCE, Runnable {
+            time++
+            for ((world, localBodies) in globalBodies.entries) {
+                val contacts = mutableListOf<Contact>()
+                globalContacts[world] = contacts
+                repeat((0.05 / TIME_STEP).roundToInt()) {
+                    var doTick = true
+                    if (frozen) {
+                        if (untilCollision && contacts.isNotEmpty()) {
+                            untilCollision = false
+                            frozen = true
+                            doTick = false
+                        }
+
+                        if (!untilCollision && --steps < 0) doTick = false
+                    }
+
+                    if (doTick) {
+                        for (body in localBodies) {
+                            if (body.hasGravity) body.velocity.add(Vector3d(GRAVITY).mul(TIME_STEP))
+                        }
+
+                        contacts.clear()
+
+                        for (i in 0..<localBodies.size) {
+                            val firstBody = localBodies[i]
+                            val firstBoundingBox = firstBody.boundingBox
+                            if (localBodies.size > 1) {
+                                for (j in (i + 1)..<localBodies.size) {
+                                    val second = localBodies[j]
+
+                                    if (!firstBoundingBox.overlaps(second.boundingBox)) continue
+
+                                    val result = firstBody.collidesGJKEPA(second) ?: continue
+
+                                    contacts += Contact(firstBody, second, result)
+                                }
+                            }
+
+                            val blocks = firstBoundingBox.overlappingBlocks(world)
+                            for (block in blocks) {
+                                val body = BlockBody(block)
+                                val result = firstBody.collidesSAT(body) ?: continue
+//
+                                contacts += Contact(body, firstBody, result)
+                                break
+                            }
+//                        }
+                        }
+
+                        for (itr in 1..5) {
+                            for (contact in contacts) {
+                                val first = contact.first
+                                val second = contact.second
+
+                                val point = contact.result.point
+                                val norm = contact.result.norm
+                                val depth = contact.result.depth
+
+                                val massImpact = first.inverseMass + second.inverseMass
+
+                                val firstLocalPoint = first.globalToLocal(point)
+                                val firstLocalNorm =
+                                    Vector3d(norm).negate().rotate(Quaterniond(first.q).conjugate()).normalize()
+                                val secondLocalPoint = second.globalToLocal(point)
+                                val secondLocalNorm =
+                                    Vector3d(norm).rotate(Quaterniond(second.q).conjugate()).normalize()
+
+                                val vr = Vector3d(second.velocity).sub(first.velocity).dot(norm) +
+                                        Vector3d(second.omega).cross(secondLocalPoint).dot(secondLocalNorm) -
+                                        Vector3d(first.omega).cross(firstLocalPoint).dot(firstLocalNorm)
+
+                                val firstAngularImpact =
+                                    Vector3d(firstLocalPoint)
+                                        .cross(firstLocalNorm)
+                                        .mul(first.inverseInertia)
+                                        .cross(firstLocalPoint)
+                                        .dot(firstLocalNorm)
+//                                    println("first angular impact: $firstAngularImpact")
+                                val secondAngularImpact =
+                                    Vector3d(secondLocalPoint)
+                                        .cross(secondLocalNorm)
+                                        .mul(second.inverseInertia)
+                                        .cross(secondLocalPoint)
+                                        .dot(secondLocalNorm)
+//                                    println("first angular impact: $secondAngularImpact")
+                                val angularImpact = firstAngularImpact + secondAngularImpact
+
+                                val bias = BIAS / TIME_STEP * (abs(depth) - SLOP).coerceAtLeast(0.0)
+
+                                var J =
+                                    (bias + (vr * -(1.0)) / (massImpact + angularImpact)).coerceAtLeast(
+                                        0.0
+                                    )
+
+
+                                val curJSum = contact.jSum
+                                contact.jSum = (curJSum + J).coerceAtLeast(0.0)
+                                J = contact.jSum - curJSum
+
+                                val firstDV = Vector3d(norm).mul(J * first.inverseMass)
+                                first.velocity.sub(firstDV)
+                                first.omega.add(
+                                    Vector3d(firstLocalPoint).cross(Vector3d(firstLocalNorm).mul(J))
+                                        .mul(first.inverseInertia)
+                                )
+
+                                val secondDV = Vector3d(norm).mul(J * second.inverseMass)
+                                second.velocity.add(secondDV)
+                                second.omega.add(
+                                    Vector3d(secondLocalPoint).cross(Vector3d(secondLocalNorm).mul(J))
+                                        .mul(second.inverseInertia)
+                                )
+
+//                                    if (J > 1.0) {
+//                                        println("STRONG COLLISION! ITR: $itr")
+//                                        println("  - NORM: $norm DEPTH: $depth POINT: $point")
+//                                        println("  - J: $J")
+//                                        println("    * VR: $vr")
+//                                        println("    * BIAS: $bias")
+//                                        println("    * MASSIMPACT: $massImpact")
+//                                        println("    * ANGULARIMPACT: $angularImpact")
+//                                        println("  - firstDV: $firstDV")
+//                                        println("  - secondDV: $secondDV")
+//                                    }
+                            }
+                        }
+
+                        for (body in localBodies) {
+                            body.step()
+                        }
+                    }
+
+
+                    for (contact in contacts) {
+                        val (point,
+                            norm,
+                            _,
+                            minkowski,
+                            closest,
+                            originals) = contact.result
+
+                        world.debugConnect(
+                            point,
+                            Vector3d(point).add(norm),
+                            DustOptions(Color.BLUE, 0.2f)
+                        )
+
+                        world.spawnParticle(
+                            Particle.REDSTONE,
+                            Location(
+                                world,
+                                point.x, point.y, point.z,
+                            ),
+                            1, Particle.DustOptions(Color.RED, 0.4f)
+                        )
+
+                        val minkowskiDebugOrigin = Vector3d(point).add(0.0, 3.0, 0.0)
+                        val vertices = mutableSetOf<Vector3d>()
+                        if (minkowski != null) {
+                            originals!!
+                            closest!!
+                            for ((a, b, c) in minkowski) {
+                                vertices += a
+                                vertices += b
+                                vertices += c
+
+                                if (DEBUG_LEVEL > 2) {
+                                    val color =
+                                        choices[Vector3d(a).add(b).add(c).hashCode().absoluteValue % (choices.size)]
+
+                                    world.debugConnect(
+                                        Vector3d(minkowskiDebugOrigin).add(Vector3d(a).mul(enhancement)),
+                                        Vector3d(minkowskiDebugOrigin).add(Vector3d(b).mul(enhancement)),
+                                        DustOptions(Color.BLACK, 0.2f)
+                                    )
+
+                                    world.debugConnect(
+                                        Vector3d(minkowskiDebugOrigin).add(Vector3d(a).mul(enhancement)),
+                                        Vector3d(minkowskiDebugOrigin).add(Vector3d(c).mul(enhancement)),
+                                        DustOptions(Color.BLACK, 0.2f)
+                                    )
+
+                                    world.debugConnect(
+                                        Vector3d(minkowskiDebugOrigin).add(Vector3d(c).mul(enhancement)),
+                                        Vector3d(minkowskiDebugOrigin).add(Vector3d(b).mul(enhancement)),
+                                        DustOptions(Color.BLACK, 0.2f)
+                                    )
+
+                                    repeat(50) {
+                                        var cA = Random.nextDouble()
+                                        var cB = Random.nextDouble()
+                                        var cC = Random.nextDouble()
+
+                                        val t = cA + cB + cC
+
+                                        cA /= t
+                                        cB /= t
+                                        cC /= t
+
+                                        val bp = Vector3d(a).mul(cA).add(Vector3d(b).mul(cB)).add(Vector3d(c).mul(cC))
+
+                                        world.spawnParticle(
+                                            Particle.REDSTONE,
+                                            Location(
+                                                world,
+                                                minkowskiDebugOrigin.x + bp.x * enhancement.x,
+                                                minkowskiDebugOrigin.y + bp.y * enhancement.y,
+                                                minkowskiDebugOrigin.z + bp.z * enhancement.z,
+                                            ),
+                                            1,
+                                            DustOptions(color, 0.2f)
+                                        )
+                                    }
+                                }
+                            }
+
+                            for (vertex in vertices) {
+                                val (start, end) = originals[vertex]!!
+
+                                val newPos = Vector3d(minkowskiDebugOrigin).add(vertex)
+
+                                if (DEBUG_LEVEL > 2) {
+                                    world.debugConnect(
+                                        start,
+                                        end,
+                                        DustOptions(Color.BLUE, 0.1f)
+                                    )
+
+                                    world.debugConnect(
+                                        newPos,
+                                        end,
+                                        DustOptions(Color.YELLOW, 0.1f)
+                                    )
+
+                                    world.debugConnect(
+                                        start,
+                                        newPos,
+                                        DustOptions(Color.YELLOW, 0.1f)
+                                    )
+
+                                    world.spawnParticle(
+                                        Particle.REDSTONE,
+                                        Location(
+                                            world,
+                                            newPos.x,
+                                            newPos.y,
+                                            newPos.z,
+                                        ),
+                                        1, Particle.DustOptions(Color.WHITE, 0.5f)
+                                    )
+                                }
+
+                                if (DEBUG_LEVEL > 2) {
+                                    world.spawnParticle(
+                                        Particle.REDSTONE,
+                                        Location(
+                                            world,
+                                            minkowskiDebugOrigin.x,
+                                            minkowskiDebugOrigin.y,
+                                            minkowskiDebugOrigin.z,
+                                        ),
+                                        1, Particle.DustOptions(Color.ORANGE, 0.5f)
+                                    )
+
+                                    world.spawnParticle(
+                                        Particle.REDSTONE,
+                                        Location(
+                                            world,
+                                            minkowskiDebugOrigin.x + closest.first.x,
+                                            minkowskiDebugOrigin.y + closest.first.y,
+                                            minkowskiDebugOrigin.z + closest.first.z,
+                                        ),
+                                        1, Particle.DustOptions(Color.RED, 0.5f)
+                                    )
+
+                                    world.spawnParticle(
+                                        Particle.REDSTONE,
+                                        Location(
+                                            world,
+                                            minkowskiDebugOrigin.x + closest.second.x,
+                                            minkowskiDebugOrigin.y + closest.second.y,
+                                            minkowskiDebugOrigin.z + closest.second.z,
+                                        ),
+                                        1, Particle.DustOptions(Color.RED, 0.5f)
+                                    )
+
+                                    world.spawnParticle(
+                                        Particle.REDSTONE,
+                                        Location(
+                                            world,
+                                            minkowskiDebugOrigin.x + closest.third.x,
+                                            minkowskiDebugOrigin.y + closest.third.y,
+                                            minkowskiDebugOrigin.z + closest.third.z,
+                                        ),
+                                        1, Particle.DustOptions(Color.RED, 0.5f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (time % DEBUG_FREQUENCY == 0) {
+                    if (DEBUG_LEVEL > 0) {
+                        for (body in localBodies) {
+                            val boundingBox = body.boundingBox
+
+                            if (DEBUG_LEVEL > 1) {
+                                val blocks = boundingBox.overlappingBlocks(world)
+                                for (block in blocks) {
+                                    world.debugBoundingBox(block.boundingBox, DustOptions(Color.RED, 0.4f), 0.24)
+                                }
+                            }
+
+                            world.debugBoundingBox(boundingBox, DustOptions(Color.BLUE, 0.4f))
+                        }
+                    }
+                }
+            }
+        }, 1, 1)
+    }
 
     override fun run(sender: CommandSender, args: Array<out String>) {
         if (sender !is Player) return
@@ -70,10 +394,14 @@ object PhysicsCommand : ICommand {
         }
 
         if (args[1] == "clear") {
-            bodies.forEach { it.kill() }
-            bodies.clear()
+            globalBodies.values.forEach { it.forEach { body -> body.kill() } }
+            globalBodies.clear()
 
             return
+        }
+
+        for (i in 2..<args.size) {
+            
         }
 
         if (args.size < 16) {
@@ -127,326 +455,8 @@ object PhysicsCommand : ICommand {
             hasGravity = hasGravity,
         )
 
-        bodies += rb
-
-        if (task == null) {
-            task = Bukkit.getScheduler().runTaskTimer(AbstractParticleEmitter.INSTANCE, Runnable {
-                time++
-                repeat((0.05 / TIME_STEP).roundToInt()) {
-                    var doTick = true
-                    if (frozen) {
-                        if (untilCollision && contacts.isNotEmpty()) {
-                            untilCollision = false
-                            frozen = true
-                            doTick = false
-                        }
-
-                        if (!untilCollision && --steps < 0) doTick = false
-                    }
-
-                    if (doTick) {
-                        for (body in bodies) {
-                            if (body.hasGravity) body.velocity.add(Vector3d(GRAVITY).mul(TIME_STEP))
-                        }
-
-                        contacts.clear()
-
-                        for (i in 0..<bodies.size) {
-                            val firstBody = bodies[i]
-                            val firstBoundingBox = firstBody.boundingBox
-                            if (bodies.size > 1) {
-                                for (j in (i + 1)..<bodies.size) {
-                                    val second = bodies[j]
-
-                                    if (!firstBoundingBox.overlaps(second.boundingBox)) continue
-
-                                    val result = firstBody.collides(second) ?: continue
-
-                                    contacts += Contact(firstBody, second, result)
-                                }
-                            }
-
-                            val blocks = firstBoundingBox.overlappingBlocks(sender.world)
-                            for (block in blocks) {
-                                val body = BlockBody(block)
-                                val result = firstBody.collides(body) ?: continue
-//
-                                contacts += Contact(body, firstBody, result)
-                            }
-
-                            for (itr in 1..5) {
-                                for (contact in contacts) {
-                                    val first = contact.first
-                                    val second = contact.second
-
-                                    val point = contact.result.point
-                                    val norm = contact.result.norm
-                                    val depth = contact.result.depth
-
-                                    val massImpact = first.inverseMass + second.inverseMass
-
-                                    val firstLocalPoint = first.globalToLocal(point)
-                                    val firstLocalNorm =
-                                        Vector3d(norm).negate().rotate(Quaterniond(first.q).conjugate()).normalize()
-                                    val secondLocalPoint = second.globalToLocal(point)
-                                    val secondLocalNorm =
-                                        Vector3d(norm).rotate(Quaterniond(second.q).conjugate()).normalize()
-
-                                    val vr = Vector3d(second.velocity).sub(first.velocity).dot(norm) +
-                                            Vector3d(second.omega).cross(secondLocalPoint).dot(secondLocalNorm) -
-                                            Vector3d(first.omega).cross(firstLocalPoint).dot(firstLocalNorm)
-
-                                    val firstAngularImpact =
-                                        Vector3d(firstLocalPoint)
-                                            .cross(firstLocalNorm)
-                                            .mul(first.inverseInertia)
-                                            .cross(firstLocalPoint)
-                                            .dot(firstLocalNorm)
-//                                    println("first angular impact: $firstAngularImpact")
-                                    val secondAngularImpact =
-                                        Vector3d(secondLocalPoint)
-                                            .cross(secondLocalNorm)
-                                            .mul(second.inverseInertia)
-                                            .cross(secondLocalPoint)
-                                            .dot(secondLocalNorm)
-//                                    println("first angular impact: $secondAngularImpact")
-                                    val angularImpact = firstAngularImpact + secondAngularImpact
-
-                                    val bias = BIAS / TIME_STEP * (abs(depth) - SLOP).coerceAtLeast(0.0)
-
-                                    var J =
-                                        (bias + (vr * -(1.0)) / (massImpact + angularImpact)).coerceAtLeast(
-                                            0.0
-                                        )
-
-
-                                    val curJSum = contact.jSum
-                                    contact.jSum = (curJSum + J).coerceAtLeast(0.0)
-                                    J = contact.jSum - curJSum
-
-                                    val firstDV = Vector3d(norm).mul(J * first.inverseMass)
-                                    first.velocity.sub(firstDV)
-                                    first.omega.add(
-                                        Vector3d(firstLocalPoint).cross(Vector3d(firstLocalNorm).mul(J))
-                                            .mul(first.inverseInertia)
-                                    )
-
-                                    val secondDV = Vector3d(norm).mul(J * second.inverseMass)
-                                    second.velocity.add(secondDV)
-                                    second.omega.add(
-                                        Vector3d(secondLocalPoint).cross(Vector3d(secondLocalNorm).mul(J))
-                                            .mul(second.inverseInertia)
-                                    )
-
-//                                    if (J > 1.0) {
-//                                        println("STRONG COLLISION! ITR: $itr")
-//                                        println("  - NORM: $norm DEPTH: $depth POINT: $point")
-//                                        println("  - J: $J")
-//                                        println("    * VR: $vr")
-//                                        println("    * BIAS: $bias")
-//                                        println("    * MASSIMPACT: $massImpact")
-//                                        println("    * ANGULARIMPACT: $angularImpact")
-//                                        println("  - firstDV: $firstDV")
-//                                        println("  - secondDV: $secondDV")
-//                                    }
-                                }
-                            }
-//                        }
-                        }
-
-                        for (body in bodies) {
-                            body.step()
-                        }
-                    }
-
-
-                    for (contact in contacts) {
-                        val (point,
-                            norm,
-                            _,
-                            minkowski,
-                            closest,
-                            originals) = contact.result
-
-                        sender.world.debugConnect(
-                            point,
-                            Vector3d(point).add(norm),
-                            DustOptions(Color.BLUE, 0.2f)
-                        )
-
-                        sender.world.spawnParticle(
-                            Particle.REDSTONE,
-                            Location(
-                                sender.world,
-                                point.x, point.y, point.z,
-                            ),
-                            1, Particle.DustOptions(Color.RED, 0.4f)
-                        )
-
-                        val minkowskiDebugOrigin = Vector3d(point).add(0.0, 3.0, 0.0)
-                        val vertices = mutableSetOf<Vector3d>()
-                        if (minkowski != null) {
-                            originals!!
-                            closest!!
-                            for ((a, b, c) in minkowski) {
-                                vertices += a
-                                vertices += b
-                                vertices += c
-
-                                if (DEBUG_LEVEL > 2) {
-                                    val color =
-                                        choices[Vector3d(a).add(b).add(c).hashCode().absoluteValue % (choices.size)]
-
-                                    sender.world.debugConnect(
-                                        Vector3d(minkowskiDebugOrigin).add(Vector3d(a).mul(enhancement)),
-                                        Vector3d(minkowskiDebugOrigin).add(Vector3d(b).mul(enhancement)),
-                                        DustOptions(Color.BLACK, 0.2f)
-                                    )
-
-                                    sender.world.debugConnect(
-                                        Vector3d(minkowskiDebugOrigin).add(Vector3d(a).mul(enhancement)),
-                                        Vector3d(minkowskiDebugOrigin).add(Vector3d(c).mul(enhancement)),
-                                        DustOptions(Color.BLACK, 0.2f)
-                                    )
-
-                                    sender.world.debugConnect(
-                                        Vector3d(minkowskiDebugOrigin).add(Vector3d(c).mul(enhancement)),
-                                        Vector3d(minkowskiDebugOrigin).add(Vector3d(b).mul(enhancement)),
-                                        DustOptions(Color.BLACK, 0.2f)
-                                    )
-
-                                    repeat(50) {
-                                        var cA = Random.nextDouble()
-                                        var cB = Random.nextDouble()
-                                        var cC = Random.nextDouble()
-
-                                        val t = cA + cB + cC
-
-                                        cA /= t
-                                        cB /= t
-                                        cC /= t
-
-                                        val bp = Vector3d(a).mul(cA).add(Vector3d(b).mul(cB)).add(Vector3d(c).mul(cC))
-
-                                        sender.world.spawnParticle(
-                                            Particle.REDSTONE,
-                                            Location(
-                                                sender.world,
-                                                minkowskiDebugOrigin.x + bp.x * enhancement.x,
-                                                minkowskiDebugOrigin.y + bp.y * enhancement.y,
-                                                minkowskiDebugOrigin.z + bp.z * enhancement.z,
-                                            ),
-                                            1,
-                                            DustOptions(color, 0.2f)
-                                        )
-                                    }
-                                }
-                            }
-
-                            for (vertex in vertices) {
-                                val (start, end) = originals[vertex]!!
-
-                                val newPos = Vector3d(minkowskiDebugOrigin).add(vertex)
-
-                                if (DEBUG_LEVEL > 2) {
-                                    sender.world.debugConnect(
-                                        start,
-                                        end,
-                                        DustOptions(Color.BLUE, 0.1f)
-                                    )
-
-                                    sender.world.debugConnect(
-                                        newPos,
-                                        end,
-                                        DustOptions(Color.YELLOW, 0.1f)
-                                    )
-
-                                    sender.world.debugConnect(
-                                        start,
-                                        newPos,
-                                        DustOptions(Color.YELLOW, 0.1f)
-                                    )
-
-                                    sender.world.spawnParticle(
-                                        Particle.REDSTONE,
-                                        Location(
-                                            sender.world,
-                                            newPos.x,
-                                            newPos.y,
-                                            newPos.z,
-                                        ),
-                                        1, Particle.DustOptions(Color.WHITE, 0.5f)
-                                    )
-                                }
-
-                                if (DEBUG_LEVEL > 2) {
-                                    sender.world.spawnParticle(
-                                        Particle.REDSTONE,
-                                        Location(
-                                            sender.world,
-                                            minkowskiDebugOrigin.x,
-                                            minkowskiDebugOrigin.y,
-                                            minkowskiDebugOrigin.z,
-                                        ),
-                                        1, Particle.DustOptions(Color.ORANGE, 0.5f)
-                                    )
-
-                                    sender.world.spawnParticle(
-                                        Particle.REDSTONE,
-                                        Location(
-                                            sender.world,
-                                            minkowskiDebugOrigin.x + closest.first.x,
-                                            minkowskiDebugOrigin.y + closest.first.y,
-                                            minkowskiDebugOrigin.z + closest.first.z,
-                                        ),
-                                        1, Particle.DustOptions(Color.RED, 0.5f)
-                                    )
-
-                                    sender.world.spawnParticle(
-                                        Particle.REDSTONE,
-                                        Location(
-                                            sender.world,
-                                            minkowskiDebugOrigin.x + closest.second.x,
-                                            minkowskiDebugOrigin.y + closest.second.y,
-                                            minkowskiDebugOrigin.z + closest.second.z,
-                                        ),
-                                        1, Particle.DustOptions(Color.RED, 0.5f)
-                                    )
-
-                                    sender.world.spawnParticle(
-                                        Particle.REDSTONE,
-                                        Location(
-                                            sender.world,
-                                            minkowskiDebugOrigin.x + closest.third.x,
-                                            minkowskiDebugOrigin.y + closest.third.y,
-                                            minkowskiDebugOrigin.z + closest.third.z,
-                                        ),
-                                        1, Particle.DustOptions(Color.RED, 0.5f)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (time % DEBUG_FREQUENCY == 0) {
-                    if (DEBUG_LEVEL > 0) {
-                        for (body in bodies) {
-                            val boundingBox = body.boundingBox
-
-                            if (DEBUG_LEVEL > 1) {
-                                val blocks = boundingBox.overlappingBlocks(sender.world)
-                                for (block in blocks) {
-                                    sender.world.debugBoundingBox(block.boundingBox, DustOptions(Color.RED, 0.4f), 0.24)
-                                }
-                            }
-
-                            sender.world.debugBoundingBox(boundingBox, DustOptions(Color.BLUE, 0.4f))
-                        }
-                    }
-                }
-            }, 1, 1)
-        }
+        val ls = globalBodies.getOrPut(sender.world) { mutableListOf() }
+        ls += rb
     }
 
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
@@ -466,8 +476,8 @@ object PhysicsCommand : ICommand {
     }
 
     fun onDisable() {
-        bodies.forEach { it.kill() }
-        bodies.clear()
+        globalBodies.values.forEach { it.forEach { body -> body.kill() } }
+        globalBodies.clear()
     }
 }
 

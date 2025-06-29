@@ -2,15 +2,22 @@ package gg.aquatic.comet.command.physics
 
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.command.PhysicsCommand
+import gg.aquatic.comet.command.debugConnect
 import org.bukkit.*
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.scheduler.BukkitTask
 import org.joml.Vector3d
 
 object PhysicsListener : Listener {
+    private lateinit var graphicsTask: BukkitTask
     fun init() {
         Bukkit.getPluginManager().registerEvents(this, AbstractParticleEmitter.INSTANCE)
+        graphicsTask = Bukkit.getScheduler().runTaskTimer(AbstractParticleEmitter.INSTANCE, Runnable {
+
+        }, 2, 2)
     }
 
     @EventHandler
@@ -20,7 +27,7 @@ object PhysicsListener : Listener {
         val end = Vector3d(start).add(dir)
 
         val allIntersections = mutableListOf<Triple<Body, Vector3d, Vector3d>>()
-        for (body in PhysicsCommand.bodies) {
+        for (body in PhysicsCommand.globalBodies[event.player.world] ?: return) {
             allIntersections += body.intersect(start, end).map { Triple(body, it.first, it.second) }
         }
 
@@ -37,9 +44,48 @@ object PhysicsListener : Listener {
             5, Particle.DustOptions(Color.YELLOW, 0.5f)
         )
 
+        event.player.world.debugConnect(
+            Vector3d(
+                intersection.x,
+                intersection.y,
+                intersection.z,
+            ),
+            Vector3d(
+                intersection.x + normal.x,
+                intersection.y + normal.y,
+                intersection.z + normal.z,
+            ), Particle.DustOptions(Color.BLUE, 0.25f)
+        )
+
         val type = event.player.inventory.itemInMainHand.type
         if (type == Material.END_ROD) {
             body.applyImpulse(intersection, normal, Vector3d(dir).normalize(2.5))
         }
+    }
+
+    private var meshRange: Pair<Location, Location?>? = null
+
+    @EventHandler
+    fun onBlockBreak(event: BlockBreakEvent) {
+        val player = event.player
+        val item = player.inventory.itemInMainHand
+        if (item.type == Material.GOLD_NUGGET) {
+            meshRange = if (meshRange != null && meshRange!!.second == null) {
+                meshRange!!.first to event.block.location
+            } else {
+                event.block.location to null
+            }
+        }
+    }
+
+    /**
+     * Generate list of convex objects
+     */
+    fun mesh(
+        world: World,
+        meshStart: Vector3d,
+        meshEnd: Vector3d,
+    ) {
+
     }
 }

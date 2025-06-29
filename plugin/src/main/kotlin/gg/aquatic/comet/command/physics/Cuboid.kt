@@ -20,7 +20,7 @@ import java.util.*
 import kotlin.math.*
 
 class Cuboid(
-    val world: World,
+    override val world: World,
     override var pos: Vector3d,
     override var velocity: Vector3d,
 
@@ -287,6 +287,7 @@ class Cuboid(
     }
 
     /**
+     * Has a bug with application of direction of impulse
      * @param point Point on body in world space
      * @param normal Normal of the point at which the impulse is being applied
      */
@@ -329,10 +330,11 @@ class Cuboid(
         return maxVertex
     }
 
-    override fun collides(blockBody: BlockBody): CollisionResult? {
+    override fun collidesSAT(blockBody: Body): CollisionResult? {
+
         val ignoredAxiss = mutableListOf<Vector3d>(
-//            Vector3d(1.0, 0.0, 0.0),
-//            Vector3d(0.0, 0.0, 1.0),
+            Vector3d(1.0, 0.0, 0.0),
+            Vector3d(0.0, 0.0, 1.0),
         )
 
         val otherAxiss = listOf(
@@ -359,11 +361,13 @@ class Cuboid(
             Vector3d(0.0, 0.0, 1.0).rotate(q).normalize(),
         )
 
-        val (edgeAxiss, ignoredEdgeAxiss) = genCrosses(otherEdges, myEdges, listOf(
-//            Vector3d(1.0, 0.0, 0.0),
-//            Vector3d(0.0, 1.0, 0.0),
-//            Vector3d(0.0, 0.0, 1.0),
-        ))
+        val (edgeAxiss, ignoredEdgeAxiss) = genCrosses(
+            otherEdges, myEdges, listOf(
+//                Vector3d(1.0, 0.0, 0.0),
+//                Vector3d(0.0, 1.0, 0.0),
+//                Vector3d(0.0, 0.0, 1.0),
+            )
+        )
 
         ignoredAxiss += ignoredEdgeAxiss
 
@@ -473,15 +477,36 @@ class Cuboid(
 //            println("myDeepestVertices : $myDeepestDistance : $myDeepestVertices")
 //            println("otherDeepestVertices : $otherDeepestDistance : $otherDeepestVertices")
 
-            check(myDeepestVertices.size == 2)
-            check(otherDeepestVertices.size == 2)
+            check(myDeepestVertices.size % 2 == 0)
+            check(otherDeepestVertices.size % 2 == 0)
 
-            val r = closestPointsBetweenSegments(
-                myDeepestVertices[0],
-                myDeepestVertices[1],
-                otherDeepestVertices[0],
-                otherDeepestVertices[1]
-            ) ?: throw IllegalStateException("PARALLEL FUCK UP!")
+            val r = if (myDeepestVertices.size > 2 || otherDeepestVertices.size > 2) {
+                var closestResult = Triple(Vector3d(), Vector3d(), Double.MAX_VALUE)
+                for (i in 0..<myDeepestVertices.size step 2) {
+                    for (j in 0..<otherDeepestVertices.size step 2) {
+                        val r = closestPointsBetweenSegments(
+                            myDeepestVertices[i],
+                            myDeepestVertices[i + 1],
+                            otherDeepestVertices[j],
+                            otherDeepestVertices[j + 1]
+                        )
+
+                        if (r.third < closestResult.third) {
+                            closestResult = r
+                        }
+                    }
+                }
+
+                check(closestResult.third != Double.MAX_VALUE)
+                closestResult
+            } else {
+                closestPointsBetweenSegments(
+                    myDeepestVertices[0],
+                    myDeepestVertices[1],
+                    otherDeepestVertices[0],
+                    otherDeepestVertices[1]
+                )
+            }
 
 //            println("   * myDeepestVertices: ${myDeepestVertices[0]}")
 //            println("   * myDeepestVertices: ${myDeepestVertices[1]}")
@@ -534,7 +559,7 @@ class Cuboid(
         }
     }
 
-    override fun collides(other: Body): CollisionResult? {
+    override fun collidesGJKEPA(other: Body): CollisionResult? {
         // map from difference to MINE to OTHER
         val originals = mutableMapOf<Vector3d, Pair<Vector3d, Vector3d>>()
 
@@ -989,7 +1014,7 @@ class Cuboid(
             a1: Vector3d,
             b0: Vector3d,
             b1: Vector3d
-        ): Triple<Vector3d, Vector3d, Double>? {
+        ): Triple<Vector3d, Vector3d, Double> {
             val a = Vector3d(a1).sub(a0).normalize()
             val b = Vector3d(b1).sub(b0).normalize()
 
@@ -1006,7 +1031,15 @@ class Cuboid(
             //if vertex-line is valid then that's the answer
             //otherwise check vertex-vertex
             //check line-line
-            val (onLLA, onLLB, llD) = closestPointsBetweenLines(a0, a, b0, b) ?: return null
+            val (onLLA, onLLB, llD) = closestPointsBetweenLines(a0, a, b0, b) ?: return let {
+                val p1 = Vector3d(a0).mul(0.5).add(Vector3d(a1).mul(0.5))
+                val p2 = Vector3d(b0).mul(0.5).add(Vector3d(b1).mul(0.5))
+                Triple(
+                    p1,
+                    p2,
+                    p1.distance(p2),
+                )
+            }
 
             if (onLLA.inside(axRange, ayRange, azRange) && onLLB.inside(bxRange, byRange, bzRange)) return Triple(
                 onLLA,
@@ -1145,7 +1178,11 @@ class Cuboid(
         /**
          * @return the crosses, the ignored crosses
          */
-        private fun genCrosses(dirs1: List<Vector3d>, dirs2: List<Vector3d>, ignored: List<Vector3d>): Pair<List<Vector3d>, List<Vector3d>> {
+        private fun genCrosses(
+            dirs1: List<Vector3d>,
+            dirs2: List<Vector3d>,
+            ignored: List<Vector3d>
+        ): Pair<List<Vector3d>, List<Vector3d>> {
             val ils = mutableListOf<Vector3d>()
             val ls = mutableListOf<Vector3d>()
             for (dir1 in dirs1) {
@@ -1153,6 +1190,7 @@ class Cuboid(
                 for (dir2 in dirs2) {
                     val r = Vector3d(dir1).cross(dir2).normalize()
                     if (isIgnored1 || dir2 in ignored) ils += r
+
                     ls += r
                 }
             }
