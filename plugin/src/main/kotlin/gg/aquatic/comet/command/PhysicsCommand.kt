@@ -27,6 +27,7 @@ object PhysicsCommand : ICommand {
     private var time = 0
     private val DEBUG_FREQUENCY = 2
     val globalBodies = mutableMapOf<World, MutableList<Body>>()
+    val globalDebugBodies = mutableMapOf<World, MutableList<Body>>()
     private var frozen = false
     private var steps = 0
     private var untilCollision = false
@@ -42,6 +43,7 @@ object PhysicsCommand : ICommand {
         task = Bukkit.getScheduler().runTaskTimer(AbstractParticleEmitter.INSTANCE, Runnable {
             time++
             for ((world, localBodies) in globalBodies.entries) {
+                val debugBodies = globalDebugBodies[world] ?: listOf()
                 val contacts = mutableListOf<Contact>()
                 globalContacts[world] = contacts
                 repeat((0.05 / TIME_STEP).roundToInt()) {
@@ -82,11 +84,14 @@ object PhysicsCommand : ICommand {
                             for (block in blocks) {
                                 val body = BlockBody(block)
                                 val result = firstBody.collidesSAT(body) ?: continue
-//
                                 contacts += Contact(body, firstBody, result)
                                 break
                             }
-//                        }
+
+                            for (debugBody in debugBodies) {
+                                val result = firstBody.collidesSAT(debugBody) ?: continue
+                                contacts += Contact(debugBody, firstBody, result)
+                            }
                         }
 
                         for (itr in 1..5) {
@@ -394,9 +399,7 @@ object PhysicsCommand : ICommand {
         }
 
         if (args[1] == "clear") {
-            globalBodies.values.forEach { it.forEach { body -> body.kill() } }
-            globalBodies.clear()
-
+            clear()
             return
         }
 
@@ -408,6 +411,7 @@ object PhysicsCommand : ICommand {
 
             var density = 1.0
             var hasGravity = true
+            var SAT = false
 
             var i = 2
             while (i < args.size) {
@@ -503,15 +507,11 @@ object PhysicsCommand : ICommand {
 
                 if (arg == "--density") {
                     i++
-                    while (i < args.size) {
-                        i++
-                        val arg2 = args[i]
-                        val d = arg2.toDoubleOrNull()
-                        if (d == null) {
-                            i--
-                            break
-                        }
-
+                    val arg2 = args[i]
+                    val d = arg2.toDoubleOrNull()
+                    if (d == null) {
+                        i--
+                    } else {
                         density = d
                     }
                 }
@@ -524,11 +524,26 @@ object PhysicsCommand : ICommand {
                     hasGravity = false
                 }
 
+                if (arg == "--sat") {
+                    SAT = true
+                }
+
                 i++
             }
 
             val origin = sender.location.toVector().toVector3d()
-            val rb = Cuboid(
+            val rb = if (SAT) Cuboid(
+                world = sender.world,
+                pos = Vector3d(origin),
+                velocity = Vector3d(),
+                width = dims.x,
+                height = dims.y,
+                length = dims.z,
+                q = Quaterniond(),
+                omega = Vector3d(),
+                density = density,
+                hasGravity = hasGravity,
+            ) else Cuboid(
                 world = sender.world,
                 pos = Vector3d(origin),
                 velocity = Vector3d(v0),
@@ -541,9 +556,21 @@ object PhysicsCommand : ICommand {
                 hasGravity = hasGravity,
             )
 
-            val ls = globalBodies.getOrPut(sender.world) { mutableListOf() }
+            val ls = if (SAT) {
+                globalDebugBodies.getOrPut(sender.world) { mutableListOf() }
+            } else {
+                globalBodies.getOrPut(sender.world) { mutableListOf() }
+            }
             ls += rb
         }
+    }
+
+    fun clear() {
+        globalBodies.values.forEach { it.forEach { body -> body.kill() } }
+        globalBodies.clear()
+
+        globalDebugBodies.values.forEach { it.forEach { body -> body.kill() } }
+        globalDebugBodies.clear()
     }
 
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
@@ -551,8 +578,7 @@ object PhysicsCommand : ICommand {
     }
 
     fun onDisable() {
-        globalBodies.values.forEach { it.forEach { body -> body.kill() } }
-        globalBodies.clear()
+        clear()
     }
 }
 
