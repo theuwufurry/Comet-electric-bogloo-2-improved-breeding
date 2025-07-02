@@ -6,7 +6,6 @@ import gg.aquatic.comet.api.emitter.*
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
-import gg.aquatic.comet.api.emitter.parent.pose
 import gg.aquatic.comet.api.emitter.random.DeterministicRandom
 import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.particle.ParticleComponent
@@ -21,9 +20,7 @@ import gg.aquatic.comet.emitter.optimization.vec.WrappedPos
 import gg.aquatic.comet.particle.Particle
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.waves.util.audience.AquaticAudience
-import org.bukkit.Location
 import org.bukkit.entity.Player
-import org.bukkit.util.Vector
 import org.joml.Quaterniond
 import org.joml.Quaternionf
 import org.joml.Vector3d
@@ -175,6 +172,8 @@ class VirtualEmitter(
                         )
                     }
                 }
+            } else {
+                pose = parent.pose
             }
         }
 
@@ -327,6 +326,7 @@ class VirtualEmitter(
 
     private fun spawnParticles() {
 //        println("|V.${unrealizedEmitter.id} SPAWNS t:$time at:$absoluteTime")
+//        println("  - pose.pos: ${pose.pos}")
         particleActionsBuffer = mutableMapOf()
         val spawns = mutableListOf<UUID>()
         repeat(rateComponent.toEmit(emitterData)) {
