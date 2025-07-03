@@ -370,43 +370,33 @@ class Cuboid(
 
     private fun collidesAAFace(start: Vector3d, end: Vector3d, normal: Vector3d): CollisionResult? {
         require(start.x <= end.x && start.y <= end.y && start.z <= end.z)
+        val large = 64.0
 
+        val order: Boolean
         val (otherEdges, otherVertices) =
             if (normal.distance(1.0, 0.0, 0.0) < EPSILON || normal.distance(-1.0, 0.0, 0.0) < EPSILON) {
+                order = (normal.x > 0.0)
                 listOf(Vector3d(0.0, 1.0, 0.0), Vector3d(0.0, 0.0, 1.0)) to listOf(
-                    Vector3d(start.x - 64.0, start.y - 64.0, start.z - 64.0),
-                    Vector3d(start.x - 64.0, end.y + 64.0, start.z - 64.0),
-                    Vector3d(start.x - 64.0, end.y + 64.0, end.z + 64.0),
-                    Vector3d(start.x - 64.0, start.y - 64.0, end.z + 64.0),
-
-                    Vector3d(start.x, start.y - 64.0, start.z - 64.0),
-                    Vector3d(start.x, end.y + 64.0, start.z - 64.0),
-                    Vector3d(start.x, end.y + 64.0, end.z + 64.0),
-                    Vector3d(start.x, start.y - 64.0, end.z + 64.0),
+                    Vector3d(start.x, start.y - large, start.z - large),
+                    Vector3d(start.x, end.y + large, start.z - large),
+                    Vector3d(start.x, end.y + large, end.z + large),
+                    Vector3d(start.x, start.y - large, end.z + large),
                 )
             } else if (normal.distance(0.0, 1.0, 0.0) < EPSILON || normal.distance(0.0, -1.0, 0.0) < EPSILON) {
+                order = (normal.y > 0.0)
                 listOf(Vector3d(1.0, 0.0, 0.0), Vector3d(0.0, 0.0, 1.0)) to listOf(
-                    Vector3d(start.x - 64.0, start.y - 64.0, start.z - 64.0),
-                    Vector3d(end.x + 64.0, start.y - 64.0, start.z - 64.0),
-                    Vector3d(end.x + 64.0, start.y - 64.0, end.z + 64.0),
-                    Vector3d(start.x - 64.0, start.y - 64.0, end.z + 64.0),
-
-                    Vector3d(start.x - 64.0, start.y, start.z - 64.0),
-                    Vector3d(end.x + 64.0, start.y, start.z - 64.0),
-                    Vector3d(end.x + 64.0, start.y, end.z + 64.0),
-                    Vector3d(start.x - 64.0, start.y, end.z + 64.0),
+                    Vector3d(start.x - large, start.y, start.z - large),
+                    Vector3d(end.x + large, start.y, start.z - large),
+                    Vector3d(end.x + large, start.y, end.z + large),
+                    Vector3d(start.x - large, start.y, end.z + large),
                 )
             } else if (normal.distance(0.0, 0.0, 1.0) < EPSILON || normal.distance(0.0, 0.0, -1.0) < EPSILON) {
+                order = (normal.z > 0.0)
                 listOf(Vector3d(1.0, 0.0, 0.0), Vector3d(0.0, 1.0, 0.0)) to listOf(
-                    Vector3d(start.x - 64.0, start.y - 64.0, start.z - 64.0),
-                    Vector3d(end.x + 64.0, start.y - 64.0, start.z - 64.0),
-                    Vector3d(end.x + 64.0, end.y + 64.0, start.z - 64.0),
-                    Vector3d(start.x - 64.0, end.y + 64.0, start.z - 64.0),
-
-                    Vector3d(start.x - 64.0, start.y - 64.0, start.z),
-                    Vector3d(end.x + 64.0, start.y - 64.0, start.z),
-                    Vector3d(end.x + 64.0, end.y + 64.0, start.z),
-                    Vector3d(start.x - 64.0, end.y + 64.0, start.z),
+                    Vector3d(start.x - large, start.y - large, start.z),
+                    Vector3d(end.x + large, start.y - large, start.z),
+                    Vector3d(end.x + large, end.y + large, start.z),
+                    Vector3d(start.x - large, end.y + large, start.z),
                 )
             } else {
                 throw IllegalArgumentException("Non-AA normal!")
@@ -437,7 +427,6 @@ class Cuboid(
 
         var minOverlap = Double.MAX_VALUE
         var minAxis: Vector3d? = null
-        var order = false
 
         for (axis in axiss) {
             var otherMin = Double.MAX_VALUE
@@ -458,7 +447,6 @@ class Cuboid(
                 otherMax = max(otherMax, s)
             }
 
-            val myOrder: Boolean = myMin > otherMin
             val overlap = if (myMin < otherMax && myMax > otherMin) {
                 if (myMax > otherMax) otherMax - myMin
                 else myMax - otherMin
@@ -478,7 +466,6 @@ class Cuboid(
             if (overlap < minOverlap) {
                 minAxis = axis
                 minOverlap = overlap
-                order = myOrder
             }
         }
 
