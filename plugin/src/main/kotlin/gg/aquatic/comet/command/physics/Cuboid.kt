@@ -330,29 +330,94 @@ class Cuboid(
         return maxVertex
     }
 
-    override fun collidesSAT(blockBody: Body): CollisionResult? {
-
-        val ignoredAxiss = mutableListOf<Vector3d>(
-            Vector3d(1.0, 0.0, 0.0),
-            Vector3d(0.0, 0.0, 1.0),
-        )
-
-        val otherAxiss = listOf(
-            Vector3d(1.0, 0.0, 0.0),
-            Vector3d(0.0, 1.0, 0.0),
-            Vector3d(0.0, 0.0, 1.0),
-        )
-
+    private fun ensureNonAligned() {
+        val tiny = 1e-14
+        val perturbation = 1e-10
         val myAxiss = listOf(
             Vector3d(1.0, 0.0, 0.0).rotate(q).normalize(),
             Vector3d(0.0, 1.0, 0.0).rotate(q).normalize(),
             Vector3d(0.0, 0.0, 1.0).rotate(q).normalize(),
         )
 
-        val otherEdges = listOf(
-            Vector3d(1.0, 0.0, 0.0),
-            Vector3d(0.0, 1.0, 0.0),
-            Vector3d(0.0, 0.0, 1.0),
+        if (myAxiss.any {
+                it.distance(1.0, 0.0, 0.0) < tiny || it.distance(-1.0, 0.0, 0.0) < tiny ||
+                        it.distance(0.0, 1.0, 0.0) < tiny || it.distance(0.0, -1.0, 0.0) < tiny ||
+                        it.distance(0.0, 0.0, 1.0) < tiny || it.distance(0.0, 0.0, -1.0) < tiny
+            }) {
+            println("was aligned!")
+
+            q.rotateXYZ(perturbation, perturbation, perturbation)
+            ensureNonAligned()
+        }
+    }
+
+    override fun collidesBlock(blockBody: BlockBody): CollisionResult? {
+        ensureNonAligned()
+        return collidesAAFace(
+            start = Vector3d(
+                blockBody.boundingBox.minX,
+                blockBody.boundingBox.maxY,
+                blockBody.boundingBox.minZ
+            ),
+            end = Vector3d(
+                blockBody.boundingBox.maxX,
+                blockBody.boundingBox.maxY,
+                blockBody.boundingBox.maxZ
+            ),
+            normal = Vector3d(0.0, 1.0, 0.0),
+        )
+    }
+
+    private fun collidesAAFace(start: Vector3d, end: Vector3d, normal: Vector3d): CollisionResult? {
+        require(start.x <= end.x && start.y <= end.y && start.z <= end.z)
+
+        val (otherEdges, otherVertices) =
+            if (normal.distance(1.0, 0.0, 0.0) < EPSILON || normal.distance(-1.0, 0.0, 0.0) < EPSILON) {
+                listOf(Vector3d(0.0, 1.0, 0.0), Vector3d(0.0, 0.0, 1.0)) to listOf(
+                    Vector3d(start.x - 64.0, start.y - 64.0, start.z - 64.0),
+                    Vector3d(start.x - 64.0, end.y + 64.0, start.z - 64.0),
+                    Vector3d(start.x - 64.0, end.y + 64.0, end.z + 64.0),
+                    Vector3d(start.x - 64.0, start.y - 64.0, end.z + 64.0),
+
+                    Vector3d(start.x, start.y - 64.0, start.z - 64.0),
+                    Vector3d(start.x, end.y + 64.0, start.z - 64.0),
+                    Vector3d(start.x, end.y + 64.0, end.z + 64.0),
+                    Vector3d(start.x, start.y - 64.0, end.z + 64.0),
+                )
+            } else if (normal.distance(0.0, 1.0, 0.0) < EPSILON || normal.distance(0.0, -1.0, 0.0) < EPSILON) {
+                listOf(Vector3d(1.0, 0.0, 0.0), Vector3d(0.0, 0.0, 1.0)) to listOf(
+                    Vector3d(start.x - 64.0, start.y - 64.0, start.z - 64.0),
+                    Vector3d(end.x + 64.0, start.y - 64.0, start.z - 64.0),
+                    Vector3d(end.x + 64.0, start.y - 64.0, end.z + 64.0),
+                    Vector3d(start.x - 64.0, start.y - 64.0, end.z + 64.0),
+
+                    Vector3d(start.x - 64.0, start.y, start.z - 64.0),
+                    Vector3d(end.x + 64.0, start.y, start.z - 64.0),
+                    Vector3d(end.x + 64.0, start.y, end.z + 64.0),
+                    Vector3d(start.x - 64.0, start.y, end.z + 64.0),
+                )
+            } else if (normal.distance(0.0, 0.0, 1.0) < EPSILON || normal.distance(0.0, 0.0, -1.0) < EPSILON) {
+                listOf(Vector3d(1.0, 0.0, 0.0), Vector3d(0.0, 1.0, 0.0)) to listOf(
+                    Vector3d(start.x - 64.0, start.y - 64.0, start.z - 64.0),
+                    Vector3d(end.x + 64.0, start.y - 64.0, start.z - 64.0),
+                    Vector3d(end.x + 64.0, end.y + 64.0, start.z - 64.0),
+                    Vector3d(start.x - 64.0, end.y + 64.0, start.z - 64.0),
+
+                    Vector3d(start.x - 64.0, start.y - 64.0, start.z),
+                    Vector3d(end.x + 64.0, start.y - 64.0, start.z),
+                    Vector3d(end.x + 64.0, end.y + 64.0, start.z),
+                    Vector3d(start.x - 64.0, end.y + 64.0, start.z),
+                )
+            } else {
+                throw IllegalArgumentException("Non-AA normal!")
+            }
+
+        val otherAxiss = listOf(normal)
+
+        val myAxiss = listOf(
+            Vector3d(1.0, 0.0, 0.0).rotate(q).normalize(),
+            Vector3d(0.0, 1.0, 0.0).rotate(q).normalize(),
+            Vector3d(0.0, 0.0, 1.0).rotate(q).normalize(),
         )
 
         val myEdges = listOf(
@@ -361,15 +426,7 @@ class Cuboid(
             Vector3d(0.0, 0.0, 1.0).rotate(q).normalize(),
         )
 
-        val (edgeAxiss, ignoredEdgeAxiss) = genCrosses(
-            otherEdges, myEdges, listOf(
-//                Vector3d(1.0, 0.0, 0.0),
-//                Vector3d(0.0, 1.0, 0.0),
-//                Vector3d(0.0, 0.0, 1.0),
-            )
-        )
-
-        ignoredAxiss += ignoredEdgeAxiss
+        val edgeAxiss = genCrosses(otherEdges, myEdges)
 
         val axiss = mutableListOf<Vector3d>()
         axiss += otherAxiss
@@ -377,16 +434,6 @@ class Cuboid(
         axiss += edgeAxiss
 
         val myVertices = vertices
-        val otherVertices = listOf(
-            Vector3d(blockBody.boundingBox.minX, blockBody.boundingBox.minY, blockBody.boundingBox.minZ),
-            Vector3d(blockBody.boundingBox.minX, blockBody.boundingBox.minY, blockBody.boundingBox.maxZ),
-            Vector3d(blockBody.boundingBox.minX, blockBody.boundingBox.maxY, blockBody.boundingBox.minZ),
-            Vector3d(blockBody.boundingBox.minX, blockBody.boundingBox.maxY, blockBody.boundingBox.maxZ),
-            Vector3d(blockBody.boundingBox.maxX, blockBody.boundingBox.minY, blockBody.boundingBox.minZ),
-            Vector3d(blockBody.boundingBox.maxX, blockBody.boundingBox.minY, blockBody.boundingBox.maxZ),
-            Vector3d(blockBody.boundingBox.maxX, blockBody.boundingBox.maxY, blockBody.boundingBox.minZ),
-            Vector3d(blockBody.boundingBox.maxX, blockBody.boundingBox.maxY, blockBody.boundingBox.maxZ),
-        )
 
         var minOverlap = Double.MAX_VALUE
         var minAxis: Vector3d? = null
@@ -417,11 +464,16 @@ class Cuboid(
                 else myMax - otherMin
             } else 0.0
 
+//            println("TEST!")
+//            println("  - axis: $axis")
+//            println("  - overlap: $overlap")
+//            println("  - order: $order")
+//            println("  - myMin: $myMin myMax: $myMax")
+//            println("  - otherMin: $otherMin otherMax: $otherMax")
+
             if (overlap <= 0.0) {
                 return null
             }
-
-            if (axis in ignoredAxiss) continue
 
             if (overlap < minOverlap) {
                 minAxis = axis
@@ -557,9 +609,10 @@ class Cuboid(
                 return CollisionResult(furtherVertex!!, Vector3d(minAxis).applyIf(!order) { negate() }, minOverlap)
             }
         }
+
     }
 
-    override fun collidesGJKEPA(other: Body): CollisionResult? {
+    override fun collidesBody(other: Body): CollisionResult? {
         // map from difference to MINE to OTHER
         val originals = mutableMapOf<Vector3d, Pair<Vector3d, Vector3d>>()
 
@@ -1181,21 +1234,15 @@ class Cuboid(
         private fun genCrosses(
             dirs1: List<Vector3d>,
             dirs2: List<Vector3d>,
-            ignored: List<Vector3d>
-        ): Pair<List<Vector3d>, List<Vector3d>> {
-            val ils = mutableListOf<Vector3d>()
+        ): List<Vector3d> {
             val ls = mutableListOf<Vector3d>()
             for (dir1 in dirs1) {
-                val isIgnored1 = dir1 in ignored
                 for (dir2 in dirs2) {
-                    val r = Vector3d(dir1).cross(dir2).normalize()
-                    if (isIgnored1 || dir2 in ignored) ils += r
-
-                    ls += r
+                    ls += Vector3d(dir1).cross(dir2).normalize()
                 }
             }
 
-            return ls to ils
+            return ls
         }
     }
 }

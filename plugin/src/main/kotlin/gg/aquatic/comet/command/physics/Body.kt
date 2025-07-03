@@ -36,8 +36,8 @@ interface Body  {
      */
     fun intersect(origin: Vector3d, end: Vector3d): List<Pair<Vector3d, Vector3d>>
 
-    fun collidesGJKEPA(other: Body): CollisionResult?
-    fun collidesSAT(blockBody: Body): CollisionResult?
+    fun collidesBody(other: Body): CollisionResult?
+    fun collidesBlock(blockBody: BlockBody): CollisionResult?
 
     fun kill()
 
@@ -68,15 +68,15 @@ class BlockBody(val block: Block) : Body {
     override val velocity: Vector3d = Vector3d()
     override val vertices = block.collisionShape.boundingBoxes.flatMap {
         listOf(
-            Vector3d(block.x + it.minX - 10, block.y + it.minY, block.z + it.minZ - 10),
-            Vector3d(block.x + it.minX - 10, block.y + it.minY, block.z + it.maxZ + 10),
-            Vector3d(block.x + it.maxX + 10, block.y + it.minY, block.z + it.maxZ + 10),
-            Vector3d(block.x + it.maxX + 10, block.y + it.minY, block.z + it.minZ - 10),
+            Vector3d(block.x + it.minX, block.y + it.minY, block.z + it.minZ),
+            Vector3d(block.x + it.minX, block.y + it.minY, block.z + it.maxZ),
+            Vector3d(block.x + it.maxX, block.y + it.minY, block.z + it.maxZ),
+            Vector3d(block.x + it.maxX, block.y + it.minY, block.z + it.minZ),
 
-            Vector3d(block.x + it.minX - 10, block.y + it.maxY, block.z + it.minZ - 10),
-            Vector3d(block.x + it.minX - 10, block.y + it.maxY, block.z + it.maxZ + 10),
-            Vector3d(block.x + it.maxX + 10, block.y + it.maxY, block.z + it.maxZ + 10),
-            Vector3d(block.x + it.maxX + 10, block.y + it.maxY, block.z + it.minZ - 10),
+            Vector3d(block.x + it.minX, block.y + it.maxY, block.z + it.minZ),
+            Vector3d(block.x + it.minX, block.y + it.maxY, block.z + it.maxZ),
+            Vector3d(block.x + it.maxX, block.y + it.maxY, block.z + it.maxZ),
+            Vector3d(block.x + it.maxX, block.y + it.maxY, block.z + it.minZ),
         )
     }
     override val edges: List<Pair<Vector3d, Vector3d>>
@@ -114,8 +114,8 @@ class BlockBody(val block: Block) : Body {
 
     override fun step() { }
 
-    override fun collidesGJKEPA(other: Body): CollisionResult? { return null }
-    override fun collidesSAT(blockBody: Body): CollisionResult? { return null }
+    override fun collidesBody(other: Body): CollisionResult? { return null }
+    override fun collidesBlock(blockBody: BlockBody): CollisionResult? { return null }
 
     override fun kill() { }
 
@@ -137,5 +137,9 @@ class BlockBody(val block: Block) : Body {
         }
 
         return maxVertex
+    }
+
+    companion object {
+        private const val LARGE = 64
     }
 }
