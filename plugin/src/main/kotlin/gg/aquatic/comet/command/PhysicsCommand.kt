@@ -7,6 +7,7 @@ import gg.aquatic.comet.command.physics.Body.Companion.TIME_STEP
 import gg.aquatic.comet.command.physics.Contact
 import gg.aquatic.comet.command.physics.Cuboid
 import gg.aquatic.waves.command.ICommand
+import io.ktor.server.config.*
 import org.bukkit.*
 import org.bukkit.Particle.DustOptions
 import org.bukkit.block.Block
@@ -42,21 +43,16 @@ object PhysicsCommand : ICommand {
         task = Bukkit.getScheduler().runTaskTimer(AbstractParticleEmitter.INSTANCE, Runnable {
             time++
             for ((world, localBodies) in globalBodies.entries) {
-                val contacts = mutableListOf<Contact>()
-                globalContacts[world] = contacts
                 repeat((0.05 / TIME_STEP).roundToInt()) {
                     var doTick = true
                     if (frozen) {
-                        if (untilCollision && contacts.isNotEmpty()) {
-                            untilCollision = false
-                            frozen = true
-                            doTick = false
-                        }
-
                         if (!untilCollision && --steps < 0) doTick = false
                     }
 
                     if (doTick) {
+                        val contacts = mutableListOf<Contact>()
+                        globalContacts[world] = contacts
+
                         for (body in localBodies) {
                             if (body.hasGravity) body.velocity.add(Vector3d(GRAVITY).mul(TIME_STEP))
                         }
@@ -173,8 +169,14 @@ object PhysicsCommand : ICommand {
                         for (body in localBodies) {
                             body.step()
                         }
+
+                        if (untilCollision && contacts.isNotEmpty()) {
+                            untilCollision = false
+                            frozen = true
+                        }
                     }
 
+                    val contacts = globalContacts[world] ?: return@repeat
 
                     for (contact in contacts) {
                         val (point,

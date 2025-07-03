@@ -114,7 +114,7 @@ class Cuboid(
 
     private val display: BlockDisplay = world.spawnEntity(
         Location(world, pos.x, pos.y, pos.z),
-        org.bukkit.entity.EntityType.BLOCK_DISPLAY
+        EntityType.BLOCK_DISPLAY
     ) as BlockDisplay
 
     private var debugDisplay: TextDisplay? = null
@@ -353,46 +353,55 @@ class Cuboid(
 
     override fun collidesBlock(blockBody: BlockBody): CollisionResult? {
         ensureNonAligned()
-        return collidesAAFace(
+        println("TRYING COLLIDING!")
+        return collidesEdge(
             start = Vector3d(
                 blockBody.boundingBox.minX,
-                blockBody.boundingBox.maxY,
-                blockBody.boundingBox.minZ
+                blockBody.boundingBox.maxX,
+                blockBody.boundingBox.minX,
             ),
             end = Vector3d(
                 blockBody.boundingBox.maxX,
-                blockBody.boundingBox.maxY,
-                blockBody.boundingBox.maxZ
+                blockBody.boundingBox.maxX,
+                blockBody.boundingBox.minX,
             ),
-            normal = Vector3d(0.0, 1.0, 0.0),
+            edge = Vector3d(1.0, 0.0, 0.0)
         )
+//        return collidesAAFace(
+//            start = Vector3d(
+//                blockBody.boundingBox.minX,
+//                blockBody.boundingBox.maxY,
+//                blockBody.boundingBox.minZ
+//            ),
+//            end = Vector3d(
+//                blockBody.boundingBox.maxX,
+//                blockBody.boundingBox.maxY,
+//                blockBody.boundingBox.maxZ
+//            ),
+//            normal = Vector3d(0.0, 1.0, 0.0),
+//        )
     }
 
     private fun collidesAAFace(start: Vector3d, end: Vector3d, normal: Vector3d): CollisionResult? {
         require(start.x <= end.x && start.y <= end.y && start.z <= end.z)
         val large = 64.0
-
-        val order: Boolean
         val (otherEdges, otherVertices) =
             if (normal.distance(1.0, 0.0, 0.0) < EPSILON || normal.distance(-1.0, 0.0, 0.0) < EPSILON) {
-                order = (normal.x > 0.0)
-                listOf(Vector3d(0.0, 1.0, 0.0), Vector3d(0.0, 0.0, 1.0)) to listOf(
+                listOf<Vector3d>() to listOf(
                     Vector3d(start.x, start.y - large, start.z - large),
                     Vector3d(start.x, end.y + large, start.z - large),
                     Vector3d(start.x, end.y + large, end.z + large),
                     Vector3d(start.x, start.y - large, end.z + large),
                 )
             } else if (normal.distance(0.0, 1.0, 0.0) < EPSILON || normal.distance(0.0, -1.0, 0.0) < EPSILON) {
-                order = (normal.y > 0.0)
-                listOf(Vector3d(1.0, 0.0, 0.0), Vector3d(0.0, 0.0, 1.0)) to listOf(
+                listOf<Vector3d>() to listOf(
                     Vector3d(start.x - large, start.y, start.z - large),
                     Vector3d(end.x + large, start.y, start.z - large),
                     Vector3d(end.x + large, start.y, end.z + large),
                     Vector3d(start.x - large, start.y, end.z + large),
                 )
             } else if (normal.distance(0.0, 0.0, 1.0) < EPSILON || normal.distance(0.0, 0.0, -1.0) < EPSILON) {
-                order = (normal.z > 0.0)
-                listOf(Vector3d(1.0, 0.0, 0.0), Vector3d(0.0, 1.0, 0.0)) to listOf(
+                listOf<Vector3d>() to listOf(
                     Vector3d(start.x - large, start.y - large, start.z),
                     Vector3d(end.x + large, start.y - large, start.z),
                     Vector3d(end.x + large, end.y + large, start.z),
@@ -404,7 +413,30 @@ class Cuboid(
 
         val otherAxiss = listOf(normal)
 
-        val myAxiss = listOf(
+        return collidesSAT(otherVertices, otherAxiss, otherEdges)
+    }
+
+    private fun collidesEdge(
+        start: Vector3d,
+        end: Vector3d,
+        edge: Vector3d
+    ): CollisionResult? {
+        val otherVertices = listOf(start, end)
+        val otherEdges = listOf(edge)
+
+        return collidesSAT(
+            otherVertices = otherVertices,
+            otherAxiss = listOf(),
+            otherEdges = otherEdges
+        )
+    }
+
+    private fun collidesSAT(
+        otherVertices: List<Vector3d>,
+        otherAxiss: List<Vector3d>,
+        otherEdges: List<Vector3d>,
+    ): CollisionResult? {
+        val myAxiss = listOf<Vector3d>(
             Vector3d(1.0, 0.0, 0.0).rotate(q).normalize(),
             Vector3d(0.0, 1.0, 0.0).rotate(q).normalize(),
             Vector3d(0.0, 0.0, 1.0).rotate(q).normalize(),
@@ -425,6 +457,7 @@ class Cuboid(
 
         val myVertices = vertices
 
+        var minOrder: Boolean? = null
         var minOverlap = Double.MAX_VALUE
         var minAxis: Vector3d? = null
 
@@ -447,15 +480,30 @@ class Cuboid(
                 otherMax = max(otherMax, s)
             }
 
+            var order: Boolean? = null
             val overlap = if (myMin < otherMax && myMax > otherMin) {
-                if (myMax > otherMax) otherMax - myMin
-                else myMax - otherMin
+                //overlapping
+                order = (otherMax - myMin) < (myMax - otherMin)
+
+
+                //check if contained or overlapping; if contained then choose smallest distance as overlap
+                if (myMin < otherMin && myMax > otherMax) {
+                    //i contain other
+                    min(myMax - otherMax, otherMin - myMin)
+                } else if (otherMin < myMin && otherMax > myMax) {
+                    //other contains me
+                    min(otherMax - myMax, myMin - otherMin)
+                } else {
+                    //just overlapping
+                    if (myMax > otherMax) otherMax - myMin
+                    else myMax - otherMin
+                }
             } else 0.0
 
 //            println("TEST!")
 //            println("  - axis: $axis")
 //            println("  - overlap: $overlap")
-//            println("  - order: $order")
+//            println("  - order: $minOrder")
 //            println("  - myMin: $myMin myMax: $myMax")
 //            println("  - otherMin: $otherMin otherMax: $otherMax")
 
@@ -466,10 +514,12 @@ class Cuboid(
             if (overlap < minOverlap) {
                 minAxis = axis
                 minOverlap = overlap
+                minOrder = order
             }
         }
 
-        check(minAxis != null)
+        minAxis!!
+        minOrder!!
 
         if (minAxis in edgeAxiss) {
             //edge-edge
@@ -477,11 +527,11 @@ class Cuboid(
 //            println("EDGE-EDGE")
 //            println("  - AXIS: $minAxis")
 //            println("  - OVERLAP: $minOverlap")
-//            println("  - ORDER: $order")
+//            println("  - ORDER: $minOrder")
 
             var myDeepestVertices = mutableListOf<Vector3d>()
             var myDeepestDistance = -Double.MAX_VALUE
-            val myOrderedAxis = if (order) Vector3d(minAxis).negate() else minAxis
+            val myOrderedAxis = if (minOrder) Vector3d(minAxis).negate() else minAxis
 
             for (vertex in myVertices) {
                 val d = vertex.dot(myOrderedAxis)
@@ -555,7 +605,7 @@ class Cuboid(
 
             return CollisionResult(
                 Vector3d(r.first).mul(0.5).add(Vector3d(r.second).mul(0.5)),
-                if (order) minAxis else Vector3d(minAxis).negate(),
+                if (minOrder) minAxis else Vector3d(minAxis).negate(),
                 r.third
             )
         } else {
@@ -563,13 +613,13 @@ class Cuboid(
 //            println("FACE-VERTEX")
 //            println("  - AXIS: $minAxis")
 //            println("  - OVERLAP: $minOverlap")
-//            println("  - ORDER: $order")
+//            println("  - minOrder: $minOrder")
 
             var furthestDistance = -Double.MAX_VALUE
             var furtherVertex: Vector3d? = null
 
             if (myAxiss.contains(minAxis)) {
-                val antiNormal = if (!order) Vector3d(minAxis).negate() else Vector3d(minAxis)
+                val antiNormal = if (!minOrder) Vector3d(minAxis).negate() else Vector3d(minAxis)
 //                println("OTHER AXIS")
                 //other has incident
                 for (vertex in otherVertices) {
@@ -580,9 +630,9 @@ class Cuboid(
                     }
                 }
 
-                return CollisionResult(furtherVertex!!, Vector3d(minAxis).applyIf(!order) { negate() }, minOverlap)
+                return CollisionResult(furtherVertex!!, Vector3d(minAxis).applyIf(!minOrder) { negate() }, minOverlap)
             } else {
-                val antiNormal = if (order) Vector3d(minAxis).negate() else Vector3d(minAxis)
+                val antiNormal = if (minOrder) Vector3d(minAxis).negate() else Vector3d(minAxis)
 //                println("MY AXIS")
                 //i have incident
                 for (vertex in myVertices) {
@@ -593,7 +643,7 @@ class Cuboid(
                     }
                 }
 
-                return CollisionResult(furtherVertex!!, Vector3d(minAxis).applyIf(!order) { negate() }, minOverlap)
+                return CollisionResult(furtherVertex!!, Vector3d(minAxis).applyIf(!minOrder) { negate() }, minOverlap)
             }
         }
 
