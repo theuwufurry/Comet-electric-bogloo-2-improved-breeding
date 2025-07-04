@@ -66,7 +66,7 @@ class OptimizedEmitter(
     private val runtime: VirtualRuntime?
 
     init {
-        println("b pose: $pose")
+//        println("b pose: $pose")
 
         blocked.set(true)
         emitterData.emitter = this

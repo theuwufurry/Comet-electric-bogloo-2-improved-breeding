@@ -132,7 +132,7 @@ data class UnrealizedEmitter(
         yawpitchSupplier: Supplier<YawPitch>?,
         after: Consumer<AbstractEmitter>,
     ) {
-        println("a pose: $pose")
+//        println("a pose: $pose")
         realize(parent, pose, environmentData, GlobalAudience(), mount, yawpitchSupplier, after)
     }
 

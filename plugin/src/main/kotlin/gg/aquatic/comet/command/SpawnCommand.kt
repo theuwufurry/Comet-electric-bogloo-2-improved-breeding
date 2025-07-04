@@ -90,8 +90,8 @@ object SpawnCommand : ICommand {
 
         val location = Location(world, x, y, z, yaw, pitch)
         val pose = location.pose()
-        println("location: $location")
-        println("0 pose: $pose")
+//        println("location: $location")
+//        println("0 pose: $pose")
         emitter.realize(null, pose, data) {}
     }
 
