@@ -385,8 +385,10 @@ class Cuboid(
     private fun collidesAAFace(start: Vector3d, end: Vector3d, normal: Vector3d): CollisionResult? {
         require(start.x <= end.x && start.y <= end.y && start.z <= end.z)
         val large = 64.0
+        val axis: Int
         val (otherEdges, otherVertices) =
             if (normal.distance(1.0, 0.0, 0.0) < EPSILON || normal.distance(-1.0, 0.0, 0.0) < EPSILON) {
+                axis = 0
                 listOf<Vector3d>() to listOf(
                     Vector3d(start.x, start.y - large, start.z - large),
                     Vector3d(start.x, end.y + large, start.z - large),
@@ -394,6 +396,7 @@ class Cuboid(
                     Vector3d(start.x, start.y - large, end.z + large),
                 )
             } else if (normal.distance(0.0, 1.0, 0.0) < EPSILON || normal.distance(0.0, -1.0, 0.0) < EPSILON) {
+                axis = 1
                 listOf<Vector3d>() to listOf(
                     Vector3d(start.x - large, start.y, start.z - large),
                     Vector3d(end.x + large, start.y, start.z - large),
@@ -401,6 +404,7 @@ class Cuboid(
                     Vector3d(start.x - large, start.y, end.z + large),
                 )
             } else if (normal.distance(0.0, 0.0, 1.0) < EPSILON || normal.distance(0.0, 0.0, -1.0) < EPSILON) {
+                axis = 2
                 listOf<Vector3d>() to listOf(
                     Vector3d(start.x - large, start.y - large, start.z),
                     Vector3d(end.x + large, start.y - large, start.z),
@@ -413,7 +417,21 @@ class Cuboid(
 
         val otherAxiss = listOf(normal)
 
-        return collidesSAT(otherVertices, otherAxiss, otherEdges)
+        val r = collidesSAT(otherVertices, otherAxiss, otherEdges) ?: return null
+
+        return when (axis) {
+            0 -> {
+                r.takeIf { r.point.y in start.y..end.y && r.point.z in start.z..end.z }
+            }
+
+            1 -> {
+                r.takeIf { r.point.x in start.x..end.x && r.point.z in start.z..end.z }
+            }
+
+            else -> {
+                r.takeIf { r.point.y in start.y..end.y && r.point.z in start.z..end.z }
+            }
+        }
     }
 
     private fun collidesEdge(

@@ -83,7 +83,7 @@ object PhysicsCommand : ICommand {
                                 println("  - norm: ${result.norm}")
                                 println("  - depth: ${result.depth}")
                                 contacts += Contact(body, firstBody, result)
-                                break
+//                                break
                             }
 
 //                            for (debugBody in debugBodies) {
