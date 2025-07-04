@@ -1,11 +1,8 @@
 package gg.aquatic.comet.command
 
 import gg.aquatic.comet.api.AbstractParticleEmitter
-import gg.aquatic.comet.command.physics.BlockBody
-import gg.aquatic.comet.command.physics.Body
+import gg.aquatic.comet.command.physics.*
 import gg.aquatic.comet.command.physics.Body.Companion.TIME_STEP
-import gg.aquatic.comet.command.physics.Contact
-import gg.aquatic.comet.command.physics.Cuboid
 import gg.aquatic.waves.command.ICommand
 import org.bukkit.*
 import org.bukkit.Particle.DustOptions
@@ -38,6 +35,7 @@ object PhysicsCommand : ICommand {
     private var globalContacts = mutableMapOf<World, MutableList<Contact>>()
     var DEBUG_LEVEL = 0
     var DEBUG_SAT_LEVEL = 0
+    var DEBUG_MESH_LEVEL = 0
 
     fun init() {
         task = Bukkit.getScheduler().runTaskTimer(AbstractParticleEmitter.INSTANCE, Runnable {
@@ -78,10 +76,10 @@ object PhysicsCommand : ICommand {
                             for (block in blocks) {
                                 val body = BlockBody(block)
                                 val result = firstBody.collidesBlock(body) ?: continue
-                                println("COLLISION!")
-                                println("  - point: ${result.point}")
-                                println("  - norm: ${result.norm}")
-                                println("  - depth: ${result.depth}")
+//                                println("COLLISION!")
+//                                println("  - point: ${result.point}")
+//                                println("  - norm: ${result.norm}")
+//                                println("  - depth: ${result.depth}")
                                 contacts += Contact(body, firstBody, result)
 //                                break
                             }
@@ -365,6 +363,94 @@ object PhysicsCommand : ICommand {
 
                             world.debugBoundingBox(boundingBox, DustOptions(Color.BLUE, 0.4f))
                         }
+
+//                        for (block in PhysicsListener.meshBlocks) {
+//                            world.debugBoundingBox(block.boundingBox, DustOptions(Color.WHITE, 0.4f), 0.24999)
+//                        }
+
+                        for (boundedFace in PhysicsListener.boundedFaces) {
+//                            when (boundedFace.axis) {
+//                                Axis.X -> for (hole in boundedFace.holes) {
+//                                    world.debugConnect(
+//                                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
+//                                        Vector3d(hole.first.x, hole.second.y, hole.first.z),
+//                                        DustOptions(Color.RED, 0.5f),
+//                                    )
+//
+//                                    world.debugConnect(
+//                                        Vector3d(hole.first.x, hole.second.y, hole.first.z),
+//                                        Vector3d(hole.first.x, hole.second.y, hole.second.z),
+//                                        DustOptions(Color.RED, 0.5f),
+//                                    )
+//
+//                                    world.debugConnect(
+//                                        Vector3d(hole.first.x, hole.second.y, hole.second.z),
+//                                        Vector3d(hole.first.x, hole.first.y, hole.second.z),
+//                                        DustOptions(Color.RED, 0.5f),
+//                                    )
+//
+//                                    world.debugConnect(
+//                                        Vector3d(hole.first.x, hole.first.y, hole.second.z),
+//                                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
+//                                        DustOptions(Color.RED, 0.5f),
+//                                    )
+//                                }
+//                                Axis.Y -> for (hole in boundedFace.holes) {
+//                                    world.debugConnect(
+//                                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
+//                                        Vector3d(hole.second.x, hole.first.y, hole.first.z),
+//                                        DustOptions(Color.GREEN, 0.5f),
+//                                    )
+//
+//                                    world.debugConnect(
+//                                        Vector3d(hole.second.x, hole.first.y, hole.first.z),
+//                                        Vector3d(hole.second.x, hole.first.y, hole.second.z),
+//                                        DustOptions(Color.GREEN, 0.5f),
+//                                    )
+//
+//                                    world.debugConnect(
+//                                        Vector3d(hole.second.x, hole.first.y, hole.second.z),
+//                                        Vector3d(hole.first.x, hole.first.y, hole.second.z),
+//                                        DustOptions(Color.GREEN, 0.5f),
+//                                    )
+//
+//                                    world.debugConnect(
+//                                        Vector3d(hole.first.x, hole.first.y, hole.second.z),
+//                                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
+//                                        DustOptions(Color.GREEN, 0.5f),
+//                                    )
+//                                }
+//                                Axis.Z -> for (hole in boundedFace.holes) {
+//                                    world.debugConnect(
+//                                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
+//                                        Vector3d(hole.second.x, hole.first.y, hole.first.z),
+//                                        DustOptions(Color.BLUE, 0.5f),
+//                                    )
+//
+//                                    world.debugConnect(
+//                                        Vector3d(hole.second.x, hole.first.y, hole.first.z),
+//                                        Vector3d(hole.second.x, hole.second.y, hole.first.z),
+//                                        DustOptions(Color.BLUE, 0.5f),
+//                                    )
+//
+//                                    world.debugConnect(
+//                                        Vector3d(hole.second.x, hole.second.y, hole.first.z),
+//                                        Vector3d(hole.first.x, hole.second.y, hole.first.z),
+//                                        DustOptions(Color.BLUE, 0.5f),
+//                                    )
+//
+//                                    world.debugConnect(
+//                                        Vector3d(hole.first.x, hole.second.y, hole.first.z),
+//                                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
+//                                        DustOptions(Color.BLUE, 0.5f),
+//                                    )
+//                                }
+//                            }
+                        }
+
+                        for (edge in PhysicsListener.boundedEdges) {
+                            world.debugConnect(edge.start, edge.end, DustOptions(Color.YELLOW, 0.4f), 0.0999)
+                        }
                     }
                 }
             }
@@ -381,6 +467,11 @@ object PhysicsCommand : ICommand {
 
         if (args[1] == "debug-sat-level") {
             DEBUG_SAT_LEVEL = args[2].toInt()
+            return
+        }
+
+        if (args[1] == "debug-mesh-level") {
+            DEBUG_MESH_LEVEL = args[2].toInt()
             return
         }
 
