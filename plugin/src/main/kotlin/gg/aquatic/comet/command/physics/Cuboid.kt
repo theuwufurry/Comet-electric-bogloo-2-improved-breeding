@@ -352,34 +352,34 @@ class Cuboid(
     }
 
     override fun collidesBlock(blockBody: BlockBody): CollisionResult? {
+        if (PhysicsCommand.DEBUG_SAT_LEVEL > 0) println("COLLIDES BLOCK!")
         ensureNonAligned()
-        println("TRYING COLLIDING!")
-        return collidesEdge(
-            start = Vector3d(
-                blockBody.boundingBox.minX,
-                blockBody.boundingBox.maxX,
-                blockBody.boundingBox.minX,
-            ),
-            end = Vector3d(
-                blockBody.boundingBox.maxX,
-                blockBody.boundingBox.maxX,
-                blockBody.boundingBox.minX,
-            ),
-            edge = Vector3d(1.0, 0.0, 0.0)
-        )
-//        return collidesAAFace(
+//        return collidesEdge(
 //            start = Vector3d(
 //                blockBody.boundingBox.minX,
-//                blockBody.boundingBox.maxY,
-//                blockBody.boundingBox.minZ
+//                blockBody.boundingBox.maxX,
+//                blockBody.boundingBox.minX,
 //            ),
 //            end = Vector3d(
 //                blockBody.boundingBox.maxX,
-//                blockBody.boundingBox.maxY,
-//                blockBody.boundingBox.maxZ
+//                blockBody.boundingBox.maxX,
+//                blockBody.boundingBox.minX,
 //            ),
-//            normal = Vector3d(0.0, 1.0, 0.0),
+//            edge = Vector3d(1.0, 0.0, 0.0)
 //        )
+        return collidesAAFace(
+            start = Vector3d(
+                blockBody.boundingBox.minX,
+                blockBody.boundingBox.maxY,
+                blockBody.boundingBox.minZ
+            ),
+            end = Vector3d(
+                blockBody.boundingBox.maxX,
+                blockBody.boundingBox.maxY,
+                blockBody.boundingBox.maxZ
+            ),
+            normal = Vector3d(0.0, 1.0, 0.0),
+        )
     }
 
     private fun collidesAAFace(start: Vector3d, end: Vector3d, normal: Vector3d): CollisionResult? {
@@ -485,14 +485,13 @@ class Cuboid(
                 //overlapping
                 order = (otherMax - myMin) < (myMax - otherMin)
 
-
                 //check if contained or overlapping; if contained then choose smallest distance as overlap
                 if (myMin < otherMin && myMax > otherMax) {
                     //i contain other
-                    min(myMax - otherMax, otherMin - myMin)
+                    min(myMax - otherMin, otherMax - myMin)
                 } else if (otherMin < myMin && otherMax > myMax) {
                     //other contains me
-                    min(otherMax - myMax, myMin - otherMin)
+                    min(otherMax - myMin, myMax - otherMin)
                 } else {
                     //just overlapping
                     if (myMax > otherMax) otherMax - myMin
@@ -500,12 +499,14 @@ class Cuboid(
                 }
             } else 0.0
 
-//            println("TEST!")
-//            println("  - axis: $axis")
-//            println("  - overlap: $overlap")
-//            println("  - order: $minOrder")
-//            println("  - myMin: $myMin myMax: $myMax")
-//            println("  - otherMin: $otherMin otherMax: $otherMax")
+            if (PhysicsCommand.DEBUG_SAT_LEVEL > 2) {
+                println("TEST!")
+                println("  - axis: $axis")
+                println("  - overlap: $overlap")
+                println("  - order: $minOrder")
+                println("  - myMin: $myMin myMax: $myMax")
+                println("  - otherMin: $otherMin otherMax: $otherMax")
+            }
 
             if (overlap <= 0.0) {
                 return null
@@ -524,10 +525,12 @@ class Cuboid(
         if (minAxis in edgeAxiss) {
             //edge-edge
             //depending on the order, find most penetrating point(s) on each body, then choose the edges from that
-//            println("EDGE-EDGE")
-//            println("  - AXIS: $minAxis")
-//            println("  - OVERLAP: $minOverlap")
-//            println("  - ORDER: $minOrder")
+            if (PhysicsCommand.DEBUG_SAT_LEVEL > 0) {
+                println("EDGE-EDGE")
+                println("  - AXIS: $minAxis")
+                println("  - OVERLAP: $minOverlap")
+                println("  - ORDER: $minOrder")
+            }
 
             var myDeepestVertices = mutableListOf<Vector3d>()
             var myDeepestDistance = -Double.MAX_VALUE
@@ -597,11 +600,13 @@ class Cuboid(
                 )
             }
 
-//            println("   * myDeepestVertices: ${myDeepestVertices[0]}")
-//            println("   * myDeepestVertices: ${myDeepestVertices[1]}")
-//            println("   * otherDeepestVertices: ${otherDeepestVertices[0]}")
-//            println("   * otherDeepestVertices: ${otherDeepestVertices[1]}")
-//            println("   * DISTANCE: ${r.third}")
+            if (PhysicsCommand.DEBUG_SAT_LEVEL > 1) {
+                println("   * myDeepestVertices: ${myDeepestVertices[0]}")
+                println("   * myDeepestVertices: ${myDeepestVertices[1]}")
+                println("   * otherDeepestVertices: ${otherDeepestVertices[0]}")
+                println("   * otherDeepestVertices: ${otherDeepestVertices[1]}")
+                println("   * DISTANCE: ${r.third}")
+            }
 
             return CollisionResult(
                 Vector3d(r.first).mul(0.5).add(Vector3d(r.second).mul(0.5)),
@@ -610,10 +615,12 @@ class Cuboid(
             )
         } else {
             //face-vertex
-//            println("FACE-VERTEX")
-//            println("  - AXIS: $minAxis")
-//            println("  - OVERLAP: $minOverlap")
-//            println("  - minOrder: $minOrder")
+            if (PhysicsCommand.DEBUG_SAT_LEVEL > 0) {
+                println("FACE-VERTEX")
+                println("  - AXIS: $minAxis")
+                println("  - OVERLAP: $minOverlap")
+                println("  - minOrder: $minOrder")
+            }
 
             var furthestDistance = -Double.MAX_VALUE
             var furtherVertex: Vector3d? = null

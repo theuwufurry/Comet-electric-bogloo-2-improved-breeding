@@ -7,7 +7,6 @@ import gg.aquatic.comet.command.physics.Body.Companion.TIME_STEP
 import gg.aquatic.comet.command.physics.Contact
 import gg.aquatic.comet.command.physics.Cuboid
 import gg.aquatic.waves.command.ICommand
-import io.ktor.server.config.*
 import org.bukkit.*
 import org.bukkit.Particle.DustOptions
 import org.bukkit.block.Block
@@ -38,6 +37,7 @@ object PhysicsCommand : ICommand {
      */
     private var globalContacts = mutableMapOf<World, MutableList<Contact>>()
     var DEBUG_LEVEL = 0
+    var DEBUG_SAT_LEVEL = 0
 
     fun init() {
         task = Bukkit.getScheduler().runTaskTimer(AbstractParticleEmitter.INSTANCE, Runnable {
@@ -78,6 +78,10 @@ object PhysicsCommand : ICommand {
                             for (block in blocks) {
                                 val body = BlockBody(block)
                                 val result = firstBody.collidesBlock(body) ?: continue
+                                println("COLLISION!")
+                                println("  - point: ${result.point}")
+                                println("  - norm: ${result.norm}")
+                                println("  - depth: ${result.depth}")
                                 contacts += Contact(body, firstBody, result)
                                 break
                             }
@@ -372,6 +376,11 @@ object PhysicsCommand : ICommand {
 
         if (args[1] == "debug") {
             DEBUG_LEVEL = args[2].toInt()
+            return
+        }
+
+        if (args[1] == "debug-sat-level") {
+            DEBUG_SAT_LEVEL = args[2].toInt()
             return
         }
 
