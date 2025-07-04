@@ -13,6 +13,7 @@ import org.bukkit.scheduler.BukkitTask
 import org.bukkit.util.BoundingBox
 import org.joml.Quaterniond
 import org.joml.Vector3d
+import org.joml.Vector3i
 import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.floor
@@ -72,22 +73,27 @@ object PhysicsCommand : ICommand {
                                 }
                             }
 
-                            val blocks = firstBoundingBox.overlappingBlocks(world)
-                            for (block in blocks) {
-                                val body = BlockBody(block)
-                                val result = firstBody.collidesBlock(body) ?: continue
-//                                println("COLLISION!")
-//                                println("  - point: ${result.point}")
-//                                println("  - norm: ${result.norm}")
-//                                println("  - depth: ${result.depth}")
-                                contacts += Contact(body, firstBody, result)
-//                                break
-                            }
+                            val meshStart = Vector3i(
+                                floor(firstBoundingBox.minX).toInt(),
+                                floor(firstBoundingBox.minY).toInt(),
+                                floor(firstBoundingBox.minZ).toInt(),
+                            )
+                            val meshEnd = Vector3i(
+                                floor(firstBoundingBox.maxX).toInt() + 1,
+                                floor(firstBoundingBox.maxY).toInt() + 1,
+                                floor(firstBoundingBox.maxZ).toInt() + 1,
+                            )
+                            val mesh = Mesher.mesh(
+                                world = world,
+                                meshStart = meshStart,
+                                meshEnd = meshEnd,
+                            )
 
-//                            for (debugBody in debugBodies) {
-//                                val result = firstBody.collidesBlock(debugBody) ?: continue
-//                                contacts += Contact(debugBody, firstBody, result)
-//                            }
+                            val meshBody = MeshBody(world)
+                            val result = firstBody.collidesMesh(mesh)
+                            for (r in result) {
+                                contacts += Contact(meshBody, firstBody, r)
+                            }
                         }
 
                         for (itr in 1..5) {
@@ -200,7 +206,7 @@ object PhysicsCommand : ICommand {
                                 world,
                                 point.x, point.y, point.z,
                             ),
-                            1, Particle.DustOptions(Color.RED, 0.4f)
+                            1, DustOptions(Color.RED, 0.4f)
                         )
 
                         val minkowskiDebugOrigin = Vector3d(point).add(0.0, 3.0, 0.0)
@@ -295,7 +301,7 @@ object PhysicsCommand : ICommand {
                                             newPos.y,
                                             newPos.z,
                                         ),
-                                        1, Particle.DustOptions(Color.WHITE, 0.5f)
+                                        1, DustOptions(Color.WHITE, 0.5f)
                                     )
                                 }
 
@@ -308,7 +314,7 @@ object PhysicsCommand : ICommand {
                                             minkowskiDebugOrigin.y,
                                             minkowskiDebugOrigin.z,
                                         ),
-                                        1, Particle.DustOptions(Color.ORANGE, 0.5f)
+                                        1, DustOptions(Color.ORANGE, 0.5f)
                                     )
 
                                     world.spawnParticle(
@@ -319,7 +325,7 @@ object PhysicsCommand : ICommand {
                                             minkowskiDebugOrigin.y + closest.first.y,
                                             minkowskiDebugOrigin.z + closest.first.z,
                                         ),
-                                        1, Particle.DustOptions(Color.RED, 0.5f)
+                                        1, DustOptions(Color.RED, 0.5f)
                                     )
 
                                     world.spawnParticle(
@@ -330,7 +336,7 @@ object PhysicsCommand : ICommand {
                                             minkowskiDebugOrigin.y + closest.second.y,
                                             minkowskiDebugOrigin.z + closest.second.z,
                                         ),
-                                        1, Particle.DustOptions(Color.RED, 0.5f)
+                                        1, DustOptions(Color.RED, 0.5f)
                                     )
 
                                     world.spawnParticle(
@@ -341,7 +347,7 @@ object PhysicsCommand : ICommand {
                                             minkowskiDebugOrigin.y + closest.third.y,
                                             minkowskiDebugOrigin.z + closest.third.z,
                                         ),
-                                        1, Particle.DustOptions(Color.RED, 0.5f)
+                                        1, DustOptions(Color.RED, 0.5f)
                                     )
                                 }
                             }
@@ -362,94 +368,6 @@ object PhysicsCommand : ICommand {
                             }
 
                             world.debugBoundingBox(boundingBox, DustOptions(Color.BLUE, 0.4f))
-                        }
-
-//                        for (block in PhysicsListener.meshBlocks) {
-//                            world.debugBoundingBox(block.boundingBox, DustOptions(Color.WHITE, 0.4f), 0.24999)
-//                        }
-
-                        for (boundedFace in PhysicsListener.boundedFaces) {
-//                            when (boundedFace.axis) {
-//                                Axis.X -> for (hole in boundedFace.holes) {
-//                                    world.debugConnect(
-//                                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
-//                                        Vector3d(hole.first.x, hole.second.y, hole.first.z),
-//                                        DustOptions(Color.RED, 0.5f),
-//                                    )
-//
-//                                    world.debugConnect(
-//                                        Vector3d(hole.first.x, hole.second.y, hole.first.z),
-//                                        Vector3d(hole.first.x, hole.second.y, hole.second.z),
-//                                        DustOptions(Color.RED, 0.5f),
-//                                    )
-//
-//                                    world.debugConnect(
-//                                        Vector3d(hole.first.x, hole.second.y, hole.second.z),
-//                                        Vector3d(hole.first.x, hole.first.y, hole.second.z),
-//                                        DustOptions(Color.RED, 0.5f),
-//                                    )
-//
-//                                    world.debugConnect(
-//                                        Vector3d(hole.first.x, hole.first.y, hole.second.z),
-//                                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
-//                                        DustOptions(Color.RED, 0.5f),
-//                                    )
-//                                }
-//                                Axis.Y -> for (hole in boundedFace.holes) {
-//                                    world.debugConnect(
-//                                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
-//                                        Vector3d(hole.second.x, hole.first.y, hole.first.z),
-//                                        DustOptions(Color.GREEN, 0.5f),
-//                                    )
-//
-//                                    world.debugConnect(
-//                                        Vector3d(hole.second.x, hole.first.y, hole.first.z),
-//                                        Vector3d(hole.second.x, hole.first.y, hole.second.z),
-//                                        DustOptions(Color.GREEN, 0.5f),
-//                                    )
-//
-//                                    world.debugConnect(
-//                                        Vector3d(hole.second.x, hole.first.y, hole.second.z),
-//                                        Vector3d(hole.first.x, hole.first.y, hole.second.z),
-//                                        DustOptions(Color.GREEN, 0.5f),
-//                                    )
-//
-//                                    world.debugConnect(
-//                                        Vector3d(hole.first.x, hole.first.y, hole.second.z),
-//                                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
-//                                        DustOptions(Color.GREEN, 0.5f),
-//                                    )
-//                                }
-//                                Axis.Z -> for (hole in boundedFace.holes) {
-//                                    world.debugConnect(
-//                                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
-//                                        Vector3d(hole.second.x, hole.first.y, hole.first.z),
-//                                        DustOptions(Color.BLUE, 0.5f),
-//                                    )
-//
-//                                    world.debugConnect(
-//                                        Vector3d(hole.second.x, hole.first.y, hole.first.z),
-//                                        Vector3d(hole.second.x, hole.second.y, hole.first.z),
-//                                        DustOptions(Color.BLUE, 0.5f),
-//                                    )
-//
-//                                    world.debugConnect(
-//                                        Vector3d(hole.second.x, hole.second.y, hole.first.z),
-//                                        Vector3d(hole.first.x, hole.second.y, hole.first.z),
-//                                        DustOptions(Color.BLUE, 0.5f),
-//                                    )
-//
-//                                    world.debugConnect(
-//                                        Vector3d(hole.first.x, hole.second.y, hole.first.z),
-//                                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
-//                                        DustOptions(Color.BLUE, 0.5f),
-//                                    )
-//                                }
-//                            }
-                        }
-
-                        for (edge in PhysicsListener.boundedEdges) {
-                            world.debugConnect(edge.start, edge.end, DustOptions(Color.YELLOW, 0.4f), 0.0999)
                         }
                     }
                 }

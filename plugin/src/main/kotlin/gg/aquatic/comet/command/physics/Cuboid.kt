@@ -351,36 +351,88 @@ class Cuboid(
         }
     }
 
-    override fun collidesBlock(blockBody: BlockBody): CollisionResult? {
-        if (PhysicsCommand.DEBUG_SAT_LEVEL > 0) println("COLLIDES BLOCK!")
+    override fun collidesMesh(mesh: Mesh): List<CollisionResult> {
+        if (PhysicsCommand.DEBUG_SAT_LEVEL > 0) println("COLLIDES MESH!")
         ensureNonAligned()
-//        return collidesEdge(
+
+        val collisions = mutableListOf<CollisionResult>()
+
+        for (cheesyFace in mesh.cheesyFaces) {
+            val r = collidesAAFace(
+                start = Vector3d(
+                    cheesyFace.start.x.toDouble(),
+                    cheesyFace.start.y.toDouble(),
+                    cheesyFace.start.z.toDouble(),
+                ),
+                end = Vector3d(
+                    cheesyFace.end.x.toDouble(),
+                    cheesyFace.end.y.toDouble(),
+                    cheesyFace.end.z.toDouble(),
+                ),
+                normal = cheesyFace.axis.vec,
+            ) ?: continue
+
+            val valid = run validate@{
+                when (cheesyFace.axis) {
+                    Axis.X -> {
+                        for (hole in cheesyFace.holes) {
+                            if (r.point.y in hole.first.y..hole.second.y && r.point.z in hole.first.z..hole.second.z) return@validate false
+                        }
+
+                        return@validate true
+                    }
+                    Axis.Y -> {
+                        for (hole in cheesyFace.holes) {
+                            if (r.point.x in hole.first.x..hole.second.x && r.point.z in hole.first.z..hole.second.z) return@validate false
+                        }
+
+                        return@validate true
+                    }
+                    Axis.Z -> {
+                        for (hole in cheesyFace.holes) {
+                            if (r.point.y in hole.first.y..hole.second.y && r.point.x in hole.first.x..hole.second.x) return@validate false
+                        }
+
+                        return@validate true
+                    }
+                }
+            }
+
+            if (valid) collisions += r
+        }
+
+        return collisions
+    }
+//    override fun collidesBlock(blockBody: BlockBody): CollisionResult? {
+//        if (PhysicsCommand.DEBUG_SAT_LEVEL > 0) println("COLLIDES BLOCK!")
+//        ensureNonAligned()
+////        return collidesEdge(
+////            start = Vector3d(
+////                blockBody.boundingBox.minX,
+////                blockBody.boundingBox.maxX,
+////                blockBody.boundingBox.minX,
+////            ),
+////            end = Vector3d(
+////                blockBody.boundingBox.maxX,
+////                blockBody.boundingBox.maxX,
+////                blockBody.boundingBox.minX,
+////            ),
+////            edge = Vector3d(1.0, 0.0, 0.0)
+////        )
+//        return collidesAAFace(
 //            start = Vector3d(
 //                blockBody.boundingBox.minX,
-//                blockBody.boundingBox.maxX,
-//                blockBody.boundingBox.minX,
+//                blockBody.boundingBox.maxY,
+//                blockBody.boundingBox.minZ
 //            ),
 //            end = Vector3d(
 //                blockBody.boundingBox.maxX,
-//                blockBody.boundingBox.maxX,
-//                blockBody.boundingBox.minX,
+//                blockBody.boundingBox.maxY,
+//                blockBody.boundingBox.maxZ
 //            ),
-//            edge = Vector3d(1.0, 0.0, 0.0)
+//            normal = Vector3d(0.0, 1.0, 0.0),
 //        )
-        return collidesAAFace(
-            start = Vector3d(
-                blockBody.boundingBox.minX,
-                blockBody.boundingBox.maxY,
-                blockBody.boundingBox.minZ
-            ),
-            end = Vector3d(
-                blockBody.boundingBox.maxX,
-                blockBody.boundingBox.maxY,
-                blockBody.boundingBox.maxZ
-            ),
-            normal = Vector3d(0.0, 1.0, 0.0),
-        )
-    }
+//    }
 
     private fun collidesAAFace(start: Vector3d, end: Vector3d, normal: Vector3d): CollisionResult? {
         require(start.x <= end.x && start.y <= end.y && start.z <= end.z)

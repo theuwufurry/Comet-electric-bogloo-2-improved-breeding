@@ -37,7 +37,7 @@ interface Body  {
     fun intersect(origin: Vector3d, end: Vector3d): List<Pair<Vector3d, Vector3d>>
 
     fun collidesBody(other: Body): CollisionResult?
-    fun collidesBlock(blockBody: BlockBody): CollisionResult?
+    fun collidesMesh(mesh: Mesh): List<CollisionResult>
 
     fun kill()
 
@@ -115,7 +115,7 @@ class BlockBody(val block: Block) : Body {
     override fun step() { }
 
     override fun collidesBody(other: Body): CollisionResult? { return null }
-    override fun collidesBlock(blockBody: BlockBody): CollisionResult? { return null }
+    override fun collidesMesh(mesh: Mesh): List<CollisionResult> { return listOf() }
 
     override fun kill() { }
 
