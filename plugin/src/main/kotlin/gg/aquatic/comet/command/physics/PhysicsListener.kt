@@ -31,7 +31,7 @@ object PhysicsListener : Listener {
         val end = Vector3d(start).add(dir)
 
         val allIntersections = mutableListOf<Triple<Body, Vector3d, Vector3d>>()
-        for (body in PhysicsCommand.globalBodies[event.player.world] ?: return) {
+        for (body in PhysicsCommand.physicsWorlds[event.player.world]?.bodies ?: return) {
             allIntersections += body.intersect(start, end).map { Triple(body, it.first, it.second) }
         }
 
@@ -73,6 +73,11 @@ object PhysicsListener : Listener {
     fun onBlockBreak(event: BlockBreakEvent) {
         val player = event.player
         val item = player.inventory.itemInMainHand
+        if (item.type == Material.END_ROD) {
+            event.isCancelled = true
+            return
+        }
+
         if (item.type == Material.GOLD_NUGGET) {
             event.isCancelled = true
             meshRange = if (meshRange != null && meshRange!!.second == null) {

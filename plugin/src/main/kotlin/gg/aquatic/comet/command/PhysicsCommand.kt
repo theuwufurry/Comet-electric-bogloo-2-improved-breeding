@@ -24,7 +24,7 @@ object PhysicsCommand : ICommand {
     private lateinit var task: BukkitTask
     private var time = 0
     private val DEBUG_FREQUENCY = 2
-    val globalBodies = mutableMapOf<World, MutableList<Body>>()
+    val physicsWorlds = mutableMapOf<World, PhysicsWorld>()
     private var frozen = false
     private var steps = 0
     private var untilCollision = false
@@ -33,7 +33,6 @@ object PhysicsCommand : ICommand {
     /**
      * point, direction
      */
-    private var globalContacts = mutableMapOf<World, MutableList<Contact>>()
     var DEBUG_LEVEL = 0
     var DEBUG_SAT_LEVEL = 0
     var DEBUG_MESH_LEVEL = 0
@@ -41,7 +40,8 @@ object PhysicsCommand : ICommand {
     fun init() {
         task = Bukkit.getScheduler().runTaskTimer(AbstractParticleEmitter.INSTANCE, Runnable {
             time++
-            for ((world, localBodies) in globalBodies.entries) {
+            for ((world, physicsWorld) in physicsWorlds.entries) {
+                val localBodies = physicsWorld.bodies
                 repeat((0.05 / TIME_STEP).roundToInt()) {
                     var doTick = true
                     if (frozen) {
@@ -49,14 +49,14 @@ object PhysicsCommand : ICommand {
                     }
 
                     if (doTick) {
-                        val contacts = mutableListOf<Contact>()
-                        globalContacts[world] = contacts
+                        physicsWorld.contacts.clear()
+                        val contacts = physicsWorld.contacts
+                        contacts.clear()
+                        physicsWorld.meshes.clear()
 
                         for (body in localBodies) {
                             if (body.hasGravity) body.velocity.add(Vector3d(GRAVITY).mul(TIME_STEP))
                         }
-
-                        contacts.clear()
 
                         for (i in 0..<localBodies.size) {
                             val firstBody = localBodies[i]
@@ -88,6 +88,8 @@ object PhysicsCommand : ICommand {
                                 meshStart = meshStart,
                                 meshEnd = meshEnd,
                             )
+
+                            physicsWorld.meshes += mesh
 
                             val meshBody = MeshBody(world)
                             val result = firstBody.collidesMesh(mesh)
@@ -159,18 +161,6 @@ object PhysicsCommand : ICommand {
                                     Vector3d(secondLocalPoint).cross(Vector3d(secondLocalNorm).mul(J))
                                         .mul(second.inverseInertia)
                                 )
-
-//                                    if (J > 1.0) {
-//                                        println("STRONG COLLISION! ITR: $itr")
-//                                        println("  - NORM: $norm DEPTH: $depth POINT: $point")
-//                                        println("  - J: $J")
-//                                        println("    * VR: $vr")
-//                                        println("    * BIAS: $bias")
-//                                        println("    * MASSIMPACT: $massImpact")
-//                                        println("    * ANGULARIMPACT: $angularImpact")
-//                                        println("  - firstDV: $firstDV")
-//                                        println("  - secondDV: $secondDV")
-//                                    }
                             }
                         }
 
@@ -184,7 +174,7 @@ object PhysicsCommand : ICommand {
                         }
                     }
 
-                    val contacts = globalContacts[world] ?: return@repeat
+                    val contacts = physicsWorld.contacts
 
                     for (contact in contacts) {
                         val (point,
@@ -360,14 +350,20 @@ object PhysicsCommand : ICommand {
                         for (body in localBodies) {
                             val boundingBox = body.boundingBox
 
-                            if (DEBUG_LEVEL > 1) {
-                                val blocks = boundingBox.overlappingBlocks(world)
-                                for (block in blocks) {
-                                    world.debugBoundingBox(block.boundingBox, DustOptions(Color.RED, 0.4f), 0.24)
-                                }
-                            }
+//                            if (DEBUG_LEVEL > 1) {
+//                                val blocks = boundingBox.overlappingBlocks(world)
+//                                for (block in blocks) {
+//                                    world.debugBoundingBox(block.boundingBox, DustOptions(Color.RED, 0.4f), 0.24)
+//                                }
+//                            }
 
                             world.debugBoundingBox(boundingBox, DustOptions(Color.BLUE, 0.4f))
+                        }
+                    }
+
+                    if (DEBUG_MESH_LEVEL > 1) {
+                        for (mesh in physicsWorld.meshes) {
+                            mesh.visualize(world)
                         }
                     }
                 }
@@ -379,21 +375,28 @@ object PhysicsCommand : ICommand {
         if (sender !is Player) return
 
         if (args[1] == "debug") {
-            DEBUG_LEVEL = args[2].toInt()
+            val nl = args[2].toInt()
+            DEBUG_LEVEL = nl
+            sender.sendMessage("DEBUG LEVEL IS NOW $DEBUG_LEVEL")
             return
         }
 
         if (args[1] == "debug-sat-level") {
-            DEBUG_SAT_LEVEL = args[2].toInt()
+            val nl = args[2].toInt()
+            DEBUG_SAT_LEVEL = nl
+            sender.sendMessage("DEBUG SAT LEVEL IS NOW $DEBUG_SAT_LEVEL")
             return
         }
 
         if (args[1] == "debug-mesh-level") {
-            DEBUG_MESH_LEVEL = args[2].toInt()
+            val nl = args[2].toInt()
+            DEBUG_MESH_LEVEL = nl
+            sender.sendMessage("DEBUG MESH LEVEL IS NOW $DEBUG_MESH_LEVEL")
             return
         }
 
         if (args[1] == "freeze") {
+            if (frozen) sender.sendMessage("UNFROZEN") else println("FROZEN")
             frozen = !frozen
             return
         }
@@ -574,15 +577,14 @@ object PhysicsCommand : ICommand {
                 hasGravity = hasGravity,
             )
 
-            val ls = globalBodies.getOrPut(sender.world) { mutableListOf() }
+            val ls = physicsWorlds.getOrPut(sender.world) { PhysicsWorld((sender.world)) }
 
-            ls += rb
+            ls.bodies += rb
         }
     }
 
     fun clear() {
-        globalBodies.values.forEach { it.forEach { body -> body.kill() } }
-        globalBodies.clear()
+        physicsWorlds.values.forEach { it.bodies.forEach { body -> body.kill() } }
     }
 
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {

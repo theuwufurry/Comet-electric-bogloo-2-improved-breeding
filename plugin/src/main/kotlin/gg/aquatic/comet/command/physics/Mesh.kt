@@ -1,5 +1,10 @@
 package gg.aquatic.comet.command.physics
 
+import gg.aquatic.comet.command.debugConnect
+import org.bukkit.Color
+import org.bukkit.Color.*
+import org.bukkit.Particle
+import org.bukkit.Particle.DustOptions
 import org.bukkit.World
 import org.bukkit.util.BoundingBox
 import org.joml.Quaterniond
@@ -9,7 +14,95 @@ import java.util.*
 data class Mesh(
     val cheesyFaces: List<CheesyAAFace>,
     val edges: Set<Edge>
-)
+) {
+    fun visualize(world: World) {
+//        for (boundedFace in cheesyFaces) {
+//            when (boundedFace.axis) {
+//                Axis.X -> for (hole in boundedFace.holes) {
+//                    world.debugConnect(
+//                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
+//                        Vector3d(hole.first.x, hole.second.y, hole.first.z),
+//                        DustOptions(RED, 0.5f),
+//                    )
+//
+//                    world.debugConnect(
+//                        Vector3d(hole.first.x, hole.second.y, hole.first.z),
+//                        Vector3d(hole.first.x, hole.second.y, hole.second.z),
+//                        DustOptions(RED, 0.5f),
+//                    )
+//
+//                    world.debugConnect(
+//                        Vector3d(hole.first.x, hole.second.y, hole.second.z),
+//                        Vector3d(hole.first.x, hole.first.y, hole.second.z),
+//                        DustOptions(RED, 0.5f),
+//                    )
+//
+//                    world.debugConnect(
+//                        Vector3d(hole.first.x, hole.first.y, hole.second.z),
+//                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
+//                        DustOptions(RED, 0.5f),
+//                    )
+//                }
+//
+//                Axis.Y -> for (hole in boundedFace.holes) {
+//                    world.debugConnect(
+//                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
+//                        Vector3d(hole.second.x, hole.first.y, hole.first.z),
+//                        DustOptions(GREEN, 0.5f),
+//                    )
+//
+//                    world.debugConnect(
+//                        Vector3d(hole.second.x, hole.first.y, hole.first.z),
+//                        Vector3d(hole.second.x, hole.first.y, hole.second.z),
+//                        DustOptions(GREEN, 0.5f),
+//                    )
+//
+//                    world.debugConnect(
+//                        Vector3d(hole.second.x, hole.first.y, hole.second.z),
+//                        Vector3d(hole.first.x, hole.first.y, hole.second.z),
+//                        DustOptions(GREEN, 0.5f),
+//                    )
+//
+//                    world.debugConnect(
+//                        Vector3d(hole.first.x, hole.first.y, hole.second.z),
+//                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
+//                        DustOptions(GREEN, 0.5f),
+//                    )
+//                }
+//
+//                Axis.Z -> for (hole in boundedFace.holes) {
+//                    world.debugConnect(
+//                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
+//                        Vector3d(hole.second.x, hole.first.y, hole.first.z),
+//                        DustOptions(BLUE, 0.5f),
+//                    )
+//
+//                    world.debugConnect(
+//                        Vector3d(hole.second.x, hole.first.y, hole.first.z),
+//                        Vector3d(hole.second.x, hole.second.y, hole.first.z),
+//                        DustOptions(BLUE, 0.5f),
+//                    )
+//
+//                    world.debugConnect(
+//                        Vector3d(hole.second.x, hole.second.y, hole.first.z),
+//                        Vector3d(hole.first.x, hole.second.y, hole.first.z),
+//                        DustOptions(BLUE, 0.5f),
+//                    )
+//
+//                    world.debugConnect(
+//                        Vector3d(hole.first.x, hole.second.y, hole.first.z),
+//                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
+//                        DustOptions(BLUE, 0.5f),
+//                    )
+//                }
+//            }
+//        }
+
+        for (edge in edges) {
+            world.debugConnect(edge.start, edge.end, DustOptions(YELLOW, 0.4f), 0.0999)
+        }
+    }
+}
 
 class MeshBody(
     override val world: World

@@ -401,38 +401,13 @@ class Cuboid(
             if (valid) collisions += r
         }
 
+        for (edge in mesh.edges) {
+            val r = collidesEdge(edge.start, edge.end, edge.vec) ?: continue
+            collisions += r
+        }
+
         return collisions
     }
-//    override fun collidesBlock(blockBody: BlockBody): CollisionResult? {
-//        if (PhysicsCommand.DEBUG_SAT_LEVEL > 0) println("COLLIDES BLOCK!")
-//        ensureNonAligned()
-////        return collidesEdge(
-////            start = Vector3d(
-////                blockBody.boundingBox.minX,
-////                blockBody.boundingBox.maxX,
-////                blockBody.boundingBox.minX,
-////            ),
-////            end = Vector3d(
-////                blockBody.boundingBox.maxX,
-////                blockBody.boundingBox.maxX,
-////                blockBody.boundingBox.minX,
-////            ),
-////            edge = Vector3d(1.0, 0.0, 0.0)
-////        )
-//        return collidesAAFace(
-//            start = Vector3d(
-//                blockBody.boundingBox.minX,
-//                blockBody.boundingBox.maxY,
-//                blockBody.boundingBox.minZ
-//            ),
-//            end = Vector3d(
-//                blockBody.boundingBox.maxX,
-//                blockBody.boundingBox.maxY,
-//                blockBody.boundingBox.maxZ
-//            ),
-//            normal = Vector3d(0.0, 1.0, 0.0),
-//        )
-//    }
 
     private fun collidesAAFace(start: Vector3d, end: Vector3d, normal: Vector3d): CollisionResult? {
         require(start.x <= end.x && start.y <= end.y && start.z <= end.z)
