@@ -50,7 +50,7 @@ interface Body  {
     )
 
     companion object {
-        const val TIME_STEP = 0.01
+        const val TIME_STEP = 0.005
 
     }
 }

@@ -71,7 +71,7 @@ object PhysicsCommand : ICommand {
 
                                     val result = firstBody.collidesBody(second) ?: continue
 
-                                    contacts += Contact(firstBody, second, result)
+                                    contacts += Contact(second, firstBody, result)
                                 }
                             }
 
@@ -95,6 +95,7 @@ object PhysicsCommand : ICommand {
 
                             val meshBody = MeshBody(world)
                             val result = firstBody.collidesMesh(mesh)
+
                             for (r in result) {
                                 contacts += Contact(meshBody, firstBody, r)
                             }
@@ -102,67 +103,64 @@ object PhysicsCommand : ICommand {
 
                         for (itr in 1..5) {
                             for (contact in contacts) {
+                                println("PROCESSING CONTACT!")
                                 val first = contact.first
                                 val second = contact.second
 
                                 val point = contact.result.point
-                                val norm = contact.result.norm
+                                val n = contact.result.norm
                                 val depth = contact.result.depth
 
-                                val massImpact = first.inverseMass + second.inverseMass
+                                //lambda = -(JV - b) / (JM^(-1)J^(T))
 
-                                val firstLocalPoint = first.globalToLocal(point)
-                                val firstLocalNorm =
-                                    Vector3d(norm).negate().rotate(Quaterniond(first.q).conjugate()).normalize()
-                                val secondLocalPoint = second.globalToLocal(point)
-                                val secondLocalNorm =
-                                    Vector3d(norm).rotate(Quaterniond(second.q).conjugate()).normalize()
-
-                                val vr = Vector3d(second.velocity).sub(first.velocity).dot(norm) +
-                                        Vector3d(second.omega).cross(secondLocalPoint).dot(secondLocalNorm) -
-                                        Vector3d(first.omega).cross(firstLocalPoint).dot(firstLocalNorm)
-
-                                val firstAngularImpact =
-                                    Vector3d(firstLocalPoint)
-                                        .cross(firstLocalNorm)
-                                        .mul(first.inverseInertia)
-                                        .cross(firstLocalPoint)
-                                        .dot(firstLocalNorm)
-//                                    println("first angular impact: $firstAngularImpact")
-                                val secondAngularImpact =
-                                    Vector3d(secondLocalPoint)
-                                        .cross(secondLocalNorm)
-                                        .mul(second.inverseInertia)
-                                        .cross(secondLocalPoint)
-                                        .dot(secondLocalNorm)
-//                                    println("first angular impact: $secondAngularImpact")
-                                val angularImpact = firstAngularImpact + secondAngularImpact
+                                //J = [ -n, (-rA x n), n, (rB x n) ]
+                                // n is given, rA is point - center
+                                val nn = Vector3d(n).mul(-1.0)
+                                val rA = Vector3d(point).sub(first.pos)
+                                val j1 = Vector3d(rA).negate().cross(n)
+                                val rB = Vector3d(point).sub(second.pos)
+                                val j3 = Vector3d(rB).cross(n)
+                                //V = [ vA, wA, vB, wB ]
+                                // vA and vB are given, wA and wB are js rotated w
+                                val vA = first.velocity
+                                val wA = Vector3d(first.omega).rotate(first.q)
+                                val vB = second.velocity
+                                val wB = Vector3d(second.omega).rotate(second.q)
 
                                 val bias = BIAS / TIME_STEP * (abs(depth) - SLOP).coerceAtLeast(0.0)
 
-                                var J =
-                                    (bias + (vr * -(1.0)) / (massImpact + angularImpact)).coerceAtLeast(
-                                        0.0
-                                    )
+                                //M^(-1) = [ iMA, iIA, iMB, iAB ]
+                                val iMA = Vector3d(first.inverseMass)
+                                val iIA = first.inverseInertia
+                                val iMB = Vector3d(second.inverseMass)
+                                val iIB = second.inverseInertia
 
+                                val den = Vector3d(nn).mul(nn).dot(iMA) + Vector3d(j1).mul(j1).dot(iIA) + Vector3d(n).mul(n).dot(iMB) + Vector3d(j3).mul(j3).dot(iIB)
+
+                                var lambda = (nn.dot(vA) + j1.dot(wA) + n.dot(vB) + j3.dot(wB) + bias) / den
+                                println("  - PURE LAMBDA: $lambda")
 
                                 val curJSum = contact.jSum
-                                contact.jSum = (curJSum + J).coerceAtLeast(0.0)
-                                J = contact.jSum - curJSum
+                                contact.jSum = (curJSum + lambda).coerceAtLeast(0.0)
+                                lambda = contact.jSum - curJSum
 
-                                val firstDV = Vector3d(norm).mul(J * first.inverseMass)
-                                first.velocity.sub(firstDV)
-                                first.omega.add(
-                                    Vector3d(firstLocalPoint).cross(Vector3d(firstLocalNorm).mul(J))
-                                        .mul(first.inverseInertia)
-                                )
+                                println("  - ITR: $itr LAMBDA: $lambda")
 
-                                val secondDV = Vector3d(norm).mul(J * second.inverseMass)
-                                second.velocity.add(secondDV)
-                                second.omega.add(
-                                    Vector3d(secondLocalPoint).cross(Vector3d(secondLocalNorm).mul(J))
-                                        .mul(second.inverseInertia)
-                                )
+                                //delta-V = M^(-1)J^T * lambda 
+                                val dVA = Vector3d(iMA).mul(nn).mul(lambda)
+                                val dOA = Vector3d(iIA).mul(j1).mul(lambda).rotate(Quaterniond(first.q).conjugate())
+                                val dVB = Vector3d(iMB).mul(n).mul(lambda)
+                                val dOB = Vector3d(iIB).mul(j3).mul(lambda).rotate(Quaterniond(second.q).conjugate())
+
+                                println("  - dVA: $dVA")
+                                println("  - dOA: $dOA")
+                                println("  - dVB: $dVB")
+                                println("  - dOB: $dOB")
+
+                                first.velocity.sub(dVA)
+                                first.omega.sub(dOA)
+                                second.velocity.add(dVB)
+                                second.omega.add(dOB)
                             }
                         }
 
@@ -366,7 +364,7 @@ object PhysicsCommand : ICommand {
                     if (DEBUG_MESH_LEVEL > 2) {
                         PhysicsListener.mesh?.visualize(world, visualizeFaces = false, visualizeEdges = true)
                         for (mesh in physicsWorld.meshes) {
-                            mesh.visualize(world, visualizeFaces = true, visualizeEdges = false)
+                            mesh.visualize(world, visualizeFaces = false, visualizeEdges = true)
                         }
                     }
                 }
@@ -733,7 +731,7 @@ private fun World.debugBoundingBox(box: BoundingBox, options: DustOptions, inter
     )
 }
 
-private const val BIAS = 0.1
+private const val BIAS = 0.05
 private const val SLOP = 0.05
 private val GRAVITY = Vector3d(0.0, -5.0, 0.0)
 
