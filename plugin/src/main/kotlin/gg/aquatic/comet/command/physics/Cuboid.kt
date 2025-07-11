@@ -330,7 +330,7 @@ class Cuboid(
         return maxVertex
     }
 
-    private fun ensureNonAligned() {
+    override fun ensureNonAligned() {
         val tiny = 1e-14
         val perturbation = 1e-10
         val myAxiss = listOf(
@@ -351,23 +351,22 @@ class Cuboid(
         }
     }
 
-    override fun collidesMesh(mesh: Mesh): List<CollisionResult> {
+    override fun collidesMesh(mesh: Mesh2): List<CollisionResult> {
         if (PhysicsCommand.DEBUG_SAT_LEVEL > 0) println("COLLIDES MESH!")
-        ensureNonAligned()
 
         val collisions = mutableListOf<CollisionResult>()
 
-        for (cheesyFace in mesh.cheesyFaces) {
+        for (cheesyFace in mesh.faces) {
             val r = collidesAAFace(
                 start = Vector3d(
-                    cheesyFace.start.x.toDouble(),
-                    cheesyFace.start.y.toDouble(),
-                    cheesyFace.start.z.toDouble(),
+                    cheesyFace.start.x,
+                    cheesyFace.start.y,
+                    cheesyFace.start.z,
                 ),
                 end = Vector3d(
-                    cheesyFace.end.x.toDouble(),
-                    cheesyFace.end.y.toDouble(),
-                    cheesyFace.end.z.toDouble(),
+                    cheesyFace.end.x,
+                    cheesyFace.end.y,
+                    cheesyFace.end.z,
                 ),
                 normal = cheesyFace.axis.vec,
             ) ?: continue
@@ -375,25 +374,27 @@ class Cuboid(
             val valid = run validate@{
                 when (cheesyFace.axis) {
                     Axis.X -> {
-                        for (hole in cheesyFace.holes) {
-                            if (r.point.y in hole.first.y..hole.second.y && r.point.z in hole.first.z..hole.second.z) return@validate false
+                        for (invalid in cheesyFace.invalid) {
+                            if (r.point.y in invalid.first.x..invalid.second.x && r.point.z in invalid.first.y..invalid.second.y) return@validate false
                         }
 
-                        return@validate true
+                        return@validate cheesyFace.valid.any { r.point.y in it.first.x..it.second.x && r.point.z in it.first.y..it.second.y }
                     }
+
                     Axis.Y -> {
-                        for (hole in cheesyFace.holes) {
-                            if (r.point.x in hole.first.x..hole.second.x && r.point.z in hole.first.z..hole.second.z) return@validate false
+                        for (invalid in cheesyFace.invalid) {
+                            if (r.point.x in invalid.first.x..invalid.second.x && r.point.z in invalid.first.y..invalid.second.y) return@validate false
                         }
 
-                        return@validate true
+                        return@validate cheesyFace.valid.any { r.point.x in it.first.x..it.second.x && r.point.z in it.first.y..it.second.y }
                     }
+
                     Axis.Z -> {
-                        for (hole in cheesyFace.holes) {
-                            if (r.point.y in hole.first.y..hole.second.y && r.point.x in hole.first.x..hole.second.x) return@validate false
+                        for (invalid in cheesyFace.invalid) {
+                            if (r.point.x in invalid.first.x..invalid.second.x && r.point.y in invalid.first.y..invalid.second.y) return@validate false
                         }
 
-                        return@validate true
+                        return@validate cheesyFace.valid.any { r.point.x in it.first.x..it.second.x && r.point.y in it.first.y..it.second.y }
                     }
                 }
             }
@@ -456,7 +457,7 @@ class Cuboid(
             }
 
             else -> {
-                r.takeIf { r.point.y in start.y..end.y && r.point.z in start.z..end.z }
+                r.takeIf { r.point.y in start.y..end.y && r.point.x in start.x..end.x }
             }
         }
     }

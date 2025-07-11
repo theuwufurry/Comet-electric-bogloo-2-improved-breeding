@@ -3,6 +3,7 @@ package gg.aquatic.comet.command
 import gg.aquatic.comet.command.physics.Body
 import gg.aquatic.comet.command.physics.Contact
 import gg.aquatic.comet.command.physics.Mesh
+import gg.aquatic.comet.command.physics.Mesh2
 import org.bukkit.World
 
 class PhysicsWorld(
@@ -10,5 +11,5 @@ class PhysicsWorld(
 ) {
     val bodies: MutableList<Body> = mutableListOf()
     var contacts: MutableList<Contact> = mutableListOf()
-    var meshes: MutableList<Mesh> = mutableListOf()
+    var meshes: MutableList<Mesh2> = mutableListOf()
 }

@@ -4,7 +4,6 @@ import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.command.PhysicsCommand
 import gg.aquatic.comet.command.debugConnect
 import org.bukkit.*
-import org.bukkit.block.Block
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockBreakEvent
@@ -14,6 +13,7 @@ import org.joml.Vector3d
 import org.joml.Vector3i
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.system.measureNanoTime
 
 object PhysicsListener : Listener {
     private lateinit var graphicsTask: BukkitTask
@@ -68,6 +68,7 @@ object PhysicsListener : Listener {
     }
 
     private var meshRange: Pair<Location, Location?>? = null
+    var mesh: Mesh2? = null
 
     @EventHandler
     fun onBlockBreak(event: BlockBreakEvent) {
@@ -81,19 +82,23 @@ object PhysicsListener : Listener {
         if (item.type == Material.GOLD_NUGGET) {
             event.isCancelled = true
             meshRange = if (meshRange != null && meshRange!!.second == null) {
-                Mesher.mesh(
-                    event.block.world,
-                    Vector3i(
-                        min(meshRange!!.first.blockX, event.block.location.blockX),
-                        min(meshRange!!.first.blockY, event.block.location.blockY),
-                        min(meshRange!!.first.blockZ, event.block.location.blockZ),
-                    ),
-                    Vector3i(
-                        max(meshRange!!.first.blockX, event.block.location.blockX),
-                        max(meshRange!!.first.blockY, event.block.location.blockY),
-                        max(meshRange!!.first.blockZ, event.block.location.blockZ),
+                val time = measureNanoTime {
+                    mesh = Mesh.mesh2(
+                        event.block.world,
+                        Vector3i(
+                            min(meshRange!!.first.blockX, event.block.location.blockX),
+                            min(meshRange!!.first.blockY, event.block.location.blockY),
+                            min(meshRange!!.first.blockZ, event.block.location.blockZ),
+                        ),
+                        Vector3i(
+                            max(meshRange!!.first.blockX, event.block.location.blockX),
+                            max(meshRange!!.first.blockY, event.block.location.blockY),
+                            max(meshRange!!.first.blockZ, event.block.location.blockZ),
+                        )
                     )
-                )
+                }
+
+                println("TOOK: ${time.toDouble() / 1_000_000.toDouble()}")
 
                 meshRange!!.first to event.block.location
             } else {
@@ -101,8 +106,4 @@ object PhysicsListener : Listener {
             }
         }
     }
-
-    /**
-     * Generate list of bounded faces and edges
-     */
 }

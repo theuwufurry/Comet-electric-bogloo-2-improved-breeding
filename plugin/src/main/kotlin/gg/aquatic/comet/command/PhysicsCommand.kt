@@ -16,6 +16,7 @@ import org.joml.Vector3d
 import org.joml.Vector3i
 import kotlin.math.abs
 import kotlin.math.absoluteValue
+import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
 import kotlin.random.Random
@@ -60,6 +61,7 @@ object PhysicsCommand : ICommand {
 
                         for (i in 0..<localBodies.size) {
                             val firstBody = localBodies[i]
+                            firstBody.ensureNonAligned()
                             val firstBoundingBox = firstBody.boundingBox
                             if (localBodies.size > 1) {
                                 for (j in (i + 1)..<localBodies.size) {
@@ -74,16 +76,16 @@ object PhysicsCommand : ICommand {
                             }
 
                             val meshStart = Vector3i(
-                                floor(firstBoundingBox.minX).toInt(),
-                                floor(firstBoundingBox.minY).toInt(),
-                                floor(firstBoundingBox.minZ).toInt(),
+                                floor(firstBoundingBox.minX).toInt() - 1,
+                                floor(firstBoundingBox.minY).toInt() - 1,
+                                floor(firstBoundingBox.minZ).toInt() - 1,
                             )
                             val meshEnd = Vector3i(
                                 floor(firstBoundingBox.maxX).toInt() + 1,
                                 floor(firstBoundingBox.maxY).toInt() + 1,
                                 floor(firstBoundingBox.maxZ).toInt() + 1,
                             )
-                            val mesh = Mesher.mesh(
+                            val mesh = Mesh.mesh2(
                                 world = world,
                                 meshStart = meshStart,
                                 meshEnd = meshEnd,
@@ -346,24 +348,25 @@ object PhysicsCommand : ICommand {
                 }
 
                 if (time % DEBUG_FREQUENCY == 0) {
-                    if (DEBUG_LEVEL > 0) {
-                        for (body in localBodies) {
-                            val boundingBox = body.boundingBox
-
+//                    if (DEBUG_LEVEL > 0) {
+//                        for (body in localBodies) {
+//                            val boundingBox = body.boundingBox
+//
 //                            if (DEBUG_LEVEL > 1) {
 //                                val blocks = boundingBox.overlappingBlocks(world)
 //                                for (block in blocks) {
 //                                    world.debugBoundingBox(block.boundingBox, DustOptions(Color.RED, 0.4f), 0.24)
 //                                }
 //                            }
+//
+//                            world.debugBoundingBox(boundingBox, DustOptions(Color.BLUE, 0.4f))
+//                        }
+//                    }
 
-                            world.debugBoundingBox(boundingBox, DustOptions(Color.BLUE, 0.4f))
-                        }
-                    }
-
-                    if (DEBUG_MESH_LEVEL > 1) {
+                    if (DEBUG_MESH_LEVEL > 2) {
+                        PhysicsListener.mesh?.visualize(world, visualizeFaces = false, visualizeEdges = true)
                         for (mesh in physicsWorld.meshes) {
-                            mesh.visualize(world)
+                            mesh.visualize(world, visualizeFaces = true, visualizeEdges = false)
                         }
                     }
                 }
@@ -585,6 +588,9 @@ object PhysicsCommand : ICommand {
 
     fun clear() {
         physicsWorlds.values.forEach { it.bodies.forEach { body -> body.kill() } }
+        physicsWorlds.values.forEach { it.bodies.clear() }
+        physicsWorlds.values.forEach { it.meshes.clear() }
+        physicsWorlds.values.forEach { it.contacts.clear() }
     }
 
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {

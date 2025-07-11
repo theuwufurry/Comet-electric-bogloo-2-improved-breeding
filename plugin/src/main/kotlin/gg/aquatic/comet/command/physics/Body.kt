@@ -29,15 +29,17 @@ interface Body  {
 
     fun globalToLocal(vec: Vector3d): Vector3d
 
-    fun step()
+    fun step() {}
 
     /**
      * @return List of intersection positions and normals
      */
     fun intersect(origin: Vector3d, end: Vector3d): List<Pair<Vector3d, Vector3d>>
 
+    fun ensureNonAligned() {}
+
     fun collidesBody(other: Body): CollisionResult?
-    fun collidesMesh(mesh: Mesh): List<CollisionResult>
+    fun collidesMesh(mesh: Mesh2): List<CollisionResult>
 
     fun kill()
 
@@ -48,7 +50,7 @@ interface Body  {
     )
 
     companion object {
-        const val TIME_STEP = 0.005
+        const val TIME_STEP = 0.01
 
     }
 }
@@ -115,7 +117,7 @@ class BlockBody(val block: Block) : Body {
     override fun step() { }
 
     override fun collidesBody(other: Body): CollisionResult? { return null }
-    override fun collidesMesh(mesh: Mesh): List<CollisionResult> { return listOf() }
+    override fun collidesMesh(mesh: Mesh2): List<CollisionResult> { return listOf() }
 
     override fun kill() { }
 
