@@ -4,11 +4,7 @@ import gg.aquatic.comet.applyIf
 import gg.aquatic.comet.command.PhysicsCommand
 import gg.aquatic.comet.command.debugConnect
 import gg.aquatic.comet.command.physics.Body.Companion.TIME_STEP
-import org.bukkit.Color
-import org.bukkit.Location
-import org.bukkit.Material
-import org.bukkit.Particle
-import org.bukkit.World
+import org.bukkit.*
 import org.bukkit.entity.BlockDisplay
 import org.bukkit.entity.Display
 import org.bukkit.entity.EntityType
@@ -347,7 +343,6 @@ class Cuboid(
                         it.distance(0.0, 1.0, 0.0) < tiny || it.distance(0.0, -1.0, 0.0) < tiny ||
                         it.distance(0.0, 0.0, 1.0) < tiny || it.distance(0.0, 0.0, -1.0) < tiny
             }) {
-            println("was aligned!")
 
             q.rotateXYZ(perturbation, perturbation, perturbation)
             ensureNonAligned()
@@ -360,49 +355,65 @@ class Cuboid(
         val collisions = mutableListOf<CollisionResult>()
 
         for (cheesyFace in mesh.faces) {
-            val r = collidesAAFace(
-                start = Vector3d(
-                    cheesyFace.start.x,
-                    cheesyFace.start.y,
-                    cheesyFace.start.z,
-                ),
-                end = Vector3d(
-                    cheesyFace.end.x,
-                    cheesyFace.end.y,
-                    cheesyFace.end.z,
-                ),
-                normal = cheesyFace.axis.vec,
-            ) ?: continue
+            val r = collidesAAFace(cheesyFace) ?: continue
 
             val valid = run validate@{
                 when (cheesyFace.axis) {
                     Axis.X -> {
                         for (invalid in cheesyFace.invalid) {
-                            if (r.point.y in invalid.first.x..invalid.second.x && r.point.z in invalid.first.y..invalid.second.y) return@validate false
+                            if (r.point.y in invalid.first.x..invalid.second.x && r.point.z in invalid.first.y..invalid.second.y) {
+                                return@validate false
+                            }
                         }
 
-                        return@validate cheesyFace.valid.any { r.point.y in it.first.x..it.second.x && r.point.z in it.first.y..it.second.y }
+                        val firstMatch =
+                            cheesyFace.valid.firstOrNull { r.point.y in it.start.x..it.end.x && r.point.z in it.start.y..it.end.y }
+                                ?: return@validate false
+                        val m = if (firstMatch.inAxisDir) 1.0 else -1.0
+                        val d = (r.norm.dot(cheesyFace.axis.vec) * m >= 0)
+                        return@validate d
                     }
 
                     Axis.Y -> {
                         for (invalid in cheesyFace.invalid) {
-                            if (r.point.x in invalid.first.x..invalid.second.x && r.point.z in invalid.first.y..invalid.second.y) return@validate false
+                            if (r.point.x in invalid.first.x..invalid.second.x && r.point.z in invalid.first.y..invalid.second.y) {
+                                return@validate false
+                            }
                         }
 
-                        return@validate cheesyFace.valid.any { r.point.x in it.first.x..it.second.x && r.point.z in it.first.y..it.second.y }
+                        val firstMatch =
+                            cheesyFace.valid.firstOrNull { r.point.x in it.start.x..it.end.x && r.point.z in it.start.y..it.end.y }
+                                ?: return@validate false
+                        val m = if (firstMatch.inAxisDir) 1.0 else -1.0
+                        val d = (r.norm.dot(cheesyFace.axis.vec) * m >= 0)
+                        return@validate d
                     }
 
                     Axis.Z -> {
                         for (invalid in cheesyFace.invalid) {
-                            if (r.point.x in invalid.first.x..invalid.second.x && r.point.y in invalid.first.y..invalid.second.y) return@validate false
+                            if (r.point.x in invalid.first.x..invalid.second.x && r.point.y in invalid.first.y..invalid.second.y) {
+                                return@validate false
+                            }
                         }
 
-                        return@validate cheesyFace.valid.any { r.point.x in it.first.x..it.second.x && r.point.y in it.first.y..it.second.y }
+                        val firstMatch =
+                            cheesyFace.valid.firstOrNull { r.point.x in it.start.x..it.end.x && r.point.y in it.start.y..it.end.y }
+                                ?: return@validate false
+                        val m = if (firstMatch.inAxisDir) 1.0 else -1.0
+                        val d = (r.norm.dot(cheesyFace.axis.vec) * m >= 0)
+                        return@validate d
                     }
                 }
             }
 
-            if (valid) collisions += r
+            if (valid) {
+//                println("FACE-VERTEX COLLISION!")
+//                println("  - depth: ${r.depth}")
+//                println("  - norm ${r.norm}")
+//                println("  - point: ${r.point}")
+//
+                collisions += r
+            }
         }
 
         for (edge in mesh.edges) {
@@ -410,11 +421,45 @@ class Cuboid(
             collisions += r
         }
 
-        return collisions
+        if (collisions.isEmpty() || collisions.size == 1) return collisions
+
+        val lovers = mutableSetOf<CollisionResult>()
+
+        for (i in 0..<collisions.size) {
+            val c1 = collisions[i]
+            for (j in (i + 1)..<collisions.size) {
+                val c2 = collisions[j]
+
+                val d = Vector3d(c2.point).sub(c1.point)
+                val areLovers = (c1.norm.dot(d) > 0.0) && (c2.norm.dot(d) < 0.0)
+                if (areLovers) {
+                    lovers += c1
+                    lovers += c2
+                }/* else {
+                    //check for unrequitted
+                    require(!((c1.norm.dot(d) > 0.0) || (c2.norm.dot(d) < 0.0)))
+
+                    //must be haters, so at least one must be unnecessary
+                }*/
+            }
+        }
+
+        val minimumHater = collisions.filter { it !in lovers }.minByOrNull { it.depth }
+
+        val all = mutableListOf<CollisionResult>()
+        all += lovers
+        minimumHater?.let { all += it }
+
+        return all
     }
 
-    private fun collidesAAFace(start: Vector3d, end: Vector3d, normal: Vector3d): CollisionResult? {
+    private fun collidesAAFace(face: MeshFace): CollisionResult? {
+        val start = Vector3d(face.start)
+        val end = Vector3d(face.end)
+        val normal = face.axis.vec
+
         require(start.x <= end.x && start.y <= end.y && start.z <= end.z)
+
         val large = 64.0
         val axis: Int
         val (otherEdges, otherVertices) =
@@ -448,9 +493,9 @@ class Cuboid(
 
         val otherAxiss = listOf(normal)
 
-        val allowedNormals = listOf(normal)
+        // val allowedNormals = listOf(normal)
 
-        val r = collidesSAT(otherVertices, otherAxiss, otherEdges, allowedNormals) ?: return null
+        val r = collidesSAT(otherVertices, otherAxiss, otherEdges) ?: return null
 
         return when (axis) {
             0 -> {
@@ -484,10 +529,12 @@ class Cuboid(
                 Vector3d(0.0, -edge.mount.a, 0.0),
                 Vector3d(0.0, 0.0, -edge.mount.b),
             )
+
             Axis.Y -> listOf(
                 Vector3d(-edge.mount.a, 0.0, 0.0),
                 Vector3d(0.0, 0.0, -edge.mount.b),
             )
+
             Axis.Z -> listOf(
                 Vector3d(-edge.mount.a, 0.0, 0.0),
                 Vector3d(0.0, -edge.mount.b, 0.0),
@@ -501,27 +548,27 @@ class Cuboid(
             allowedNormals = allowedNormals,
         ) ?: return null
 
-       // world.debugConnect(
-       //     r.point,
-       //     Vector3d(r.point).add(r.norm),
-       //     Particle.DustOptions(Color.WHITE, 0.2f)
-       // )
-       //
-       // world.spawnParticle(
-       //     Particle.REDSTONE,
-       //     Location(
-       //         world,
-       //         r.point.x, r.point.y, r.point.z,
-       //     ),
-       //     1, Particle.DustOptions(Color.BLACK, 0.4f)
-       // )
-       //
-       // println("EDGE COLLISION!")
-       // println("  - depth: ${r.depth}")
-       // println("  - norm ${r.norm}")
-       // println("  - point: ${r.point}")
+//        world.debugConnect(
+//            r.point,
+//            Vector3d(r.point).add(r.norm),
+//            Particle.DustOptions(Color.WHITE, 0.2f)
+//        )
+//
+//        world.spawnParticle(
+//            Particle.REDSTONE,
+//            Location(
+//                world,
+//                r.point.x, r.point.y, r.point.z,
+//            ),
+//            1, Particle.DustOptions(Color.BLACK, 0.4f)
+//        )
 
-       return r
+//       println("EDGE COLLISION!")
+//       println("  - depth: ${r.depth}")
+//       println("  - norm ${r.norm}")
+//       println("  - point: ${r.point}")
+//
+        return r
     }
 
     private fun collidesSAT(
@@ -606,11 +653,6 @@ class Cuboid(
                 return null
             }
 
-            if (allowedNormals != null) {
-                val efa = if (order!!) axis else Vector3d(axis).negate()
-                if (!allowedNormals.all { efa.dot(it) >= 0.0 }) continue
-            }
-
             if (overlap < minOverlap) {
                 minAxis = axis
                 minOverlap = overlap
@@ -618,8 +660,13 @@ class Cuboid(
             }
         }
 
-        minAxis ?: return null
+        minAxis!!
         minOrder!!
+
+        if (allowedNormals != null) {
+            val efa = if (minOrder) minAxis else Vector3d(minAxis).negate()
+            if (!allowedNormals.all { efa.dot(it) >= 0.0 }) return null
+        }
 
         if (minAxis in edgeAxiss) {
             //edge-edge
@@ -1391,3 +1438,6 @@ class Cuboid(
 }
 
 private const val EPSILON = 1e-11
+fun Vector3d.toStringFull(): String {
+    return "( $x, $y, $z )"
+}

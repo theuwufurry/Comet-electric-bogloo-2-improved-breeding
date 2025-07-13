@@ -254,7 +254,14 @@ data class Mesh(
                         axis = axis,
                         start = Vector3d(bb1.min.a(), meshStart.b().toDouble(), meshStart.c().toDouble()).deshuffle(),
                         end = Vector3d(bb1.min.a(), meshEnd.b().toDouble(), meshEnd.c().toDouble()).deshuffle(),
-                        valid = mutableListOf(Vector2d(bb1.min.b(), bb1.min.c()) to Vector2d(bb1.max.b(), bb1.max.c())),
+                        valid = mutableListOf(
+                            MeshFacePass(
+                                Vector2d(bb1.min.b(), bb1.min.c()),
+                                Vector2d(bb1.max.b(), bb1.max.c()),
+                                false,
+
+                            )
+                        ),
                         invalid = mutableListOf(),
                     )
 
@@ -269,7 +276,13 @@ data class Mesh(
                         axis = axis,
                         start = Vector3d(bb1.max.a(), meshStart.b().toDouble(), meshStart.c().toDouble()).deshuffle(),
                         end = Vector3d(bb1.max.a(), meshEnd.b().toDouble(), meshEnd.c().toDouble()).deshuffle(),
-                        valid = mutableListOf(Vector2d(bb1.min.b(), bb1.min.c()) to Vector2d(bb1.max.b(), bb1.max.c())),
+                        valid = mutableListOf(
+                            MeshFacePass(
+                                Vector2d(bb1.min.b(), bb1.min.c()),
+                                Vector2d(bb1.max.b(), bb1.max.c()),
+                                true
+                            )
+                        ),
                         invalid = mutableListOf(),
                     )
 
@@ -282,8 +295,9 @@ data class Mesh(
                     val bb2 = boundingBoxes[j]
 
                     val minMaxClose = abs(bb1.min.a() - bb2.max.a()) < epsilon
-                    if (doMin && (minMaxClose || abs(bb1.min.a() - bb2.min.a()) < epsilon)) {
-                        minFace.valid += Vector2d(bb2.min.b(), bb2.min.c()) to Vector2d(bb2.max.b(), bb2.max.c())
+                    val isMinClose = abs(bb1.min.a() - bb2.min.a()) < epsilon
+                    if (doMin && (minMaxClose || isMinClose)) {
+                        minFace.valid += MeshFacePass(Vector2d(bb2.min.b(), bb2.min.c()), Vector2d(bb2.max.b(), bb2.max.c()), !isMinClose)
                     }
 
                     if (minMaxClose) {
@@ -296,8 +310,9 @@ data class Mesh(
                     }
 
                     val maxMinClose = abs(bb1.max.a() - bb2.min.a()) < epsilon
-                    if (doMax && (maxMinClose || abs(bb1.max.a() - bb2.max.a()) < epsilon)) {
-                        maxFace.valid += Vector2d(bb2.min.b(), bb2.min.c()) to Vector2d(bb2.max.b(), bb2.max.c())
+                    val isMaxClose = abs(bb1.max.a() - bb2.max.a()) < epsilon
+                    if (doMax && (maxMinClose || isMaxClose)) {
+                        maxFace.valid += MeshFacePass(Vector2d(bb2.min.b(), bb2.min.c()), Vector2d(bb2.max.b(), bb2.max.c()), isMaxClose)
                     }
 
                     if (maxMinClose) {
@@ -411,7 +426,12 @@ data class Mesh(
                     var mount: EdgeMount? = null
                     for (bb in boundingBoxes) {
                         for (e in EdgeMount.entries) {
-                            if (bb.contains(x, axis.first.x + 2.0 * epsilon * e.a, axis.first.y + 2.0 * epsilon * e.b)) {
+                            if (bb.contains(
+                                    x,
+                                    axis.first.x + 2.0 * epsilon * e.a,
+                                    axis.first.y + 2.0 * epsilon * e.b
+                                )
+                            ) {
                                 mount = e
                                 break
                             }
@@ -444,7 +464,12 @@ data class Mesh(
                     var mount: EdgeMount? = null
                     for (bb in boundingBoxes) {
                         for (e in EdgeMount.entries) {
-                            if (bb.contains(axis.first.x + 2.0 * epsilon * e.a, y, axis.first.y + 2.0 * epsilon * e.b)) {
+                            if (bb.contains(
+                                    axis.first.x + 2.0 * epsilon * e.a,
+                                    y,
+                                    axis.first.y + 2.0 * epsilon * e.b
+                                )
+                            ) {
                                 mount = e
                                 break
                             }
@@ -477,7 +502,12 @@ data class Mesh(
                     var mount: EdgeMount? = null
                     for (bb in boundingBoxes) {
                         for (e in EdgeMount.entries) {
-                            if (bb.contains(axis.first.x + 2.0 * epsilon * e.a, axis.first.y + 2.0 * epsilon * e.b, z)) {
+                            if (bb.contains(
+                                    axis.first.x + 2.0 * epsilon * e.a,
+                                    axis.first.y + 2.0 * epsilon * e.b,
+                                    z
+                                )
+                            ) {
                                 mount = e
                                 break
                             }

@@ -96,13 +96,13 @@ object PhysicsCommand : ICommand {
                             val meshBody = MeshBody(world)
                             val result = firstBody.collidesMesh(mesh)
 
-                            if (result.isNotEmpty()) {
-                                contacts += Contact(firstBody, meshBody, result.minBy{ it.depth })
+//                            if (result.isNotEmpty()) {
+//                                contacts += Contact(firstBody, meshBody, result.minBy { it.depth })
+//                            }
+
+                            for (r in result) {
+                                contacts += Contact(firstBody, meshBody, r)
                             }
-                            //
-                            // for (r in result) {
-                            //     contacts += Contact(firstBody, meshBody, r)
-                            // }
                         }
 
                         for (itr in 1..5) {
