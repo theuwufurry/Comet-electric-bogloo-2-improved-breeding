@@ -736,7 +736,7 @@ private fun World.debugBoundingBox(box: BoundingBox, options: DustOptions, inter
 }
 
 private const val BIAS = 0.15
-private const val SLOP = 0.01
+const val SLOP = 0.01
 private val GRAVITY = Vector3d(0.0, -5.0, 0.0)
 
 private val choices = listOf(

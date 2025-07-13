@@ -20,6 +20,7 @@ data class MeshFace(
     val end: Vector3d,
     val valid: MutableList<MeshFacePass>,
     val invalid: MutableList<Pair<Vector2d, Vector2d>>,
+    val level: Double,
 )
 
 data class MeshFacePass(

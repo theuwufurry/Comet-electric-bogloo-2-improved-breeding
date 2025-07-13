@@ -2,9 +2,11 @@ package gg.aquatic.comet.command.physics
 
 import gg.aquatic.comet.applyIf
 import gg.aquatic.comet.command.PhysicsCommand
-import gg.aquatic.comet.command.debugConnect
+import gg.aquatic.comet.command.SLOP
 import gg.aquatic.comet.command.physics.Body.Companion.TIME_STEP
-import org.bukkit.*
+import org.bukkit.Location
+import org.bukkit.Material
+import org.bukkit.World
 import org.bukkit.entity.BlockDisplay
 import org.bukkit.entity.Display
 import org.bukkit.entity.EntityType
@@ -158,6 +160,7 @@ class Cuboid(
         1.0 / (width * width + height * height),
     ).div(density * volume / 12.0)
 
+    private var prevQ = Quaterniond(q)
     override fun step() {
         pos.add(Vector3d(velocity).mul(TIME_STEP))
 
@@ -190,14 +193,16 @@ class Cuboid(
             .mul(TIME_STEP / 6.0)
 
         omega.add(fDO)
-        q.add(fDQ)
 
+        q.add(fDQ)
         q.normalize()
 
         torque = Vector3d()
 
         display.transformation = createTransformation()
         display.teleport(Location(world, pos.x, pos.y, pos.z))
+
+        prevQ = Quaterniond(q)
 
         handleDebug()
     }
@@ -329,6 +334,12 @@ class Cuboid(
         return maxVertex
     }
 
+    private fun maxChange(): Double {
+        return velocity.length() * TIME_STEP +
+                Vector3d(width * 0.5, height * 0.5, length * 0.5).rotate(q)
+                    .distance(Vector3d(width * 0.5, height * 0.5, length * 0.5).rotate(prevQ)) + SLOP
+    }
+
     override fun ensureNonAligned() {
         val tiny = 1e-14
         val perturbation = 1e-10
@@ -349,165 +360,186 @@ class Cuboid(
         }
     }
 
+    private var prevMaxDepth = SLOP
     override fun collidesMesh(mesh: Mesh2): List<CollisionResult> {
         if (PhysicsCommand.DEBUG_SAT_LEVEL > 0) println("COLLIDES MESH!")
 
         val collisions = mutableListOf<CollisionResult>()
+        val maxDepth = prevMaxDepth + maxChange() * FUDGE
+        prevMaxDepth = 0.0
 
         for (cheesyFace in mesh.faces) {
             val r = collidesAAFace(cheesyFace) ?: continue
+            if (r.isEmpty()) continue
 
-            val valid = run validate@{
-                when (cheesyFace.axis) {
-                    Axis.X -> {
-                        for (invalid in cheesyFace.invalid) {
-                            if (r.point.y in invalid.first.x..invalid.second.x && r.point.z in invalid.first.y..invalid.second.y) {
+//            println("TC! axis: ${cheesyFace.axis}")
+//            println("  * valid: ${cheesyFace.valid}")
+
+            for (p in r) {
+                val valid = run validate@{
+                    when (cheesyFace.axis) {
+                        Axis.X -> {
+                            for (invalid in cheesyFace.invalid) {
+                                if (p.point.y in invalid.first.x..invalid.second.x && p.point.z in invalid.first.y..invalid.second.y) {
+//                                println("INVALID BY $invalid")
+                                    return@validate false
+                                }
+                            }
+
+                            val firstMatch =
+                                cheesyFace.valid.firstOrNull { p.point.y in it.start.x..it.end.x && p.point.z in it.start.y..it.end.y }
+                            if (firstMatch == null) {
+//                                println("NOT IN ANY VALID")
                                 return@validate false
                             }
+
+                            val m = if (firstMatch.inAxisDir) 1.0 else -1.0
+                            val d = (p.norm.dot(cheesyFace.axis.vec) * m >= 0)
+//                            println("m: $m d: $d")
+                            return@validate d
                         }
 
-                        val firstMatch =
-                            cheesyFace.valid.firstOrNull { r.point.y in it.start.x..it.end.x && r.point.z in it.start.y..it.end.y }
-                                ?: return@validate false
-                        val m = if (firstMatch.inAxisDir) 1.0 else -1.0
-                        val d = (r.norm.dot(cheesyFace.axis.vec) * m >= 0)
-                        return@validate d
-                    }
+                        Axis.Y -> {
+                            for (invalid in cheesyFace.invalid) {
+                                if (p.point.x in invalid.first.x..invalid.second.x && p.point.z in invalid.first.y..invalid.second.y) {
+//                                println("INVALID BY $invalid")
+                                    return@validate false
+                                }
+                            }
 
-                    Axis.Y -> {
-                        for (invalid in cheesyFace.invalid) {
-                            if (r.point.x in invalid.first.x..invalid.second.x && r.point.z in invalid.first.y..invalid.second.y) {
+                            val firstMatch =
+                                cheesyFace.valid.firstOrNull { p.point.x in it.start.x..it.end.x && p.point.z in it.start.y..it.end.y }
+                            if (firstMatch == null) {
+//                                println("NOT IN ANY VALID")
                                 return@validate false
                             }
+                            val m = if (firstMatch.inAxisDir) 1.0 else -1.0
+                            val d = (p.norm.dot(cheesyFace.axis.vec) * m >= 0)
+//                            println("m: $m d: $d")
+                            return@validate d
                         }
 
-                        val firstMatch =
-                            cheesyFace.valid.firstOrNull { r.point.x in it.start.x..it.end.x && r.point.z in it.start.y..it.end.y }
-                                ?: return@validate false
-                        val m = if (firstMatch.inAxisDir) 1.0 else -1.0
-                        val d = (r.norm.dot(cheesyFace.axis.vec) * m >= 0)
-                        return@validate d
-                    }
+                        Axis.Z -> {
+                            for (invalid in cheesyFace.invalid) {
+                                if (p.point.x in invalid.first.x..invalid.second.x && p.point.y in invalid.first.y..invalid.second.y) {
+//                                println("INVALID BY $invalid")
+                                    return@validate false
+                                }
+                            }
 
-                    Axis.Z -> {
-                        for (invalid in cheesyFace.invalid) {
-                            if (r.point.x in invalid.first.x..invalid.second.x && r.point.y in invalid.first.y..invalid.second.y) {
+                            val firstMatch =
+                                cheesyFace.valid.firstOrNull { p.point.x in it.start.x..it.end.x && p.point.y in it.start.y..it.end.y }
+                            if (firstMatch == null) {
+//                                println("NOT IN ANY VALID")
                                 return@validate false
                             }
+                            val m = if (firstMatch.inAxisDir) 1.0 else -1.0
+                            val d = (p.norm.dot(cheesyFace.axis.vec) * m >= 0)
+//                            println("m: $m d: $d")
+                            return@validate d
                         }
-
-                        val firstMatch =
-                            cheesyFace.valid.firstOrNull { r.point.x in it.start.x..it.end.x && r.point.y in it.start.y..it.end.y }
-                                ?: return@validate false
-                        val m = if (firstMatch.inAxisDir) 1.0 else -1.0
-                        val d = (r.norm.dot(cheesyFace.axis.vec) * m >= 0)
-                        return@validate d
                     }
                 }
-            }
 
-            if (valid) {
-//                println("FACE-VERTEX COLLISION!")
-//                println("  - depth: ${r.depth}")
-//                println("  - norm ${r.norm}")
-//                println("  - point: ${r.point}")
+                if (valid) {
+//                    println("FACE-VERTEX COLLISION!")
+//                    println("  - depth: ${p.depth}")
+//                    println("  - norm ${p.norm}")
+//                    println("  - point: ${p.point}")
+
+                    if (p.depth > maxDepth) {
+                        println("OVERSHOT, ${p.depth / maxDepth}x MAX DEPTH")
+                        continue
+                    }
+
+                    if (p.depth > prevMaxDepth) {
+                        prevMaxDepth = p.depth
+                    }
 //
-                collisions += r
+                    collisions += p
+                    break
+                }
             }
         }
 
         for (edge in mesh.edges) {
             val r = collidesEdge(edge) ?: continue
+
+            if (r.depth > maxDepth) {
+                println("OVERSHOT, ${r.depth / maxDepth}x MAX DEPTH")
+                continue
+            }
+
+            if (r.depth > prevMaxDepth) {
+                prevMaxDepth = r.depth
+            }
+
             collisions += r
         }
 
-        if (collisions.isEmpty() || collisions.size == 1) return collisions
-
-        val lovers = mutableSetOf<CollisionResult>()
-
-        for (i in 0..<collisions.size) {
-            val c1 = collisions[i]
-            for (j in (i + 1)..<collisions.size) {
-                val c2 = collisions[j]
-
-                val d = Vector3d(c2.point).sub(c1.point)
-                val areLovers = (c1.norm.dot(d) > 0.0) && (c2.norm.dot(d) < 0.0)
-                if (areLovers) {
-                    lovers += c1
-                    lovers += c2
-                }/* else {
-                    //check for unrequitted
-                    require(!((c1.norm.dot(d) > 0.0) || (c2.norm.dot(d) < 0.0)))
-
-                    //must be haters, so at least one must be unnecessary
-                }*/
-            }
-        }
-
-        val minimumHater = collisions.filter { it !in lovers }.minByOrNull { it.depth }
-
-        val all = mutableListOf<CollisionResult>()
-        all += lovers
-        minimumHater?.let { all += it }
-
-        return all
+        return collisions
     }
 
-    private fun collidesAAFace(face: MeshFace): CollisionResult? {
+    private fun collidesAAFace(
+        face: MeshFace,
+        normal: Vector3d = face.axis.vec,
+    ): List<CollisionResult>? {
         val start = Vector3d(face.start)
         val end = Vector3d(face.end)
-        val normal = face.axis.vec
 
         require(start.x <= end.x && start.y <= end.y && start.z <= end.z)
 
         val large = 64.0
-        val axis: Int
-        val (otherEdges, otherVertices) =
-            if (normal.distance(1.0, 0.0, 0.0) < EPSILON || normal.distance(-1.0, 0.0, 0.0) < EPSILON) {
-                axis = 0
+        val (otherEdges, otherVertices) = when (face.axis) {
+            Axis.X -> {
                 listOf<Vector3d>() to listOf(
                     Vector3d(start.x, start.y - large, start.z - large),
                     Vector3d(start.x, end.y + large, start.z - large),
                     Vector3d(start.x, end.y + large, end.z + large),
                     Vector3d(start.x, start.y - large, end.z + large),
                 )
-            } else if (normal.distance(0.0, 1.0, 0.0) < EPSILON || normal.distance(0.0, -1.0, 0.0) < EPSILON) {
-                axis = 1
+            }
+
+            Axis.Y -> {
                 listOf<Vector3d>() to listOf(
                     Vector3d(start.x - large, start.y, start.z - large),
                     Vector3d(end.x + large, start.y, start.z - large),
                     Vector3d(end.x + large, start.y, end.z + large),
                     Vector3d(start.x - large, start.y, end.z + large),
                 )
-            } else if (normal.distance(0.0, 0.0, 1.0) < EPSILON || normal.distance(0.0, 0.0, -1.0) < EPSILON) {
-                axis = 2
+            }
+
+            Axis.Z -> {
                 listOf<Vector3d>() to listOf(
                     Vector3d(start.x - large, start.y - large, start.z),
                     Vector3d(end.x + large, start.y - large, start.z),
                     Vector3d(end.x + large, end.y + large, start.z),
                     Vector3d(start.x - large, end.y + large, start.z),
                 )
-            } else {
-                throw IllegalArgumentException("Non-AA normal!")
             }
+        }
 
         val otherAxiss = listOf(normal)
 
         // val allowedNormals = listOf(normal)
 
-        val r = collidesSAT(otherVertices, otherAxiss, otherEdges) ?: return null
+        val r = collidesSAT(otherVertices, otherAxiss, otherEdges, findAll = true) ?: return null
+        if (r.isEmpty()) return null
+//        if (r.size > 1) println("found: ${r.size}")
 
-        return when (axis) {
-            0 -> {
-                r.takeIf { r.point.y in start.y..end.y && r.point.z in start.z..end.z }
+        r.sortBy { -it.depth }
+
+        return when (face.axis) {
+            Axis.X -> {
+                r.filter { it.point.y in start.y..end.y && it.point.z in start.z..end.z }
             }
 
-            1 -> {
-                r.takeIf { r.point.x in start.x..end.x && r.point.z in start.z..end.z }
+            Axis.Y -> {
+                r.filter { it.point.x in start.x..end.x && it.point.z in start.z..end.z }
             }
 
-            else -> {
-                r.takeIf { r.point.y in start.y..end.y && r.point.x in start.x..end.x }
+            Axis.Z -> {
+                r.filter { it.point.y in start.y..end.y && it.point.x in start.x..end.x }
             }
         }
     }
@@ -548,6 +580,8 @@ class Cuboid(
             allowedNormals = allowedNormals,
         ) ?: return null
 
+        if (r.isEmpty()) return null
+
 //        world.debugConnect(
 //            r.point,
 //            Vector3d(r.point).add(r.norm),
@@ -568,7 +602,7 @@ class Cuboid(
 //       println("  - norm ${r.norm}")
 //       println("  - point: ${r.point}")
 //
-        return r
+        return r.first()
     }
 
     private fun collidesSAT(
@@ -576,7 +610,8 @@ class Cuboid(
         otherAxiss: List<Vector3d>,
         otherEdges: List<Vector3d>,
         allowedNormals: List<Vector3d>? = null,
-    ): CollisionResult? {
+        findAll: Boolean = false,
+    ): MutableList<CollisionResult>? {
         val myAxiss = listOf<Vector3d>(
             Vector3d(1.0, 0.0, 0.0).rotate(q).normalize(),
             Vector3d(0.0, 1.0, 0.0).rotate(q).normalize(),
@@ -603,55 +638,11 @@ class Cuboid(
         var minAxis: Vector3d? = null
 
         for (axis in axiss) {
-            var otherMin = Double.MAX_VALUE
-            var otherMax = -Double.MAX_VALUE
-
-            var myMin = Double.MAX_VALUE
-            var myMax = -Double.MAX_VALUE
-
-            for (vertex in myVertices) {
-                val s = vertex.dot(axis)
-                myMin = min(myMin, s)
-                myMax = max(myMax, s)
-            }
-
-            for (vertex in otherVertices) {
-                val s = vertex.dot(axis)
-                otherMin = min(otherMin, s)
-                otherMax = max(otherMax, s)
-            }
-
-            var order: Boolean? = null
-            val overlap = if (myMin < otherMax && myMax > otherMin) {
-                //overlapping
-                order = (otherMax - myMin) < (myMax - otherMin)
-
-                //check if contained or overlapping; if contained then choose smallest distance as overlap
-                if (myMin < otherMin && myMax > otherMax) {
-                    //i contain other
-                    min(myMax - otherMin, otherMax - myMin)
-                } else if (otherMin < myMin && otherMax > myMax) {
-                    //other contains me
-                    min(otherMax - myMin, myMax - otherMin)
-                } else {
-                    //just overlapping
-                    if (myMax > otherMax) otherMax - myMin
-                    else myMax - otherMin
-                }
-            } else 0.0
-
-            if (PhysicsCommand.DEBUG_SAT_LEVEL > 2) {
-                println("TEST!")
-                println("  - axis: $axis")
-                println("  - overlap: $overlap")
-                println("  - order: $minOrder")
-                println("  - myMin: $myMin myMax: $myMax")
-                println("  - otherMin: $otherMin otherMax: $otherMax")
-            }
-
-            if (overlap <= 0.0) {
-                return null
-            }
+            val (overlap, order) = cycleSAT(
+                axis = axis,
+                myVertices = myVertices,
+                otherVertices = otherVertices
+            ) ?: return null
 
             if (overlap < minOverlap) {
                 minAxis = axis
@@ -754,10 +745,12 @@ class Cuboid(
                 println("   * DISTANCE: ${r.third}")
             }
 
-            return CollisionResult(
-                Vector3d(r.first).mul(0.5).add(Vector3d(r.second).mul(0.5)),
-                if (minOrder) minAxis else Vector3d(minAxis).negate(),
-                r.third
+            return mutableListOf(
+                CollisionResult(
+                    Vector3d(r.first).mul(0.5).add(Vector3d(r.second).mul(0.5)),
+                    if (minOrder) minAxis else Vector3d(minAxis).negate(),
+                    r.third
+                )
             )
         } else {
             //face-vertex
@@ -782,8 +775,35 @@ class Cuboid(
                         furtherVertex = vertex
                     }
                 }
+                if (PhysicsCommand.DEBUG_SAT_LEVEL > 0) {
+                    println("  - POINT: $furtherVertex")
+                }
 
-                return CollisionResult(furtherVertex!!, Vector3d(minAxis).applyIf(!minOrder) { negate() }, minOverlap)
+                //happens to conicide with antinormal here, but keep them as separate variables to not cause confusion
+                val trueAxis = Vector3d(minAxis).applyIf(!minOrder) { negate() }
+
+                val r = mutableListOf(
+                    CollisionResult(
+                        furtherVertex!!,
+                        trueAxis,
+                        minOverlap,
+                    )
+                )
+
+                if (findAll) {
+                    for (vertex in otherVertices) {
+                        val d = vertex.dot(antiNormal)
+                        if (abs(d - furthestDistance) <= minOverlap) {
+                            r += CollisionResult(
+                                vertex,
+                                trueAxis,
+                                minOverlap - abs(d - furthestDistance),
+                            )
+                        }
+                    }
+                }
+
+                return r
             } else {
                 val antiNormal = if (minOrder) Vector3d(minAxis).negate() else Vector3d(minAxis)
 //                println("MY AXIS")
@@ -796,10 +816,99 @@ class Cuboid(
                     }
                 }
 
-                return CollisionResult(furtherVertex!!, Vector3d(minAxis).applyIf(!minOrder) { negate() }, minOverlap)
+                if (PhysicsCommand.DEBUG_SAT_LEVEL > 0) {
+                    println("  - POINT: $furtherVertex")
+                }
+
+                val trueAxis = Vector3d(minAxis).applyIf(!minOrder) { negate() }
+
+                val r = mutableListOf(
+                    CollisionResult(
+                        furtherVertex!!,
+                        trueAxis,
+                        minOverlap,
+                    )
+                )
+
+                if (findAll) {
+                    for (vertex in myVertices) {
+                        val d = vertex.dot(antiNormal)
+                        if (abs(d - furthestDistance) <= minOverlap) {
+                            r += CollisionResult(
+                                vertex,
+                                trueAxis,
+                                minOverlap - abs(d - furthestDistance),
+                            )
+                        }
+                    }
+                }
+
+                return r
             }
         }
 
+    }
+
+    private data class SATCycle(
+        val overlap: Double,
+        val order: Boolean,
+    )
+
+    private fun cycleSAT(
+        axis: Vector3d,
+        myVertices: List<Vector3d>,
+        otherVertices: List<Vector3d>,
+    ): SATCycle? {
+        var otherMin = Double.MAX_VALUE
+        var otherMax = -Double.MAX_VALUE
+
+        var myMin = Double.MAX_VALUE
+        var myMax = -Double.MAX_VALUE
+
+        for (vertex in myVertices) {
+            val s = vertex.dot(axis)
+            myMin = min(myMin, s)
+            myMax = max(myMax, s)
+        }
+
+        for (vertex in otherVertices) {
+            val s = vertex.dot(axis)
+            otherMin = min(otherMin, s)
+            otherMax = max(otherMax, s)
+        }
+
+        var order: Boolean? = null
+        val overlap = if (myMin < otherMax && myMax > otherMin) {
+            //overlapping
+            order = (otherMax - myMin) < (myMax - otherMin)
+
+            //check if contained or overlapping; if contained then choose smallest distance as overlap
+            if (myMin < otherMin && myMax > otherMax) {
+                //i contain other
+                min(myMax - otherMin, otherMax - myMin)
+            } else if (otherMin < myMin && otherMax > myMax) {
+                //other contains me
+                min(otherMax - myMin, myMax - otherMin)
+            } else {
+                //just overlapping
+                if (myMax > otherMax) otherMax - myMin
+                else myMax - otherMin
+            }
+        } else 0.0
+
+        if (PhysicsCommand.DEBUG_SAT_LEVEL > 2) {
+            println("TEST!")
+            println("  - axis: $axis")
+            println("  - overlap: $overlap")
+            println("  - myMin: $myMin myMax: $myMax")
+            println("  - otherMin: $otherMin otherMax: $otherMax")
+        }
+
+        if (overlap <= 0.0) {
+            return null
+        }
+
+        return SATCycle(overlap, order!!)
     }
 
     override fun collidesBody(other: Body): CollisionResult? {
@@ -904,7 +1013,8 @@ class Cuboid(
                             val myInt =
                                 Vector3d(a3mine).mul(aC).add(Vector3d(b3mine).mul(bC)).add(Vector3d(c3mine).mul(cC))
                             val otherInt =
-                                Vector3d(a3other).mul(aC).add(Vector3d(b3other).mul(bC)).add(Vector3d(c3other).mul(cC))
+                                Vector3d(a3other).mul(aC).add(Vector3d(b3other).mul(bC))
+                                    .add(Vector3d(c3other).mul(cC))
                             if (doDebug) {
                                 println(
                                     """
@@ -1438,6 +1548,7 @@ class Cuboid(
 }
 
 private const val EPSILON = 1e-11
+private const val FUDGE = 1.1
 fun Vector3d.toStringFull(): String {
     return "( $x, $y, $z )"
 }

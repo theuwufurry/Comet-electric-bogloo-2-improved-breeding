@@ -263,6 +263,7 @@ data class Mesh(
                             )
                         ),
                         invalid = mutableListOf(),
+                        level = bb1.min.a(),
                     )
 
                     doMin = true
@@ -284,6 +285,7 @@ data class Mesh(
                             )
                         ),
                         invalid = mutableListOf(),
+                        level = bb1.max.a(),
                     )
 
                     doMax = true
