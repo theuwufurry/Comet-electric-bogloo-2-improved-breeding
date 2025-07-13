@@ -63,7 +63,7 @@ object PhysicsListener : Listener {
 
         val type = event.player.inventory.itemInMainHand.type
         if (type == Material.END_ROD) {
-            body.applyImpulse(intersection, normal, Vector3d(dir).normalize(2.5))
+            body.applyImpulse(intersection, normal, Vector3d(dir).normalize(PhysicsCommand.PUSH_V))
         }
     }
 

@@ -2,9 +2,12 @@ package gg.aquatic.comet.command.physics
 
 import gg.aquatic.comet.applyIf
 import gg.aquatic.comet.command.PhysicsCommand
+import gg.aquatic.comet.command.debugConnect
 import gg.aquatic.comet.command.physics.Body.Companion.TIME_STEP
+import org.bukkit.Color
 import org.bukkit.Location
 import org.bukkit.Material
+import org.bukkit.Particle
 import org.bukkit.World
 import org.bukkit.entity.BlockDisplay
 import org.bukkit.entity.Display
@@ -403,7 +406,7 @@ class Cuboid(
         }
 
         for (edge in mesh.edges) {
-            val r = collidesEdge(edge.start, edge.end, edge.vec) ?: continue
+            val r = collidesEdge(edge) ?: continue
             collisions += r
         }
 
@@ -445,7 +448,9 @@ class Cuboid(
 
         val otherAxiss = listOf(normal)
 
-        val r = collidesSAT(otherVertices, otherAxiss, otherEdges) ?: return null
+        val allowedNormals = listOf(normal)
+
+        val r = collidesSAT(otherVertices, otherAxiss, otherEdges, allowedNormals) ?: return null
 
         return when (axis) {
             0 -> {
@@ -463,24 +468,67 @@ class Cuboid(
     }
 
     private fun collidesEdge(
-        start: Vector3d,
-        end: Vector3d,
-        edge: Vector3d
+        edge: Edge
     ): CollisionResult? {
-        val otherVertices = listOf(start, end)
-        val otherEdges = listOf(edge)
+        edge.axis!!
+        edge.mount!!
+        val otherVertices = listOf(
+            edge.start,
+            edge.end,
+        )
 
-        return collidesSAT(
+        val otherEdges = listOf(edge.vec)
+
+        val allowedNormals = when (edge.axis) {
+            Axis.X -> listOf(
+                Vector3d(0.0, -edge.mount.a, 0.0),
+                Vector3d(0.0, 0.0, -edge.mount.b),
+            )
+            Axis.Y -> listOf(
+                Vector3d(-edge.mount.a, 0.0, 0.0),
+                Vector3d(0.0, 0.0, -edge.mount.b),
+            )
+            Axis.Z -> listOf(
+                Vector3d(-edge.mount.a, 0.0, 0.0),
+                Vector3d(0.0, -edge.mount.b, 0.0),
+            )
+        }
+
+        val r = collidesSAT(
             otherVertices = otherVertices,
             otherAxiss = listOf(),
-            otherEdges = otherEdges
-        )
+            otherEdges = otherEdges,
+            allowedNormals = allowedNormals,
+        ) ?: return null
+
+       // world.debugConnect(
+       //     r.point,
+       //     Vector3d(r.point).add(r.norm),
+       //     Particle.DustOptions(Color.WHITE, 0.2f)
+       // )
+       //
+       // world.spawnParticle(
+       //     Particle.REDSTONE,
+       //     Location(
+       //         world,
+       //         r.point.x, r.point.y, r.point.z,
+       //     ),
+       //     1, Particle.DustOptions(Color.BLACK, 0.4f)
+       // )
+       //
+       // println("EDGE COLLISION!")
+       // println("  - depth: ${r.depth}")
+       // println("  - norm ${r.norm}")
+       // println("  - point: ${r.point}")
+
+       return r
     }
 
     private fun collidesSAT(
         otherVertices: List<Vector3d>,
         otherAxiss: List<Vector3d>,
         otherEdges: List<Vector3d>,
+        allowedNormals: List<Vector3d>? = null,
     ): CollisionResult? {
         val myAxiss = listOf<Vector3d>(
             Vector3d(1.0, 0.0, 0.0).rotate(q).normalize(),
@@ -558,6 +606,11 @@ class Cuboid(
                 return null
             }
 
+            if (allowedNormals != null) {
+                val efa = if (order!!) axis else Vector3d(axis).negate()
+                if (!allowedNormals.all { efa.dot(it) >= 0.0 }) continue
+            }
+
             if (overlap < minOverlap) {
                 minAxis = axis
                 minOverlap = overlap
@@ -565,7 +618,7 @@ class Cuboid(
             }
         }
 
-        minAxis!!
+        minAxis ?: return null
         minOrder!!
 
         if (minAxis in edgeAxiss) {

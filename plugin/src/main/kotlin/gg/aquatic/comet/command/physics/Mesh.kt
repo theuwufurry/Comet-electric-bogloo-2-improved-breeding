@@ -408,22 +408,24 @@ data class Mesh(
 
                     val x = s * 0.5 + e * 0.5
                     //categorize bounding boxes into 3d array if this gets too slow; though shouldn't be a problem for small objects
-                    var sum = 0
+                    var mount: EdgeMount? = null
                     for (bb in boundingBoxes) {
-                        if (bb.contains(x, axis.first.x - 2.0 * epsilon, axis.first.y - 2.0 * epsilon)) sum++
-                        if (bb.contains(x, axis.first.x - 2.0 * epsilon, axis.first.y + 2.0 * epsilon)) sum++
-                        if (bb.contains(x, axis.first.x + 2.0 * epsilon, axis.first.y - 2.0 * epsilon)) sum++
-                        if (bb.contains(x, axis.first.x + 2.0 * epsilon, axis.first.y + 2.0 * epsilon)) sum++
-
-                        if (sum > 2) {
-                            break
+                        for (e in EdgeMount.entries) {
+                            if (bb.contains(x, axis.first.x + 2.0 * epsilon * e.a, axis.first.y + 2.0 * epsilon * e.b)) {
+                                mount = e
+                                break
+                            }
                         }
+
+                        if (mount != null) break
                     }
 
-                    if (sum < 3) {
+                    if (mount != null) {
                         edges += Edge(
                             start = Vector3d(s, axis.first.x, axis.first.y),
                             end = Vector3d(e, axis.first.x, axis.first.y),
+                            mount = mount,
+                            axis = Axis.X,
                         )
                     }
                 }
@@ -439,22 +441,24 @@ data class Mesh(
 
                     val y = s * 0.5 + e * 0.5
                     //categorize bounding boxes into 3d array if this gets too slow; though shouldn't be a problem for small objects
-                    var sum = 0
+                    var mount: EdgeMount? = null
                     for (bb in boundingBoxes) {
-                        if (bb.contains(axis.first.x - 2.0 * epsilon, y, axis.first.y - 2.0 * epsilon)) sum++
-                        if (bb.contains(axis.first.x - 2.0 * epsilon, y, axis.first.y + 2.0 * epsilon)) sum++
-                        if (bb.contains(axis.first.x + 2.0 * epsilon, y, axis.first.y - 2.0 * epsilon)) sum++
-                        if (bb.contains(axis.first.x + 2.0 * epsilon, y, axis.first.y + 2.0 * epsilon)) sum++
-
-                        if (sum > 2) {
-                            break
+                        for (e in EdgeMount.entries) {
+                            if (bb.contains(axis.first.x + 2.0 * epsilon * e.a, y, axis.first.y + 2.0 * epsilon * e.b)) {
+                                mount = e
+                                break
+                            }
                         }
+
+                        if (mount != null) break
                     }
 
-                    if (sum < 3) {
+                    if (mount != null) {
                         edges += Edge(
                             start = Vector3d(axis.first.x, s, axis.first.y),
                             end = Vector3d(axis.first.x, e, axis.first.y),
+                            mount = mount,
+                            axis = Axis.Y,
                         )
                     }
                 }
@@ -470,22 +474,24 @@ data class Mesh(
 
                     val z = s * 0.5 + e * 0.5
                     //categorize bounding boxes into 3d array if this gets too slow; though shouldn't be a problem for small objects
-                    var sum = 0
+                    var mount: EdgeMount? = null
                     for (bb in boundingBoxes) {
-                        if (bb.contains(axis.first.x - 2.0 * epsilon, axis.first.y - 2.0 * epsilon, z)) sum++
-                        if (bb.contains(axis.first.x - 2.0 * epsilon, axis.first.y + 2.0 * epsilon, z)) sum++
-                        if (bb.contains(axis.first.x + 2.0 * epsilon, axis.first.y - 2.0 * epsilon, z)) sum++
-                        if (bb.contains(axis.first.x + 2.0 * epsilon, axis.first.y + 2.0 * epsilon, z)) sum++
-
-                        if (sum > 2) {
-                            break
+                        for (e in EdgeMount.entries) {
+                            if (bb.contains(axis.first.x + 2.0 * epsilon * e.a, axis.first.y + 2.0 * epsilon * e.b, z)) {
+                                mount = e
+                                break
+                            }
                         }
+
+                        if (mount != null) break
                     }
 
-                    if (sum < 3) {
+                    if (mount != null) {
                         edges += Edge(
                             start = Vector3d(axis.first.x, axis.first.y, s),
                             end = Vector3d(axis.first.x, axis.first.y, e),
+                            mount = mount,
+                            axis = Axis.Z,
                         )
                     }
                 }

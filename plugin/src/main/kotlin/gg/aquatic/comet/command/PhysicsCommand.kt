@@ -16,7 +16,6 @@ import org.joml.Vector3d
 import org.joml.Vector3i
 import kotlin.math.abs
 import kotlin.math.absoluteValue
-import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
 import kotlin.random.Random
@@ -36,6 +35,7 @@ object PhysicsCommand : ICommand {
      */
     var DEBUG_LEVEL = 0
     var DEBUG_SAT_LEVEL = 0
+    var PUSH_V = 2.5
     var DEBUG_MESH_LEVEL = 0
 
     fun init() {
@@ -96,14 +96,17 @@ object PhysicsCommand : ICommand {
                             val meshBody = MeshBody(world)
                             val result = firstBody.collidesMesh(mesh)
 
-                            for (r in result) {
-                                contacts += Contact(meshBody, firstBody, r)
+                            if (result.isNotEmpty()) {
+                                contacts += Contact(firstBody, meshBody, result.minBy{ it.depth })
                             }
+                            //
+                            // for (r in result) {
+                            //     contacts += Contact(firstBody, meshBody, r)
+                            // }
                         }
 
                         for (itr in 1..5) {
                             for (contact in contacts) {
-                                println("PROCESSING CONTACT!")
                                 val first = contact.first
                                 val second = contact.second
 
@@ -135,27 +138,21 @@ object PhysicsCommand : ICommand {
                                 val iMB = Vector3d(second.inverseMass)
                                 val iIB = second.inverseInertia
 
-                                val den = Vector3d(nn).mul(nn).dot(iMA) + Vector3d(j1).mul(j1).dot(iIA) + Vector3d(n).mul(n).dot(iMB) + Vector3d(j3).mul(j3).dot(iIB)
+                                val den =
+                                    Vector3d(nn).mul(nn).dot(iMA) + Vector3d(j1).mul(j1).dot(iIA) + Vector3d(n).mul(n)
+                                        .dot(iMB) + Vector3d(j3).mul(j3).dot(iIB)
 
                                 var lambda = (nn.dot(vA) + j1.dot(wA) + n.dot(vB) + j3.dot(wB) + bias) / den
-                                println("  - PURE LAMBDA: $lambda")
 
                                 val curJSum = contact.jSum
                                 contact.jSum = (curJSum + lambda).coerceAtLeast(0.0)
                                 lambda = contact.jSum - curJSum
-
-                                println("  - ITR: $itr LAMBDA: $lambda")
 
                                 //delta-V = M^(-1)J^T * lambda 
                                 val dVA = Vector3d(iMA).mul(nn).mul(lambda)
                                 val dOA = Vector3d(iIA).mul(j1).mul(lambda).rotate(Quaterniond(first.q).conjugate())
                                 val dVB = Vector3d(iMB).mul(n).mul(lambda)
                                 val dOB = Vector3d(iIB).mul(j3).mul(lambda).rotate(Quaterniond(second.q).conjugate())
-
-                                println("  - dVA: $dVA")
-                                println("  - dOA: $dOA")
-                                println("  - dVB: $dVB")
-                                println("  - dOB: $dOB")
 
                                 first.velocity.sub(dVA)
                                 first.omega.sub(dOA)
@@ -386,6 +383,13 @@ object PhysicsCommand : ICommand {
             val nl = args[2].toInt()
             DEBUG_SAT_LEVEL = nl
             sender.sendMessage("DEBUG SAT LEVEL IS NOW $DEBUG_SAT_LEVEL")
+            return
+        }
+
+        if (args[1] == "push-v") {
+            val nl = args[2].toDouble()
+            PUSH_V = nl
+            sender.sendMessage("PUSH_V IS NOW $PUSH_V")
             return
         }
 
@@ -731,8 +735,8 @@ private fun World.debugBoundingBox(box: BoundingBox, options: DustOptions, inter
     )
 }
 
-private const val BIAS = 0.05
-private const val SLOP = 0.05
+private const val BIAS = 0.15
+private const val SLOP = 0.01
 private val GRAVITY = Vector3d(0.0, -5.0, 0.0)
 
 private val choices = listOf(
