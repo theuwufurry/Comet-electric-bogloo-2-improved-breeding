@@ -2,10 +2,13 @@ package gg.aquatic.comet.command.physics
 
 import gg.aquatic.comet.applyIf
 import gg.aquatic.comet.command.PhysicsCommand
-import gg.aquatic.comet.command.SLOP
+import gg.aquatic.comet.command.PASSIVE_SLOP
+import gg.aquatic.comet.command.debugConnect
 import gg.aquatic.comet.command.physics.Body.Companion.TIME_STEP
+import org.bukkit.Color
 import org.bukkit.Location
 import org.bukkit.Material
+import org.bukkit.Particle
 import org.bukkit.World
 import org.bukkit.entity.BlockDisplay
 import org.bukkit.entity.Display
@@ -36,6 +39,7 @@ class Cuboid(
     override val hasGravity: Boolean,
 ) : Body {
     override val id = UUID.randomUUID()
+    override val type: BodyType = BodyType.ACTIVE
 
     val scale = Vector3d(width, height, length)
 
@@ -102,13 +106,13 @@ class Cuboid(
                 zMin = min(zMin, vertex.z)
                 zMax = max(zMax, vertex.z)
             }
-
-            xMin += (velocity.x * TIME_STEP).coerceAtMost(0.0)
-            xMax += (velocity.x * TIME_STEP).coerceAtLeast(0.0)
-            yMin += (velocity.y * TIME_STEP).coerceAtMost(0.0)
-            yMax += (velocity.y * TIME_STEP).coerceAtLeast(0.0)
-            zMin += (velocity.z * TIME_STEP).coerceAtMost(0.0)
-            zMax += (velocity.z * TIME_STEP).coerceAtLeast(0.0)
+//
+//            xMin += (velocity.x * TIME_STEP).coerceAtMost(0.0)
+//            xMax += (velocity.x * TIME_STEP).coerceAtLeast(0.0)
+//            yMin += (velocity.y * TIME_STEP).coerceAtMost(0.0)
+//            yMax += (velocity.y * TIME_STEP).coerceAtLeast(0.0)
+//            zMin += (velocity.z * TIME_STEP).coerceAtMost(0.0)
+//            zMax += (velocity.z * TIME_STEP).coerceAtLeast(0.0)
 
             return BoundingBox(xMin, yMin, zMin, xMax, yMax, zMax)
         }
@@ -162,6 +166,8 @@ class Cuboid(
 
     private var prevQ = Quaterniond(q)
     override fun step() {
+        prevQ = Quaterniond(q)
+
         pos.add(Vector3d(velocity).mul(TIME_STEP))
 
         val h2 = TIME_STEP / 2.0
@@ -202,7 +208,6 @@ class Cuboid(
         display.transformation = createTransformation()
         display.teleport(Location(world, pos.x, pos.y, pos.z))
 
-        prevQ = Quaterniond(q)
 
         handleDebug()
     }
@@ -337,7 +342,7 @@ class Cuboid(
     private fun maxChange(): Double {
         return velocity.length() * TIME_STEP +
                 Vector3d(width * 0.5, height * 0.5, length * 0.5).rotate(q)
-                    .distance(Vector3d(width * 0.5, height * 0.5, length * 0.5).rotate(prevQ)) + SLOP
+                    .distance(Vector3d(width * 0.5, height * 0.5, length * 0.5).rotate(prevQ)) + PASSIVE_SLOP
     }
 
     override fun ensureNonAligned() {
@@ -360,16 +365,17 @@ class Cuboid(
         }
     }
 
-    private var prevMaxDepth = SLOP
+    private var prevMaxDepth = PASSIVE_SLOP
     override fun collidesMesh(mesh: Mesh2): List<CollisionResult> {
         if (PhysicsCommand.DEBUG_SAT_LEVEL > 0) println("COLLIDES MESH!")
 
         val collisions = mutableListOf<CollisionResult>()
         val maxDepth = prevMaxDepth + maxChange() * FUDGE
+//        println("prevMaxDepth: $prevMaxDepth v: $velocity maxChange: ${maxChange()} maxDepth: $maxDepth")
         prevMaxDepth = 0.0
 
         for (cheesyFace in mesh.faces) {
-            val r = collidesAAFace(cheesyFace) ?: continue
+            val r = collidesFace(cheesyFace) ?: continue
             if (r.isEmpty()) continue
 
 //            println("TC! axis: ${cheesyFace.axis}")
@@ -448,7 +454,24 @@ class Cuboid(
 //                    println("  - point: ${p.point}")
 
                     if (p.depth > maxDepth) {
-                        println("OVERSHOT, ${p.depth / maxDepth}x MAX DEPTH")
+//                        println("OVERSHOT, ${p.depth / maxDepth}x MAX DEPTH with ${p.depth}")
+//                        println("p: $p")
+
+                        world.debugConnect(
+                            p.point,
+                            Vector3d(p.point).add(p.norm),
+                            Particle.DustOptions(Color.WHITE, 0.2f)
+                        )
+
+                        world.spawnParticle(
+                            Particle.REDSTONE,
+                            Location(
+                                world,
+                                p.point.x, p.point.y, p.point.z,
+                            ),
+                            1, Particle.DustOptions(Color.BLACK, 0.4f)
+                        )
+
                         continue
                     }
 
@@ -457,6 +480,7 @@ class Cuboid(
                     }
 //
                     collisions += p
+
                     break
                 }
             }
@@ -466,7 +490,8 @@ class Cuboid(
             val r = collidesEdge(edge) ?: continue
 
             if (r.depth > maxDepth) {
-                println("OVERSHOT, ${r.depth / maxDepth}x MAX DEPTH")
+//                println("OVERSHOT, ${r.depth / maxDepth}x MAX DEPTH with ${r.depth}")
+//                println("r: $r")
                 continue
             }
 
@@ -480,7 +505,7 @@ class Cuboid(
         return collisions
     }
 
-    private fun collidesAAFace(
+    private fun collidesFace(
         face: MeshFace,
         normal: Vector3d = face.axis.vec,
     ): List<CollisionResult>? {
@@ -523,7 +548,7 @@ class Cuboid(
 
         // val allowedNormals = listOf(normal)
 
-        val r = collidesSAT(otherVertices, otherAxiss, otherEdges, findAll = true) ?: return null
+        val r = collidesSAT(otherVertices, otherAxiss, otherEdges, findAll = true, collideMyAxiss = false) ?: return null
         if (r.isEmpty()) return null
 //        if (r.size > 1) println("found: ${r.size}")
 
@@ -582,26 +607,6 @@ class Cuboid(
 
         if (r.isEmpty()) return null
 
-//        world.debugConnect(
-//            r.point,
-//            Vector3d(r.point).add(r.norm),
-//            Particle.DustOptions(Color.WHITE, 0.2f)
-//        )
-//
-//        world.spawnParticle(
-//            Particle.REDSTONE,
-//            Location(
-//                world,
-//                r.point.x, r.point.y, r.point.z,
-//            ),
-//            1, Particle.DustOptions(Color.BLACK, 0.4f)
-//        )
-
-//       println("EDGE COLLISION!")
-//       println("  - depth: ${r.depth}")
-//       println("  - norm ${r.norm}")
-//       println("  - point: ${r.point}")
-//
         return r.first()
     }
 
@@ -611,18 +616,19 @@ class Cuboid(
         otherEdges: List<Vector3d>,
         allowedNormals: List<Vector3d>? = null,
         findAll: Boolean = false,
+        collideMyAxiss: Boolean = true,
     ): MutableList<CollisionResult>? {
-        val myAxiss = listOf<Vector3d>(
+        val myAxiss = if (collideMyAxiss) listOf<Vector3d>(
             Vector3d(1.0, 0.0, 0.0).rotate(q).normalize(),
             Vector3d(0.0, 1.0, 0.0).rotate(q).normalize(),
             Vector3d(0.0, 0.0, 1.0).rotate(q).normalize(),
-        )
+        ) else listOf()
 
-        val myEdges = listOf(
+        val myEdges = if (collideMyAxiss) listOf(
             Vector3d(1.0, 0.0, 0.0).rotate(q).normalize(),
             Vector3d(0.0, 1.0, 0.0).rotate(q).normalize(),
             Vector3d(0.0, 0.0, 1.0).rotate(q).normalize(),
-        )
+        ) else listOf()
 
         val edgeAxiss = genCrosses(otherEdges, myEdges)
 
@@ -1548,7 +1554,7 @@ class Cuboid(
 }
 
 private const val EPSILON = 1e-11
-private const val FUDGE = 1.1
+private const val FUDGE = 2.0
 fun Vector3d.toStringFull(): String {
     return "( $x, $y, $z )"
 }

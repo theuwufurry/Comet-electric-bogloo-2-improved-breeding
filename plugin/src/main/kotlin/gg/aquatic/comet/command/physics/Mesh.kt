@@ -260,7 +260,7 @@ data class Mesh(
                                 Vector2d(bb1.max.b(), bb1.max.c()),
                                 false,
 
-                            )
+                                )
                         ),
                         invalid = mutableListOf(),
                         level = bb1.min.a(),
@@ -299,7 +299,11 @@ data class Mesh(
                     val minMaxClose = abs(bb1.min.a() - bb2.max.a()) < epsilon
                     val isMinClose = abs(bb1.min.a() - bb2.min.a()) < epsilon
                     if (doMin && (minMaxClose || isMinClose)) {
-                        minFace.valid += MeshFacePass(Vector2d(bb2.min.b(), bb2.min.c()), Vector2d(bb2.max.b(), bb2.max.c()), !isMinClose)
+                        minFace.valid += MeshFacePass(
+                            Vector2d(bb2.min.b(), bb2.min.c()),
+                            Vector2d(bb2.max.b(), bb2.max.c()),
+                            !isMinClose
+                        )
                     }
 
                     if (minMaxClose) {
@@ -314,7 +318,11 @@ data class Mesh(
                     val maxMinClose = abs(bb1.max.a() - bb2.min.a()) < epsilon
                     val isMaxClose = abs(bb1.max.a() - bb2.max.a()) < epsilon
                     if (doMax && (maxMinClose || isMaxClose)) {
-                        maxFace.valid += MeshFacePass(Vector2d(bb2.min.b(), bb2.min.c()), Vector2d(bb2.max.b(), bb2.max.c()), isMaxClose)
+                        maxFace.valid += MeshFacePass(
+                            Vector2d(bb2.min.b(), bb2.min.c()),
+                            Vector2d(bb2.max.b(), bb2.max.c()),
+                            isMaxClose
+                        )
                     }
 
                     if (maxMinClose) {
@@ -426,23 +434,24 @@ data class Mesh(
                     val x = s * 0.5 + e * 0.5
                     //categorize bounding boxes into 3d array if this gets too slow; though shouldn't be a problem for small objects
                     var mount: EdgeMount? = null
+                    var sum = 0
                     for (bb in boundingBoxes) {
                         for (e in EdgeMount.entries) {
                             if (bb.contains(
                                     x,
                                     axis.first.x + 2.0 * epsilon * e.a,
-                                    axis.first.y + 2.0 * epsilon * e.b
+                                    axis.first.y + 2.0 * epsilon * e.b,
                                 )
                             ) {
+                                sum++
                                 mount = e
-                                break
                             }
                         }
 
                         if (mount != null) break
                     }
 
-                    if (mount != null) {
+                    if (sum == 1) {
                         edges += Edge(
                             start = Vector3d(s, axis.first.x, axis.first.y),
                             end = Vector3d(e, axis.first.x, axis.first.y),
@@ -464,23 +473,24 @@ data class Mesh(
                     val y = s * 0.5 + e * 0.5
                     //categorize bounding boxes into 3d array if this gets too slow; though shouldn't be a problem for small objects
                     var mount: EdgeMount? = null
+                    var sum = 0
                     for (bb in boundingBoxes) {
                         for (e in EdgeMount.entries) {
                             if (bb.contains(
                                     axis.first.x + 2.0 * epsilon * e.a,
                                     y,
-                                    axis.first.y + 2.0 * epsilon * e.b
+                                    axis.first.y + 2.0 * epsilon * e.b,
                                 )
                             ) {
+                                sum++
                                 mount = e
-                                break
                             }
                         }
 
                         if (mount != null) break
                     }
 
-                    if (mount != null) {
+                    if (sum == 1) {
                         edges += Edge(
                             start = Vector3d(axis.first.x, s, axis.first.y),
                             end = Vector3d(axis.first.x, e, axis.first.y),
@@ -502,23 +512,24 @@ data class Mesh(
                     val z = s * 0.5 + e * 0.5
                     //categorize bounding boxes into 3d array if this gets too slow; though shouldn't be a problem for small objects
                     var mount: EdgeMount? = null
+                    var sum = 0
                     for (bb in boundingBoxes) {
                         for (e in EdgeMount.entries) {
                             if (bb.contains(
                                     axis.first.x + 2.0 * epsilon * e.a,
                                     axis.first.y + 2.0 * epsilon * e.b,
-                                    z
+                                    z,
                                 )
                             ) {
+                                sum++
                                 mount = e
-                                break
                             }
                         }
 
                         if (mount != null) break
                     }
 
-                    if (mount != null) {
+                    if (sum == 1) {
                         edges += Edge(
                             start = Vector3d(axis.first.x, axis.first.y, s),
                             end = Vector3d(axis.first.x, axis.first.y, e),
@@ -622,7 +633,7 @@ class Mesh2(
 
         if (visualizeEdges) {
             for (edge in edges) {
-                world.debugConnect(edge.start, edge.end, DustOptions(FUCHSIA, 0.3f), 0.1)
+                world.debugConnect(edge.start, edge.end, DustOptions(FUCHSIA, 0.18f), 0.05)
             }
         }
     }
@@ -668,6 +679,7 @@ class MeshBody(
     override val world: World
 ) : Body {
     override val id: UUID = UUID.randomUUID()
+    override val type: BodyType = BodyType.PASSIVE
     override val velocity: Vector3d = Vector3d()
     override val vertices: List<Vector3d> = listOf()
     override val edges: List<Pair<Vector3d, Vector3d>> = listOf()

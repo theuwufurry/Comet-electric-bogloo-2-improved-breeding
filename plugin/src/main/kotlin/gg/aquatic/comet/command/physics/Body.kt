@@ -9,6 +9,7 @@ import java.util.UUID
 
 interface Body  {
     val id: UUID
+    val type: BodyType
     val velocity: Vector3d
 
     val world: World
@@ -55,6 +56,10 @@ interface Body  {
     }
 }
 
+enum class BodyType {
+    ACTIVE, PASSIVE
+}
+
 data class CollisionResult (
     val point: Vector3d,
     val norm: Vector3d,
@@ -66,6 +71,7 @@ data class CollisionResult (
 
 class BlockBody(val block: Block) : Body {
     override val world: World = block.world
+    override val type: BodyType = BodyType.PASSIVE
     override val id: UUID = UUID.randomUUID()
     override val velocity: Vector3d = Vector3d()
     override val vertices = block.collisionShape.boundingBoxes.flatMap {

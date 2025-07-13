@@ -55,10 +55,6 @@ object PhysicsCommand : ICommand {
                         contacts.clear()
                         physicsWorld.meshes.clear()
 
-                        for (body in localBodies) {
-                            if (body.hasGravity) body.velocity.add(Vector3d(GRAVITY).mul(TIME_STEP))
-                        }
-
                         for (i in 0..<localBodies.size) {
                             val firstBody = localBodies[i]
                             firstBody.ensureNonAligned()
@@ -105,7 +101,11 @@ object PhysicsCommand : ICommand {
                             }
                         }
 
-                        for (itr in 1..5) {
+                        for (body in localBodies) {
+                            if (body.hasGravity) body.velocity.add(Vector3d(GRAVITY).mul(TIME_STEP))
+                        }
+
+                        for (itr in 1..8) {
                             for (contact in contacts) {
                                 val first = contact.first
                                 val second = contact.second
@@ -130,7 +130,9 @@ object PhysicsCommand : ICommand {
                                 val vB = second.velocity
                                 val wB = Vector3d(second.omega).rotate(second.q)
 
-                                val bias = BIAS / TIME_STEP * (abs(depth) - SLOP).coerceAtLeast(0.0)
+                                val slop = if (first.type == BodyType.ACTIVE && second.type == BodyType.ACTIVE) ACTIVE_SLOP else PASSIVE_SLOP
+
+                                val bias = BIAS / TIME_STEP * (abs(depth) - slop).coerceAtLeast(0.0)
 
                                 //M^(-1) = [ iMA, iIA, iMB, iAB ]
                                 val iMA = Vector3d(first.inverseMass)
@@ -148,16 +150,27 @@ object PhysicsCommand : ICommand {
                                 contact.jSum = (curJSum + lambda).coerceAtLeast(0.0)
                                 lambda = contact.jSum - curJSum
 
-                                //delta-V = M^(-1)J^T * lambda 
+                                //delta-V = M^(-1)J^T * lambda
                                 val dVA = Vector3d(iMA).mul(nn).mul(lambda)
                                 val dOA = Vector3d(iIA).mul(j1).mul(lambda).rotate(Quaterniond(first.q).conjugate())
                                 val dVB = Vector3d(iMB).mul(n).mul(lambda)
                                 val dOB = Vector3d(iIB).mul(j3).mul(lambda).rotate(Quaterniond(second.q).conjugate())
 
+//                                println("ITR: $itr")
+//                                println("  - FIRST IM: ${first.inverseMass}")
+//                                println("  - FIRST V: ${first.velocity}")
+//                                println("  - SECOND IM: ${second.inverseMass}")
+//                                println("  - SECOND V: ${second.velocity}")
+//                                println("-- lambda: $lambda")
+//                                println("-- dVA: $dVA")
+//                                println("-- dOA: $dOA")
+//                                println("-- dVB: $dVB")
+//                                println("-- dOB: $dOB")
+
                                 first.velocity.sub(dVA)
                                 first.omega.sub(dOA)
-                                second.velocity.add(dVB)
-                                second.omega.add(dOB)
+                                second.velocity.sub(dVB)
+                                second.omega.sub(dOB)
                             }
                         }
 
@@ -431,7 +444,7 @@ object PhysicsCommand : ICommand {
 
         if (args[1] == "cube") {
             var v0 = Vector3d(0.0)
-            var dims = Vector3d(1.0)
+            var dims = Vector3d(0.99)
             var l = Vector3d(0.0)
             var rot0 = Vector3d(0.0)
 
@@ -735,8 +748,9 @@ private fun World.debugBoundingBox(box: BoundingBox, options: DustOptions, inter
     )
 }
 
-private const val BIAS = 0.15
-const val SLOP = 0.01
+private const val BIAS = 0.2
+const val PASSIVE_SLOP = 0.0001
+const val ACTIVE_SLOP = 0.01
 private val GRAVITY = Vector3d(0.0, -5.0, 0.0)
 
 private val choices = listOf(
