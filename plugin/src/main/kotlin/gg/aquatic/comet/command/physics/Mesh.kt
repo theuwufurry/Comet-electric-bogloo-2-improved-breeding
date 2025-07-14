@@ -604,6 +604,8 @@ class MeshBody(
     override val omega: Vector3d = Vector3d()
     override val hasGravity: Boolean = false
     override val pos: Vector3d = Vector3d()
+    override val contacts: MutableList<Contact> = mutableListOf()
+    override val previousContacts: MutableList<Contact> = mutableListOf()
 
     override fun support(dir: Vector3d): Vector3d {
         return Vector3d()

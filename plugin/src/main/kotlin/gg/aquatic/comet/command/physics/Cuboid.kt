@@ -1,8 +1,8 @@
 package gg.aquatic.comet.command.physics
 
 import gg.aquatic.comet.applyIf
-import gg.aquatic.comet.command.PASSIVE_SLOP
 import gg.aquatic.comet.command.PhysicsCommand
+import gg.aquatic.comet.command.PhysicsWorld.Companion.PASSIVE_SLOP
 import gg.aquatic.comet.command.debugConnect
 import gg.aquatic.comet.command.physics.Body.Companion.TIME_STEP
 import gg.aquatic.comet.command.physics.Mesh.Companion.INNER
@@ -134,13 +134,16 @@ class Cuboid(
         )
     }
 
+    override var contacts: MutableList<Contact> = mutableListOf()
+    override var previousContacts: MutableList<Contact> = mutableListOf()
+
     init {
         val material = VALID_MATERIALS.random()
 
         display.block = material.createBlockData()
 
         display.transformation = createTransformation()
-        display.interpolationDuration = 1
+        display.interpolationDuration = 2
     }
 
     override fun kill() {
@@ -207,6 +210,11 @@ class Cuboid(
 
         vertices = calcVertices()
         boundingBox = calcBoundingBox()
+
+
+        previousContacts.clear()
+        previousContacts += contacts
+        contacts.clear()
 
         display.transformation = createTransformation()
         display.teleport(Location(world, pos.x, pos.y, pos.z))
@@ -516,8 +524,6 @@ class Cuboid(
                     }
 //
                     collisions += p
-
-                    break
                 }
             }
         }
@@ -1344,7 +1350,7 @@ class Cuboid(
 
     companion object {
         private val VALID_MATERIALS = listOf(
-            Material.CHERRY_LEAVES,
+            Material.SEA_LANTERN,
         )
 
         fun toBarycentric(

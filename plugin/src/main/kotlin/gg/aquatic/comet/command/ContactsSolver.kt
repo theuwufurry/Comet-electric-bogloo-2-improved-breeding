@@ -1,5 +1,9 @@
 package gg.aquatic.comet.command
 
+import gg.aquatic.comet.command.PhysicsWorld.Companion.ACTIVE_SLOP
+import gg.aquatic.comet.command.PhysicsWorld.Companion.BIAS
+import gg.aquatic.comet.command.PhysicsWorld.Companion.FRICTION
+import gg.aquatic.comet.command.PhysicsWorld.Companion.PASSIVE_SLOP
 import gg.aquatic.comet.command.physics.Body.Companion.TIME_STEP
 import gg.aquatic.comet.command.physics.BodyType
 import gg.aquatic.comet.command.physics.Contact
@@ -8,7 +12,7 @@ import org.joml.Vector3d
 import kotlin.math.abs
 
 object ContactsSolver {
-    private const val NORMAL_ITERATIONS = 6
+    private const val NORMAL_ITERATIONS = 3
     private const val FRICTION_ITERATIONS = 3
     fun solve(contacts: List<Contact>) {
         for (itr in 1..NORMAL_ITERATIONS) {
@@ -110,7 +114,6 @@ object ContactsSolver {
                         iMA = iMA, iIA = iIA, iMB = iMB, iIB = iIB,
                         vA = vA, wA = wA, vB = vB, wB = wB,
                     )
-
 
                     first.velocity.sub(dVA)
                     first.omega.sub(dOA)
