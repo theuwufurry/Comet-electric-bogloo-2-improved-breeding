@@ -40,7 +40,9 @@ interface Body  {
     fun ensureNonAligned() {}
 
     fun collidesBody(other: Body): CollisionResult?
-    fun collidesMesh(mesh: Mesh2): List<CollisionResult>
+    fun collidesEnvironment(): List<CollisionResult>
+
+    fun visualize() {}
 
     fun kill()
 
@@ -52,7 +54,6 @@ interface Body  {
 
     companion object {
         const val TIME_STEP = 0.005
-
     }
 }
 
@@ -123,7 +124,7 @@ class BlockBody(val block: Block) : Body {
     override fun step() { }
 
     override fun collidesBody(other: Body): CollisionResult? { return null }
-    override fun collidesMesh(mesh: Mesh2): List<CollisionResult> { return listOf() }
+    override fun collidesEnvironment(): List<CollisionResult> { return listOf() }
 
     override fun kill() { }
 

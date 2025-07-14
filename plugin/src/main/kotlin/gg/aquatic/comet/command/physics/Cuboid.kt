@@ -1,25 +1,19 @@
 package gg.aquatic.comet.command.physics
 
 import gg.aquatic.comet.applyIf
-import gg.aquatic.comet.command.PhysicsCommand
 import gg.aquatic.comet.command.PASSIVE_SLOP
+import gg.aquatic.comet.command.PhysicsCommand
 import gg.aquatic.comet.command.debugConnect
 import gg.aquatic.comet.command.physics.Body.Companion.TIME_STEP
-import org.bukkit.Color
-import org.bukkit.Location
-import org.bukkit.Material
-import org.bukkit.Particle
-import org.bukkit.World
+import gg.aquatic.comet.command.physics.Mesh.Companion.INNER
+import org.bukkit.*
 import org.bukkit.entity.BlockDisplay
 import org.bukkit.entity.Display
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.TextDisplay
 import org.bukkit.util.BoundingBox
 import org.bukkit.util.Transformation
-import org.joml.Quaterniond
-import org.joml.Quaternionf
-import org.joml.Vector3d
-import org.joml.Vector3f
+import org.joml.*
 import java.util.*
 import kotlin.math.*
 
@@ -63,8 +57,11 @@ class Cuboid(
         Vector3d(0.5, 0.5, -0.5),
     )
 
-    override val vertices: List<Vector3d>
-        get() = rawVertices.map { localToGlobal(it) }
+    private fun calcVertices(): List<Vector3d> {
+        return rawVertices.map { localToGlobal(it) }
+    }
+
+    override var vertices: List<Vector3d> = calcVertices()
 
     override val edges: List<Pair<Vector3d, Vector3d>>
         get() {
@@ -87,25 +84,24 @@ class Cuboid(
             )
         }
 
-    override val boundingBox: BoundingBox
-        get() {
-            var xMin = Double.MAX_VALUE
-            var xMax = -Double.MAX_VALUE
-            var yMin = Double.MAX_VALUE
-            var yMax = -Double.MAX_VALUE
-            var zMin = Double.MAX_VALUE
-            var zMax = -Double.MAX_VALUE
+    private fun calcBoundingBox(): BoundingBox {
+        var xMin = Double.MAX_VALUE
+        var xMax = -Double.MAX_VALUE
+        var yMin = Double.MAX_VALUE
+        var yMax = -Double.MAX_VALUE
+        var zMin = Double.MAX_VALUE
+        var zMax = -Double.MAX_VALUE
 
-            val myVertices = vertices
+        val myVertices = vertices
 
-            for (vertex in myVertices) {
-                xMin = min(xMin, vertex.x)
-                xMax = max(xMax, vertex.x)
-                yMin = min(yMin, vertex.y)
-                yMax = max(yMax, vertex.y)
-                zMin = min(zMin, vertex.z)
-                zMax = max(zMax, vertex.z)
-            }
+        for (vertex in myVertices) {
+            xMin = min(xMin, vertex.x)
+            xMax = max(xMax, vertex.x)
+            yMin = min(yMin, vertex.y)
+            yMax = max(yMax, vertex.y)
+            zMin = min(zMin, vertex.z)
+            zMax = max(zMax, vertex.z)
+        }
 //
 //            xMin += (velocity.x * TIME_STEP).coerceAtMost(0.0)
 //            xMax += (velocity.x * TIME_STEP).coerceAtLeast(0.0)
@@ -114,8 +110,11 @@ class Cuboid(
 //            zMin += (velocity.z * TIME_STEP).coerceAtMost(0.0)
 //            zMax += (velocity.z * TIME_STEP).coerceAtLeast(0.0)
 
-            return BoundingBox(xMin, yMin, zMin, xMax, yMax, zMax)
-        }
+        return BoundingBox(xMin, yMin, zMin, xMax, yMax, zMax)
+    }
+
+
+    override var boundingBox: BoundingBox = calcBoundingBox()
 
     private val display: BlockDisplay = world.spawnEntity(
         Location(world, pos.x, pos.y, pos.z),
@@ -141,6 +140,7 @@ class Cuboid(
         display.block = material.createBlockData()
 
         display.transformation = createTransformation()
+        display.interpolationDuration = 1
     }
 
     override fun kill() {
@@ -205,9 +205,11 @@ class Cuboid(
 
         torque = Vector3d()
 
+        vertices = calcVertices()
+        boundingBox = calcBoundingBox()
+
         display.transformation = createTransformation()
         display.teleport(Location(world, pos.x, pos.y, pos.z))
-
 
         handleDebug()
     }
@@ -365,8 +367,42 @@ class Cuboid(
         }
     }
 
+    private var cachedMesh: Mesh = Mesh.mesh(world = world, boundingBox = boundingBox)
+
+    private fun getMesh(): Mesh {
+        val bb = boundingBox
+
+        val meshStart = Vector3i(
+            floor(boundingBox.minX).toInt() - INNER,
+            floor(boundingBox.minY).toInt() - INNER,
+            floor(boundingBox.minZ).toInt() - INNER,
+        )
+        val meshEnd = Vector3i(
+            floor(boundingBox.maxX).toInt() + INNER,
+            floor(boundingBox.maxY).toInt() + INNER,
+            floor(boundingBox.maxZ).toInt() + INNER,
+        )
+
+        if (meshStart.x < cachedMesh.start.x || meshStart.y < cachedMesh.start.y || meshStart.z < cachedMesh.start.z
+            || meshEnd.x > cachedMesh.end.x || meshEnd.y > cachedMesh.end.y || meshEnd.z > cachedMesh.end.z
+        ) {
+//            println("NEW MESH!")
+//            println("  - meshStart: $meshStart")
+//            println("  - meshEnd: $meshEnd")
+//            println("  - cachedMesh.start: ${cachedMesh.start}")
+//            println("  - cachedMesh.end: ${cachedMesh.end}")
+
+            cachedMesh = Mesh.mesh(world, bb)
+            return cachedMesh
+        } else {
+            return cachedMesh
+        }
+    }
+
     private var prevMaxDepth = PASSIVE_SLOP
-    override fun collidesMesh(mesh: Mesh2): List<CollisionResult> {
+    override fun collidesEnvironment(): List<CollisionResult> {
+        val mesh = getMesh()
+
         if (PhysicsCommand.DEBUG_SAT_LEVEL > 0) println("COLLIDES MESH!")
 
         val collisions = mutableListOf<CollisionResult>()
@@ -517,6 +553,8 @@ class Cuboid(
         val large = 64.0
         val (otherEdges, otherVertices) = when (face.axis) {
             Axis.X -> {
+                if (boundingBox.maxX < face.level || boundingBox.minX > face.level) return null
+
                 listOf<Vector3d>() to listOf(
                     Vector3d(start.x, start.y - large, start.z - large),
                     Vector3d(start.x, end.y + large, start.z - large),
@@ -526,6 +564,8 @@ class Cuboid(
             }
 
             Axis.Y -> {
+                if (boundingBox.maxY < face.level || boundingBox.minY > face.level) return null
+
                 listOf<Vector3d>() to listOf(
                     Vector3d(start.x - large, start.y, start.z - large),
                     Vector3d(end.x + large, start.y, start.z - large),
@@ -535,6 +575,8 @@ class Cuboid(
             }
 
             Axis.Z -> {
+                if (boundingBox.maxZ < face.level || boundingBox.minZ > face.level) return null
+
                 listOf<Vector3d>() to listOf(
                     Vector3d(start.x - large, start.y - large, start.z),
                     Vector3d(end.x + large, start.y - large, start.z),
@@ -548,7 +590,8 @@ class Cuboid(
 
         // val allowedNormals = listOf(normal)
 
-        val r = collidesSAT(otherVertices, otherAxiss, otherEdges, findAll = true, collideMyAxiss = false) ?: return null
+        val r =
+            collidesSAT(otherVertices, otherAxiss, otherEdges, findAll = true, collideMyAxiss = false) ?: return null
         if (r.isEmpty()) return null
 //        if (r.size > 1) println("found: ${r.size}")
 
@@ -572,6 +615,15 @@ class Cuboid(
     private fun collidesEdge(
         edge: Edge
     ): CollisionResult? {
+//        if (!bb.contains(edge.start.x, edge.start.y, edge.start.z) && !bb.contains(
+//                edge.end.x,
+//                edge.end.y,
+//                edge.end.z
+//            )
+//        ) {
+//            return null
+//        }
+
         edge.axis!!
         edge.mount!!
         val otherVertices = listOf(
@@ -582,20 +634,32 @@ class Cuboid(
         val otherEdges = listOf(edge.vec)
 
         val allowedNormals = when (edge.axis) {
-            Axis.X -> listOf(
-                Vector3d(0.0, -edge.mount.a, 0.0),
-                Vector3d(0.0, 0.0, -edge.mount.b),
-            )
+            Axis.X -> {
+                if (!(boundingBox.minY <= edge.start.y && boundingBox.maxY >= edge.start.y
+                    && boundingBox.minZ <= edge.start.z && boundingBox.maxZ >= edge.start.z)) return null
+                listOf(
+                    Vector3d(0.0, -edge.mount.a, 0.0),
+                    Vector3d(0.0, 0.0, -edge.mount.b),
+                )
+            }
 
-            Axis.Y -> listOf(
-                Vector3d(-edge.mount.a, 0.0, 0.0),
-                Vector3d(0.0, 0.0, -edge.mount.b),
-            )
+            Axis.Y -> {
+                if (!(boundingBox.minX <= edge.start.x && boundingBox.maxX >= edge.start.x
+                            && boundingBox.minZ <= edge.start.z && boundingBox.maxZ >= edge.start.z)) return null
+                listOf(
+                    Vector3d(-edge.mount.a, 0.0, 0.0),
+                    Vector3d(0.0, 0.0, -edge.mount.b),
+                )
+            }
 
-            Axis.Z -> listOf(
-                Vector3d(-edge.mount.a, 0.0, 0.0),
-                Vector3d(0.0, -edge.mount.b, 0.0),
-            )
+            Axis.Z -> {
+                if (!(boundingBox.minX <= edge.start.x && boundingBox.maxX >= edge.start.x
+                            && boundingBox.minY <= edge.start.y && boundingBox.maxY >= edge.start.y)) return null
+                listOf(
+                    Vector3d(-edge.mount.a, 0.0, 0.0),
+                    Vector3d(0.0, -edge.mount.b, 0.0),
+                )
+            }
         }
 
         val r = collidesSAT(
@@ -1267,14 +1331,20 @@ class Cuboid(
             shape += Triple(uniqueStart, uniqueEnd, point)
         }
 
-        if (!shape.isConvex()) {
-            println("CONCAVE SHAPE")
+//        if (!shape.isConvex()) {
+//            println("CONCAVE SHAPE")
+//        }
+    }
+
+    override fun visualize() {
+        if (PhysicsCommand.DEBUG_MESH_LEVEL > 0) {
+            cachedMesh.visualize(world, visualizeFaces = false, visualizeEdges = true)
         }
     }
 
     companion object {
         private val VALID_MATERIALS = listOf(
-            Material.GLASS
+            Material.CHERRY_LEAVES,
         )
 
         fun toBarycentric(
@@ -1541,7 +1611,8 @@ class Cuboid(
             dirs1: List<Vector3d>,
             dirs2: List<Vector3d>,
         ): List<Vector3d> {
-            val ls = mutableListOf<Vector3d>()
+            if (dirs1.isEmpty() || dirs2.isEmpty()) return listOf()
+            val ls = ArrayList<Vector3d>(dirs1.size * dirs2.size)
             for (dir1 in dirs1) {
                 for (dir2 in dirs2) {
                     ls += Vector3d(dir1).cross(dir2).normalize()
@@ -1554,7 +1625,7 @@ class Cuboid(
 }
 
 private const val EPSILON = 1e-11
-private const val FUDGE = 2.0
+private const val FUDGE = 4.0
 fun Vector3d.toStringFull(): String {
     return "( $x, $y, $z )"
 }

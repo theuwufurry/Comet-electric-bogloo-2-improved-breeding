@@ -12,118 +12,101 @@ import org.joml.Vector3d
 import org.joml.Vector3i
 import java.util.*
 import kotlin.math.abs
+import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 
-data class Mesh(
-    val cheesyFaces: List<CheesyAAFace>,
-    val edges: Set<Edge>
+class Mesh(
+    val start: Vector3i,
+    val end: Vector3i,
+    val faces: List<MeshFace>,
+    val edges: List<Edge>,
 ) {
-    fun visualize(world: World) {
-        for (boundedFace in cheesyFaces) {
-            when (boundedFace.axis) {
-                Axis.X -> for (hole in boundedFace.holes) {
-                    world.debugConnect(
-                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
-                        Vector3d(hole.first.x, hole.second.y, hole.first.z),
-                        DustOptions(RED, 0.5f),
-                    )
+    fun visualize(world: World, visualizeFaces: Boolean, visualizeEdges: Boolean) {
+        if (visualizeFaces) {
+            val validInterval = 0.24
+            val interval = 0.05
+            for (face in faces) {
+                when (face.axis) {
+                    Axis.X -> {
+                        continue
+                        for ((start, end) in face.invalid) {
+                            val min = Vector3d(face.start.x, start.x, start.y)
+                            val max = Vector3d(face.start.x, end.x, end.y)
 
-                    world.debugConnect(
-                        Vector3d(hole.first.x, hole.second.y, hole.first.z),
-                        Vector3d(hole.first.x, hole.second.y, hole.second.z),
-                        DustOptions(RED, 0.5f),
-                    )
+                            world.square(face.axis, min, max, DustOptions(RED, 0.5f), interval)
+                        }
 
-                    world.debugConnect(
-                        Vector3d(hole.first.x, hole.second.y, hole.second.z),
-                        Vector3d(hole.first.x, hole.first.y, hole.second.z),
-                        DustOptions(RED, 0.5f),
-                    )
+                        for ((start, end) in face.valid) {
+                            val min = Vector3d(face.start.x, start.x, start.y)
+                            val max = Vector3d(face.start.x, end.x, end.y)
 
-                    world.debugConnect(
-                        Vector3d(hole.first.x, hole.first.y, hole.second.z),
-                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
-                        DustOptions(RED, 0.5f),
-                    )
-                }
+                            world.square(face.axis, min, max, DustOptions(WHITE, 0.3f), validInterval)
+                        }
+                    }
 
-                Axis.Y -> for (hole in boundedFace.holes) {
-                    world.debugConnect(
-                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
-                        Vector3d(hole.second.x, hole.first.y, hole.first.z),
-                        DustOptions(GREEN, 0.5f),
-                    )
+                    Axis.Y -> {
+                        continue
+                        for ((start, end) in face.invalid) {
+                            val min = Vector3d(face.start.y, start.x, start.y)
+                            val max = Vector3d(face.start.y, end.x, end.y)
 
-                    world.debugConnect(
-                        Vector3d(hole.second.x, hole.first.y, hole.first.z),
-                        Vector3d(hole.second.x, hole.first.y, hole.second.z),
-                        DustOptions(GREEN, 0.5f),
-                    )
+                            world.square(face.axis, min, max, DustOptions(RED, 0.5f), interval)
+                        }
 
-                    world.debugConnect(
-                        Vector3d(hole.second.x, hole.first.y, hole.second.z),
-                        Vector3d(hole.first.x, hole.first.y, hole.second.z),
-                        DustOptions(GREEN, 0.5f),
-                    )
+                        for ((start, end) in face.valid) {
+                            val min = Vector3d(face.start.y, start.x, start.y)
+                            val max = Vector3d(face.start.y, end.x, end.y)
 
-                    world.debugConnect(
-                        Vector3d(hole.first.x, hole.first.y, hole.second.z),
-                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
-                        DustOptions(GREEN, 0.5f),
-                    )
-                }
+                            world.square(face.axis, min, max, DustOptions(WHITE, 0.3f), validInterval)
+                        }
+                    }
 
-                Axis.Z -> for (hole in boundedFace.holes) {
-                    world.debugConnect(
-                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
-                        Vector3d(hole.second.x, hole.first.y, hole.first.z),
-                        DustOptions(BLUE, 0.5f),
-                    )
+                    Axis.Z -> {
+                        for ((start, end) in face.invalid) {
+                            val min = Vector3d(face.start.z, start.x, start.y)
+                            val max = Vector3d(face.start.z, end.x, end.y)
 
-                    world.debugConnect(
-                        Vector3d(hole.second.x, hole.first.y, hole.first.z),
-                        Vector3d(hole.second.x, hole.second.y, hole.first.z),
-                        DustOptions(BLUE, 0.5f),
-                    )
+                            world.square(face.axis, min, max, DustOptions(RED, 0.5f), interval)
+                        }
 
-                    world.debugConnect(
-                        Vector3d(hole.second.x, hole.second.y, hole.first.z),
-                        Vector3d(hole.first.x, hole.second.y, hole.first.z),
-                        DustOptions(BLUE, 0.5f),
-                    )
+                        for ((start, end) in face.valid) {
+                            val min = Vector3d(face.start.z, start.x, start.y)
+                            val max = Vector3d(face.start.z, end.x, end.y)
 
-                    world.debugConnect(
-                        Vector3d(hole.first.x, hole.second.y, hole.first.z),
-                        Vector3d(hole.first.x, hole.first.y, hole.first.z),
-                        DustOptions(BLUE, 0.5f),
-                    )
+                            world.square(face.axis, min, max, DustOptions(WHITE, 0.3f), validInterval)
+                        }
+                    }
                 }
             }
         }
-//
-//        for (edge in edges) {
-//            world.debugConnect(edge.start, edge.end, DustOptions(YELLOW, 0.4f), 0.0999)
-//        }
+
+        if (visualizeEdges) {
+            for (edge in edges) {
+                world.debugConnect(edge.start, edge.end, DustOptions(FUCHSIA, 0.25f), 0.1)
+            }
+        }
     }
 
     companion object {
+        private const val OUTER = 1
+        const val INNER = 1
+
         fun mesh(
             world: World,
-            meshStart: Vector3i,
-            meshEnd: Vector3i,
+            boundingBox: BoundingBox,
         ): Mesh {
-            return Mesh(
-                cheesyFaces = listOf(),
-                edges = setOf()
+            val meshStart = Vector3i(
+                floor(boundingBox.minX).toInt() - OUTER,
+                floor(boundingBox.minY).toInt() - OUTER,
+                floor(boundingBox.minZ).toInt() - OUTER,
             )
-        }
+            val meshEnd = Vector3i(
+                floor(boundingBox.maxX).toInt() + OUTER,
+                floor(boundingBox.maxY).toInt() + OUTER,
+                floor(boundingBox.maxZ).toInt() + OUTER,
+            )
 
-        fun mesh2(
-            world: World,
-            meshStart: Vector3i,
-            meshEnd: Vector3i,
-        ): Mesh2 {
             val boundingBoxes = mutableListOf<BoundingBox>()
 
             for (x in (meshStart.x)..(meshEnd.x)) {
@@ -148,7 +131,9 @@ data class Mesh(
 
             val edges = createMeshEdges(boundingBoxes)
 
-            return Mesh2(
+            return Mesh(
+                start = meshStart,
+                end = meshEnd,
                 faces = meshFaces,
                 edges = edges,
             )
@@ -568,77 +553,6 @@ data class Mesh(
     }
 }
 
-class Mesh2(
-    val faces: List<MeshFace>,
-    val edges: List<Edge>,
-) {
-    fun visualize(world: World, visualizeFaces: Boolean, visualizeEdges: Boolean) {
-        if (visualizeFaces) {
-            val validInterval = 0.24
-            val interval = 0.05
-            for (face in faces) {
-                when (face.axis) {
-                    Axis.X -> {
-                        continue
-                        for ((start, end) in face.invalid) {
-                            val min = Vector3d(face.start.x, start.x, start.y)
-                            val max = Vector3d(face.start.x, end.x, end.y)
-
-                            world.square(face.axis, min, max, DustOptions(RED, 0.5f), interval)
-                        }
-
-                        for ((start, end) in face.valid) {
-                            val min = Vector3d(face.start.x, start.x, start.y)
-                            val max = Vector3d(face.start.x, end.x, end.y)
-
-                            world.square(face.axis, min, max, DustOptions(WHITE, 0.3f), validInterval)
-                        }
-                    }
-
-                    Axis.Y -> {
-                        continue
-                        for ((start, end) in face.invalid) {
-                            val min = Vector3d(face.start.y, start.x, start.y)
-                            val max = Vector3d(face.start.y, end.x, end.y)
-
-                            world.square(face.axis, min, max, DustOptions(RED, 0.5f), interval)
-                        }
-
-                        for ((start, end) in face.valid) {
-                            val min = Vector3d(face.start.y, start.x, start.y)
-                            val max = Vector3d(face.start.y, end.x, end.y)
-
-                            world.square(face.axis, min, max, DustOptions(WHITE, 0.3f), validInterval)
-                        }
-                    }
-
-                    Axis.Z -> {
-                        for ((start, end) in face.invalid) {
-                            val min = Vector3d(face.start.z, start.x, start.y)
-                            val max = Vector3d(face.start.z, end.x, end.y)
-
-                            world.square(face.axis, min, max, DustOptions(RED, 0.5f), interval)
-                        }
-
-                        for ((start, end) in face.valid) {
-                            val min = Vector3d(face.start.z, start.x, start.y)
-                            val max = Vector3d(face.start.z, end.x, end.y)
-
-                            world.square(face.axis, min, max, DustOptions(WHITE, 0.3f), validInterval)
-                        }
-                    }
-                }
-            }
-        }
-
-        if (visualizeEdges) {
-            for (edge in edges) {
-                world.debugConnect(edge.start, edge.end, DustOptions(FUCHSIA, 0.18f), 0.05)
-            }
-        }
-    }
-}
-
 fun World.square(
     axis: Axis,
     min: Vector3d,
@@ -709,9 +623,7 @@ class MeshBody(
         return null
     }
 
-    override fun collidesMesh(mesh: Mesh2): List<CollisionResult> {
-        return listOf()
-    }
+    override fun collidesEnvironment(): List<CollisionResult> { return listOf() }
 
     override fun kill() {}
 

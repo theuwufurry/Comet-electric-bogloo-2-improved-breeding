@@ -9,8 +9,8 @@ import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.scheduler.BukkitTask
+import org.bukkit.util.BoundingBox
 import org.joml.Vector3d
-import org.joml.Vector3i
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.system.measureNanoTime
@@ -68,7 +68,7 @@ object PhysicsListener : Listener {
     }
 
     private var meshRange: Pair<Location, Location?>? = null
-    var mesh: Mesh2? = null
+    var mesh: Mesh? = null
 
     @EventHandler
     fun onBlockBreak(event: BlockBreakEvent) {
@@ -83,17 +83,15 @@ object PhysicsListener : Listener {
             event.isCancelled = true
             meshRange = if (meshRange != null && meshRange!!.second == null) {
                 val time = measureNanoTime {
-                    mesh = Mesh.mesh2(
+                    mesh = Mesh.mesh(
                         event.block.world,
-                        Vector3i(
-                            min(meshRange!!.first.blockX, event.block.location.blockX),
-                            min(meshRange!!.first.blockY, event.block.location.blockY),
-                            min(meshRange!!.first.blockZ, event.block.location.blockZ),
-                        ),
-                        Vector3i(
-                            max(meshRange!!.first.blockX, event.block.location.blockX),
-                            max(meshRange!!.first.blockY, event.block.location.blockY),
-                            max(meshRange!!.first.blockZ, event.block.location.blockZ),
+                        BoundingBox(
+                            min(meshRange!!.first.blockX, event.block.location.blockX).toDouble(),
+                            min(meshRange!!.first.blockY, event.block.location.blockY).toDouble(),
+                            min(meshRange!!.first.blockZ, event.block.location.blockZ).toDouble(),
+                            max(meshRange!!.first.blockX, event.block.location.blockX).toDouble(),
+                            max(meshRange!!.first.blockY, event.block.location.blockY).toDouble(),
+                            max(meshRange!!.first.blockZ, event.block.location.blockZ).toDouble(),
                         )
                     )
                 }
