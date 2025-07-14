@@ -12,10 +12,14 @@ import org.joml.Vector3d
 import kotlin.math.abs
 
 object ContactsSolver {
-    private const val NORMAL_ITERATIONS = 3
-    private const val FRICTION_ITERATIONS = 3
+    private const val NORMAL_ITERATIONS = 10
+    private const val FRICTION_ITERATIONS = 4
+    private const val SIGNIFICANT_LAMBDA = 1e-6
+
     fun solve(contacts: List<Contact>) {
-        for (itr in 1..NORMAL_ITERATIONS) {
+        var itr = 1
+        while (itr <= NORMAL_ITERATIONS) {
+            var itrSignificant = false
             for (contact in contacts) {
                 val first = contact.first
                 val second = contact.second
@@ -47,13 +51,15 @@ object ContactsSolver {
                 val j1 = Vector3d(rA).negate().cross(n)
                 val j3 = Vector3d(rB).cross(n)
 
-                val (dVA, dOA, dVB, dOB) = deltaV(
+                val (dVA, dOA, dVB, dOB, significant) = deltaV(
                     contact = contact,
                     type = DeltaType.NORMAL,
                     j0 = nn, j1 = j1, j2 = n, j3 = j3,
                     iMA = iMA, iIA = iIA, iMB = iMB, iIB = iIB,
                     vA = vA, wA = wA, vB = vB, wB = wB,
                 )
+
+                if (significant) itrSignificant = true
 
                 first.velocity.sub(dVA)
                 first.omega.sub(dOA)
@@ -75,9 +81,18 @@ object ContactsSolver {
                 //friction is same as normal but find orthonormal basis from normal
 
             }
+
+            if (!itrSignificant) {
+                break
+            }
+
+            itr++
         }
 
+        println("DID $itr ITERATIONS")
+
         for (itr in 1..FRICTION_ITERATIONS) {
+            var itrSignificant = false
             for (contact in contacts) {
                 val first = contact.first
                 val second = contact.second
@@ -107,7 +122,7 @@ object ContactsSolver {
                     val j2 = Vector3d(contact.t1)
                     val j3 = Vector3d(rB).cross(contact.t1)
 
-                    val (dVA, dOA, dVB, dOB) = deltaV(
+                    val (dVA, dOA, dVB, dOB, significant) = deltaV(
                         contact = contact,
                         type = DeltaType.T1,
                         j0 = j0, j1 = j1, j2 = j2, j3 = j3,
@@ -119,6 +134,8 @@ object ContactsSolver {
                     first.omega.sub(dOA)
                     second.velocity.sub(dVB)
                     second.omega.sub(dOB)
+
+                    if (significant) itrSignificant = true
                 }
 
                 run t2@{
@@ -127,7 +144,7 @@ object ContactsSolver {
                     val j2 = Vector3d(contact.t2)
                     val j3 = Vector3d(rB).cross(contact.t2)
 
-                    val (dVA, dOA, dVB, dOB) = deltaV(
+                    val (dVA, dOA, dVB, dOB, significant) = deltaV(
                         contact = contact,
                         type = DeltaType.T2,
                         j0 = j0, j1 = j1, j2 = j2, j3 = j3,
@@ -139,7 +156,13 @@ object ContactsSolver {
                     first.omega.sub(dOA)
                     second.velocity.sub(dVB)
                     second.omega.sub(dOB)
+
+                    if (significant) itrSignificant = true
                 }
+            }
+
+            if (!itrSignificant) {
+                break
             }
         }
     }
@@ -149,6 +172,7 @@ object ContactsSolver {
         val dOA: Vector3d,
         val dVB: Vector3d,
         val dOB: Vector3d,
+        val significant: Boolean,
     )
 
     private enum class DeltaType {
@@ -207,6 +231,7 @@ object ContactsSolver {
             dOA,
             dVB,
             dOB,
+            lambda > SIGNIFICANT_LAMBDA,
         )
     }
 }
