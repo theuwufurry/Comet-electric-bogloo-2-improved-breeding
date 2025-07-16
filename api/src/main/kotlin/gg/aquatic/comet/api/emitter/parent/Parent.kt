@@ -55,8 +55,8 @@ fun Vector3d.noRollQuaternion(): Quaterniond {
 
 fun Location.pose(): Pose {
     val rot = Quaterniond()
-        .rotateY((-yaw * Math.PI / 180.0))
         .rotateX(((pitch + 180f) * Math.PI / 180.0))
+        .rotateLocalY((-yaw * Math.PI / 180.0))
 
     return Pose(
         world!!,

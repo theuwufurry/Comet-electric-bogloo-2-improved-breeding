@@ -52,6 +52,7 @@ object CometRegistry {
     /**
      * @return False if emitter not found by ID, true on success.
      */
+    @JvmStatic
     @JvmOverloads
     fun spawn(
         id: String,

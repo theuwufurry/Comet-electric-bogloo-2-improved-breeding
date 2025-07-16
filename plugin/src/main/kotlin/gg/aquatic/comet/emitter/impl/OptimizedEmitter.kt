@@ -6,7 +6,6 @@ import gg.aquatic.comet.api.emitter.*
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
-import gg.aquatic.comet.api.emitter.parent.pose
 import gg.aquatic.comet.api.emitter.random.DeterministicRandom
 import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.particle.ParticleData
@@ -24,16 +23,12 @@ import gg.aquatic.comet.particle.data.EntityDataBuilder
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport
 import gg.aquatic.waves.util.audience.AquaticAudience
-import org.bukkit.Location
 import org.bukkit.entity.Player
-import org.bukkit.util.Vector
-import org.joml.Quaterniond
 import org.joml.Quaternionf
 import org.joml.Vector3d
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
-import kotlin.contracts.contract
 import kotlin.random.Random
 import kotlin.system.measureNanoTime
 
