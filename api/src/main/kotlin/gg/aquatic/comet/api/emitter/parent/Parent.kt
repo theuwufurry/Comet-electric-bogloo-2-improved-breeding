@@ -3,7 +3,6 @@ package gg.aquatic.comet.api.emitter.parent
 import org.bukkit.Location
 import org.bukkit.World
 import org.joml.Quaterniond
-import org.joml.Quaternionf
 import org.joml.Vector3d
 import kotlin.math.atan2
 import kotlin.math.sqrt
@@ -55,7 +54,7 @@ fun Vector3d.noRollQuaternion(): Quaterniond {
 
 fun Location.pose(): Pose {
     val rot = Quaterniond()
-        .rotateX(((pitch + 180f) * Math.PI / 180.0))
+        .rotateZ(-((pitch + 180f) * Math.PI / 180.0))
         .rotateLocalY((-yaw * Math.PI / 180.0))
 
     return Pose(
@@ -66,4 +65,6 @@ fun Location.pose(): Pose {
 }
 
 val NORMAL: Vector3d
-    get() { return Vector3d(0.0, 0.0, 1.0) }
+    get() {
+        return Vector3d(0.0, 0.0, 1.0)
+    }

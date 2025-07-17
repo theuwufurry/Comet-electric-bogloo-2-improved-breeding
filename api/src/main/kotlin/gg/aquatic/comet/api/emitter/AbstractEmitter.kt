@@ -22,7 +22,6 @@ abstract class AbstractEmitter : Parent {
 
     abstract val unrealizedEmitter: AbstractUnrealizedEmitter
 
-    abstract val forwardVector: Vector3d
     abstract val environmentData: EnvironmentData
 
     abstract fun tick(): EmitterTickResult

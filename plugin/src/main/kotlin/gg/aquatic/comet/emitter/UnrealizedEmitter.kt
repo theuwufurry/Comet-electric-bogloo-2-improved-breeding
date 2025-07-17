@@ -52,7 +52,6 @@ data class UnrealizedEmitter(
     val distanceCullingComponent: DistanceCullingComponent,
     val updateFrequencyComponent: UpdateFrequencyComponent,
     override val billboardConstraints: BillboardConstraints,
-    override val forwardVector: Vector3d,
     val isListed: Boolean,
     override val isDoubleSided: Boolean,
     override val lookahead: Int,
@@ -88,10 +87,9 @@ data class UnrealizedEmitter(
                     pose,
                     emitterData,
                     this,
-                    forwardVector,
                     environmentData,
                     audience,
-                    mount = mount!!,
+                    mount = mount,
                     yawpitchSupplier = yawpitchSupplier
                 )
             } else {
@@ -100,14 +98,14 @@ data class UnrealizedEmitter(
                     components,
                     rateComponent,
                     distanceCullingComponent,
-                    billboardConstraints, pose, emitterData, this, forwardVector, environmentData, audience, false, yawpitchSupplier = yawpitchSupplier
+                    billboardConstraints, pose, emitterData, this, environmentData, audience, false, yawpitchSupplier = yawpitchSupplier
                 ) else Emitter(
                     parent,
                     components,
                     rateComponent,
                     distanceCullingComponent,
                     updateFrequencyComponent,
-                    billboardConstraints, pose, emitterData, this, forwardVector, environmentData, audience, yawpitchSupplier = yawpitchSupplier
+                    billboardConstraints, pose, emitterData, this, environmentData, audience, yawpitchSupplier = yawpitchSupplier
                 )
 
             }
@@ -166,7 +164,6 @@ data class UnrealizedEmitter(
                 pose,
                 emitterData,
                 this,
-                forwardVector,
                 environmentData,
                 audience,
                 seed = random.kotlinRandom.nextInt(),
@@ -182,7 +179,6 @@ data class UnrealizedEmitter(
             pose,
             emitterData,
             this,
-            forwardVector,
             environmentData,
             audience,
             true,
@@ -198,7 +194,6 @@ data class UnrealizedEmitter(
             pose,
             emitterData,
             this,
-            forwardVector,
             environmentData,
             audience,
             seed = random.kotlinRandom.nextInt(),
@@ -242,7 +237,6 @@ data class UnrealizedEmitter(
                 billboardConstraints = billboardConstraints,
                 backerPose = pose,
                 backerEmitterData = emitterData,
-                backerForwardVector = forwardVector,
                 backerEnvironmentData = environmentData,
                 seed = random.kotlinRandom.nextInt(),
                 timeOffset,

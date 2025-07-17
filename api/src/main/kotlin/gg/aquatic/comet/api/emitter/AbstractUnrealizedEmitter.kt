@@ -23,7 +23,6 @@ abstract class AbstractUnrealizedEmitter {
     abstract val preInitComponents: List<PreInitComponent>
     abstract val components: List<Component>
     abstract val billboardConstraints: BillboardConstraints
-    abstract val forwardVector: Vector3d
 
     abstract val isDoubleSided: Boolean
     abstract val lookahead: Int

@@ -26,7 +26,7 @@ object GlobalTicker {
     val emitterCache: MutableMap<UUID, CachedPath> = ConcurrentHashMap()
 
     fun init() {
-        task = Bukkit.getScheduler().runTaskTimer(AbstractParticleEmitter.INSTANCE, Runnable {
+        task = Bukkit.getScheduler().runTaskTimerAsynchronously(AbstractParticleEmitter.INSTANCE, Runnable {
             tick()
         }, 1, 1)
     }

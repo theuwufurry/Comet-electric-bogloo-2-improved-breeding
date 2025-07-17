@@ -35,13 +35,20 @@ class CometEffectBuilder(
         return this
     }
 
-    private var environmentData: EnvironmentData = EnvironmentData()
+    var size = 1.0
+    var data: Map<String, Any> = mapOf()
 
-    fun environmentData(
-        size: Double,
+    fun data(
         data: Map<String, Any>
     ): CometEffectBuilder {
-        environmentData = EnvironmentData.create(size, data)
+        this.data = data
+        return this
+    }
+
+    fun size(
+        size: Double
+    ): CometEffectBuilder {
+        this.size = size
         return this
     }
 
@@ -79,7 +86,7 @@ class CometEffectBuilder(
     fun spawn(): Boolean {
         require(pose != null) { "Must set effect's pose via the pose() or location() method."}
         (unrealizedEmitterByID(id) ?: return false).realize(
-            parent, pose!!, environmentData, audience, mount, yawpitchSupplier, after
+            parent, pose!!, EnvironmentData.create(size, data), audience, mount, yawpitchSupplier, after
         )
 
         return true

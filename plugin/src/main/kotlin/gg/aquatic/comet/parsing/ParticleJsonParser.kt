@@ -284,15 +284,6 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
                 }
             }
 
-            if (key == "forward_vector") {
-                val obj = componentElement.asJsonObject
-                forwardVector = Vector3d(
-                    obj["x"].asNumber.toDouble(),
-                    obj["y"].asNumber.toDouble(),
-                    obj["z"].asNumber.toDouble(),
-                ).normalize()
-            }
-
             if (key in rateComponentParsers) {
                 val component = rateComponentParsers[key]!!.parse(componentElement, macros)
                 if (component != null) {
@@ -324,7 +315,6 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
             distanceCullingComponent ?: DistanceCullingComponent.default(),
             updateFrequencyComponent ?: IntervalUpdateFrequencyComponent.default(),
             billboardConstraints ?: BillboardConstraints.CENTER,
-            forwardVector,
             isListed,
             isDoubleSided,
             lookahead,

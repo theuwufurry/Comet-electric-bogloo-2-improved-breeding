@@ -14,6 +14,8 @@ import gg.aquatic.comet.particle.macro.HermiteParser
 import gg.aquatic.comet.particle.macro.LinearParser
 import gg.aquatic.waves.command.AquaticBaseCommand
 import gg.aquatic.waves.command.register
+import org.joml.Vector3d
+import org.joml.Vector3f
 import org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory
 
 //val debugDust: Particle.DustOptions = Particle.DustOptions(Color.fromRGB(255, 255, 255), 0.6F)
@@ -109,3 +111,9 @@ data class Result<out R, out E>(
         }
     }
 }
+
+/**
+ * The 'direction' that an emitter faces initially; should be replaced with emitter rotation component, since this cannot represent the full quaternion
+ * TODO: Create emitter rotation component
+ */
+val DEFAULT_EMITTER_DIRECTION = Vector3f(0f, 0f, -1f)

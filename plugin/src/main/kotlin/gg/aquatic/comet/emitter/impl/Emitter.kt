@@ -1,5 +1,6 @@
 package gg.aquatic.comet.emitter.impl
 
+import gg.aquatic.comet.DEFAULT_EMITTER_DIRECTION
 import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.Mount
 import gg.aquatic.comet.api.emitter.*
@@ -23,6 +24,7 @@ import org.bukkit.Particle.DustOptions
 import org.bukkit.entity.Player
 import org.joml.Quaternionf
 import org.joml.Vector3d
+import org.joml.Vector3f
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
@@ -38,7 +40,6 @@ class Emitter(
     override var pose: Pose,
     val emitterData: EmitterData,
     override val unrealizedEmitter: AbstractUnrealizedEmitter,
-    override val forwardVector: Vector3d,
     override val environmentData: EnvironmentData,
     override val audience: AquaticAudience,
     val seed: Int = Random.nextInt(),

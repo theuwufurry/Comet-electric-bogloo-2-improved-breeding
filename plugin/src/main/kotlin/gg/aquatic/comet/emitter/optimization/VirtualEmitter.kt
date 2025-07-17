@@ -23,7 +23,6 @@ import gg.aquatic.waves.util.audience.AquaticAudience
 import org.bukkit.entity.Player
 import org.joml.Quaterniond
 import org.joml.Quaternionf
-import org.joml.Vector3d
 import java.util.*
 import java.util.function.Supplier
 
@@ -36,7 +35,6 @@ class VirtualEmitter(
     val billboardConstraints: BillboardConstraints,
     backerPose: Pose,
     backerEmitterData: EmitterData,
-    backerForwardVector: Vector3d,
     private val backerEnvironmentData: EnvironmentData,
     seed: Int,
     private val timeOffset: Int,
@@ -52,7 +50,6 @@ class VirtualEmitter(
         billboardConstraints = backer.billboardConstraints,
         backerPose = backer.pose,
         backerEmitterData = backer.emitterData.clone(),
-        backerForwardVector = Vector3d(backer.forwardVector),
         backerEnvironmentData = backer.environmentData.clone(),
         seed = backer.random.seed,
         timeOffset = 0,
@@ -76,7 +73,6 @@ class VirtualEmitter(
 
     override val particles: MutableList<Particle> = mutableListOf()
     override var pose: Pose = backerPose.clone()
-    override val forwardVector: Vector3d = backerForwardVector
     override val environmentData: EnvironmentData
         get() = EnvironmentData(backerEnvironmentData.size, emitterData.variable as VariableMutableMap)
 

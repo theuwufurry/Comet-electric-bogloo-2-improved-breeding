@@ -1,5 +1,6 @@
 package gg.aquatic.comet.emitter.impl
 
+import gg.aquatic.comet.DEFAULT_EMITTER_DIRECTION
 import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.Mount
 import gg.aquatic.comet.api.emitter.*
@@ -24,8 +25,10 @@ import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport
 import gg.aquatic.waves.util.audience.AquaticAudience
 import org.bukkit.entity.Player
+import org.joml.Quaterniond
 import org.joml.Quaternionf
 import org.joml.Vector3d
+import org.joml.Vector3f
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
@@ -41,7 +44,6 @@ class OptimizedEmitter(
     override var pose: Pose,
     val emitterData: EmitterData,
     override val unrealizedEmitter: AbstractUnrealizedEmitter,
-    override val forwardVector: Vector3d,
     override val environmentData: EnvironmentData,
     override val audience: AquaticAudience,
     private val internal: Boolean,

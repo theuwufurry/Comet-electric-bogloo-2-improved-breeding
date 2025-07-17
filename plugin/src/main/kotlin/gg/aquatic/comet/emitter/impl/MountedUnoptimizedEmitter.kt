@@ -1,5 +1,6 @@
 package gg.aquatic.comet.emitter.impl
 
+import gg.aquatic.comet.DEFAULT_EMITTER_DIRECTION
 import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.Mount
 import gg.aquatic.comet.api.emitter.*
@@ -7,7 +8,6 @@ import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
-import gg.aquatic.comet.api.emitter.parent.pose
 import gg.aquatic.comet.api.emitter.random.DeterministicRandom
 import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.particle.ParticleComponent
@@ -20,12 +20,10 @@ import gg.aquatic.comet.particle.data.EntityDataBuilder
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.waves.util.audience.AquaticAudience
 import org.bukkit.Color
-import org.bukkit.Location
 import org.bukkit.entity.Player
-import org.bukkit.util.Vector
-import org.joml.Quaterniond
 import org.joml.Quaternionf
 import org.joml.Vector3d
+import org.joml.Vector3f
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
@@ -44,7 +42,6 @@ class MountedUnoptimizedEmitter(
     override var pose: Pose,
     val emitterData: EmitterData,
     override val unrealizedEmitter: AbstractUnrealizedEmitter,
-    override val forwardVector: Vector3d,
     override val environmentData: EnvironmentData,
     override val audience: AquaticAudience,
     val seed: Int = Random.nextInt(),

@@ -54,7 +54,7 @@ class JavascriptSubAction(
 
             for (element in jsonArray) {
                 val asString = element.asString
-                if ("particle_variable" in asString) particleScripts += particleEngine.compile(
+                if ("particle" in asString || "particle_variable" in asString) particleScripts += particleEngine.compile(
                     asString,
                     macros
                 ) else emitterScripts += emitterEngine.compile(asString, macros)
