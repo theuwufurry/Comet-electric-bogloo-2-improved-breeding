@@ -1,15 +1,15 @@
 package gg.aquatic.comet.api
 
 import com.google.gson.JsonParser
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.type.EntityTypes
+import org.bukkit.entity.EntityType
 import org.joml.Vector3d
 
 object PassengerOffsets {
-    lateinit var offsets: Map<gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.type.EntityType, Vector3d>
+    lateinit var offsets: Map<EntityType, Vector3d>
 
     fun load() {
         val map =
-            mutableMapOf<gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.type.EntityType, Vector3d>()
+            mutableMapOf<EntityType, Vector3d>()
         val bytes = AbstractParticleEmitter.INSTANCE.getResource("passenger_offsets.json")!!.readAllBytes()
         val json = JsonParser.parseString(bytes.decodeToString()).asJsonObject
         for ((name, elem) in json.entrySet()) {
@@ -19,9 +19,9 @@ object PassengerOffsets {
                 elem.asJsonObject["z"].asJsonPrimitive.asNumber.toDouble(),
             )
 
-            val type = EntityTypes.getByName(name)
+            val type = EntityType.valueOf(name.uppercase())
 
-            map += (type as gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.type.EntityType) to vec
+            map += type to vec
         }
 
         offsets = map

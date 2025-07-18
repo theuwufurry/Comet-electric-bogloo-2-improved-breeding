@@ -15,16 +15,13 @@ import gg.aquatic.comet.api.particle.data.EntityData
 import gg.aquatic.comet.api.particle.display.TextDisplayComponent
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
 import gg.aquatic.comet.particle.data.EntityDataBuilder
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.type.EntityTypes
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.world.Location
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3d
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetPassengers
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity
+import gg.aquatic.waves.Waves
+import org.bukkit.Bukkit
+import org.bukkit.Location
+import org.bukkit.entity.EntityType
 import org.joml.Quaterniond
 import org.joml.Quaternionf
+import org.joml.Vector3d
 import java.util.*
 
 open class Particle(override var data: ParticleData) : AbstractParticle() {
@@ -68,8 +65,8 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
         data.age++
     }
 
-    override fun getAddPacket(data: ParticleData): List<PacketWrapper<*>> {
-        val result = mutableListOf<PacketWrapper<*>>()
+    override fun getAddPacket(data: ParticleData): List<Any> {
+        val result = mutableListOf<Any>()
 
         val mount = data.emitter?.mount
 
@@ -86,14 +83,13 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
         )
 
         val yawpitch = data.emitter?.yawpitchSupplier?.get() ?: YawPitch(0f, 0f)
-        result += WrapperPlayServerSpawnEntity(
+
+        result += Waves.NMS_HANDLER.createEntitySpawnPacket(
             id,
-            Optional.of(uuid),
-            if (data.displayData is SpriteData || data.displayData is TextDisplayComponent) EntityTypes.TEXT_DISPLAY else EntityTypes.ITEM_DISPLAY,
+            uuid,
+            if (data.displayData is SpriteData || data.displayData is TextDisplayComponent) EntityType.TEXT_DISPLAY else EntityType.ITEM_DISPLAY,
             spawnPos,
-            yawpitch.pitch, yawpitch.yaw, 0f,
-            0,
-            Optional.of(Vector3d())
+            yawpitch.yaw, yawpitch.pitch
         )
 
         val nd = EntityDataBuilder.getDataFor(
@@ -121,24 +117,21 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
             ), true
         )
 
-        result += WrapperPlayServerEntityMetadata(id, nd)
-
+        result += Waves.NMS_HANDLER.createEntityUpdatePacket(id,nd ?: listOf())
 
         if (mount != null) {
             val ls = PassengerManager.passengerMap.getOrPut(data.emitter!!.mount!!.entityID) { mutableListOf() }
             ls += id
-            result += WrapperPlayServerSetPassengers(data.emitter!!.mount!!.entityID, ls.toIntArray())
+            result += Waves.NMS_HANDLER.createPassengersPacket(data.emitter!!.mount!!.entityID, ls.toIntArray())
         }
 
         if (data.emitter != null && data.emitter!!.unrealizedEmitter.isDoubleSided) {
-            result += WrapperPlayServerSpawnEntity(
+            result += Waves.NMS_HANDLER.createEntitySpawnPacket(
                 invertedIDs.first,
-                Optional.of(invertedIDs.second),
-                if (data.displayData is SpriteData || data.displayData is TextDisplayComponent) EntityTypes.TEXT_DISPLAY else EntityTypes.ITEM_DISPLAY,
+                invertedIDs.second,
+                if (data.displayData is SpriteData || data.displayData is TextDisplayComponent) EntityType.TEXT_DISPLAY else EntityType.ITEM_DISPLAY,
                 spawnPos,
-                yawpitch.pitch, yawpitch.yaw, 0f,
-                0,
-                Optional.of(Vector3d())
+                yawpitch.yaw, yawpitch.pitch
             )
 
             val inverted = EntityDataBuilder.getDataFor(
@@ -166,7 +159,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                 ), true
             )
 
-            result += WrapperPlayServerEntityMetadata(invertedIDs.first, inverted)
+            result += Waves.NMS_HANDLER.createEntityUpdatePacket(invertedIDs.first, inverted ?: listOf())
 
             return result
         } else {
@@ -180,9 +173,9 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
         shouldUpdate: Boolean,
         data: ParticleData,
         flagOverride: UpdateFlags?,
-    ): List<PacketWrapper<*>> {
+    ): List<Any> {
         return if (shouldUpdate) {
-            val result = mutableListOf<PacketWrapper<*>>()
+            val result = mutableListOf<Any>()
             handleFullUpdate(entityDataBuilder, data, flagOverride)?.let { result += it }
 
             if (data.emitter != null && data.emitter!!.unrealizedEmitter.isDoubleSided) {
@@ -194,7 +187,15 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
             result
         } else if (data.transformationInterpolationDuration > 1 && previousEntityData.reserveTransparency != null) {
             val transformationInterpolationDuration = data.transformationInterpolationDuration - 1
-            val flags = UpdateFlags(false, false, false, false, false, true, false)
+            val flags = UpdateFlags(
+                display = false,
+                transparency = false,
+                translation = false,
+                rotation = false,
+                scale = false,
+                transformationInterpolation = true,
+                teleportationDuration = false
+            )
 
             val newData =
                 EntityData(
@@ -213,7 +214,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
 
             previousEntityData = newData.copy()
 
-            val result = mutableListOf<PacketWrapper<*>>()
+            val result = mutableListOf<Any>()
 
             if (data.emitter != null && data.emitter!!.unrealizedEmitter.isDoubleSided) {
                 val invertedData = EntityData(
@@ -232,12 +233,12 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
 
                 entityDataBuilder.getDataFor(
                     invertedData, flags, false
-                )?.let { WrapperPlayServerEntityMetadata(invertedIDs.first, it) }?.let { result += it }
+                )?.let { Waves.NMS_HANDLER.createEntityUpdatePacket(invertedIDs.first, it) }?.let { result += it }
             }
 
             entityDataBuilder.getDataFor(
                 newData, flags, false
-            )?.let { WrapperPlayServerEntityMetadata(id, it) }?.let { result += it }
+            )?.let { Waves.NMS_HANDLER.createEntityUpdatePacket(id, it) }?.let { result += it }
 
             result
         } else listOf()
@@ -248,7 +249,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
         data: ParticleData,
         flagOverride: UpdateFlags?,
         entityID: Int = id
-    ): WrapperPlayServerEntityMetadata? {
+    ): Any? {
         val (flags, newData) = flagOverride?.let {
             flagOverride to EntityData(
                 data.displayData,
@@ -321,7 +322,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
 
         return entityDataBuilder.getDataFor(
             newData, flags, false
-        ).let { WrapperPlayServerEntityMetadata(entityID, it) }
+        ).let { Waves.NMS_HANDLER.createEntityUpdatePacket(entityID, it ?: listOf()) }
     }
 
     private fun Quaternionf.flipped(): Quaternionf {
@@ -334,17 +335,15 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
         return Quaternionf(data.emitter!!.pose.rot).mul(newThis)
     }
 
-    override fun getMovementPacket(): WrapperPlayServerEntityTeleport {
+    override fun getMovementPacket(): Any {
         val yawpitch = data.emitter?.yawpitchSupplier?.get() ?: YawPitch(0f, 0f)
-        return WrapperPlayServerEntityTeleport(
-            id, Location(
-                Vector3d(
-                    data.origin.x + data.relativePosition.x,
-                    data.origin.y + data.relativePosition.y,
-                    data.origin.z + data.relativePosition.z
-                ), yawpitch.yaw, yawpitch.pitch
-            ), true
-        )
+        return Waves.NMS_HANDLER.createTeleportPacket(id, Location(
+            Bukkit.getWorlds().first(),
+            data.origin.x + data.relativePosition.x,
+            data.origin.y + data.relativePosition.y,
+            data.origin.z + data.relativePosition.z,
+            yawpitch.yaw, yawpitch.pitch
+        ))
     }
 
     override val pose: Pose

@@ -11,7 +11,7 @@ val maven_password = if (env.isPresent("MAVEN_PASSWORD")) env.fetch("MAVEN_PASSW
 tasks {
     compileJava {
         options.encoding = Charsets.UTF_8.name()
-        options.release.set(17)
+        options.release.set(21)
     }
 
     build {

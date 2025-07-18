@@ -2,19 +2,17 @@ package gg.aquatic.comet.api.particle
 
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.particle.data.AbstractEntityDataBuilder
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport
 
 abstract class AbstractParticle : Parent {
     abstract var data: ParticleData
     abstract val id: Int
     abstract val entityIDs: List<Int>
     abstract fun tick()
-    abstract fun getAddPacket(data: ParticleData = this.data): List<PacketWrapper<*>>
+    abstract fun getAddPacket(data: ParticleData = this.data): List<Any>
 
-    abstract fun updatePackets(entityDataBuilder: AbstractEntityDataBuilder, shouldUpdate: Boolean, data: ParticleData = this.data, flagOverride: UpdateFlags?): List<PacketWrapper<*>>
+    abstract fun updatePackets(entityDataBuilder: AbstractEntityDataBuilder, shouldUpdate: Boolean, data: ParticleData = this.data, flagOverride: UpdateFlags?): List<Any>
 
-    abstract fun getMovementPacket(): WrapperPlayServerEntityTeleport
+    abstract fun getMovementPacket(): Any
 }
 
 data class UpdateFlags(
@@ -33,7 +31,15 @@ data class UpdateFlags(
     fun anyTrue() = display || transparency || translation || rotation || scale || teleportationDuration || transformationInterpolation
 
     companion object {
-        fun allTrue() = UpdateFlags(true, true, true, true, true, true, true)
+        fun allTrue() = UpdateFlags(
+            display = true,
+            transparency = true,
+            translation = true,
+            rotation = true,
+            scale = true,
+            transformationInterpolation = true,
+            teleportationDuration = true
+        )
 
         fun delta(curr: ParticleData, prev: ParticleData): UpdateFlags {
             val flags = UpdateFlags()

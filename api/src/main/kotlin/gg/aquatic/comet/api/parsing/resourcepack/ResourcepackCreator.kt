@@ -6,11 +6,8 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.parsing.asStringOrNull
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.component.ComponentTypes
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.ItemStack
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.type.ItemTypes
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.nbt.NBTInt
-import kotlinx.serialization.json.JsonPrimitive
+import org.bukkit.Material
+import org.bukkit.inventory.ItemStack
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.File
@@ -29,6 +26,7 @@ object ResourcepackCreator {
     val modelMap: MutableMap<String, ItemStack> = mutableMapOf()
 
     val uvs: MutableList<UVData> = mutableListOf()
+
     /*
     look through provided sprites for something of matching name
     generate imgs with that label
@@ -159,9 +157,11 @@ object ResourcepackCreator {
             val override = JsonObject()
             val predicate = JsonObject()
             val index = count++
-            val stack = ItemStack.builder().type(ItemTypes.getByName("$ITEM")).amount(1).build()
-            stack.setComponent(ComponentTypes.CUSTOM_MODEL_DATA, index)
-            stack.orCreateTag.setTag("CustomModelData", NBTInt(index))
+            val stack = ItemStack.of(Material.valueOf(ITEM.uppercase())).apply {
+                val im = itemMeta
+                im.setCustomModelData(index)
+                this.itemMeta = im
+            }
 
             modelMap += file.nameWithoutExtension to stack
 
@@ -203,7 +203,7 @@ object ResourcepackCreator {
             val bufferedImage: BufferedImage = ImageIO.read(image)
             val argbImage = BufferedImage(bufferedImage.width, bufferedImage.height, BufferedImage.TYPE_INT_ARGB)
             val graphics = argbImage.createGraphics()
-            graphics.drawImage(bufferedImage, 0,0, null)
+            graphics.drawImage(bufferedImage, 0, 0, null)
             graphics.dispose()
             argbImage.ensureGrid(16)
             argbImage.ensureSize()

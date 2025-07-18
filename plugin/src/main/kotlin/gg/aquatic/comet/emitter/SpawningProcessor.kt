@@ -4,11 +4,8 @@ import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.api.packet.PassengerManager
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.particle.Particle
-import gg.aquatic.waves.chunk.trackedByPlayers
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.PacketEvents
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
-import gg.aquatic.waves.util.toUser
+import gg.aquatic.waves.Waves
+import gg.aquatic.waves.util.sendPacket
 import org.bukkit.entity.Player
 import java.util.concurrent.ConcurrentHashMap
 
@@ -26,7 +23,7 @@ class SpawningProcessor(
         removedViewers.clear()
         addedViewers.clear()
 
-        val chunkViewers = emitter.pose.location.chunk.trackedByPlayers()
+        val chunkViewers = Waves.NMS_HANDLER.chunkViewers(emitter.pose.location.chunk)
 
         for (currentViewer in currentViewers) {
             val distanceSquared = currentViewer.eyeLocation.distanceSquared(emitter.pose.location)
@@ -54,9 +51,7 @@ class SpawningProcessor(
         currentViewers += addedViewers
     }
 
-    fun process(dataPackets: MutableList<PacketWrapper<*>>): MutableList<Pair<Player, MutableList<Int>>> {
-        val playerManager = PacketEvents.getAPI().playerManager
-
+    fun process(dataPackets: MutableList<Any>): MutableList<Pair<Player, MutableList<Int>>> {
         emitter.particles.removeAll(deadParticles)
         val rawDeadParticleIDs = deadParticles.flatMap { it.entityIDs }.toMutableList()
         val deadParticleIDs: MutableList<Pair<Player, MutableList<Int>>> = mutableListOf()
@@ -67,10 +62,7 @@ class SpawningProcessor(
         for (currentViewer in currentViewers) {
             deadParticleIDs += currentViewer to rawDeadParticleIDs
             for (packet in dataPackets) {
-                try {
-                    playerManager.sendPacketSilently(currentViewer, packet)
-                } catch (ignored: NullPointerException) {
-                }
+                currentViewer.sendPacket(packet,true)
             }
         }
 
@@ -79,16 +71,13 @@ class SpawningProcessor(
         }
 
         if (emitter.unrealizedEmitter.persistent) {
-            val spawnPackets: List<PacketWrapper<*>> by lazy {
+            val spawnPackets: List<Any> by lazy {
                 emitter.getSpawnPackets()
             }
 
             for (viewer in addedViewers) {
                 for (spawnPacket in spawnPackets) {
-                    try {
-                        viewer.toUser().sendPacketSilently(spawnPacket)
-                    } catch (ignored: NullPointerException) {
-                    }
+                    viewer.sendPacket(spawnPacket,true)
                 }
             }
         }
@@ -105,22 +94,17 @@ class SpawningProcessor(
         if (particlesToKill.isEmpty()) return
         val ls = particlesToKill.flatMap { it.entityIDs }
         val ids = ls.toIntArray()
+        val destroyPacket = Waves.NMS_HANDLER.createDestroyEntitiesPacket(*ids)
         for (player in currentViewers) {
             PassengerManager.passengerMap[player.entityId]?.removeAll(ls)
-            try {
-                player.toUser().sendPacketSilently(WrapperPlayServerDestroyEntities(*ids))
-            } catch (ignored: NullPointerException) {
-            }
+            player.sendPacket(destroyPacket, true)
         }
     }
 
-    fun sendSpawns(bundle: MutableList<PacketWrapper<*>>) {
+    fun sendSpawns(bundle: MutableList<Any>) {
         for (player in currentViewers) {
             for (packet in bundle) {
-                try {
-                    player.toUser().sendPacketSilently(packet)
-                } catch (ignored: NullPointerException) {
-                }
+                player.sendPacket(packet,true)
             }
         }
     }
@@ -128,7 +112,7 @@ class SpawningProcessor(
     val players: List<Player>
         get() {
             val maxDistance = distanceCullingComponent.viewDistance
-            return emitter.pose.location.chunk.trackedByPlayers()
+            return Waves.NMS_HANDLER.chunkViewers(emitter.pose.location.chunk)
                 .filter { emitter.audience.canBeApplied(it) }
                 .filter { it.eyeLocation.distanceSquared(emitter.pose.location) < maxDistance }
         }

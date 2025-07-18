@@ -1,6 +1,5 @@
 package gg.aquatic.comet.emitter.impl
 
-import gg.aquatic.comet.DEFAULT_EMITTER_DIRECTION
 import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.Mount
 import gg.aquatic.comet.api.emitter.*
@@ -17,13 +16,11 @@ import gg.aquatic.comet.emitter.SpawningProcessor
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.particle.Particle
 import gg.aquatic.comet.particle.data.EntityDataBuilder
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.waves.util.audience.AquaticAudience
 import org.bukkit.Color
 import org.bukkit.entity.Player
 import org.joml.Quaternionf
 import org.joml.Vector3d
-import org.joml.Vector3f
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
@@ -110,7 +107,7 @@ class MountedUnoptimizedEmitter(
             return EmitterTickResult(false)
         }
 
-        val dataPackets: MutableList<PacketWrapper<*>> = mutableListOf()
+        val dataPackets: MutableList<Any> = mutableListOf()
 
         for (particle in particles) {
             fun die() {
@@ -133,11 +130,11 @@ class MountedUnoptimizedEmitter(
                 }
             }
 
-            dataPackets += particle.updatePackets(
+            dataPackets.addAll(particle.updatePackets(
                 entityDataBuilder = EntityDataBuilder,
                 shouldUpdate = shouldUpdate.shouldUpdate,
                 flagOverride = null
-            )
+            ))
 //            ).let { dataPackets += it }
 
             if (particle.data.dead) {
@@ -155,7 +152,7 @@ class MountedUnoptimizedEmitter(
     }
 
     private fun spawnParticles() {
-        val bundle: MutableList<PacketWrapper<*>> = mutableListOf()
+        val bundle: MutableList<Any> = mutableListOf()
         repeat(rateComponent.toEmit(emitterData)) {
             val particleData = ParticleData(random.uuid())
             val particle = Particle(particleData)
@@ -210,7 +207,7 @@ class MountedUnoptimizedEmitter(
         )
     }
 
-    override fun getSpawnPackets(): List<PacketWrapper<*>> {
+    override fun getSpawnPackets(): List<Any> {
         return particles.flatMap { it.getAddPacket() }
     }
 

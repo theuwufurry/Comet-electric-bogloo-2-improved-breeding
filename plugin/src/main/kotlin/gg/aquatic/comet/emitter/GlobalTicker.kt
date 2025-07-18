@@ -4,8 +4,8 @@ import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.api.packet.PassengerManager
 import gg.aquatic.comet.emitter.optimization.CachedPath
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
-import gg.aquatic.waves.util.toUser
+import gg.aquatic.waves.Waves
+import gg.aquatic.waves.util.sendPacket
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitTask
@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.system.measureNanoTime
 
 object GlobalTicker {
-    private val emitterInitializations:  Queue<() -> AbstractEmitter> = ConcurrentLinkedQueue()
+    private val emitterInitializations: Queue<() -> AbstractEmitter> = ConcurrentLinkedQueue()
 
     internal val emitters: Queue<AbstractEmitter> = ConcurrentLinkedQueue()
     private val emittersToAdd: Queue<AbstractEmitter> = ConcurrentLinkedQueue()
@@ -85,9 +85,9 @@ object GlobalTicker {
         }
 
         for ((player, ids) in playerDeadParticleMap) {
-            if (player.toUser() == null) continue
             PassengerManager.passengerMap[player.entityId]?.removeAll(ids)
-            player.toUser().sendPacketSilently(WrapperPlayServerDestroyEntities(*ids.toIntArray()))
+            val destroyPacket = Waves.NMS_HANDLER.createDestroyEntitiesPacket(*ids.toIntArray())
+            player.sendPacket(destroyPacket, true)
         }
 
         emitters.removeAll(deadEmitters)
@@ -96,7 +96,7 @@ object GlobalTicker {
         emittersToAdd.clear()
 
         val start = System.currentTimeMillis()
-        while(true) {
+        while (true) {
             val curr = emitterInitializations.poll() ?: break
 //            println("initializing at $tickTime")
             val r = curr()

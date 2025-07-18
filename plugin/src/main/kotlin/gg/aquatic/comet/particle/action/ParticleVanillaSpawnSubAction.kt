@@ -1,5 +1,6 @@
 package gg.aquatic.comet.particle.action
 
+import com.destroystokyo.paper.ParticleBuilder
 import com.google.gson.JsonElement
 import com.google.gson.stream.MalformedJsonException
 import gg.aquatic.comet.api.emitter.EmitterData
@@ -9,15 +10,9 @@ import gg.aquatic.comet.api.parsing.*
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.parsing.expression
 import gg.aquatic.comet.particle.color.addDependency
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.PacketEvents
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.particle.Particle
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.particle.data.ParticleData
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.particle.data.ParticleDustData
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.particle.type.ParticleType
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.particle.type.ParticleTypes
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3d
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3f
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerParticle
+import org.bukkit.Particle
+import org.joml.Vector3d
+import org.joml.Vector3f
 import java.awt.Color
 import javax.script.CompiledScript
 
@@ -25,12 +20,10 @@ class ParticleVanillaSpawnSubAction(
     private val compiledVanillaParticleData: CompiledVanillaParticle
 ) : SubAction {
     override fun execute(context: ActionContext) {
-        val playerManager = PacketEvents.getAPI().playerManager
         context.pose ?: return
 
         val particlePacket = compiledVanillaParticleData.realize(context) ?: return
-
-        context.otherEmitterData.emitter!!.players.forEach { playerManager.sendPacketSilently(it, particlePacket) }
+        particlePacket.receivers(context.otherEmitterData.emitter!!.players).spawn()
     }
 
     companion object : ComponentParser<ParticleVanillaSpawnSubAction> {
@@ -45,10 +38,10 @@ class ParticleVanillaSpawnSubAction(
 }
 
 class CompiledVanillaParticle(
-    private val type: ParticleType<out ParticleData>,
+    private val type: Particle,
     private val compiledData: CompiledData<*>,
     private val longDistance: Boolean,
-    private val offset: Vector3f,
+    private val offset: Vector3d,
     private val maxSpeed: Float,
     private val count: Int
 ) {
@@ -58,16 +51,17 @@ class CompiledVanillaParticle(
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): CompiledVanillaParticle {
             val obj =
                 if (!jsonElement.isJsonObject) throw MalformedJsonException("Particle should be a json object!") else jsonElement.asJsonObject!!
-            val type: ParticleType<out ParticleData> = ParticleTypes.getByName(
-                obj["type"]?.asStringOrNull() ?: throw MalformedJsonException("Particle data needs a type!")
-            ) ?: throw MalformedJsonException("Invalid particle type!")
+            val type = Particle.valueOf(
+                obj["type"]?.asStringOrNull()?.uppercase()
+                    ?: throw MalformedJsonException("Particle data needs a type!")
+            )
             val longDistance = obj["long_distance"]?.asBooleanOrNull() ?: false
-            val offset = obj["offset"]?.asVector3fWithDefaultValues() ?: org.joml.Vector3f()
+            val offset = obj["offset"]?.asVector3fWithDefaultValues() ?: Vector3f()
             val maxSpeed = obj["max_speed"]?.asNumberOrNull()?.toFloat() ?: 0f
             val count = obj["count"]?.asNumberOrNull()?.toInt() ?: 1
 
             val data: CompiledData<*> = obj["data"]?.let {
-                if (type == ParticleTypes.DUST) {
+                if (type == Particle.DUST) {
                     parseParticleDustData(it, macros)
                 } else CompiledData.EmptyDustData()
             } ?: CompiledData.EmptyDustData()
@@ -77,10 +71,10 @@ class CompiledVanillaParticle(
                 type,
                 data,
                 longDistance,
-                Vector3f(
-                    offset.x,
-                    offset.y,
-                    offset.z
+                Vector3d(
+                    offset.x.toDouble(),
+                    offset.y.toDouble(),
+                    offset.z.toDouble()
                 ),
                 maxSpeed,
                 count
@@ -88,39 +82,40 @@ class CompiledVanillaParticle(
         }
     }
 
-    fun realize(context: ActionContext): WrapperPlayServerParticle? {
+    fun realize(context: ActionContext): ParticleBuilder? {
         val data = compiledData.realize(context.otherEmitterData, context.otherParticleData ?: return null)
-        val particle = when (type) {
-            ParticleTypes.DUST -> Particle(type as ParticleType<ParticleDustData>, data as ParticleDustData)
-            else -> Particle(type as ParticleType<ParticleData>, data)
+        val particleBuilder = when (type) {
+            Particle.DUST -> {
+                val dustData = data as? CompiledData.ParticleDustData ?: return null
+                ParticleBuilder(type).color(
+                    org.bukkit.Color.fromRGB(dustData.red, dustData.green, dustData.blue),
+                    data.scale
+                )
+            }
+
+            else -> ParticleBuilder(type)
         }
 
         val pose = context.pose!!
 
-        return WrapperPlayServerParticle(
-            particle,
-            longDistance,
-            Vector3d(
-                pose.pos.x,
-                pose.pos.y,
-                pose.pos.z
-            ),
-            offset,
-            maxSpeed,
-            count
-        )
+        particleBuilder.offset(offset.x, offset.y, offset.z)
+        particleBuilder.count(count)
+        particleBuilder.extra(maxSpeed.toDouble())
+        particleBuilder.location(pose.location)
+
+        return particleBuilder
     }
 }
 
-interface CompiledData<T : ParticleData> {
+interface CompiledData<T> {
     fun realize(otherEmitterData: EmitterData, otherParticleData: gg.aquatic.comet.api.particle.ParticleData): T
 
-    class EmptyDustData : CompiledData<ParticleData> {
+    class EmptyDustData : CompiledData<Unit> {
         override fun realize(
             otherEmitterData: EmitterData,
             otherParticleData: gg.aquatic.comet.api.particle.ParticleData
-        ): ParticleData {
-            return ParticleData()
+        ) {
+            return
         }
     }
 
@@ -143,6 +138,13 @@ interface CompiledData<T : ParticleData> {
             )
         }
     }
+
+    class ParticleDustData(
+        val scale: Float,
+        val red: Int,
+        val green: Int,
+        val blue: Int
+    )
 }
 
 fun parseParticleDustData(jsonElement: JsonElement, macros: Map<String, Macro>?): CompiledData.CompiledDustData {

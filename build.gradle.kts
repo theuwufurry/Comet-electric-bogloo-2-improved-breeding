@@ -9,7 +9,6 @@ version = "1.9.2"
 
 repositories {
     mavenCentral()
-    maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
     maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
     maven { url = uri("https://repo.codemc.io/repository/maven-snapshots/") }
     maven {
@@ -25,8 +24,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly("org.spigotmc:spigot-api:1.19.4-R0.1-SNAPSHOT")
-    compileOnly("gg.aquatic.waves:Waves:1.1.9:publish")
+    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
+    compileOnly("gg.aquatic.waves:Waves:1.2.22:publish")
 
     compileOnly("org.openjdk.nashorn:nashorn-core:15.4")
 
@@ -36,7 +35,7 @@ dependencies {
 }
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(21)
 }
 
 subprojects {
@@ -59,8 +58,8 @@ subprojects {
     }
 
     dependencies {
-        compileOnly("org.spigotmc:spigot-api:1.19.4-R0.1-SNAPSHOT")
-        compileOnly("gg.aquatic.waves:Waves:1.1.9:publish")
+        compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
+        compileOnly("gg.aquatic.waves:Waves:1.2.22:publish")
 
         compileOnly("org.openjdk.nashorn:nashorn-core:15.4")
 
@@ -69,6 +68,6 @@ subprojects {
     }
 
     kotlin {
-        jvmToolchain(17)
+        jvmToolchain(21)
     }
 }

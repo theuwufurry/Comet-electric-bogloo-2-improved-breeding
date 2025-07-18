@@ -1,6 +1,5 @@
 package gg.aquatic.comet.emitter.impl
 
-import gg.aquatic.comet.DEFAULT_EMITTER_DIRECTION
 import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.Mount
 import gg.aquatic.comet.api.emitter.*
@@ -21,14 +20,13 @@ import gg.aquatic.comet.emitter.optimization.VirtualRuntime
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.particle.Particle
 import gg.aquatic.comet.particle.data.EntityDataBuilder
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport
+import gg.aquatic.waves.Waves
 import gg.aquatic.waves.util.audience.AquaticAudience
+import org.bukkit.Bukkit
+import org.bukkit.Location
 import org.bukkit.entity.Player
-import org.joml.Quaterniond
 import org.joml.Quaternionf
 import org.joml.Vector3d
-import org.joml.Vector3f
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
@@ -137,7 +135,7 @@ class OptimizedEmitter(
             }
         }
 
-        val dataPackets: MutableList<PacketWrapper<*>> = mutableListOf()
+        val dataPackets: MutableList<Any> = mutableListOf()
 
         cachedEmitterPath.emitterActions.firstOrNull { it.time == time }?.let { emData ->
             emData.actions.forEach { a ->
@@ -175,16 +173,14 @@ class OptimizedEmitter(
                         val nextPos = locs.getOrNull(i + 1)
                         if (nextPos != null) {
                             if (DEBUG_LOCS >= 2) println("TP | ${nextPos.vec.vec.x} ${nextPos.vec.vec.y} ${nextPos.vec.vec.z}")
-                            dataPackets += WrapperPlayServerEntityTeleport(
+                            dataPackets += Waves.NMS_HANDLER.createTeleportPacket(
                                 particle.id,
-                                gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.world.Location(
-                                    gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3d(
-                                        nextPos.vec.vec.x,
-                                        nextPos.vec.vec.y,
-                                        nextPos.vec.vec.z,
-                                    ), 0f, 0f
-                                ),
-                                true
+                                Location(
+                                    Bukkit.getWorlds().first(),
+                                    nextPos.vec.vec.x,
+                                    nextPos.vec.vec.y,
+                                    nextPos.vec.vec.z,
+                                )
                             )
 
                             val nnextPos = locs.getOrNull(i + 2)
@@ -246,8 +242,8 @@ class OptimizedEmitter(
                             if (DEBUG_DISPLAY_DATA >= 1) println("  | TRANSPARENCY: ${nextDatum.vec.alpha * 255.0}")
 
                             particle.updatePackets(EntityDataBuilder, true, nd, flags)
-                                ?.let {
-                                    dataPackets += it
+                                .let {
+                                    dataPackets.addAll(it)
                                 }
                         }
                     }
@@ -280,7 +276,7 @@ class OptimizedEmitter(
     private fun spawnParticles(timestampedEmitterData: TimestampedEmitterData) {
 //        if (timestampedEmitterData.spawns.isNotEmpty()) println("O.${unrealizedEmitter.id} SPAWNING t:$time")
 
-        val bundle: MutableList<PacketWrapper<*>> = mutableListOf()
+        val bundle: MutableList<Any> = mutableListOf()
         for (spawn in timestampedEmitterData.spawns) {
             val particleData = ParticleData(spawn)
             particleData.emitter = this
@@ -371,8 +367,8 @@ class OptimizedEmitter(
         )
     }
 
-    override fun getSpawnPackets(): List<PacketWrapper<*>> {
-        val packets = mutableListOf<PacketWrapper<*>>()
+    override fun getSpawnPackets(): List<Any> {
+        val packets = mutableListOf<Any>()
         for (particle in particles) {
             val locs = cachedEmitterPath.locations[particle.data.id] ?: continue
             run u@{
@@ -447,10 +443,10 @@ class OptimizedEmitter(
                     return@u
                 }
 
-                data!!.relativePosition = Vector3d()
-                data!!.origin = loc!!
+                data.relativePosition = Vector3d()
+                data.origin = loc
 
-                packets += particle.getAddPacket(data!!)
+                packets.addAll(particle.getAddPacket(data))
             }
         }
 
