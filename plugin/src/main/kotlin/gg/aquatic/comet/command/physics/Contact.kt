@@ -3,8 +3,8 @@ package gg.aquatic.comet.command.physics
 import org.joml.Vector3d
 
 data class Contact(
-    val first: Body,
-    val second: Body,
+    val first: ActiveBody,
+    val second: ActiveBody,
     val result: CollisionResult,
     var lambdaSum: Double = 0.0
 ) {

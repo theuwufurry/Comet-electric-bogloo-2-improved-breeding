@@ -4,7 +4,7 @@ import gg.aquatic.comet.command.PhysicsWorld.Companion.ACTIVE_SLOP
 import gg.aquatic.comet.command.PhysicsWorld.Companion.BIAS
 import gg.aquatic.comet.command.PhysicsWorld.Companion.FRICTION
 import gg.aquatic.comet.command.PhysicsWorld.Companion.PASSIVE_SLOP
-import gg.aquatic.comet.command.physics.Body.Companion.TIME_STEP
+import gg.aquatic.comet.command.physics.ActiveBody.Companion.TIME_STEP
 import gg.aquatic.comet.command.physics.BodyType
 import gg.aquatic.comet.command.physics.Contact
 import org.joml.Quaterniond

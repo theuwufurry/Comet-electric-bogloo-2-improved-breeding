@@ -30,7 +30,7 @@ object PhysicsListener : Listener {
         val dir = event.player.location.direction.toVector3d().mul(20.0)
         val end = Vector3d(start).add(dir)
 
-        val allIntersections = mutableListOf<Triple<Body, Vector3d, Vector3d>>()
+        val allIntersections = mutableListOf<Triple<ActiveBody, Vector3d, Vector3d>>()
         for (body in PhysicsCommand.physicsWorlds[event.player.world]?.bodies ?: return) {
             allIntersections += body.intersect(start, end).map { Triple(body, it.first, it.second) }
         }

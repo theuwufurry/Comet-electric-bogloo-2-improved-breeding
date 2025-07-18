@@ -4,7 +4,7 @@ import gg.aquatic.comet.applyIf
 import gg.aquatic.comet.command.PhysicsCommand
 import gg.aquatic.comet.command.PhysicsWorld.Companion.PASSIVE_SLOP
 import gg.aquatic.comet.command.debugConnect
-import gg.aquatic.comet.command.physics.Body.Companion.TIME_STEP
+import gg.aquatic.comet.command.physics.ActiveBody.Companion.TIME_STEP
 import gg.aquatic.comet.command.physics.Mesh.Companion.INNER
 import org.bukkit.*
 import org.bukkit.entity.BlockDisplay
@@ -31,7 +31,7 @@ class Cuboid(
     val length: Double,
     val density: Double,
     override val hasGravity: Boolean,
-) : Body {
+) : ActiveBody {
     override val id = UUID.randomUUID()
     override val type: BodyType = BodyType.ACTIVE
 
@@ -987,7 +987,7 @@ class Cuboid(
         return SATCycle(overlap, order!!)
     }
 
-    override fun collidesBody(other: Body): CollisionResult? {
+    override fun collidesBody(other: ActiveBody): CollisionResult? {
         // map from difference to MINE to OTHER
         val originals = mutableMapOf<Vector3d, Pair<Vector3d, Vector3d>>()
 

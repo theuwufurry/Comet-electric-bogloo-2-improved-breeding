@@ -591,7 +591,7 @@ fun World.square(
 
 class MeshBody(
     override val world: World
-) : Body {
+) : ActiveBody {
     override val id: UUID = UUID.randomUUID()
     override val type: BodyType = BodyType.PASSIVE
     override val velocity: Vector3d = Vector3d()
@@ -621,7 +621,7 @@ class MeshBody(
         return listOf()
     }
 
-    override fun collidesBody(other: Body): CollisionResult? {
+    override fun collidesBody(other: ActiveBody): CollisionResult? {
         return null
     }
 

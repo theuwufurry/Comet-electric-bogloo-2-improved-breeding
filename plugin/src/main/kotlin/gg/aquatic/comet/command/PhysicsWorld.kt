@@ -8,7 +8,7 @@ import gg.aquatic.comet.command.PhysicsCommand.frozen
 import gg.aquatic.comet.command.PhysicsCommand.steps
 import gg.aquatic.comet.command.PhysicsCommand.untilCollision
 import gg.aquatic.comet.command.physics.*
-import gg.aquatic.comet.command.physics.Body.Companion.TIME_STEP
+import gg.aquatic.comet.command.physics.ActiveBody.Companion.TIME_STEP
 import org.bukkit.Color
 import org.bukkit.Location
 import org.bukkit.Particle
@@ -21,7 +21,7 @@ import kotlin.random.Random
 class PhysicsWorld(
     val world: World
 ) {
-    val bodies: MutableList<Body> = mutableListOf()
+    val bodies: MutableList<ActiveBody> = mutableListOf()
     var contacts: MutableList<Contact> = mutableListOf()
     var meshes: MutableList<Mesh> = mutableListOf()
 

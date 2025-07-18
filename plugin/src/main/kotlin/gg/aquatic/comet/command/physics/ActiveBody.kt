@@ -1,13 +1,12 @@
 package gg.aquatic.comet.command.physics
 
 import org.bukkit.World
-import org.bukkit.block.Block
 import org.bukkit.util.BoundingBox
 import org.joml.Quaterniond
 import org.joml.Vector3d
 import java.util.UUID
 
-interface Body  {
+interface ActiveBody  {
     val id: UUID
     val type: BodyType
     val velocity: Vector3d
@@ -39,7 +38,7 @@ interface Body  {
 
     fun ensureNonAligned() {}
 
-    fun collidesBody(other: Body): CollisionResult?
+    fun collidesBody(other: ActiveBody): CollisionResult?
     fun collidesEnvironment(): List<CollisionResult>
 
     fun visualize() {}
