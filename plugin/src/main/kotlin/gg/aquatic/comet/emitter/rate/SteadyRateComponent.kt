@@ -50,7 +50,7 @@ class SteadyRateComponent(
             val emitterData = EmitterData()
             val engine = emitterEngine(emitterData)
             return SteadyRateComponent(
-                engine.compile(jsonObject.expression("spawn_rate") ?: return null, macros),
+                engine.compile(jsonObject.expression("spawn_rate") ?: return null, macros) ?: return null,
                 jsonObject.expression("max_particles")?.let { engine.compile(it, macros) },
                 emitterData
             )
@@ -60,7 +60,7 @@ class SteadyRateComponent(
             val emitterData = EmitterData()
             val engine = emitterEngine(emitterData)
             return SteadyRateComponent(
-                engine.compile("20", null),
+                engine.compile("20", null)!!,
                 null,
                 emitterData
             )

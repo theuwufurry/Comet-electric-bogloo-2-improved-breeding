@@ -13,9 +13,9 @@ import org.joml.Vector3f
 import javax.script.CompiledScript
 
 class ExpressionScaleComponent(
-    private val xScale: CompiledScript,
-    private val yScale: CompiledScript,
-    private val zScale: CompiledScript,
+    private val xScale: CompiledScript?,
+    private val yScale: CompiledScript?,
+    private val zScale: CompiledScript?,
     private val myParticleData: ParticleData,
     private val myEmitterData: EmitterData
 ) : ParticleComponent, ScaleComponent {
@@ -33,9 +33,9 @@ class ExpressionScaleComponent(
             val (engine, particleData) = particleEngine(emitterData)
 
             return ExpressionScaleComponent(
-                engine.compile(jsonObject.expression("x") ?: "1", macros),
-                engine.compile(jsonObject.expression("y") ?: "1", macros),
-                engine.compile(jsonObject.expression("z") ?: "1", macros),
+                jsonObject.expression("x")?.let { engine.compile(it,  macros) },
+                jsonObject.expression("y")?.let { engine.compile(it,  macros) },
+                jsonObject.expression("z")?.let { engine.compile(it,  macros) },
                 particleData, emitterData
             )
         }
@@ -46,9 +46,9 @@ class ExpressionScaleComponent(
         myParticleData.copyFrom(otherParticleData)
 
         otherParticleData.scale = Vector3f(
-            (xScale.eval() as Number).toFloat() * otherEmitterData.emitter!!.environmentData.size.toFloat(),
-            (yScale.eval() as Number).toFloat() * otherEmitterData.emitter!!.environmentData.size.toFloat(),
-            (zScale.eval() as Number).toFloat() * otherEmitterData.emitter!!.environmentData.size.toFloat()
+            (xScale?.eval() as? Number ?: 1f).toFloat() * otherEmitterData.emitter!!.environmentData.size.toFloat(),
+            (yScale?.eval() as? Number ?: 1f).toFloat() * otherEmitterData.emitter!!.environmentData.size.toFloat(),
+            (zScale?.eval() as? Number ?: 1f).toFloat() * otherEmitterData.emitter!!.environmentData.size.toFloat()
         )
     }
 

@@ -91,7 +91,7 @@ class CompiledVanillaParticle(
     fun realize(context: ActionContext): WrapperPlayServerParticle? {
         val data = compiledData.realize(context.otherEmitterData, context.otherParticleData ?: return null)
         val particle = when (type) {
-            ParticleTypes.DUST -> Particle(type as ParticleType<ParticleDustData>, data as ParticleDustData)
+            ParticleTypes.DUST -> Particle(type as? ParticleType<ParticleDustData> ?: return null, data as ParticleDustData)
             else -> Particle(type as ParticleType<ParticleData>, data)
         }
 
@@ -145,7 +145,7 @@ interface CompiledData<T : ParticleData> {
     }
 }
 
-fun parseParticleDustData(jsonElement: JsonElement, macros: Map<String, Macro>?): CompiledData.CompiledDustData {
+fun parseParticleDustData(jsonElement: JsonElement, macros: Map<String, Macro>?): CompiledData.CompiledDustData? {
     val obj =
         if (jsonElement.isJsonObject) jsonElement.asJsonObject else throw MalformedJsonException("Dust particle data should be an object!")
     val emitterData = EmitterData()
@@ -156,8 +156,8 @@ fun parseParticleDustData(jsonElement: JsonElement, macros: Map<String, Macro>?)
     val scaleScript = engine.compile(obj.expression("scale") ?: "1", macros)
 
     return CompiledData.CompiledDustData(
-        colorScript,
-        scaleScript,
+        colorScript ?: return null,
+        scaleScript ?: return null,
         emitterData, particleData
     )
 }

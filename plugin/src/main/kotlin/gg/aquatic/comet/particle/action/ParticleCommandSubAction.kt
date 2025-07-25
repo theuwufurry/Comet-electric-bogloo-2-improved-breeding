@@ -41,7 +41,7 @@ class ParticleCommandSubAction(
 
             val commandScript = engine.compile(jsonObject.expression("command") ?: return null, macros)
 
-            return ParticleCommandSubAction(commandScript, particleData, emitterData)
+            return ParticleCommandSubAction(commandScript ?: return null, particleData, emitterData)
         }
     }
 }

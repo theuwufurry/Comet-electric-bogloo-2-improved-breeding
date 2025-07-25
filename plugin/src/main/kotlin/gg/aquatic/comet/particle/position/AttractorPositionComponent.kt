@@ -172,10 +172,10 @@ class AttractorPositionComponent(
             for (attractorElement in attractorsArray) {
                 val attractorObject = attractorElement.asJsonObject
                 attractorScripts += Attractor(
-                    engine.compile(attractorObject.expression("x") ?: return null, macros),
-                    engine.compile(attractorObject.expression("y") ?: return null, macros),
-                    engine.compile(attractorObject.expression("z") ?: return null, macros),
-                    engine.compile(attractorObject.expression("mass") ?: "1", macros),
+                    engine.compile(attractorObject.expression("x") ?: return null, macros) ?: continue,
+                    engine.compile(attractorObject.expression("y") ?: return null, macros) ?: continue,
+                    engine.compile(attractorObject.expression("z") ?: return null, macros) ?: continue,
+                    engine.compile(attractorObject.expression("mass") ?: "1", macros) ?: continue,
                     attractorObject.expression("radius")?.let { engine.compile(it, macros) },
                 )
             }
@@ -184,7 +184,7 @@ class AttractorPositionComponent(
 
             return AttractorPositionComponent(
                 attractorScripts,
-                engine.compile(jsonObject.expression("factor") ?: "1", macros),
+                engine.compile(jsonObject.expression("factor") ?: "1", macros) ?: return null,
                 jsonObject.getAsJsonPrimitive("type")?.asString ?: "gravity_linear",
                 actions,
                 emitterData, particleData

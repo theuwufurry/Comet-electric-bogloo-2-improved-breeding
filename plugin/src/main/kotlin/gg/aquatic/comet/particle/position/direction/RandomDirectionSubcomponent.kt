@@ -12,7 +12,7 @@ import kotlin.math.sqrt
 
 class RandomDirectionSubcomponent(
     private val magnitudeScript: CompiledScript? = null,
-    private val directionScript: Pair<DirectionSubcomponent, CompiledScript>? = null,
+    private val directionScript: Pair<DirectionSubcomponent, CompiledScript?>? = null,
     private val myParticleData: ParticleData,
     private val myEmitterData: EmitterData
 ) : DirectionSubcomponent {

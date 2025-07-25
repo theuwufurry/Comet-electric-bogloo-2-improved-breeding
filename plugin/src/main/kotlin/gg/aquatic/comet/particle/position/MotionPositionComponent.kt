@@ -375,7 +375,7 @@ class MotionPositionComponent(
                 )
             } else if ("random_velocity" in jsonObject.keySet()) {
                 val velocityObject = jsonObject.getAsJsonObject("random_velocity") ?: return null
-                val directionPair: Pair<DirectionSubcomponent, CompiledScript>? =
+                val directionPair: Pair<DirectionSubcomponent, CompiledScript?>? =
                     velocityObject.getAsJsonObject("bias")?.let l@{
                         if (!it.has("direction")) throw NullPointerException("bias in random_velocity missing direction!")
                         val dirObject = it.get("direction")
@@ -398,7 +398,7 @@ class MotionPositionComponent(
                                     ),
                                     it.expression("magnitude")?.let { mag -> engine.compile(mag, macros) },
                                     particleData, emitterData
-                                ), engine.compile(it.getAsJsonPrimitive("spread").expression() ?: "0", macros)
+                                ), (engine.compile(it.getAsJsonPrimitive("spread").expression() ?: "0", macros) ?: return null)
                             )
                         } else {
                             Pair(
@@ -434,9 +434,9 @@ class MotionPositionComponent(
             val accelerationObject =
                 if (jsonObject.has("acceleration")) jsonObject.getAsJsonObject("acceleration") else null
             val accelerationScript: Triple<CompiledScript, CompiledScript, CompiledScript> = Triple(
-                engine.compile(accelerationObject?.expression("x") ?: "0", macros),
-                engine.compile(accelerationObject?.expression("y") ?: "0", macros),
-                engine.compile(accelerationObject?.expression("z") ?: "0", macros)
+                engine.compile(accelerationObject?.expression("x") ?: "0", macros) ?: return null,
+                engine.compile(accelerationObject?.expression("y") ?: "0", macros) ?: return null,
+                engine.compile(accelerationObject?.expression("z") ?: "0", macros) ?: return null
             )
 
             val actions = jsonObject.getAsJsonArray("on_collision")?.let { Action.parse(it, macros) }

@@ -10,6 +10,7 @@ import java.util.*
 import javax.script.Compilable
 import javax.script.CompiledScript
 import javax.script.ScriptContext
+import javax.script.ScriptException
 
 fun emitterEngine(emitterData: EmitterData): Compilable {
     val engine = AbstractParticleEmitter.scriptEngineFactory.getScriptEngine("-scripting")
@@ -31,7 +32,11 @@ fun particleEngine(emitterData: EmitterData): Pair<Compilable, ParticleData> {
 }
 
 
-fun Compilable.compile(input: String, macros: Map<String, Macro>?, tryAsSimpleString: Boolean = false): CompiledScript {
+fun Compilable.compile(
+    input: String,
+    macros: Map<String, Macro>?,
+    tryAsSimpleString: Boolean = false
+): CompiledScript? {
     var output = input
     if (macros != null) {
         for ((from, macro) in macros) {
@@ -66,7 +71,14 @@ fun Compilable.compile(input: String, macros: Map<String, Macro>?, tryAsSimpleSt
         }
     }
 
-    return compile(output)
+    return try {
+        compile(output)
+    } catch (sc: ScriptException) {
+        AbstractParticleEmitter.INSTANCE.logger.severe("Issue while compiling Javascript one of your scripts!")
+        AbstractParticleEmitter.INSTANCE.logger.severe(sc.message)
+
+        null
+    }
 }
 
 fun Compilable.compileOrNull(script: String): CompiledScript? {

@@ -35,7 +35,7 @@ class ExpressionRotationComponent(
                 if ("x_local" in id) {
                     val compiledScript = engine.compile(jsonObject.expression(id) ?: return null, macros)
                     rotations += {
-                        rotateLocalX((compiledScript.eval() as Number).toFloat())
+                        rotateLocalX((compiledScript?.eval() as? Number ?: 0.0).toFloat())
                     }
 
                     continue
@@ -44,7 +44,7 @@ class ExpressionRotationComponent(
                 if ("y_local" in id) {
                     val compiledScript = engine.compile(jsonObject.expression(id) ?: return null, macros)
                     rotations += {
-                        rotateLocalY((compiledScript.eval() as Number).toFloat())
+                        rotateLocalY((compiledScript?.eval() as? Number ?: 0.0).toFloat())
                     }
 
                     continue
@@ -53,7 +53,7 @@ class ExpressionRotationComponent(
                 if ("z_local" in id) {
                     val compiledScript = engine.compile(jsonObject.expression(id) ?: return null, macros)
                     rotations += {
-                        rotateLocalZ((compiledScript.eval() as Number).toFloat())
+                        rotateLocalZ((compiledScript?.eval() as? Number ?: 0.0).toFloat())
                     }
 
                     continue
@@ -62,7 +62,7 @@ class ExpressionRotationComponent(
                 if ("x" in id) {
                     val compiledScript = engine.compile(jsonObject.expression(id) ?: return null, macros)
                     rotations += {
-                        rotateX((compiledScript.eval() as Number).toFloat())
+                        rotateX((compiledScript?.eval() as? Number ?: 0.0).toFloat())
                     }
 
                     continue
@@ -71,7 +71,7 @@ class ExpressionRotationComponent(
                 if ("y" in id) {
                     val compiledScript = engine.compile(jsonObject.expression(id) ?: return null, macros)
                     rotations += {
-                        rotateY((compiledScript.eval() as Number).toFloat())
+                        rotateY((compiledScript?.eval() as? Number ?: 0.0).toFloat())
                     }
 
                     continue
@@ -80,7 +80,7 @@ class ExpressionRotationComponent(
                 if ("z" in id) {
                     val compiledScript = engine.compile(jsonObject.expression(id) ?: return null, macros)
                     rotations += {
-                        rotateZ((compiledScript.eval() as Number).toFloat())
+                        rotateZ((compiledScript?.eval() as? Number ?: 0.0).toFloat())
                     }
 
                     continue

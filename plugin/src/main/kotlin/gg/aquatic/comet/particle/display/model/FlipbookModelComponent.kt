@@ -34,17 +34,17 @@ class FlipbookModelComponent(
             val models: MutableList<Pair<Double, CompiledScript>> = mutableListOf()
             if (jsonObject["models"].isJsonArray) {
                 for (element in jsonObject.getAsJsonArray("models")) {
-                    models += (element as JsonObject).getAsJsonPrimitive("index").asNumber.toDouble() to engine.compile(
+                    models += (element as JsonObject).getAsJsonPrimitive("index").asNumber.toDouble() to (engine.compile(
                         element.expression("model") ?: return null,
                         macros, true
-                    )
+                    ) ?: continue)
                 }
             } else if (jsonObject["models"].isJsonObject) {
                 for ((index, model) in jsonObject["models"].asJsonObject.entrySet()) {
-                    models += index.toDouble() to engine.compile(
+                    models += index.toDouble() to (engine.compile(
                         model.asStringOrNull() ?: return null,
                         macros, true
-                    )
+                    ) ?: continue)
                 }
             } else {
                 return null
@@ -52,7 +52,7 @@ class FlipbookModelComponent(
 
 
             return FlipbookModelComponent(
-                engine.compile(jsonObject.expression("input") ?: return null, macros),
+                engine.compile(jsonObject.expression("input") ?: return null, macros) ?: return null,
                 models,
                 particleData, emitterData
             )

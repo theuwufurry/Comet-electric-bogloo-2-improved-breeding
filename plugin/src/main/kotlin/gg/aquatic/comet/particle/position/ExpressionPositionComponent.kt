@@ -53,9 +53,9 @@ class ExpressionPositionComponent(
             val (engine, particleData) = particleEngine(emitterData)
 
             return ExpressionPositionComponent(
-                engine.compile(jsonObject.expression("x") ?: return null, macros),
-                engine.compile(jsonObject.expression("y") ?: return null, macros),
-                engine.compile(jsonObject.expression("z") ?: return null, macros),
+                engine.compile(jsonObject.expression("x") ?: return null, macros) ?: return null,
+                engine.compile(jsonObject.expression("y") ?: return null, macros) ?: return null,
+                engine.compile(jsonObject.expression("z") ?: return null, macros) ?: return null,
                 emitterData, particleData
             )
         }

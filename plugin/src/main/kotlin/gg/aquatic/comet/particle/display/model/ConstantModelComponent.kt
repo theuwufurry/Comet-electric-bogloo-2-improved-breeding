@@ -31,7 +31,7 @@ class ConstantModelComponent(
             val engine = emitterEngine(emitterData)
 
             return ConstantModelComponent(
-                engine.compile(jsonObject.expression("id") ?: return null, macros, true),
+                engine.compile(jsonObject.expression("id") ?: return null, macros, true) ?: return null,
                 emitterData
             )
         }

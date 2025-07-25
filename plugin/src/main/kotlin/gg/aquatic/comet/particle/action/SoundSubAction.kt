@@ -59,9 +59,9 @@ class SoundSubAction(
             val emitterData = EmitterData()
             val engine = emitterEngine(emitterData)
 
-            val soundIDExpr = engine.compile(jsonObject.expression("sound_id")!!, macros, true)
-            val volumeExpr = engine.compile(jsonObject.expression("volume") ?: "1", macros)
-            val pitchExpr = engine.compile(jsonObject.expression("pitch") ?: "1", macros)
+            val soundIDExpr = engine.compile(jsonObject.expression("sound_id")!!, macros, true) ?: return null
+            val volumeExpr = engine.compile(jsonObject.expression("volume") ?: "1", macros) ?: return null
+            val pitchExpr = engine.compile(jsonObject.expression("pitch") ?: "1", macros) ?: return null
 
             return SoundSubAction(soundIDExpr, volumeExpr, pitchExpr, emitterData)
         }

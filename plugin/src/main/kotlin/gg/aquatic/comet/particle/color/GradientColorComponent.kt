@@ -32,24 +32,24 @@ class GradientColorComponent(
             val (engine, particleData) = particleEngine(emitterData)
             if (jsonObject["data"].isJsonArray) {
                 for (element in jsonObject.getAsJsonArray("data")) {
-                    gradient += (element as JsonObject).getAsJsonPrimitive("index").asNumber.toDouble() to engine.compile(
+                    gradient += (element as JsonObject).getAsJsonPrimitive("index").asNumber.toDouble() to (engine.compile(
                         element.expression("color")?.addDependency() ?: return null,
                         macros
-                    )
+                    ) ?: continue)
                 }
             } else if (jsonObject["data"].isJsonObject) {
                 for ((index, colorStr) in jsonObject.getAsJsonObject("data").entrySet()) {
-                    gradient += index.toDouble() to engine.compile(
+                    gradient += index.toDouble() to (engine.compile(
                         colorStr.asString.addDependency(),
                         macros
-                    )
+                    ) ?: continue)
                 }
             } else {
                 return null
             }
 
             return GradientColorComponent(
-                engine.compile(jsonObject.expression("interpolant") ?: return null, macros),
+                engine.compile(jsonObject.expression("interpolant") ?: return null, macros) ?: return null,
                 gradient,
                 emitterData,
                 particleData

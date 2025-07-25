@@ -31,7 +31,7 @@ class ConstantColorComponent(
             val (engine, particleData) = particleEngine(emitterData)
 
             return ConstantColorComponent(
-                engine.compile(jsonObject.expression("color")?.addDependency() ?: return null, macros),
+                engine.compile(jsonObject.expression("color")?.addDependency() ?: return null, macros) ?: return null,
                 emitterData, particleData
             )
         }

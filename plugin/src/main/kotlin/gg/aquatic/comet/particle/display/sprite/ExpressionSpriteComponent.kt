@@ -29,7 +29,7 @@ class ExpressionSpriteComponent(
             val (engine, particleData) = particleEngine(emitterData)
 
             return ExpressionSpriteComponent(
-                engine.compile(jsonObject.expression("sprite") ?: return null, macros, true),
+                engine.compile(jsonObject.expression("sprite") ?: return null, macros, true) ?: return null,
                 particleData, emitterData
             )
         }

@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.script.CompiledScript
 
 class SpherePositionComponent(
-    private val radiusScript: CompiledScript,
+    private val radiusScript: CompiledScript?,
     private val dir: SphereDirection?,
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData,
@@ -32,7 +32,7 @@ class SpherePositionComponent(
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
         otherParticleData.relativePosition = if (otherParticleData.age == 0.0) {
-            val radius = (radiusScript.eval() as Number).toDouble()
+            val radius = (radiusScript?.eval() as? Number ?: DEFAULT_RADIUS).toDouble()
             val radiusSquared = radius * radius
             var sphereOffset = randomVector(otherEmitterData.emitter!!, radius)
             while (sphereOffset.lengthSquared() > radiusSquared) {
@@ -76,6 +76,7 @@ class SpherePositionComponent(
 
     companion object : BaseComponentParser {
         override val id: String = "sphere_position"
+        private const val DEFAULT_RADIUS = 1.0
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): SpherePositionComponent {
             val jsonObject = jsonElement.asJsonObject
@@ -86,25 +87,17 @@ class SpherePositionComponent(
                 val magnitudeScript =
                     jsonObject["magnitude"]?.expression()?.let { magnitude -> engine.compile(magnitude, macros) }
 
-                it.asStringOrNull()?.let { str ->
+                it.asStringOrNull()?.let {  str ->
                     when (str) {
-                        "inwards" -> {
-                            return@top SphereDirection(DirType.INWARDS, magnitudeScript)
-                        }
-
-                        "outwards" -> {
-                            return@top SphereDirection(DirType.OUTWARDS, magnitudeScript)
-                        }
-
-                        else -> {
-                            null
-                        }
+                        "inwards" -> SphereDirection(DirType.INWARDS, magnitudeScript)
+                        "outwards" -> return@top SphereDirection(DirType.OUTWARDS, magnitudeScript)
+                        else -> null
                     }
                 }
             }
 
             return SpherePositionComponent(
-                engine.compile(jsonObject.expression("radius") ?: "1", macros),
+                jsonObject.expression("radius")?.let { engine.compile(it, macros) },
                 dir,
                 emitterData, particleData
             )

@@ -33,7 +33,7 @@ class ExpressionModelComponent(
             val (engine, particleData) = particleEngine(emitterData)
 
             return ExpressionModelComponent(
-                engine.compile(jsonObject.expression("id") ?: return null, macros, true),
+                engine.compile(jsonObject.expression("id") ?: return null, macros, true) ?: return null,
                 emitterData,
                 particleData
             )

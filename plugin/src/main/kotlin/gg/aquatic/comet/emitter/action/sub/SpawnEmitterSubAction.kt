@@ -145,13 +145,13 @@ class SpawnEmitterSubAction(
             val engine = emitterEngine(emitterData)
             val unrealizedEmitterIDs = if (jsonObject.get("emitter").isJsonPrimitive) {
                 listOf(
-                    engine.compile(jsonObject.expression("emitter") ?: return null, macros, true).eval() as String
+                    (engine.compile(jsonObject.expression("emitter") ?: return null, macros, true) ?: return null).eval() as String
                 )
             } else {
                 val arr = jsonObject.getAsJsonArray("emitter")
                 val ids: MutableList<String> = mutableListOf()
                 for (elem in arr) {
-                    ids += engine.compile(elem.asString, macros, true).eval() as String
+                    ids += (engine.compile(elem.asString, macros, true) ?: return null).eval() as String
                 }
 
                 ids

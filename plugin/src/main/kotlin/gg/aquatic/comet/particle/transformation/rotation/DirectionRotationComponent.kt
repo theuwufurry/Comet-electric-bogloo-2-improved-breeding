@@ -35,10 +35,10 @@ class DirectionRotationComponent(
             val (engine, particleData) = particleEngine(emitterData)
 
             return DirectionRotationComponent(
-                engine.compile(jsonObject.expression("x") ?: return null, macros),
-                engine.compile(jsonObject.expression("y") ?: return null, macros),
-                engine.compile(jsonObject.expression("z") ?: return null, macros),
-                engine.compile(jsonObject.expression("angle") ?: return null, macros),
+                engine.compile(jsonObject.expression("x") ?: return null, macros) ?: return null,
+                engine.compile(jsonObject.expression("y") ?: return null, macros) ?: return null,
+                engine.compile(jsonObject.expression("z") ?: return null, macros) ?: return null,
+                engine.compile(jsonObject.expression("angle") ?: return null, macros) ?: return null,
                 particleData, emitterData
             )
         }

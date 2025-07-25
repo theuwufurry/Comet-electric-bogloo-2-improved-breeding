@@ -25,7 +25,7 @@ class InstantRateComponent(
             val emitterData = EmitterData()
             val engine = emitterEngine(emitterData)
             return InstantRateComponent(
-                engine.compile(jsonObject.expression("amount") ?: return null, macros),
+                engine.compile(jsonObject.expression("amount") ?: return null, macros) ?: return null,
                 engine.compile(jsonObject.expression("offset") ?: "0", macros),
                 emitterData
             )

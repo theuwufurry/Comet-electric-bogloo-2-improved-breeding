@@ -1,6 +1,9 @@
 package gg.aquatic.comet.emitter.action.sub
 
 import com.google.gson.JsonElement
+import gg.aquatic.comet.ParticleEmitter
+import gg.aquatic.comet.api.AbstractParticleEmitter
+import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.action.ActionContext
 import gg.aquatic.comet.api.emitter.action.SubAction
@@ -11,6 +14,7 @@ import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.particleEngine
 import gg.aquatic.comet.api.particle.ParticleData
 import javax.script.CompiledScript
+import javax.script.ScriptException
 
 class JavascriptSubAction(
     private val emitterScripts: List<CompiledScript>,
@@ -29,7 +33,13 @@ class JavascriptSubAction(
             myParticleData.copyFrom(otherParticleData)
             for (script in particleScripts) {
                 //modifies my particle data and possibly my emitter data
-                script.eval()
+                try {
+                    script.eval()
+                } catch (sc: ScriptException) {
+                    AbstractParticleEmitter.INSTANCE.logger.severe("Javascript error while executing ${myEmitterData.emitter?.unrealizedEmitter?.id}!")
+                    AbstractParticleEmitter.INSTANCE.logger.severe(sc.message)
+                    myEmitterData.emitter?.kill()
+                }
             }
 
             otherParticleData.copyFrom(myParticleData)
@@ -54,10 +64,10 @@ class JavascriptSubAction(
 
             for (element in jsonArray) {
                 val asString = element.asString
-                if ("particle" in asString || "particle_variable" in asString) particleScripts += particleEngine.compile(
-                    asString,
-                    macros
-                ) else emitterScripts += emitterEngine.compile(asString, macros)
+                    if ("particle" in asString || "particle_variable" in asString) particleScripts += particleEngine.compile(
+                        asString,
+                        macros
+                    ) ?: return null else emitterScripts += emitterEngine.compile(asString, macros) ?: return null
             }
 
             return JavascriptSubAction(

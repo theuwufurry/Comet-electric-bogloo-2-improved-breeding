@@ -33,24 +33,24 @@ class FlipbookSpriteComponent(
             val sprites: MutableList<Pair<Double, CompiledScript>> = mutableListOf()
             if (jsonObject["sprites"].isJsonArray) {
                 for (element in jsonObject.getAsJsonArray("sprites")) {
-                    sprites += (element as JsonObject).getAsJsonPrimitive("index").asNumber.toDouble() to engine.compile(
+                    sprites += (element as JsonObject).getAsJsonPrimitive("index").asNumber.toDouble() to (engine.compile(
                         element.expression("sprite") ?: return null,
                         macros, true
-                    )
+                    ) ?: continue)
                 }
             } else if (jsonObject["sprites"].isJsonObject) {
                 for ((index, sprite) in jsonObject["sprites"].asJsonObject.entrySet()) {
-                    sprites += index.toDouble() to engine.compile(
+                    sprites += index.toDouble() to (engine.compile(
                         sprite.asStringOrNull() ?: return null,
                         macros, true
-                    )
+                    ) ?: continue )
                 }
             } else {
                 return null
             }
 
             return FlipbookSpriteComponent(
-                engine.compile(jsonObject.expression("input") ?: return null, macros),
+                engine.compile(jsonObject.expression("input") ?: return null, macros) ?: return null,
                 sprites,
                 particleData, emitterData
             )

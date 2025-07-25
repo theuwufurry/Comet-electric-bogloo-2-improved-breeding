@@ -76,7 +76,7 @@ class RandomSpriteComponent(
                 } else {
                     for ((weight, sprite) in jsonObject.entrySet()) {
                         val spriteString = sprite.asStringOrNull() ?: continue
-                        weightedSprites += (engine.compile(weight, macros, true) to engine.compile(spriteString, macros, true))
+                        weightedSprites += (engine.compile(weight, macros, true) ?: continue) to (engine.compile(spriteString, macros, true) ?: continue)
                     }
 
                     return RandomSpriteComponent(
@@ -91,7 +91,7 @@ class RandomSpriteComponent(
                     val obj = jsonElem.asJsonObjectOrNull() ?: continue
                     val weightStr = obj["weight"]?.asStringOrNull() ?: continue
                     val spriteString = obj["sprite"]?.asStringOrNull() ?: continue
-                    weightedSprites += (engine.compile(weightStr, macros, true) to engine.compile(spriteString, macros, true))
+                    weightedSprites += ((engine.compile(weightStr, macros, true) ?: continue) to (engine.compile(spriteString, macros, true) ?: continue))
                 }
 
                 return RandomSpriteComponent(

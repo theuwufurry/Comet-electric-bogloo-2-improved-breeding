@@ -37,14 +37,14 @@ class ManualRateComponent(
 
         override val id: String = "emitter_rate_manual"
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ManualRateComponent {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ManualRateComponent? {
             val jsonObject = jsonElement.asJsonObject
             val emitterData = EmitterData()
             val engine = emitterEngine(emitterData)
             val spawningMap: MutableMap<Int, CompiledScript> = TreeMap()
             for ((timeString, _) in jsonObject.entrySet()) {
                 timeString.toIntOrNull()?.let l@{
-                    val amountScript = engine.compile(jsonObject.expression(timeString) ?: return@l, macros)
+                    val amountScript = engine.compile(jsonObject.expression(timeString) ?: return@l, macros) ?: return null
                     spawningMap[it] = amountScript
                 } ?: run l@{
                     if (!timesInput.matches(timeString)) return@l
@@ -54,7 +54,7 @@ class ManualRateComponent(
                     val start = parts[0].toInt()
                     val finish = parts[1].toInt()
 
-                    val amountScript = engine.compile(jsonObject.expression(timeString) ?: return@l, macros)
+                    val amountScript = engine.compile(jsonObject.expression(timeString) ?: return@l, macros) ?: return null
                     for (time in start..finish) {
                         spawningMap[time] = amountScript
                     }
