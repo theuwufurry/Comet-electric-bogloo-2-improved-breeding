@@ -32,6 +32,7 @@ dependencies {
 
     compileOnly("io.lumine:Mythic-Dist:5.6.1")
     compileOnly("com.ticxo.modelengine:ModelEngine:R4.0.7")
+
     implementation(kotlin("stdlib-jdk8"))
 }
 
@@ -44,8 +45,9 @@ subprojects {
     apply(plugin = "io.github.goooler.shadow")
 
     repositories {
-        maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
         mavenCentral()
+        mavenLocal()
+        maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
         maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
         maven { url = uri("https://repo.codemc.io/repository/maven-snapshots/") }
         maven { url = uri("https://repo.nekroplex.com/releases") }

@@ -1,5 +1,6 @@
 package gg.aquatic.comet.command.physics
 
+import com.ixume.udar.collisiondetection.collidesBlocks
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.command.PhysicsCommand
 import gg.aquatic.comet.command.debugConnect

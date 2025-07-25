@@ -4,8 +4,22 @@ plugins {
 
 version = parent!!.version
 
+repositories {
+    maven {
+        url = uri("https://maven.pkg.github.com/Ruskei/Udar")
+        credentials {
+            username = System.getenv("GITHUB_USERNAME")
+            password = System.getenv("GITHUB_TOKEN")
+        }
+    }
+
+    mavenLocal()
+}
+
 dependencies {
     implementation(project(":api"))
+
+    compileOnly("com.ixume:udar:0.0.0")
 }
 
 tasks {
