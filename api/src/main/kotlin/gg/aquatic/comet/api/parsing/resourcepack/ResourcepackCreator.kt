@@ -22,13 +22,34 @@ object ResourcepackCreator {
     private const val RP_IMAGE = "pack.png"
     private const val RP_META = "pack.mcmeta"
     private const val ITEM = "amethyst_shard"
+    private val ITEM_TYPE = ItemTypes.getByName(ITEM)
     const val NAMESPACE = "p"
     const val FONT_NAME = "d"
     private const val PARTICLES_PNG = "particles.png"
 
-    val modelMap: MutableMap<String, ItemStack> = mutableMapOf()
+    val modelMap: MutableMap<String, ModelData> = mutableMapOf()
+
+    fun stack(id: String, color: Int): ItemStack? {
+        val md = modelMap[id] ?: return null
+        return createStack(md.index, color)
+    }
+
+    private fun createStack(index: Int, color: Int?): ItemStack {
+        val stack = ItemStack.builder().type(ITEM_TYPE).amount(1).build()
+        val md = ItemCustomModelData(index)
+
+        if (color != null) {
+            md.colors.add(gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.color.Color(color))
+        }
+
+        stack.setComponent(ComponentTypes.CUSTOM_MODEL_DATA_LISTS, md)
+        stack.orCreateTag.setTag("CustomModelData", NBTInt(index))
+
+        return stack
+    }
 
     val uvs: MutableList<UVData> = mutableListOf()
+
     /*
     look through provided sprites for something of matching name
     generate imgs with that label
@@ -140,6 +161,15 @@ object ResourcepackCreator {
 
         itemObj.add("model", mObj)
 
+        val tints = JsonArray()
+
+        val modelDataTint = JsonObject()
+        modelDataTint.addProperty("type", "custom_model_data")
+        modelDataTint.addProperty("index", 0)
+        modelDataTint.addProperty("default", 16777215)
+
+        tints.add(modelDataTint)
+
         val modelItemsObj = JsonObject()
         modelItemsObj.addProperty("parent", "item/generated")
         texturesObj.addProperty("layer0", "item/$ITEM")
@@ -181,9 +211,9 @@ object ResourcepackCreator {
             val override = JsonObject()
             val predicate = JsonObject()
             val index = count++
-            val stack = ItemStack.builder().type(ItemTypes.getByName(ITEM)).amount(1).build()
+
+            val stack = ItemStack.builder().type(ITEM_TYPE).amount(1).build()
             stack.setComponent(ComponentTypes.CUSTOM_MODEL_DATA_LISTS, ItemCustomModelData(index))
-//            stack.setComponent(ComponentTypes.CUSTOM_MODEL_DATA, ItemCustomModelData(index))
             stack.orCreateTag.setTag("CustomModelData", NBTInt(index))
 
             val iObj = JsonObject()
@@ -193,12 +223,13 @@ object ResourcepackCreator {
 
             miObj.addProperty("type", "model")
             miObj.addProperty("model", "item/$NAMESPACE/${file.nameWithoutExtension}")
+            miObj.add("tints", tints)
 
             iObj.add("model", miObj)
 
             entries.add(iObj)
 
-            modelMap += file.nameWithoutExtension to stack
+            modelMap += file.nameWithoutExtension to ModelData(index = index)
 
             predicate.addProperty("custom_model_data", index)
             override.add("predicate", predicate)
@@ -241,7 +272,7 @@ object ResourcepackCreator {
             val bufferedImage: BufferedImage = ImageIO.read(image)
             val argbImage = BufferedImage(bufferedImage.width, bufferedImage.height, BufferedImage.TYPE_INT_ARGB)
             val graphics = argbImage.createGraphics()
-            graphics.drawImage(bufferedImage, 0,0, null)
+            graphics.drawImage(bufferedImage, 0, 0, null)
             graphics.dispose()
             argbImage.ensureGrid(16)
             argbImage.ensureSize()

@@ -94,7 +94,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
                     entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                         22 + PACKET_OFFSET,
                         EntityDataTypes.ITEMSTACK,
-                        ResourcepackCreator.modelMap[displayData.id]
+                        ResourcepackCreator.stack(displayData.id, component.color)
                     )
                 }
             }
