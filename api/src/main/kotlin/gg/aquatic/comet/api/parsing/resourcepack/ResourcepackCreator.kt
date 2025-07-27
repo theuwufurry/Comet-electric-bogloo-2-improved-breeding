@@ -7,10 +7,10 @@ import com.google.gson.JsonParser
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.parsing.asStringOrNull
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.component.ComponentTypes
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.component.builtin.item.ItemCustomModelData
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.ItemStack
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.type.ItemTypes
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.nbt.NBTInt
-import kotlinx.serialization.json.JsonPrimitive
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.File
@@ -105,8 +105,11 @@ object ResourcepackCreator {
     private fun genModels(files: List<File>) {
         val dataFolder = AbstractParticleEmitter.INSTANCE.dataFolder
 
-        val itemFolder = File(dataFolder.path + "/output/$RP_NAME/assets/minecraft/models/item")
+        val itemFolder = File(dataFolder.path + "/output/$RP_NAME/assets/minecraft/items")
         itemFolder.mkdirs()
+
+        val modelItemFolder = File(dataFolder.path + "/output/$RP_NAME/assets/minecraft/models/item")
+        modelItemFolder.mkdirs()
 
         val modelFolder = File(dataFolder.path + "/output/$RP_NAME/assets/minecraft/models/item/$NAMESPACE")
         modelFolder.mkdirs()
@@ -118,10 +121,29 @@ object ResourcepackCreator {
 
         val texturesObj = JsonObject()
 
-        val itemsObj = JsonObject()
-        itemsObj.addProperty("parent", "item/generated")
+        val itemObj = JsonObject()
+
+        val mObj = JsonObject()
+
+        mObj.addProperty("type", "range_dispatch")
+        mObj.addProperty("property", "custom_model_data")
+
+        val fallback = JsonObject()
+        fallback.addProperty("type", "model")
+        fallback.addProperty("model", "item/$ITEM")
+
+        mObj.add("fallback", fallback)
+
+        val entries = JsonArray()
+
+        mObj.add("entries", entries)
+
+        itemObj.add("model", mObj)
+
+        val modelItemsObj = JsonObject()
+        modelItemsObj.addProperty("parent", "item/generated")
         texturesObj.addProperty("layer0", "item/$ITEM")
-        itemsObj.add("textures", texturesObj)
+        modelItemsObj.add("textures", texturesObj)
 
         val overridesArr = JsonArray()
 
@@ -159,9 +181,22 @@ object ResourcepackCreator {
             val override = JsonObject()
             val predicate = JsonObject()
             val index = count++
-            val stack = ItemStack.builder().type(ItemTypes.getByName("$ITEM")).amount(1).build()
-            stack.setComponent(ComponentTypes.CUSTOM_MODEL_DATA, index)
+            val stack = ItemStack.builder().type(ItemTypes.getByName(ITEM)).amount(1).build()
+            stack.setComponent(ComponentTypes.CUSTOM_MODEL_DATA_LISTS, ItemCustomModelData(index))
+//            stack.setComponent(ComponentTypes.CUSTOM_MODEL_DATA, ItemCustomModelData(index))
             stack.orCreateTag.setTag("CustomModelData", NBTInt(index))
+
+            val iObj = JsonObject()
+            iObj.addProperty("threshold", index)
+
+            val miObj = JsonObject()
+
+            miObj.addProperty("type", "model")
+            miObj.addProperty("model", "item/$NAMESPACE/${file.nameWithoutExtension}")
+
+            iObj.add("model", miObj)
+
+            entries.add(iObj)
 
             modelMap += file.nameWithoutExtension to stack
 
@@ -171,10 +206,13 @@ object ResourcepackCreator {
             overridesArr.add(override)
         }
 
-        itemsObj.add("overrides", overridesArr)
+        modelItemsObj.add("overrides", overridesArr)
 
-        val itemTarget = File(itemFolder.path + "/$ITEM.json")
-        itemTarget.writeText(gson.toJson(itemsObj))
+        val modelItemTarget = File(modelItemFolder.path, "$ITEM.json")
+        modelItemTarget.writeText(gson.toJson(modelItemsObj))
+
+        val itemTarget = File(itemFolder.path, "$ITEM.json")
+        itemTarget.writeText(gson.toJson(itemObj))
     }
 
     private fun genSprites(images: List<File>) {
