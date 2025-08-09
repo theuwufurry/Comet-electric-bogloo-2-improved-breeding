@@ -1,6 +1,7 @@
 package gg.aquatic.comet.particle.display.text
 
 import com.google.gson.JsonElement
+import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.parsing.BaseComponentParser
 import gg.aquatic.comet.api.parsing.compile
@@ -24,7 +25,14 @@ class ConstantTextComponent(
     override val priority: Int = 0
     override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
         myEmitterData.copyFrom(otherEmitterData)
-        val str = text.eval() as String
+        val r = text.eval()
+        val str = r as? String
+        if (str == null) {
+            AbstractParticleEmitter.INSTANCE.logger.severe("Issue converting $r to string in constant_text component!")
+
+            return
+        }
+
         val c = (bg?.eval() as? Color)?.rgb ?: 0
         val lineWidth = (lineWidth?.eval() as? Int) ?: Int.MAX_VALUE
         otherParticleData.displayData = if (otherParticleData.age == 0.0) {

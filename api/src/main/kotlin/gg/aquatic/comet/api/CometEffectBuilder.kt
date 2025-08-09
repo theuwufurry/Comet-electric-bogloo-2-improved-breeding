@@ -9,7 +9,10 @@ import gg.aquatic.comet.api.emitter.parent.pose
 import gg.aquatic.waves.util.audience.AquaticAudience
 import gg.aquatic.waves.util.audience.GlobalAudience
 import org.bukkit.Location
+import org.bukkit.World
+import org.joml.Quaterniond
 import org.joml.Vector2f
+import org.joml.Vector3d
 import java.util.function.Consumer
 import java.util.function.Supplier
 
@@ -18,11 +21,27 @@ class CometEffectBuilder(
 ) {
     private var pose: Pose? = null
 
+    /**
+     * Use this if you know how Quaternions work
+     */
     fun pose(pose: Pose): CometEffectBuilder {
         this.pose = pose
         return this
     }
 
+    fun pos(world: World, x: Double, y: Double, z: Double): CometEffectBuilder {
+        this.pose = Pose(
+            world,
+            Vector3d(x, y, z),
+            Quaterniond()
+        )
+
+        return this
+    }
+
+    /**
+     * This method accounts for the location's yaw and pitch, make sure to test it!
+     */
     fun location(location: Location): CometEffectBuilder {
         this.pose = location.pose()
         return this
