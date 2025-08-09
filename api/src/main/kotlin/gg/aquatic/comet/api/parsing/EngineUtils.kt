@@ -49,14 +49,13 @@ fun Compilable.compile(
 
     output = output.replace("Math.random()", "emitter.emitter.random.kotlinRandom.nextDouble()")
 
-    val compiled = compileOrNull(output)
+    val (compiled, e) = compileOrNull(output)
     if (tryAsSimpleString) {
         try {
             if (compiled == null) {
                 val escapedCompiled = compile("\"" + output + "\"")
                 escapedCompiled?.eval()
                 return escapedCompiled
-
             } else {
                 compiled.eval()
             }
@@ -66,7 +65,13 @@ fun Compilable.compile(
                 escapedCompiled.eval()
                 return escapedCompiled
             } catch (ignored: Exception) {
-                return compiled!!
+                if (compiled == null) {
+                    AbstractParticleEmitter.INSTANCE.logger.severe("Issue while compiling Javascript one of your scripts!")
+                    AbstractParticleEmitter.INSTANCE.logger.severe(e!!.message)
+                    return null
+                }
+
+                return compiled
             }
         }
     }
@@ -81,10 +86,10 @@ fun Compilable.compile(
     }
 }
 
-fun Compilable.compileOrNull(script: String): CompiledScript? {
+fun Compilable.compileOrNull(script: String): Pair<CompiledScript?, Exception?> {
     return try {
-        compile(script)
-    } catch (ignored: Exception) {
-        null
+        compile(script) to null
+    } catch (e: Exception) {
+        null to e
     }
 }
