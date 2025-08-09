@@ -9,7 +9,6 @@ import gg.aquatic.comet.api.parsing.emitterEngine
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
-import gg.aquatic.comet.api.particle.display.TextDisplayComponent
 import gg.aquatic.comet.api.particle.display.sprite.SpriteComponent
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
 import gg.aquatic.comet.parsing.expression
@@ -48,11 +47,7 @@ class ConstantSpriteComponent(private val sprite: CompiledScript, private val my
         myEmitterData.copyFrom(otherEmitterData)
         otherParticleData.displayData = if (otherParticleData.age == 0.0) {
             val str = sprite.eval() as String
-            if (str.first() == '\"' && str.last() == '\"') {
-                TextDisplayComponent(str.substring(1, str.length - 1))
-            } else {
-                SpriteData(str)
-            }
+            SpriteData(str)
         } else {
             otherParticleData.displayData
         }

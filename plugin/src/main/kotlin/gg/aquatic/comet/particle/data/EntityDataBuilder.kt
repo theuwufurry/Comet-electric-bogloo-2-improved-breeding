@@ -4,7 +4,7 @@ import gg.aquatic.comet.api.parsing.resourcepack.ResourcepackCreator
 import gg.aquatic.comet.api.particle.UpdateFlags
 import gg.aquatic.comet.api.particle.data.AbstractEntityDataBuilder
 import gg.aquatic.comet.api.particle.data.EntityData
-import gg.aquatic.comet.api.particle.display.TextDisplayComponent
+import gg.aquatic.comet.api.particle.display.TextData
 import gg.aquatic.comet.api.particle.display.model.ModelData
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityDataTypes
@@ -99,13 +99,26 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
                 }
             }
 
-            else -> {
+            is TextData -> {
+                val td = (component.displayData as TextData)
                 if (flags.display) {
                     entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                         22 + PACKET_OFFSET,
                         EntityDataTypes.ADV_COMPONENT,
-                        Component.text((component.displayData as TextDisplayComponent).string)
+                        Component.text(td.string)
                             .color(TextColor.color(component.color and 0xFFFFFF))
+                    )
+
+                    entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
+                        23 + PACKET_OFFSET,
+                        EntityDataTypes.INT,
+                        td.lineWidth,
+                    )
+
+                    entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
+                        24 + PACKET_OFFSET,
+                        EntityDataTypes.INT,
+                        td.backgroundColor,
                     )
                 }
 
@@ -116,6 +129,10 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
                         ((component.color ushr 24) + 26).coerceAtMost(255).toByte()
                     )
                 }
+            }
+
+            else -> {
+                return null
             }
         }
 
