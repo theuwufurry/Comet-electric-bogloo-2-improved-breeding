@@ -14,6 +14,7 @@ import gg.aquatic.comet.particle.macro.HermiteParser
 import gg.aquatic.comet.particle.macro.LinearParser
 import gg.aquatic.waves.command.AquaticBaseCommand
 import gg.aquatic.waves.command.register
+import gg.aquatic.waves.util.message.Messages
 import org.joml.Vector3d
 import org.joml.Vector3f
 import org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory
@@ -39,7 +40,8 @@ class ParticleEmitter : AbstractParticleEmitter() {
         GlobalTicker.init()
 
         AquaticBaseCommand(
-            "comet", "Base command of Comet plugin", mutableListOf(), mutableMapOf(
+            name = "comet", description = "Base command of Comet plugin", aliases = mutableListOf(),
+            subCommands = mutableMapOf(
                 "reload" to ReloadParticleScriptsCommand,
                 "spawn" to SpawnCommand,
                 "clear" to ClearParticlesCommand,
@@ -49,7 +51,7 @@ class ParticleEmitter : AbstractParticleEmitter() {
                 "info" to InfoCommand,
                 "kill" to KillCommand
             ),
-            listOf()
+            helpMessage = { DummyMessage },
         ).register("comet")
 
         initializeHooks()

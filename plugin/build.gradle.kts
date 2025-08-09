@@ -25,7 +25,7 @@ tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
 
     exclude("kotlin/**")
     exclude("org/**")
-    relocate("kotlin", "gg.aquatic.waves.shadow.kotlin")
+    relocate("kotlin", "gg.aquatic.waves.libs.kotlin")
 }
 
 tasks.processResources {

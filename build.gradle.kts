@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "2.0.21"
+    kotlin("jvm") version "2.2.0"
     id("io.github.goooler.shadow") version "8.1.8"
     id("co.uzzu.dotenv.gradle") version "2.0.0"
 }
@@ -25,7 +25,7 @@ repositories {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
-    compileOnly("gg.aquatic.waves:Waves:1.2.22:publish")
+    compileOnly("gg.aquatic.waves:Waves:1.3.3:publish")
 
     compileOnly("org.openjdk.nashorn:nashorn-core:15.4")
 
@@ -59,7 +59,7 @@ subprojects {
 
     dependencies {
         compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
-        compileOnly("gg.aquatic.waves:Waves:1.2.22:publish")
+        compileOnly("gg.aquatic.waves:Waves:1.3.3:publish")
 
         compileOnly("org.openjdk.nashorn:nashorn-core:15.4")
 

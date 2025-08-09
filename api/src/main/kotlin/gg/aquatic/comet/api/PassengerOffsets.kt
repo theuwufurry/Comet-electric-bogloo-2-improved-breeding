@@ -19,9 +19,11 @@ object PassengerOffsets {
                 elem.asJsonObject["z"].asJsonPrimitive.asNumber.toDouble(),
             )
 
-            val type = EntityType.valueOf(name.uppercase())
-
-            map += type to vec
+            try {
+                val type = EntityType.valueOf(name.uppercase())
+                map += type to vec
+            } catch (ignored: Exception) {
+            }
         }
 
         offsets = map
