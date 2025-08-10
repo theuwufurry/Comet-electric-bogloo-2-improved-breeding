@@ -96,13 +96,10 @@ class OptimizedEmitter(
     private var time = 0
 
     override fun tick(): EmitterTickResult {
-        if (blocked.get()) {
+        if (!blocked.compareAndSet(false, true)) {
             println("${unrealizedEmitter.id} blocked!")
             return EmitterTickResult(true)
         }
-
-        blocked.set(true)
-
 //        println("O.${unrealizedEmitter.id}: TICK t:$time")
 
         if (killed.get()) return EmitterTickResult(false)

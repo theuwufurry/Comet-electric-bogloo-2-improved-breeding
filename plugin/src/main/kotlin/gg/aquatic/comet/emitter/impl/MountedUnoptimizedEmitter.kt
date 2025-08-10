@@ -1,6 +1,5 @@
 package gg.aquatic.comet.emitter.impl
 
-import gg.aquatic.comet.DEFAULT_EMITTER_DIRECTION
 import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.Mount
 import gg.aquatic.comet.api.emitter.*
@@ -23,7 +22,6 @@ import org.bukkit.Color
 import org.bukkit.entity.Player
 import org.joml.Quaternionf
 import org.joml.Vector3d
-import org.joml.Vector3f
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
@@ -49,7 +47,10 @@ class MountedUnoptimizedEmitter(
     override val yawpitchSupplier: Supplier<YawPitch>?,
 ) : AbstractEmitter() {
     private val dustOptions =
-        org.bukkit.Particle.DustOptions(Color.fromRGB(Random.nextInt(255), Random.nextInt(255), Random.nextInt(255)), 0.5f)
+        org.bukkit.Particle.DustOptions(
+            Color.fromRGB(Random.nextInt(255), Random.nextInt(255), Random.nextInt(255)),
+            0.5f
+        )
 
     override val id: UUID = emitterData.id
     val emitterComponents: List<EmitterComponent> =
@@ -79,7 +80,7 @@ class MountedUnoptimizedEmitter(
     private var emitterMisses = 0
 
     override fun tick(): EmitterTickResult {
-        if (blocked.get()) {
+        if (!blocked.compareAndSet(false, true)) {
             println("${unrealizedEmitter.id} blocked!")
             return EmitterTickResult(true)
         }
@@ -221,6 +222,11 @@ class MountedUnoptimizedEmitter(
     }
 
     override fun applyEmitterRotation(input: Quaternionf): Quaternionf {
-        return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(pose.rot.x, pose.rot.y, pose.rot.z, pose.rot.w).mul(input) else input
+        return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(
+            pose.rot.x,
+            pose.rot.y,
+            pose.rot.z,
+            pose.rot.w
+        ).mul(input) else input
     }
 }

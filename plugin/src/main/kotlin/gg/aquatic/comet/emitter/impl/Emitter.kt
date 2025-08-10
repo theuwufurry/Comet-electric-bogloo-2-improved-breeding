@@ -76,8 +76,7 @@ class Emitter(
     private var emitterMisses = 0
 
     override fun tick(): EmitterTickResult {
-        if (blocked.get()) {
-//            println("${unrealizedEmitter.id} blocked!")
+        if (!blocked.compareAndSet(false, true)) {
             return EmitterTickResult(true)
         }
 
