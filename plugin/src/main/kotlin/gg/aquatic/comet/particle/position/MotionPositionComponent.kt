@@ -75,6 +75,7 @@ class MotionPositionComponent(
                 )?.mul(otherEmitterData.emitter!!.environmentData.size)?.rotate(myEmitterData.emitter!!.pose.rot)
                     ?: Vector3d()
             )
+
             return
         }
 
