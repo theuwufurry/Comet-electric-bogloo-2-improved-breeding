@@ -4,9 +4,9 @@ import gg.aquatic.comet.api.parsing.resourcepack.ResourcepackCreator
 import gg.aquatic.comet.api.particle.UpdateFlags
 import gg.aquatic.comet.api.particle.data.AbstractEntityDataBuilder
 import gg.aquatic.comet.api.particle.data.EntityData
-import gg.aquatic.comet.api.particle.display.TextData
 import gg.aquatic.comet.api.particle.display.model.ModelData
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
+import gg.aquatic.comet.api.particle.display.text.TextData
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityDataTypes
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Quaternion4f
 import net.kyori.adventure.key.Key
@@ -105,8 +105,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
                     entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
                         22 + PACKET_OFFSET,
                         EntityDataTypes.ADV_COMPONENT,
-                        Component.text(td.string)
-                            .color(TextColor.color(component.color and 0xFFFFFF))
+                        td.with(component.color and 0xFFFFFF),
                     )
 
                     entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(

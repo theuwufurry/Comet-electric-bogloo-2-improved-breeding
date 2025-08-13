@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "gg.aquatic"
-version = "1.11.1"
+version = "1.12.0"
 
 repositories {
     mavenCentral()
@@ -31,6 +31,7 @@ dependencies {
     compileOnly("org.openjdk.nashorn:nashorn-core:15.4")
 
     compileOnly("io.lumine:Mythic-Dist:5.6.1")
+    implementation("net.kyori:adventure-api:4.24.0")
     compileOnly("com.ticxo.modelengine:ModelEngine:R4.0.7")
     implementation(kotlin("stdlib-jdk8"))
 }

@@ -12,10 +12,7 @@ import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.api.particle.UpdateFlags
 import gg.aquatic.comet.api.particle.data.AbstractEntityDataBuilder
 import gg.aquatic.comet.api.particle.data.EntityData
-import gg.aquatic.comet.api.particle.display.TextData
-import gg.aquatic.comet.api.particle.display.sprite.SpriteData
 import gg.aquatic.comet.particle.data.EntityDataBuilder
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.type.EntityTypes
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.world.Location
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.util.Vector3d
 import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.PacketWrapper
@@ -89,7 +86,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
         result += WrapperPlayServerSpawnEntity(
             id,
             Optional.of(uuid),
-            if (data.displayData is SpriteData || data.displayData is TextData) EntityTypes.TEXT_DISPLAY else EntityTypes.ITEM_DISPLAY,
+            data.displayData.entityType,
             spawnPos,
             yawpitch.pitch, yawpitch.yaw, 0f,
             0,
@@ -134,7 +131,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
             result += WrapperPlayServerSpawnEntity(
                 invertedIDs.first,
                 Optional.of(invertedIDs.second),
-                if (data.displayData is SpriteData || data.displayData is TextData) EntityTypes.TEXT_DISPLAY else EntityTypes.ITEM_DISPLAY,
+                data.displayData.entityType,
                 spawnPos,
                 yawpitch.pitch, yawpitch.yaw, 0f,
                 0,

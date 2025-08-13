@@ -54,6 +54,7 @@ import gg.aquatic.comet.particle.display.sprite.ExpressionSpriteComponent
 import gg.aquatic.comet.particle.display.sprite.FlipbookSpriteComponent
 import gg.aquatic.comet.particle.display.sprite.RandomSpriteComponent
 import gg.aquatic.comet.particle.display.text.ConstantTextComponent
+import gg.aquatic.comet.particle.display.text.MiniMessageTextComponent
 import gg.aquatic.comet.particle.lifetime.ParticleLifetimeComponent
 import gg.aquatic.comet.particle.lifetime.ParticleLifetimeExpressionComponent
 import gg.aquatic.comet.particle.light.ConstantLightComponent
@@ -117,6 +118,7 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
             FlipbookModelComponent,
 
             ConstantTextComponent,
+            MiniMessageTextComponent,
 
             ConstantLightComponent,
 
@@ -192,7 +194,13 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
         GlobalTicker.killInstances()
 
         for (file in effects) {
-            val rootObject = JsonParser.parseReader(FileReader(file)).asJsonObject
+            val rootObject = try {
+                JsonParser.parseReader(FileReader(file)).asJsonObject
+            } catch (e: Exception) {
+                AbstractParticleEmitter.INSTANCE.logger.severe("Failed parsing ${file.nameWithoutExtension}! Error:")
+                e.printStackTrace()
+                continue
+            }
 
             val emitter = parseComponents(rootObject, file.nameWithoutExtension)
             emitter?.run {
