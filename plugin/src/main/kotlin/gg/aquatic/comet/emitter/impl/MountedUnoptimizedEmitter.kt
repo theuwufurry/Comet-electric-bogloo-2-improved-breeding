@@ -108,6 +108,7 @@ class MountedUnoptimizedEmitter(
                 )
             }
 
+            blocked.set(false)
             return EmitterTickResult(false)
         }
 
@@ -151,6 +152,8 @@ class MountedUnoptimizedEmitter(
         val deadParticleIDs: MutableList<Pair<Player, MutableList<Int>>> = spawningProcessor.process(dataPackets)
 
         if (!dead && emitterData.isActive) spawnParticles()
+
+        blocked.set(false)
 
         return EmitterTickResult(true, deadParticleIDs)
     }

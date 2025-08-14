@@ -91,7 +91,7 @@ class Emitter(
             emitterComponents.forEach { it.die(emitterData) }
         }
 
-        if (dead && particles.size == 0) {
+        if (dead && particles.isEmpty()) {
             if (locMisses > 0 || particleMisses > 0 || emitterMisses > 0 || displayMisses > 0) {
                 println(
                     """
@@ -103,6 +103,8 @@ class Emitter(
             """.trimIndent()
                 )
             }
+
+            blocked.set(false)
 
             return EmitterTickResult(false)
         }
@@ -147,6 +149,8 @@ class Emitter(
         val deadParticleIDs: MutableList<Pair<Player, MutableList<Int>>> = spawningProcessor.process(dataPackets)
 
         if (!dead && emitterData.isActive) spawnParticles()
+
+        blocked.set(false)
 
         return EmitterTickResult(true, deadParticleIDs)
     }
