@@ -3,21 +3,22 @@ package gg.aquatic.comet.particle.position
 import com.google.gson.JsonElement
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.parsing.BaseComponentParser
-import gg.aquatic.comet.api.parsing.compile
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.particleEngine
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
-import gg.aquatic.comet.parsing.expression
+import gg.aquatic.comet.parsing.getExpr
+import gg.aquatic.comet.script.expr.Expr
+import gg.aquatic.comet.script.expr.JSExpr.Companion.constructExpr
+import gg.aquatic.comet.script.expr.getOrPrint
 import org.joml.Vector3d
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import javax.script.CompiledScript
 
 class ExpressionPositionComponent(
-    private val xOffset: CompiledScript,
-    private val yOffset: CompiledScript,
-    private val zOffset: CompiledScript,
+    private val xOffset: Expr<Number>,
+    private val yOffset: Expr<Number>,
+    private val zOffset: Expr<Number>,
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData
 ) : ParticleComponent, PositionComponent {
@@ -33,9 +34,9 @@ class ExpressionPositionComponent(
 
         val oldResult = om.getOrPut(otherParticleData.id) { Vector3d() }
         val newResult = Vector3d(
-            (xOffset.eval() as Number).toDouble() * otherEmitterData.emitter!!.environmentData.size,
-            (yOffset.eval() as Number).toDouble() * otherEmitterData.emitter!!.environmentData.size,
-            (zOffset.eval() as Number).toDouble() * otherEmitterData.emitter!!.environmentData.size
+            (xOffset.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble() ?: return) * otherEmitterData.emitter!!.environmentData.size,
+            (yOffset.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble() ?: return) * otherEmitterData.emitter!!.environmentData.size,
+            (zOffset.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble() ?: return) * otherEmitterData.emitter!!.environmentData.size,
         )
         om[otherParticleData.id] = newResult.rotate(myEmitterData.emitter!!.pose.rot)
         val newPos = Vector3d(otherParticleData.relativePosition).add(Vector3d(newResult).sub(oldResult))
@@ -47,17 +48,26 @@ class ExpressionPositionComponent(
     companion object : BaseComponentParser {
         override val id: String = "expression_position"
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ExpressionPositionComponent? {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<ExpressionPositionComponent> {
             val jsonObject = jsonElement.asJsonObject
             val emitterData = EmitterData()
             val (engine, particleData) = particleEngine(emitterData)
 
-            return ExpressionPositionComponent(
-                engine.compile(jsonObject.expression("x") ?: return null, macros) ?: return null,
-                engine.compile(jsonObject.expression("y") ?: return null, macros) ?: return null,
-                engine.compile(jsonObject.expression("z") ?: return null, macros) ?: return null,
+            return Result.success(ExpressionPositionComponent(
+                jsonObject.getExpr("x")
+                    .fold({it}, {return Result.failure(it)})
+                    .constructExpr<Number>(engine, macros)
+                    .fold({it}, {return Result.failure(it)}),
+                jsonObject.getExpr("y")
+                    .fold({it}, {return Result.failure(it)})
+                    .constructExpr<Number>(engine, macros)
+                    .fold({it}, {return Result.failure(it)}),
+                jsonObject.getExpr("z")
+                    .fold({it}, {return Result.failure(it)})
+                    .constructExpr<Number>(engine, macros)
+                    .fold({it}, {return Result.failure(it)}),
                 emitterData, particleData
-            )
+            ))
         }
     }
 }

@@ -23,8 +23,8 @@ class InfiniteEmitterLifetimeComponent : EmitterComponent,
     companion object : BaseComponentParser {
         override val id: String = "infinite_emitter_lifetime"
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): InfiniteEmitterLifetimeComponent {
-            return InfiniteEmitterLifetimeComponent()
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<InfiniteEmitterLifetimeComponent> {
+            return Result.success(InfiniteEmitterLifetimeComponent())
         }
     }
 }

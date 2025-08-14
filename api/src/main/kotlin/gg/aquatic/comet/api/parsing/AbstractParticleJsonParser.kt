@@ -6,17 +6,20 @@ import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.PreInitComponent
 import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.parsing.macro.Macro
+import kotlinx.serialization.json.JsonArray
 import org.joml.Vector3d
 import org.joml.Vector3f
 
+class InvalidJsonException(msg: String) : Exception(msg)
+class NotMyType() : Exception()
 interface ComponentParser<T> {
     val id: String
-    fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): T?
+    fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<T>
 }
 
 interface BaseComponentParser {
     val id: String
-    fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component?
+    fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<Component>
 }
 
 interface PreInitComponentParser {
@@ -49,6 +52,10 @@ fun JsonElement.asBooleanOrNull(): Boolean? {
 
 fun JsonElement.asNumberOrNull(): Number? {
     return if (isJsonPrimitive && asJsonPrimitive.isNumber) asNumber else null
+}
+
+fun JsonElement.asArrayOrNull(): com.google.gson.JsonArray? {
+    return if (isJsonArray) asJsonArray else null
 }
 
 fun JsonElement.asVector3dWithDefaultValues(def: Vector3d = Vector3d()): Vector3d? {

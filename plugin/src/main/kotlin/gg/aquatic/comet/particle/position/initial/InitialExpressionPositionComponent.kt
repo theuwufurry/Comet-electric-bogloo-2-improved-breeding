@@ -3,20 +3,21 @@ package gg.aquatic.comet.particle.position.initial
 import com.google.gson.JsonElement
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.parsing.BaseComponentParser
-import gg.aquatic.comet.api.parsing.compile
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.particleEngine
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
-import gg.aquatic.comet.parsing.expression
+import gg.aquatic.comet.parsing.getExprOrNull
 import gg.aquatic.comet.particle.position.PositionComponent
+import gg.aquatic.comet.script.expr.Expr
+import gg.aquatic.comet.script.expr.JSExpr.Companion.constructExpr
+import gg.aquatic.comet.script.expr.getOrPrint
 import org.joml.Vector3d
-import javax.script.CompiledScript
 
 class InitialExpressionPositionComponent(
-    private val xOffset: CompiledScript?,
-    private val yOffset: CompiledScript?,
-    private val zOffset: CompiledScript?,
+    private val xOffset: Expr<Number>?,
+    private val yOffset: Expr<Number>?,
+    private val zOffset: Expr<Number>?,
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData
 ) : ParticleComponent, PositionComponent {
@@ -27,9 +28,9 @@ class InitialExpressionPositionComponent(
             myParticleData.copyFrom(otherParticleData)
             otherParticleData.relativePosition.add(
                 Vector3d(
-                    (xOffset?.eval() as? Number)?.toDouble() ?: 0.0,
-                    (yOffset?.eval() as? Number)?.toDouble() ?: 0.0,
-                    (zOffset?.eval() as? Number)?.toDouble() ?: 0.0,
+                    xOffset?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble() ?: 0.0,
+                    yOffset?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble() ?: 0.0,
+                    zOffset?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble() ?: 0.0,
                 ).rotate(otherEmitterData.emitter!!.pose.rot)
             )
         }
@@ -41,16 +42,27 @@ class InitialExpressionPositionComponent(
 
         override val id: String = "initial_expression_position"
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): InitialExpressionPositionComponent {
+        override fun parse(
+            jsonElement: JsonElement,
+            macros: Map<String, Macro>?
+        ): Result<InitialExpressionPositionComponent> {
             val jsonObject = jsonElement.asJsonObject
             val emitterData = EmitterData()
             val (engine, particleData) = particleEngine(emitterData)
 
-            return InitialExpressionPositionComponent(
-                jsonObject.expression("x")?.let { engine.compile(it, macros) },
-                jsonObject.expression("y")?.let { engine.compile(it, macros) },
-                jsonObject.expression("z")?.let { engine.compile(it, macros) },
-                emitterData, particleData
+            return Result.success(
+                InitialExpressionPositionComponent(
+                    jsonObject.getExprOrNull("x")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
+                    jsonObject.getExprOrNull("y")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
+                    jsonObject.getExprOrNull("z")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
+                    emitterData, particleData
+                )
             )
         }
     }

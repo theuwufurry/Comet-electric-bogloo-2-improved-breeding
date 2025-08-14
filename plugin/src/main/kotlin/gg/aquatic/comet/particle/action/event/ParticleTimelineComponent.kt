@@ -37,7 +37,7 @@ class ParticleTimelineComponent(
     companion object : BaseComponentParser {
         override val id: String = "on_particle_timeline"
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<Component> {
             val jsonObject =
                 if (jsonElement.isJsonObject) jsonElement.asJsonObject else throw MalformedJsonException("Malformed particle timeline component.")
 
@@ -47,10 +47,10 @@ class ParticleTimelineComponent(
                 val time = entry.toIntOrNull() ?: continue
                 if (!element.isJsonArray) continue
 
-                map[time] = Action.parse(element.asJsonArray, macros)
+                map[time] = Action.parse(element.asJsonArray, macros).fold({ it }, { return Result.failure(it) })
             }
 
-            return ParticleTimelineComponent(map)
+            return Result.success(ParticleTimelineComponent(map))
         }
     }
 }

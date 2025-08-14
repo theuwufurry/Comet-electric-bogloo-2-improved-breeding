@@ -4,6 +4,7 @@ import com.google.gson.JsonElement
 import gg.aquatic.comet.api.emitter.action.ActionContext
 import gg.aquatic.comet.api.emitter.action.SubAction
 import gg.aquatic.comet.api.parsing.ComponentParser
+import gg.aquatic.comet.api.parsing.NotMyType
 import gg.aquatic.comet.api.parsing.macro.Macro
 
 class ParticleDieSubAction : SubAction {
@@ -15,12 +16,12 @@ class ParticleDieSubAction : SubAction {
     companion object : ComponentParser<ParticleDieSubAction> {
         override val id: String = "particle_die"
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ParticleDieSubAction? {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<ParticleDieSubAction> {
             if (jsonElement.isJsonPrimitive && jsonElement.asString == "particle_die") {
-                return ParticleDieSubAction()
+                return Result.success(ParticleDieSubAction())
             }
 
-            return null
+            return Result.failure(NotMyType())
         }
     }
 }

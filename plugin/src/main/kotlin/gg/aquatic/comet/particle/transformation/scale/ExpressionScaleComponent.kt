@@ -3,19 +3,20 @@ package gg.aquatic.comet.particle.transformation.scale
 import com.google.gson.JsonElement
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.parsing.BaseComponentParser
-import gg.aquatic.comet.api.parsing.compile
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.particleEngine
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
-import gg.aquatic.comet.parsing.expression
+import gg.aquatic.comet.parsing.getExprOrNull
+import gg.aquatic.comet.script.expr.Expr
+import gg.aquatic.comet.script.expr.JSExpr.Companion.constructExpr
+import gg.aquatic.comet.script.expr.getOrPrint
 import org.joml.Vector3f
-import javax.script.CompiledScript
 
 class ExpressionScaleComponent(
-    private val xScale: CompiledScript?,
-    private val yScale: CompiledScript?,
-    private val zScale: CompiledScript?,
+    private val xScale: Expr<Number>?,
+    private val yScale: Expr<Number>?,
+    private val zScale: Expr<Number>?,
     private val myParticleData: ParticleData,
     private val myEmitterData: EmitterData
 ) : ParticleComponent, ScaleComponent {
@@ -27,16 +28,24 @@ class ExpressionScaleComponent(
         override fun parse(
             jsonElement: JsonElement,
             macros: Map<String, Macro>?
-        ): ExpressionScaleComponent {
+        ): Result<ExpressionScaleComponent> {
             val jsonObject = jsonElement.asJsonObject
             val emitterData = EmitterData()
             val (engine, particleData) = particleEngine(emitterData)
 
-            return ExpressionScaleComponent(
-                jsonObject.expression("x")?.let { engine.compile(it,  macros) },
-                jsonObject.expression("y")?.let { engine.compile(it,  macros) },
-                jsonObject.expression("z")?.let { engine.compile(it,  macros) },
-                particleData, emitterData
+            return Result.success(
+                ExpressionScaleComponent(
+                    jsonObject.getExprOrNull("x")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
+                    jsonObject.getExprOrNull("y")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
+                    jsonObject.getExprOrNull("z")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
+                    particleData, emitterData
+                )
             )
         }
     }
@@ -46,9 +55,9 @@ class ExpressionScaleComponent(
         myParticleData.copyFrom(otherParticleData)
 
         otherParticleData.scale = Vector3f(
-            (xScale?.eval() as? Number ?: 1f).toFloat() * otherEmitterData.emitter!!.environmentData.size.toFloat(),
-            (yScale?.eval() as? Number ?: 1f).toFloat() * otherEmitterData.emitter!!.environmentData.size.toFloat(),
-            (zScale?.eval() as? Number ?: 1f).toFloat() * otherEmitterData.emitter!!.environmentData.size.toFloat()
+            (xScale?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toFloat() ?: 1f) * otherEmitterData.emitter!!.environmentData.size.toFloat(),
+            (yScale?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toFloat() ?: 1f) * otherEmitterData.emitter!!.environmentData.size.toFloat(),
+            (zScale?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toFloat() ?: 1f) * otherEmitterData.emitter!!.environmentData.size.toFloat(),
         )
     }
 

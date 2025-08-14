@@ -36,8 +36,12 @@ class ParticleInitComponent(
     companion object : BaseComponentParser {
         override val id: String = "on_particle_init"
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {
-            return ParticleInitComponent(Action.parse(jsonElement.asJsonArray, macros))
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<Component> {
+            return Result.success(
+                ParticleInitComponent(
+                    Action.parse(jsonElement.asJsonArray, macros).fold({ it }, { return Result.failure(it) })
+                )
+            )
         }
     }
 }

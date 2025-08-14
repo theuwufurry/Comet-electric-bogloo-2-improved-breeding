@@ -38,7 +38,7 @@ class EmitterTimelineComponent(
     companion object : BaseComponentParser {
         override val id: String = "on_emitter_timeline"
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<Component> {
             val jsonObject =
                 if (jsonElement.isJsonObject) jsonElement.asJsonObject else throw MalformedJsonException("Malformed emitter timeline component.")
 
@@ -48,10 +48,13 @@ class EmitterTimelineComponent(
                 val time = entry.toIntOrNull() ?: continue
                 if (!element.isJsonArray) continue
 
-                map[time] = Action.parse(element.asJsonArray, macros)
+                map[time] = Action.parse(element.asJsonArray, macros).fold(
+                    { it },
+                    { return Result.failure(it) }
+                )
             }
 
-            return EmitterTimelineComponent(map)
+            return Result.success(EmitterTimelineComponent(map))
         }
     }
 }

@@ -36,7 +36,7 @@ fun Compilable.compile(
     input: String,
     macros: Map<String, Macro>?,
     tryAsSimpleString: Boolean = false
-): CompiledScript? {
+): Result<CompiledScript> {
     var output = input
     if (macros != null) {
         for ((from, macro) in macros) {
@@ -55,7 +55,7 @@ fun Compilable.compile(
             if (compiled == null) {
                 val escapedCompiled = compile("\"" + output + "\"")
                 escapedCompiled?.eval()
-                return escapedCompiled
+                return Result.success(escapedCompiled)
             } else {
                 compiled.eval()
             }
@@ -63,26 +63,21 @@ fun Compilable.compile(
             try {
                 val escapedCompiled = compile("\"" + output + "\"")
                 escapedCompiled.eval()
-                return escapedCompiled
+                return Result.success(escapedCompiled)
             } catch (ignored: Exception) {
                 if (compiled == null) {
-                    AbstractParticleEmitter.INSTANCE.logger.severe("Issue while compiling Javascript one of your scripts!")
-                    AbstractParticleEmitter.INSTANCE.logger.severe(e!!.message)
-                    return null
+                    return Result.failure(e!!)
                 }
 
-                return compiled
+                return Result.success(compiled)
             }
         }
     }
 
     return try {
-        compile(output)
+        Result.success(compile(output))
     } catch (sc: ScriptException) {
-        AbstractParticleEmitter.INSTANCE.logger.severe("Issue while compiling Javascript one of your scripts!")
-        AbstractParticleEmitter.INSTANCE.logger.severe(sc.message)
-
-        null
+        Result.failure(sc)
     }
 }
 

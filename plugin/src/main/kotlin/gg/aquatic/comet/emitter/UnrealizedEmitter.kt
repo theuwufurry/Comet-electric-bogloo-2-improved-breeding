@@ -23,8 +23,6 @@ import gg.aquatic.comet.emitter.optimization.VirtualRuntime
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.waves.util.audience.AquaticAudience
 import gg.aquatic.waves.util.audience.GlobalAudience
-import org.bukkit.Location
-import org.joml.Vector3d
 import java.util.*
 import java.util.function.Consumer
 import java.util.function.Supplier

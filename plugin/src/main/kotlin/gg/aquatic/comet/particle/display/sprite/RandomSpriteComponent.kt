@@ -8,10 +8,13 @@ import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.api.particle.display.sprite.SpriteComponent
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
-import javax.script.CompiledScript
+import gg.aquatic.comet.parsing.getExpr
+import gg.aquatic.comet.script.expr.Expr
+import gg.aquatic.comet.script.expr.JSExpr.Companion.constructExpr
+import gg.aquatic.comet.script.expr.getOrPrint
 
 class RandomSpriteComponent(
-    private val weightedSprites: List<Pair<CompiledScript, CompiledScript>>,
+    private val weightedSprites: List<Pair<Expr<Number>, Expr<String>>>,
     private val myParticleData: ParticleData, private val myEmitterData: EmitterData
 ) : ParticleComponent, SpriteComponent {
     override val priority = 0
@@ -23,8 +26,8 @@ class RandomSpriteComponent(
             var totalWeight = 0.0
             val evaluatedWeightedSprites: MutableList<Pair<Double, String>> = mutableListOf()
             for ((weightScript, spriteScript) in weightedSprites) {
-                val weight = (weightScript.eval() as Number).toDouble()
-                val sprite = spriteScript.eval() as String
+                val weight = weightScript.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble() ?: return
+                val sprite = spriteScript.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id) ?: return
                 evaluatedWeightedSprites += (weight to sprite)
                 totalWeight += weight
             }
@@ -52,36 +55,52 @@ class RandomSpriteComponent(
     companion object : BaseComponentParser {
         override val id: String = "random_sprite"
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): RandomSpriteComponent? {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<RandomSpriteComponent> {
             val emitterData = EmitterData()
             val (engine, particleData) = particleEngine(emitterData)
-            val weightedSprites: MutableList<Pair<CompiledScript, CompiledScript>> = mutableListOf()
+            val weightedSprites: MutableList<Pair<Expr<Number>, Expr<String>>> = mutableListOf()
 
             if (jsonElement.isJsonObject) {
                 val jsonObject = jsonElement.asJsonObject
                 if (jsonObject.has("sprite") && jsonObject.has("min") && jsonObject.has("max")) {
-                    val sprite = jsonObject["sprite"]!!.asStringOrNull() ?: return null
-                    val min = jsonObject["min"]!!.asNumberOrNull()?.toInt() ?: return null
-                    val max = jsonObject["max"]!!.asNumberOrNull()?.toInt() ?: return null
-                    if (max < min) return null
+                    val sprite = jsonObject.getExpr("sprite").fold({ it }, { return Result.failure(it) })
+                    val min = jsonObject["min"]
+                        ?.asNumberOrNull()?.toInt()
+                        ?: return Result.failure(InvalidJsonException("Malformed 'min' field!"))
+                    val max = jsonObject["max"]
+                        ?.asNumberOrNull()?.toInt()
+                        ?: return Result.failure(InvalidJsonException("Malformed 'min' field!"))
+                    if (max < min) return Result.failure(InvalidJsonException("Max is greater than min!"))
 
                     for (i in min..max) {
-                        weightedSprites += engine.compile("1") to engine.compile("\"$sprite.$i\"")
+                        weightedSprites += ("1".constructExpr<Number>(engine, macros).getOrThrow()) to "\"$sprite.$i\""
+                            .constructExpr<String>(engine, macros, tryAsSimpleString = true)
+                            .fold({ it }, { return Result.failure(it) })
                     }
 
-                    return RandomSpriteComponent(
-                        weightedSprites,
-                        particleData, emitterData
+                    return Result.success(
+                        RandomSpriteComponent(
+                            weightedSprites,
+                            particleData, emitterData
+                        )
                     )
                 } else {
                     for ((weight, sprite) in jsonObject.entrySet()) {
                         val spriteString = sprite.asStringOrNull() ?: continue
-                        weightedSprites += (engine.compile(weight, macros, true) ?: continue) to (engine.compile(spriteString, macros, true) ?: continue)
+                        weightedSprites += (
+                                weight.constructExpr<Number>(engine, macros)
+                                    .fold({ it }, { return Result.failure(it) })
+                                ) to (
+                                spriteString.constructExpr<String>(engine, macros, tryAsSimpleString = true)
+                                    .fold({ it }, { return Result.failure(it) })
+                                )
                     }
 
-                    return RandomSpriteComponent(
-                        weightedSprites,
-                        particleData, emitterData
+                    return Result.success(
+                        RandomSpriteComponent(
+                            weightedSprites,
+                            particleData, emitterData
+                        )
                     )
                 }
             } else {
@@ -91,13 +110,19 @@ class RandomSpriteComponent(
                     val obj = jsonElem.asJsonObjectOrNull() ?: continue
                     val weightStr = obj["weight"]?.asStringOrNull() ?: continue
                     val spriteString = obj["sprite"]?.asStringOrNull() ?: continue
-                    weightedSprites += ((engine.compile(weightStr, macros, true) ?: continue) to (engine.compile(spriteString, macros, true) ?: continue))
+                    weightedSprites += (
+                            weightStr.constructExpr<Number>(engine, macros)
+                                .fold({ it }, { return Result.failure(it) })
+                            ) to (
+                            spriteString.constructExpr<String>(engine, macros, tryAsSimpleString = true)
+                                .fold({ it }, { return Result.failure(it) })
+                            )
                 }
 
-                return RandomSpriteComponent(
+                return Result.success(RandomSpriteComponent(
                     weightedSprites,
                     particleData, emitterData
-                )
+                ))
             }
         }
     }

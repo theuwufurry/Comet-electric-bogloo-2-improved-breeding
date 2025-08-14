@@ -6,7 +6,7 @@ import com.google.gson.JsonPrimitive
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.parsing.asBooleanOrNull
 import gg.aquatic.comet.api.parsing.asJsonObjectOrNull
-import gg.aquatic.comet.parsing.expression
+import gg.aquatic.comet.parsing.getExprOrNull
 import gg.aquatic.comet.particle.position.initial.SpherePositionComponent
 import gg.aquatic.comet.snowstorm.Deserializer
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
@@ -30,7 +30,7 @@ object EmitterSphereShapeDeserializer : Deserializer {
         val parsedArray = offsetArray?.map { deserializedEffect.parseExpr(it.primitiveString()) }
 
         val radius =
-            jsonObject.expression("radius")?.let { deserializedEffect.parseExpr(it) } ?: listOf(LiteralExpr(1.0))
+            jsonObject.getExprOrNull("radius")?.let { deserializedEffect.parseExpr(it) } ?: listOf(LiteralExpr(1.0))
         val surfaceOnly = jsonObject["surface_only"]?.asBooleanOrNull() ?: false
 
 

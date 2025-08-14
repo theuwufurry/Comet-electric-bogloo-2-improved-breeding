@@ -4,28 +4,28 @@ import com.google.gson.JsonElement
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.parsing.ComponentParser
-import gg.aquatic.comet.api.parsing.compile
 import gg.aquatic.comet.api.parsing.emitterEngine
 import gg.aquatic.comet.api.parsing.macro.Macro
-import gg.aquatic.comet.parsing.expression
-import javax.script.CompiledScript
+import gg.aquatic.comet.parsing.getExpr
+import gg.aquatic.comet.parsing.getExprOrNull
+import gg.aquatic.comet.script.expr.Expr
+import gg.aquatic.comet.script.expr.JSExpr.Companion.constructExpr
+import gg.aquatic.comet.script.expr.getOrPrint
 import kotlin.math.floor
 import kotlin.math.min
 
 class SteadyRateComponent(
-    private val spawnRate: CompiledScript,
-    private val maxParticles: CompiledScript?,
+    private val spawnRate: Expr<Number>,
+    private val maxParticles: Expr<Number>?,
     private val myEmitterData: EmitterData
 ) :
     RateComponent {
     override fun toEmit(otherEmitterData: EmitterData): Int {
         myEmitterData.copyFrom(otherEmitterData)
-        val evaluatedMaxParticles = maxParticles?.let {
-            (it.eval() as Number).toInt()
-        } ?: Integer.MAX_VALUE
+        val evaluatedMaxParticles = maxParticles?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toInt() ?: Integer.MAX_VALUE
         if (otherEmitterData.emitter!!.particles.size >= evaluatedMaxParticles) return 0
 
-        val evaluatedSpawnRate = (spawnRate.eval() as Number).toDouble()
+        val evaluatedSpawnRate = spawnRate.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble() ?: 0.0
         //evaluatedSpawnRate is per second, we need per tick.
         //tick spawn rate is floor(evaluatedSpawnRate / 20) + leftovers
         //leftovers = (evaluatedSpawnRate % 20). leftovers are every few ticks. should be evenly spaced throughout 20 tick interval.
@@ -45,14 +45,20 @@ class SteadyRateComponent(
     companion object : ComponentParser<SteadyRateComponent> {
         override val id: String = "emitter_rate_steady"
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): SteadyRateComponent? {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<SteadyRateComponent> {
             val jsonObject = jsonElement.asJsonObject
             val emitterData = EmitterData()
             val engine = emitterEngine(emitterData)
-            return SteadyRateComponent(
-                engine.compile(jsonObject.expression("spawn_rate") ?: return null, macros) ?: return null,
-                jsonObject.expression("max_particles")?.let { engine.compile(it, macros) },
-                emitterData
+            return Result.success(
+                SteadyRateComponent(
+                    jsonObject.getExpr("spawn_rate")
+                        .fold({ it }, { return Result.failure(it) })
+                        .constructExpr<Number>(engine, macros).fold({ it }, { return Result.failure(it) }),
+                    jsonObject.getExprOrNull("max_particles")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
+                    emitterData
+                )
             )
         }
 
@@ -60,7 +66,7 @@ class SteadyRateComponent(
             val emitterData = EmitterData()
             val engine = emitterEngine(emitterData)
             return SteadyRateComponent(
-                engine.compile("20", null)!!,
+                "20".constructExpr<Number>(engine, null).getOrThrow(),
                 null,
                 emitterData
             )

@@ -2,8 +2,8 @@ package gg.aquatic.comet.particle.lifetime
 
 import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.emitter.EmitterData
-import gg.aquatic.comet.api.parsing.compile
 import gg.aquatic.comet.api.parsing.particleEngine
+import gg.aquatic.comet.script.expr.JSExpr.Companion.constructExpr
 
 interface ParticleLifetimeComponent {
     companion object {
@@ -13,7 +13,7 @@ interface ParticleLifetimeComponent {
 
             return ParticleLifetimeExpressionComponent(
                 null,
-                engine.compile("20", null),
+                "20".constructExpr<Number>(engine, null).getOrThrow(),
                 particleData, emitterData
             )
         }

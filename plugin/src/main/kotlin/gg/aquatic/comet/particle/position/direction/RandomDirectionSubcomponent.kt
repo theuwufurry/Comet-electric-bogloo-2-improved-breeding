@@ -3,16 +3,17 @@ package gg.aquatic.comet.particle.position.direction
 import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.particle.ParticleData
+import gg.aquatic.comet.script.expr.Expr
+import gg.aquatic.comet.script.expr.getOrPrint
 import org.joml.Quaterniond
 import org.joml.Vector3d
-import javax.script.CompiledScript
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
 class RandomDirectionSubcomponent(
-    private val magnitudeScript: CompiledScript? = null,
-    private val directionScript: Pair<DirectionSubcomponent, CompiledScript?>? = null,
+    private val magnitudeScript: Expr<Number>? = null,
+    private val directionScript: Pair<DirectionSubcomponent, Expr<Number>?>? = null,
     private val myParticleData: ParticleData,
     private val myEmitterData: EmitterData
 ) : DirectionSubcomponent {
@@ -21,8 +22,10 @@ class RandomDirectionSubcomponent(
         myParticleData.copyFrom(otherParticleData)
         if (myParticleData.age == 0.0) {
             val dir: Vector3d? = directionScript?.first?.dir(otherEmitterData, otherParticleData)
-            val spread: Double? = directionScript?.second?.eval() as? Double
-            return randomVector(otherEmitterData.emitter!!, magnitudeScript?.let { it.eval() as Number }?.toDouble() ?: 0.0, dir, spread)
+            val spread: Double? = directionScript?.second?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble()
+            val magnitude = magnitudeScript?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble() ?: 0.0
+            val v = randomVector(otherEmitterData.emitter!!, magnitude, dir, spread)
+            return v
         }
 
         return myParticleData.velocity

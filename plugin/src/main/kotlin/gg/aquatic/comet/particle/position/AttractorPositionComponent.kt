@@ -6,22 +6,24 @@ import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.action.ActionContext
 import gg.aquatic.comet.api.parsing.BaseComponentParser
 import gg.aquatic.comet.api.parsing.PostInit
-import gg.aquatic.comet.api.parsing.compile
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.particleEngine
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.emitter.action.Action
-import gg.aquatic.comet.parsing.expression
+import gg.aquatic.comet.parsing.getExpr
+import gg.aquatic.comet.parsing.getExprOrNull
+import gg.aquatic.comet.script.expr.Expr
+import gg.aquatic.comet.script.expr.JSExpr.Companion.constructExpr
+import gg.aquatic.comet.script.expr.getOrPrint
 import org.joml.Vector3d
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import javax.script.CompiledScript
 import kotlin.math.min
 
 class AttractorPositionComponent(
     private val attractorScripts: List<Attractor>,
-    private val factor: CompiledScript,
+    private val factor: Expr<Number>?,
     private val type: String,
     private val onHitAction: Action?,
     private val myEmitterData: EmitterData,
@@ -30,11 +32,11 @@ class AttractorPositionComponent(
     override val priority = 0
 
     class Attractor(
-        val x: CompiledScript,
-        val y: CompiledScript,
-        val z: CompiledScript,
-        val mass: CompiledScript,
-        val radius: CompiledScript?
+        val x: Expr<Number>,
+        val y: Expr<Number>,
+        val z: Expr<Number>,
+        val mass: Expr<Number>?,
+        val radius: Expr<Number>?
     )
 
     override fun realize(unrealizedEmitter: AbstractUnrealizedEmitter) {
@@ -60,17 +62,21 @@ class AttractorPositionComponent(
                 for (script in attractorScripts) {
                     currentEvaluatedAttractors += EvaluatedAttractor(
                         Vector3d(
-                            (script.x.eval() as Number).toDouble() * otherEmitterData.emitter!!.environmentData.size,
-                            (script.y.eval() as Number).toDouble() * otherEmitterData.emitter!!.environmentData.size,
-                            (script.z.eval() as Number).toDouble() * otherEmitterData.emitter!!.environmentData.size,
+                            (script.x.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble()
+                                ?: return) * otherEmitterData.emitter!!.environmentData.size,
+                            (script.y.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble()
+                                ?: return) * otherEmitterData.emitter!!.environmentData.size,
+                            (script.z.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble()
+                                ?: return) * otherEmitterData.emitter!!.environmentData.size,
                         ),
-                        (script.mass.eval() as Number).toDouble(),
-                        (script.radius?.eval() as? Number)?.toDouble()
-                            ?.let { it * otherEmitterData.emitter!!.environmentData.size }
+                        (script.mass?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble() ?: 1.0),
+                        (script.radius?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble()
+                            ?.let { it * otherEmitterData.emitter!!.environmentData.size })
                     )
                 }
 
-                currentEvaluatedAttractors to (factor.eval() as Number).toDouble()
+
+                currentEvaluatedAttractors to (factor?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble() ?: 1.0)
             } else {
                 savedData.evaluatedAttractors to savedData.evaluatedFactor
             }
@@ -163,7 +169,7 @@ class AttractorPositionComponent(
     companion object : BaseComponentParser {
         override val id: String = "attractor_position"
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): AttractorPositionComponent? {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<AttractorPositionComponent> {
             val jsonObject = jsonElement.asJsonObject
             val emitterData = EmitterData()
             val (engine, particleData) = particleEngine(emitterData)
@@ -172,22 +178,41 @@ class AttractorPositionComponent(
             for (attractorElement in attractorsArray) {
                 val attractorObject = attractorElement.asJsonObject
                 attractorScripts += Attractor(
-                    engine.compile(attractorObject.expression("x") ?: return null, macros) ?: continue,
-                    engine.compile(attractorObject.expression("y") ?: return null, macros) ?: continue,
-                    engine.compile(attractorObject.expression("z") ?: return null, macros) ?: continue,
-                    engine.compile(attractorObject.expression("mass") ?: "1", macros) ?: continue,
-                    attractorObject.expression("radius")?.let { engine.compile(it, macros) },
+                    attractorObject.getExpr("x")
+                        .fold({ it }, { return Result.failure(it) })
+                        .constructExpr<Number>(engine, macros)
+                        .fold({ it }, { return Result.failure(it) }),
+                    attractorObject.getExpr("y")
+                        .fold({ it }, { return Result.failure(it) })
+                        .constructExpr<Number>(engine, macros)
+                        .fold({ it }, { return Result.failure(it) }),
+                    attractorObject.getExpr("z")
+                        .fold({ it }, { return Result.failure(it) })
+                        .constructExpr<Number>(engine, macros)
+                        .fold({ it }, { return Result.failure(it) }),
+                    attractorObject.getExpr("mass")
+                        .fold({ it }, { return Result.failure(it) })
+                        .constructExpr<Number>(engine, macros)
+                        .fold({ it }, { return Result.failure(it) }),
+                    attractorObject.getExprOrNull("radius")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) })
                 )
             }
 
-            val actions = jsonObject.getAsJsonArray("on_hit_attractor")?.let { Action.parse(it, macros) }
+            val actions = jsonObject.getAsJsonArray("on_hit_attractor")
+                ?.let { Action.parse(it, macros).fold({ it }, { return Result.failure(it) }) }
 
-            return AttractorPositionComponent(
-                attractorScripts,
-                engine.compile(jsonObject.expression("factor") ?: "1", macros) ?: return null,
-                jsonObject.getAsJsonPrimitive("type")?.asString ?: "gravity_linear",
-                actions,
-                emitterData, particleData
+            return Result.success(
+                AttractorPositionComponent(
+                    attractorScripts,
+                    jsonObject.getExprOrNull("factor")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
+                    jsonObject.getAsJsonPrimitive("type")?.asString ?: "gravity_linear",
+                    actions,
+                    emitterData, particleData
+                )
             )
         }
     }

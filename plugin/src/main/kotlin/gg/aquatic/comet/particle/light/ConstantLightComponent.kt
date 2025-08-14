@@ -8,12 +8,14 @@ import gg.aquatic.comet.api.parsing.particleEngine
 import gg.aquatic.comet.api.particle.LightData
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
-import gg.aquatic.comet.parsing.expression
-import javax.script.CompiledScript
+import gg.aquatic.comet.parsing.getExprOrNull
+import gg.aquatic.comet.script.expr.Expr
+import gg.aquatic.comet.script.expr.JSExpr.Companion.constructExpr
+import gg.aquatic.comet.script.expr.getOrPrint
 
 class ConstantLightComponent(
-    private val skylightScript: CompiledScript?,
-    private val blocklightScript: CompiledScript?,
+    private val skylightScript: Expr<Number>?,
+    private val blocklightScript: Expr<Number>?,
     private val myParticleData: ParticleData,
     private val myEmitterData: EmitterData,
 ) : ParticleComponent {
@@ -26,13 +28,8 @@ class ConstantLightComponent(
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
 
-        val skylight = if (skylightScript == null) 0 else {
-            (skylightScript.eval() as Number).toInt()
-        }
-
-        val blocklight = if (blocklightScript == null) 0 else {
-            (blocklightScript.eval() as Number).toInt()
-        }
+        val skylight = skylightScript?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toInt() ?: 0
+        val blocklight = blocklightScript?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toInt() ?: 0
 
         otherParticleData.light = LightData(skylight, blocklight)
     }
@@ -42,15 +39,21 @@ class ConstantLightComponent(
     companion object : BaseComponentParser {
         override val id: String = "constant_lightdata"
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ConstantLightComponent {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<ConstantLightComponent> {
             val jsonObject = jsonElement.asJsonObject
             val emitterData = EmitterData()
             val (engine, particleData) = particleEngine(emitterData)
 
-            return ConstantLightComponent(
-                jsonObject.expression("sky")?.let { engine.compile((it)) },
-                jsonObject.expression("block")?.let { engine.compile((it)) },
-                particleData, emitterData
+            return Result.success(
+                ConstantLightComponent(
+                    jsonObject.getExprOrNull("sky")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
+                    jsonObject.getExprOrNull("block")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
+                    particleData, emitterData
+                )
             )
         }
     }

@@ -7,23 +7,24 @@ import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.parsing.BaseComponentParser
 import gg.aquatic.comet.api.parsing.asJsonObjectOrNull
-import gg.aquatic.comet.api.parsing.compile
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.particleEngine
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
-import gg.aquatic.comet.parsing.expression
+import gg.aquatic.comet.parsing.getExprOrNull
+import gg.aquatic.comet.script.expr.Expr
+import gg.aquatic.comet.script.expr.JSExpr.Companion.constructExpr
+import gg.aquatic.comet.script.expr.getOrPrint
 import org.joml.Quaternionf
 import org.joml.Vector3f
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import javax.script.CompiledScript
 import kotlin.math.asin
 import kotlin.math.atan2
 
 class VelocityRotationComponent(
     private val spriteRotation: Float,
-    private val directedRotation: CompiledScript?,
+    private val directedRotation: Expr<Number>?,
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData
 ) : ParticleComponent, RotationComponent {
@@ -52,7 +53,7 @@ class VelocityRotationComponent(
         val yaw = atan2(delta.x, delta.z) + Math.PI.toFloat()
         val pitch = asin(delta.y) + Math.PI.toFloat() * -0.5f
 
-        val evaluatedDirectedRotation = (directedRotation?.eval() as? Number)?.toFloat() ?: 0f
+        val evaluatedDirectedRotation = directedRotation?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toFloat() ?: 0f
 
         otherParticleData.rotation = Quaternionf()
             .rotationY(yaw)
@@ -73,20 +74,24 @@ class VelocityRotationComponent(
     companion object : BaseComponentParser {
         override val id: String = "velocity_rotation"
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<Component> {
             val obj = jsonElement.asJsonObjectOrNull()
                 ?: throw MalformedJsonException("Velocity rotation component is not a json object!")
 
-            val spriteRotation = obj.expression("sprite_rotation")
+            val spriteRotation = obj.getExprOrNull("sprite_rotation")
                 ?.let { AbstractParticleEmitter.scriptEngineFactory.scriptEngine.eval(it) as Number }?.toFloat() ?: 0f
             val emitterData = EmitterData()
             val (engine, particleData) = particleEngine(emitterData)
-            val directedRotation = engine.compile(obj.expression("directed_rotation") ?: "0", macros)
+            val directedRotation = obj.getExprOrNull("directed_rotation")
+                ?.constructExpr<Number>(engine, macros)
+                ?.fold({ it }, { return Result.failure(it) })
 
-            return VelocityRotationComponent(
-                spriteRotation,
-                directedRotation,
-                emitterData, particleData
+            return Result.success(
+                VelocityRotationComponent(
+                    spriteRotation,
+                    directedRotation,
+                    emitterData, particleData
+                )
             )
         }
     }
