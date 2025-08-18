@@ -59,7 +59,7 @@ subprojects {
 
     dependencies {
         compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
-        compileOnly("gg.aquatic.waves:Waves:1.3.3:publish")
+        compileOnly("gg.aquatic.waves:Waves:1.3.6:publish")
 
         compileOnly("org.openjdk.nashorn:nashorn-core:15.4")
 

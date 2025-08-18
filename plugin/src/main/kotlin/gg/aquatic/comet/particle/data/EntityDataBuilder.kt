@@ -59,7 +59,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
             is SpriteData -> {
                 if (initial) {
                     entityData += EntityDataValue.create(23 + PACKET_OFFSET, DataSerializerTypes.INT, Int.MAX_VALUE)
-                    entityData += EntityDataValue.create(23 + PACKET_OFFSET, DataSerializerTypes.INT, 0)
+                    entityData += EntityDataValue.create(24 + PACKET_OFFSET, DataSerializerTypes.INT, 0)
                 }
 
                 if (flags.display) {
