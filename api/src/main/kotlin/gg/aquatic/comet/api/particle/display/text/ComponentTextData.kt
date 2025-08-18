@@ -1,10 +1,9 @@
 package gg.aquatic.comet.api.particle.display.text
 
 import gg.aquatic.comet.api.particle.display.DisplayData
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.type.EntityType
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.type.EntityTypes
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
+import org.bukkit.entity.EntityType
 
 class ComponentTextData(
     val component: Component,
@@ -12,7 +11,7 @@ class ComponentTextData(
     override val lineWidth: Int,
     val colored: Boolean,
 ) : TextData {
-    override val entityType: EntityType = EntityTypes.TEXT_DISPLAY
+    override val entityType: EntityType = EntityType.TEXT_DISPLAY
 
     override fun with(color: Int): Component {
         return if (colored) component.color(TextColor.color(color)) else component

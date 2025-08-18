@@ -1,12 +1,13 @@
 package gg.aquatic.comet.particle.data
 
+
 import gg.aquatic.comet.api.parsing.resourcepack.ResourcepackCreator
 import gg.aquatic.comet.api.particle.UpdateFlags
 import gg.aquatic.comet.api.particle.data.AbstractEntityDataBuilder
 import gg.aquatic.comet.api.particle.data.EntityData
-import gg.aquatic.comet.api.particle.display.TextDisplayComponent
 import gg.aquatic.comet.api.particle.display.model.ModelData
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
+import gg.aquatic.comet.api.particle.display.text.TextData
 import gg.aquatic.waves.api.nms.entity.DataSerializerTypes
 import gg.aquatic.waves.api.nms.entity.EntityDataValue
 import net.kyori.adventure.key.Key
@@ -59,7 +60,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
             is SpriteData -> {
                 if (initial) {
                     entityData += EntityDataValue.create(23 + PACKET_OFFSET, DataSerializerTypes.INT, Int.MAX_VALUE)
-                    entityData += EntityDataValue.create(23 + PACKET_OFFSET, DataSerializerTypes.INT, 0)
+                    entityData += EntityDataValue.create(24 + PACKET_OFFSET, DataSerializerTypes.INT, 0)
                 }
 
                 if (flags.display) {
@@ -77,28 +78,27 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
 
             is ModelData -> {
                 if (flags.display) {
-                    entityData += EntityDataValue.create(22 + PACKET_OFFSET, DataSerializerTypes.ITEM_STACK, ResourcepackCreator.stack(displayData.id, component.color))
+                    entityData += EntityDataValue.create(22 + PACKET_OFFSET, DataSerializerTypes.ITEM_STACK, ResourcepackCreator.stack(displayData.id, component.color) ?: ItemStack.empty())
                 }
             }
 
             is TextData -> {
                 val td = (component.displayData as TextData)
                 if (flags.display) {
-                    entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
+                    entityData += EntityDataValue.create(
                         22 + PACKET_OFFSET,
-                        EntityDataTypes.ADV_COMPONENT,
-                        td.with(component.color and 0xFFFFFF),
+                        DataSerializerTypes.COMPONENT,
+                        td.with(component.color and 0xFFFFFF)
                     )
-
-                    entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
+                    entityData += EntityDataValue.create(
                         23 + PACKET_OFFSET,
-                        EntityDataTypes.INT,
+                        DataSerializerTypes.INT,
                         td.lineWidth,
                     )
 
-                    entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
+                    entityData += EntityDataValue.create(
                         24 + PACKET_OFFSET,
-                        EntityDataTypes.INT,
+                        DataSerializerTypes.INT,
                         td.backgroundColor,
                     )
                 }

@@ -33,7 +33,7 @@ class Action(
             val subActions: MutableList<SubAction> = mutableListOf()
             for (element in jsonArray) {
                 subActionParsers.forEach { parser ->
-                    parser.parse(element, macros).fold(
+                    parser.parse(element, macros)?.fold(
                         { subActions += it },
                         {
                             if (it !is NotMyType) {

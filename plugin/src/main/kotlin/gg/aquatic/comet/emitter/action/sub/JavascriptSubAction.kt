@@ -15,8 +15,8 @@ import gg.aquatic.comet.script.expr.JSRunnable.Companion.constructRunnable
 import javax.script.ScriptException
 
 class JavascriptSubAction(
-    private val emitterScripts: List<java.lang.Runnable>,
-    private val particleScripts: List<java.lang.Runnable>,
+    private val emitterScripts: List<Runnable>,
+    private val particleScripts: List<Runnable>,
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData,
 ) : SubAction {

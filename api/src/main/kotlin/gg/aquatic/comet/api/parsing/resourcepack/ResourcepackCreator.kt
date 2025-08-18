@@ -6,11 +6,10 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.parsing.asStringOrNull
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.component.ComponentTypes
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.component.builtin.item.ItemCustomModelData
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.ItemStack
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.type.ItemTypes
-import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.nbt.NBTInt
+import gg.aquatic.waves.Waves
+import gg.aquatic.waves.util.version.ServerVersion
+import org.bukkit.Material
+import org.bukkit.inventory.ItemStack
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.File
@@ -22,7 +21,7 @@ object ResourcepackCreator {
     private const val RP_IMAGE = "pack.png"
     private const val RP_META = "pack.mcmeta"
     private const val ITEM = "amethyst_shard"
-    private val ITEM_TYPE = ItemTypes.getByName(ITEM)
+    private val ITEM_TYPE = Material.AMETHYST_SHARD
     const val NAMESPACE = "p"
     const val FONT_NAME = "d"
     private const val PARTICLES_PNG = "particles.png"
@@ -35,15 +34,17 @@ object ResourcepackCreator {
     }
 
     private fun createStack(index: Int, color: Int?): ItemStack {
-        val stack = ItemStack.builder().type(ITEM_TYPE).amount(1).build()
-        val md = ItemCustomModelData(index)
-
-        if (color != null) {
-            md.colors.add(gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.color.Color(color))
+        val stack = ItemStack(ITEM_TYPE)
+        stack.editMeta { im ->
+            im.setCustomModelData(index)
+            color?.let {
+                if (!ServerVersion.ofAquatic(Waves.INSTANCE)!!.isOlder(ServerVersion.V_1_21_4)) {
+                    // TODO: Check if it is really ARGB
+                    im.customModelDataComponent.floats = listOf(index.toFloat())
+                    im.customModelDataComponent.colors = listOf(org.bukkit.Color.fromARGB(it))
+                }
+            }
         }
-
-        stack.setComponent(ComponentTypes.CUSTOM_MODEL_DATA_LISTS, md)
-        stack.orCreateTag.setTag("CustomModelData", NBTInt(index))
 
         return stack
     }
@@ -212,9 +213,13 @@ object ResourcepackCreator {
             val predicate = JsonObject()
             val index = count++
 
-            val stack = ItemStack.builder().type(ITEM_TYPE).amount(1).build()
-            stack.setComponent(ComponentTypes.CUSTOM_MODEL_DATA_LISTS, ItemCustomModelData(index))
-            stack.orCreateTag.setTag("CustomModelData", NBTInt(index))
+            val stack = ItemStack(ITEM_TYPE)
+            stack.editMeta { im ->
+                im.setCustomModelData(index)
+                if (!ServerVersion.ofAquatic(Waves.INSTANCE)!!.isOlder(ServerVersion.V_1_21_4)) {
+                    im.customModelDataComponent.floats = listOf(index.toFloat())
+                }
+            }
 
             val iObj = JsonObject()
             iObj.addProperty("threshold", index)

@@ -6,7 +6,6 @@ import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.PreInitComponent
 import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.parsing.macro.Macro
-import kotlinx.serialization.json.JsonArray
 import org.joml.Vector3d
 import org.joml.Vector3f
 
