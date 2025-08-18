@@ -94,16 +94,16 @@ class OptimizedEmitter(
     private var time = 0
 
     override fun tick(): EmitterTickResult {
-        if (blocked.get()) {
+        if (!blocked.compareAndSet(false, true)) {
             println("${unrealizedEmitter.id} blocked!")
             return EmitterTickResult(true)
         }
-
-        blocked.set(true)
-
 //        println("O.${unrealizedEmitter.id}: TICK t:$time")
 
-        if (killed.get()) return EmitterTickResult(false)
+        if (killed.get()) {
+            blocked.set(false)
+            return EmitterTickResult(false)
+        }
 
         spawningProcessor.tick()
 
@@ -126,11 +126,13 @@ class OptimizedEmitter(
 //                    println("O.${unrealizedEmitter.id} RUNTIME DEAD SUCCESSFUL at $time")
                     dead = true
                     kill()
+                    blocked.set(false)
                     return EmitterTickResult(false)
                 }
             }
         } else {
             if (dead && particles.size == 0) {
+                blocked.set(false)
                 return EmitterTickResult(false)
             }
         }

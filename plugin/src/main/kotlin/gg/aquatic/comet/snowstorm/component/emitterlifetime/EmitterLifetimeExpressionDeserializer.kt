@@ -3,7 +3,7 @@ package gg.aquatic.comet.snowstorm.component.emitterlifetime
 import com.google.gson.JsonElement
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.parsing.asJsonObjectOrNull
-import gg.aquatic.comet.parsing.expression
+import gg.aquatic.comet.parsing.getExprOrNull
 import gg.aquatic.comet.snowstorm.Deserializer
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
 import gg.aquatic.comet.snowstorm.deserialized.emitterlifetime.EmitterLifetimeExpression
@@ -19,8 +19,8 @@ object EmitterLifetimeExpressionDeserializer : Deserializer {
             return
         }
 
-        val activation = jsonObject.expression("activation_expression")?.let { deserializedEffect.parseExpr(it, true) }
-        val expiration = jsonObject.expression("expiration_expression")?.let { deserializedEffect.parseExpr(it, true) }
+        val activation = jsonObject.getExprOrNull("activation_expression")?.let { deserializedEffect.parseExpr(it, true) }
+        val expiration = jsonObject.getExprOrNull("expiration_expression")?.let { deserializedEffect.parseExpr(it, true) }
 
         deserializedEffect.components += EmitterLifetimeExpression(activation, expiration)
     }

@@ -10,6 +10,7 @@ import java.util.*
 import javax.script.Compilable
 import javax.script.CompiledScript
 import javax.script.ScriptContext
+import javax.script.ScriptException
 
 fun emitterEngine(emitterData: EmitterData): Compilable {
     val engine = AbstractParticleEmitter.scriptEngineFactory.getScriptEngine("-scripting")
@@ -31,7 +32,11 @@ fun particleEngine(emitterData: EmitterData): Pair<Compilable, ParticleData> {
 }
 
 
-fun Compilable.compile(input: String, macros: Map<String, Macro>?, tryAsSimpleString: Boolean = false): CompiledScript {
+fun Compilable.compile(
+    input: String,
+    macros: Map<String, Macro>?,
+    tryAsSimpleString: Boolean = false
+): Result<CompiledScript> {
     var output = input
     if (macros != null) {
         for ((from, macro) in macros) {
@@ -44,14 +49,13 @@ fun Compilable.compile(input: String, macros: Map<String, Macro>?, tryAsSimpleSt
 
     output = output.replace("Math.random()", "emitter.emitter.random.kotlinRandom.nextDouble()")
 
-    val compiled = compileOrNull(output)
+    val (compiled, e) = compileOrNull(output)
     if (tryAsSimpleString) {
         try {
             if (compiled == null) {
                 val escapedCompiled = compile("\"" + output + "\"")
                 escapedCompiled?.eval()
-                return escapedCompiled
-
+                return Result.success(escapedCompiled)
             } else {
                 compiled.eval()
             }
@@ -59,20 +63,28 @@ fun Compilable.compile(input: String, macros: Map<String, Macro>?, tryAsSimpleSt
             try {
                 val escapedCompiled = compile("\"" + output + "\"")
                 escapedCompiled.eval()
-                return escapedCompiled
+                return Result.success(escapedCompiled)
             } catch (ignored: Exception) {
-                return compiled!!
+                if (compiled == null) {
+                    return Result.failure(e!!)
+                }
+
+                return Result.success(compiled)
             }
         }
     }
 
-    return compile(output)
+    return try {
+        Result.success(compile(output))
+    } catch (sc: ScriptException) {
+        Result.failure(sc)
+    }
 }
 
-fun Compilable.compileOrNull(script: String): CompiledScript? {
+fun Compilable.compileOrNull(script: String): Pair<CompiledScript?, Exception?> {
     return try {
-        compile(script)
-    } catch (ignored: Exception) {
-        null
+        compile(script) to null
+    } catch (e: Exception) {
+        null to e
     }
 }

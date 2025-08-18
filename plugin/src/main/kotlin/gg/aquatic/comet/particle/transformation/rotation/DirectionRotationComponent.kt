@@ -3,21 +3,22 @@ package gg.aquatic.comet.particle.transformation.rotation
 import com.google.gson.JsonElement
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.parsing.BaseComponentParser
-import gg.aquatic.comet.api.parsing.compile
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.particleEngine
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
-import gg.aquatic.comet.parsing.expression
+import gg.aquatic.comet.parsing.getExpr
+import gg.aquatic.comet.script.expr.Expr
+import gg.aquatic.comet.script.expr.JSExpr.Companion.constructExpr
+import gg.aquatic.comet.script.expr.getOrPrint
 import org.joml.Quaternionf
 import org.joml.Vector3f
-import javax.script.CompiledScript
 
 class DirectionRotationComponent(
-    private val axisXScript: CompiledScript,
-    private val axisYScript: CompiledScript,
-    private val axisZScript: CompiledScript,
-    private val angleScript: CompiledScript,
+    private val axisXScript: Expr<Number>,
+    private val axisYScript: Expr<Number>,
+    private val axisZScript: Expr<Number>,
+    private val angleScript: Expr<Number>,
     private val myParticleData: ParticleData,
     private val myEmitterData: EmitterData
 ) : ParticleComponent, RotationComponent {
@@ -29,17 +30,31 @@ class DirectionRotationComponent(
         override fun parse(
             jsonElement: JsonElement,
             macros: Map<String, Macro>?
-        ): DirectionRotationComponent? {
+        ): Result<DirectionRotationComponent> {
             val jsonObject = jsonElement.asJsonObject
             val emitterData = EmitterData()
             val (engine, particleData) = particleEngine(emitterData)
 
-            return DirectionRotationComponent(
-                engine.compile(jsonObject.expression("x") ?: return null, macros),
-                engine.compile(jsonObject.expression("y") ?: return null, macros),
-                engine.compile(jsonObject.expression("z") ?: return null, macros),
-                engine.compile(jsonObject.expression("angle") ?: return null, macros),
-                particleData, emitterData
+            return Result.success(
+                DirectionRotationComponent(
+                    jsonObject.getExpr("x")
+                        .fold({it}, {return Result.failure(it)})
+                        .constructExpr<Number>(engine, macros)
+                        .fold({ it }, { return Result.failure(it) }),
+                    jsonObject.getExpr("y")
+                        .fold({it}, {return Result.failure(it)})
+                        .constructExpr<Number>(engine, macros)
+                        .fold({ it }, { return Result.failure(it) }),
+                    jsonObject.getExpr("z")
+                        .fold({it}, {return Result.failure(it)})
+                        .constructExpr<Number>(engine, macros)
+                        .fold({ it }, { return Result.failure(it) }),
+                    jsonObject.getExpr("angle")
+                        .fold({it}, {return Result.failure(it)})
+                        .constructExpr<Number>(engine, macros)
+                        .fold({ it }, { return Result.failure(it) }),
+                    particleData, emitterData
+                )
             )
         }
     }
@@ -48,15 +63,15 @@ class DirectionRotationComponent(
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
         val dir = Vector3f(
-            (axisXScript.eval() as Number).toFloat(),
-            (axisYScript.eval() as Number).toFloat(),
-            (axisZScript.eval() as Number).toFloat(),
+            axisXScript.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toFloat() ?: return,
+            axisYScript.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toFloat() ?: return,
+            axisZScript.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toFloat() ?: return,
         ).normalize()
 
         otherParticleData.rotation = otherEmitterData.emitter!!.applyEmitterRotation(
             Quaternionf()
                 .rotateTo(Vector3f(0f, 0f, 1f), dir)
-                .rotateZ((angleScript.eval() as Number).toFloat())
+                .rotateZ(angleScript.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toFloat() ?: return)
         )
     }
 

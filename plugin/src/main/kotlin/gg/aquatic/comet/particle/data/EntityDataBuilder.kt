@@ -59,7 +59,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
             is SpriteData -> {
                 if (initial) {
                     entityData += EntityDataValue.create(23 + PACKET_OFFSET, DataSerializerTypes.INT, Int.MAX_VALUE)
-                    entityData += EntityDataValue.create(24 + PACKET_OFFSET, DataSerializerTypes.INT, 0)
+                    entityData += EntityDataValue.create(23 + PACKET_OFFSET, DataSerializerTypes.INT, 0)
                 }
 
                 if (flags.display) {
@@ -77,19 +77,39 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
 
             is ModelData -> {
                 if (flags.display) {
-                    entityData += EntityDataValue.create(22 + PACKET_OFFSET, DataSerializerTypes.ITEM_STACK, ResourcepackCreator.modelMap[displayData.id] ?: ItemStack.empty())
+                    entityData += EntityDataValue.create(22 + PACKET_OFFSET, DataSerializerTypes.ITEM_STACK, ResourcepackCreator.stack(displayData.id, component.color))
                 }
             }
 
-            else -> {
+            is TextData -> {
+                val td = (component.displayData as TextData)
                 if (flags.display) {
-                    entityData += EntityDataValue.create(22 + PACKET_OFFSET, DataSerializerTypes.COMPONENT, Component.text((component.displayData as TextDisplayComponent).string)
-                        .color(TextColor.color(component.color and 0xFFFFFF)))
+                    entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
+                        22 + PACKET_OFFSET,
+                        EntityDataTypes.ADV_COMPONENT,
+                        td.with(component.color and 0xFFFFFF),
+                    )
+
+                    entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
+                        23 + PACKET_OFFSET,
+                        EntityDataTypes.INT,
+                        td.lineWidth,
+                    )
+
+                    entityData += gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.data.EntityData(
+                        24 + PACKET_OFFSET,
+                        EntityDataTypes.INT,
+                        td.backgroundColor,
+                    )
                 }
 
                 if (flags.transparency) {
                     entityData += EntityDataValue.create(25 + PACKET_OFFSET, DataSerializerTypes.BYTE, ((component.color ushr 24) + 26).coerceAtMost(255).toByte())
                 }
+            }
+
+            else -> {
+                return null
             }
         }
 
@@ -174,8 +194,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
             strB.append("| ROTATION: ${entityData.rotation}\n")
 
         if (flags.teleportationDuration &&
-            !flags.scale && !flags.translation && !flags.display && !flags.transformationInterpolation && !flags.transparency && !flags.rotation
-        ) {
+            !flags.scale && !flags.translation && !flags.display && !flags.transformationInterpolation && !flags.transparency && !flags.rotation) {
             strB.append("| LONELY!")
         }
 

@@ -17,10 +17,7 @@ import gg.aquatic.comet.api.PreInitComponent
 import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.api.emitter.rate.RateComponent
-import gg.aquatic.comet.api.parsing.AbstractParticleJsonParser
-import gg.aquatic.comet.api.parsing.ComponentParser
-import gg.aquatic.comet.api.parsing.PostInit
-import gg.aquatic.comet.api.parsing.asNumberOrNull
+import gg.aquatic.comet.api.parsing.*
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.macro.MacrosParser
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
@@ -53,6 +50,8 @@ import gg.aquatic.comet.particle.display.sprite.ConstantSpriteComponent
 import gg.aquatic.comet.particle.display.sprite.ExpressionSpriteComponent
 import gg.aquatic.comet.particle.display.sprite.FlipbookSpriteComponent
 import gg.aquatic.comet.particle.display.sprite.RandomSpriteComponent
+import gg.aquatic.comet.particle.display.text.ConstantTextComponent
+import gg.aquatic.comet.particle.display.text.MiniMessageTextComponent
 import gg.aquatic.comet.particle.lifetime.ParticleLifetimeComponent
 import gg.aquatic.comet.particle.lifetime.ParticleLifetimeExpressionComponent
 import gg.aquatic.comet.particle.light.ConstantLightComponent
@@ -75,7 +74,7 @@ import org.joml.Vector3d
 import java.io.File
 import java.io.FileReader
 
-fun JsonObject.expression(field: String): String? {
+fun JsonObject.getExprOrNull(field: String): String? {
     if (field !in keySet()) return null
     val fieldElement = this.get(field)
     if (!fieldElement.isJsonPrimitive) return null
@@ -83,7 +82,15 @@ fun JsonObject.expression(field: String): String? {
     return ((if (fieldPrimitive.isNumber) fieldPrimitive.asNumber.toString() else fieldPrimitive.asString))
 }
 
-fun JsonElement.expression(): String? {
+fun JsonObject.getExpr(field: String): Result<String> {
+    if (field !in keySet()) return Result.failure(InvalidJsonException("Missing field $field"))
+    val fieldElement = this.get(field)
+    if (!fieldElement.isJsonPrimitive) return Result.failure(InvalidJsonException("Expected $field to be a primitive!"))
+    val fieldPrimitive = fieldElement.asJsonPrimitive
+    return Result.success(((if (fieldPrimitive.isNumber) fieldPrimitive.asNumber.toString() else fieldPrimitive.asString)))
+}
+
+fun JsonElement.getExprOrNull(): String? {
     if (!this.isJsonPrimitive) return null
     val asPrimitive = this.asJsonPrimitive
     return ((if (asPrimitive.isNumber) asPrimitive.asNumber.toString() else asPrimitive.asString))
@@ -114,6 +121,9 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
             ConstantModelComponent,
             ExpressionModelComponent,
             FlipbookModelComponent,
+
+            ConstantTextComponent,
+            MiniMessageTextComponent,
 
             ConstantLightComponent,
 
@@ -189,7 +199,13 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
         GlobalTicker.killInstances()
 
         for (file in effects) {
-            val rootObject = JsonParser.parseReader(FileReader(file)).asJsonObject
+            val rootObject = try {
+                JsonParser.parseReader(FileReader(file)).asJsonObject
+            } catch (e: Exception) {
+                AbstractParticleEmitter.INSTANCE.logger.severe("Failed parsing ${file.nameWithoutExtension}! Error:")
+                e.printStackTrace()
+                continue
+            }
 
             val emitter = parseComponents(rootObject, file.nameWithoutExtension)
             emitter?.run {
@@ -257,12 +273,13 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
 
         for ((key, componentElement) in componentsObject.entrySet()) {
             if (key in componentParsers) {
-                val component = componentParsers[key]!!.parse(componentElement, macros)
-                if (component != null) {
-                    components += component
+                componentParsers[key]!!.parse(componentElement, macros)
+                    .fold({ components += it }, {
+                        AbstractParticleEmitter.INSTANCE.logger.severe("Error while parsing $key component in $id!")
+                        it.printStackTrace()
+                    })
 
-                    continue
-                }
+                continue
             }
 
             if (key in preInitComponentParsers) {
@@ -285,23 +302,31 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
             }
 
             if (key in rateComponentParsers) {
-                val component = rateComponentParsers[key]!!.parse(componentElement, macros)
-                if (component != null) {
-                    rateComponent = component
-                }
+                rateComponentParsers[key]!!.parse(componentElement, macros)
+                    .fold({ rateComponent = it }, {
+                        AbstractParticleEmitter.INSTANCE.logger.severe("Error while parsing $key component in $id!")
+                        it.printStackTrace()
+                    })
 
                 continue
             }
 
             if (key in updateFrequencyParsers) {
-                val component = updateFrequencyParsers[key]!!.parse(componentElement, macros)
-                if (component != null) {
-                    updateFrequencyComponent = component
-                }
+                updateFrequencyParsers[key]!!.parse(componentElement, macros)
+                    .fold({ updateFrequencyComponent = it }, {
+                        AbstractParticleEmitter.INSTANCE.logger.severe("Error while parsing $key component in $id!")
+                        it.printStackTrace()
+                    })
+
+                continue
             }
 
             if (key == distanceCullingParser.first) {
-                distanceCullingComponent = distanceCullingParser.second.parse(componentElement, macros)
+                distanceCullingParser.second.parse(componentElement, macros)
+                    .fold({ distanceCullingComponent = it }, {
+                        AbstractParticleEmitter.INSTANCE.logger.severe("Error while parsing $key component in $id!")
+                        it.printStackTrace()
+                    })
             }
         }
 

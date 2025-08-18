@@ -6,8 +6,11 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.parsing.asStringOrNull
-import org.bukkit.Material
-import org.bukkit.inventory.ItemStack
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.component.ComponentTypes
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.component.builtin.item.ItemCustomModelData
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.ItemStack
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.item.type.ItemTypes
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.nbt.NBTInt
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.File
@@ -19,11 +22,31 @@ object ResourcepackCreator {
     private const val RP_IMAGE = "pack.png"
     private const val RP_META = "pack.mcmeta"
     private const val ITEM = "amethyst_shard"
+    private val ITEM_TYPE = ItemTypes.getByName(ITEM)
     const val NAMESPACE = "p"
     const val FONT_NAME = "d"
     private const val PARTICLES_PNG = "particles.png"
 
-    val modelMap: MutableMap<String, ItemStack> = mutableMapOf()
+    val modelMap: MutableMap<String, ModelData> = mutableMapOf()
+
+    fun stack(id: String, color: Int): ItemStack? {
+        val md = modelMap[id] ?: return null
+        return createStack(md.index, color)
+    }
+
+    private fun createStack(index: Int, color: Int?): ItemStack {
+        val stack = ItemStack.builder().type(ITEM_TYPE).amount(1).build()
+        val md = ItemCustomModelData(index)
+
+        if (color != null) {
+            md.colors.add(gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.color.Color(color))
+        }
+
+        stack.setComponent(ComponentTypes.CUSTOM_MODEL_DATA_LISTS, md)
+        stack.orCreateTag.setTag("CustomModelData", NBTInt(index))
+
+        return stack
+    }
 
     val uvs: MutableList<UVData> = mutableListOf()
 
@@ -103,8 +126,11 @@ object ResourcepackCreator {
     private fun genModels(files: List<File>) {
         val dataFolder = AbstractParticleEmitter.INSTANCE.dataFolder
 
-        val itemFolder = File(dataFolder.path + "/output/$RP_NAME/assets/minecraft/models/item")
+        val itemFolder = File(dataFolder.path + "/output/$RP_NAME/assets/minecraft/items")
         itemFolder.mkdirs()
+
+        val modelItemFolder = File(dataFolder.path + "/output/$RP_NAME/assets/minecraft/models/item")
+        modelItemFolder.mkdirs()
 
         val modelFolder = File(dataFolder.path + "/output/$RP_NAME/assets/minecraft/models/item/$NAMESPACE")
         modelFolder.mkdirs()
@@ -116,10 +142,38 @@ object ResourcepackCreator {
 
         val texturesObj = JsonObject()
 
-        val itemsObj = JsonObject()
-        itemsObj.addProperty("parent", "item/generated")
+        val itemObj = JsonObject()
+
+        val mObj = JsonObject()
+
+        mObj.addProperty("type", "range_dispatch")
+        mObj.addProperty("property", "custom_model_data")
+
+        val fallback = JsonObject()
+        fallback.addProperty("type", "model")
+        fallback.addProperty("model", "item/$ITEM")
+
+        mObj.add("fallback", fallback)
+
+        val entries = JsonArray()
+
+        mObj.add("entries", entries)
+
+        itemObj.add("model", mObj)
+
+        val tints = JsonArray()
+
+        val modelDataTint = JsonObject()
+        modelDataTint.addProperty("type", "custom_model_data")
+        modelDataTint.addProperty("index", 0)
+        modelDataTint.addProperty("default", 16777215)
+
+        tints.add(modelDataTint)
+
+        val modelItemsObj = JsonObject()
+        modelItemsObj.addProperty("parent", "item/generated")
         texturesObj.addProperty("layer0", "item/$ITEM")
-        itemsObj.add("textures", texturesObj)
+        modelItemsObj.add("textures", texturesObj)
 
         val overridesArr = JsonArray()
 
@@ -157,13 +211,25 @@ object ResourcepackCreator {
             val override = JsonObject()
             val predicate = JsonObject()
             val index = count++
-            val stack = ItemStack.of(Material.valueOf(ITEM.uppercase())).apply {
-                val im = itemMeta
-                im.setCustomModelData(index)
-                this.itemMeta = im
-            }
 
-            modelMap += file.nameWithoutExtension to stack
+            val stack = ItemStack.builder().type(ITEM_TYPE).amount(1).build()
+            stack.setComponent(ComponentTypes.CUSTOM_MODEL_DATA_LISTS, ItemCustomModelData(index))
+            stack.orCreateTag.setTag("CustomModelData", NBTInt(index))
+
+            val iObj = JsonObject()
+            iObj.addProperty("threshold", index)
+
+            val miObj = JsonObject()
+
+            miObj.addProperty("type", "model")
+            miObj.addProperty("model", "item/$NAMESPACE/${file.nameWithoutExtension}")
+            miObj.add("tints", tints)
+
+            iObj.add("model", miObj)
+
+            entries.add(iObj)
+
+            modelMap += file.nameWithoutExtension to ModelData(index = index)
 
             predicate.addProperty("custom_model_data", index)
             override.add("predicate", predicate)
@@ -171,10 +237,13 @@ object ResourcepackCreator {
             overridesArr.add(override)
         }
 
-        itemsObj.add("overrides", overridesArr)
+        modelItemsObj.add("overrides", overridesArr)
 
-        val itemTarget = File(itemFolder.path + "/$ITEM.json")
-        itemTarget.writeText(gson.toJson(itemsObj))
+        val modelItemTarget = File(modelItemFolder.path, "$ITEM.json")
+        modelItemTarget.writeText(gson.toJson(modelItemsObj))
+
+        val itemTarget = File(itemFolder.path, "$ITEM.json")
+        itemTarget.writeText(gson.toJson(itemObj))
     }
 
     private fun genSprites(images: List<File>) {

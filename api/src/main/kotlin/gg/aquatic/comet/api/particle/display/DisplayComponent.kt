@@ -1,15 +1,10 @@
 package gg.aquatic.comet.api.particle.display
 
-interface DisplayComponent {
+import gg.aquatic.waves.shadow.com.retrooper.packetevents.protocol.entity.type.EntityType
 
-}
+interface DisplayComponent
 
 interface DisplayData {
+    val entityType: EntityType
     fun copy(): DisplayData
-}
-
-data class TextDisplayComponent(val string: String) : DisplayData {
-    override fun copy(): DisplayData {
-        return TextDisplayComponent(string)
-    }
 }

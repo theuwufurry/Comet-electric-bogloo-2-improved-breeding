@@ -34,8 +34,12 @@ class ParticleTickComponent(
     companion object : BaseComponentParser {
         override val id: String = "on_particle_tick"
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {
-            return ParticleTickComponent(Action.parse(jsonElement.asJsonArray, macros))
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<Component> {
+            return Result.success(
+                ParticleTickComponent(
+                    Action.parse(jsonElement.asJsonArray, macros).fold({ it }, { return Result.failure(it) })
+                )
+            )
         }
     }
 }

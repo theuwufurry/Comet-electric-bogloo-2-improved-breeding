@@ -5,6 +5,7 @@ import gg.aquatic.comet.api.emitter.action.AbstractAction
 import gg.aquatic.comet.api.emitter.action.ActionContext
 import gg.aquatic.comet.api.emitter.action.SubAction
 import gg.aquatic.comet.api.parsing.ComponentParser
+import gg.aquatic.comet.api.parsing.NotMyType
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.emitter.action.sub.EmitterDieSubAction
 import gg.aquatic.comet.emitter.action.sub.JavascriptSubAction
@@ -28,18 +29,22 @@ class Action(
             SoundSubAction
         )
 
-        fun parse(jsonArray: JsonArray, macros: Map<String, Macro>?): Action {
+        fun parse(jsonArray: JsonArray, macros: Map<String, Macro>?): Result<Action> {
             val subActions: MutableList<SubAction> = mutableListOf()
             for (element in jsonArray) {
                 subActionParsers.forEach { parser ->
-                    parser.parse(element, macros)?.let l@{
-                        subActions.add(it)
-                        return@l
-                    }
+                    parser.parse(element, macros).fold(
+                        { subActions += it },
+                        {
+                            if (it !is NotMyType) {
+                                return Result.failure(it)
+                            }
+                        }
+                    )
                 }
             }
 
-            return Action(subActions)
+            return Result.success(Action(subActions))
         }
     }
 
