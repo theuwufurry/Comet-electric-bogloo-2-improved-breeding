@@ -3,7 +3,7 @@ package gg.aquatic.comet.snowstorm.component.particlelifetime
 import com.google.gson.JsonElement
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.parsing.asJsonObjectOrNull
-import gg.aquatic.comet.parsing.expression
+import gg.aquatic.comet.parsing.getExprOrNull
 import gg.aquatic.comet.snowstorm.Deserializer
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
 import gg.aquatic.comet.snowstorm.deserialized.particlelifetime.ParticleLifetimeExpression
@@ -21,7 +21,7 @@ object ParticleLifetimeExpressionDeserializer : Deserializer {
         }
 
         val maxLifetime =
-            (jsonObject.expression("max_lifetime")?.let { deserializedEffect.parseExpr(it, true) }
+            (jsonObject.getExprOrNull("max_lifetime")?.let { deserializedEffect.parseExpr(it, true) }
                 ?: listOf(LiteralExpr(200.0)))
         deserializedEffect.components += ParticleLifetimeExpression(maxLifetime)
     }

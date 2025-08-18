@@ -15,9 +15,7 @@ import gg.aquatic.comet.emitter.UnrealizedEmitter
 import gg.aquatic.comet.emitter.optimization.TimestampedParticleActions
 import gg.aquatic.comet.emitter.optimization.VirtualEmitter
 import gg.aquatic.comet.parsing.ParticleJsonParser
-import gg.aquatic.comet.parsing.expression
-import org.bukkit.Location
-import org.bukkit.util.Vector
+import gg.aquatic.comet.parsing.getExprOrNull
 import org.joml.Quaterniond
 import org.joml.Vector3d
 
@@ -72,9 +70,9 @@ class SpawnEmitterSubAction(
             val subPose = Pose(
                 pose.world,
                 Vector3d(
-                pose.pos.x + rotatedNormal.x * context.otherEmitterData.emitter!!.random.kotlinRandom.nextDouble() * magnitude,
-                pose.pos.y + rotatedNormal.y * context.otherEmitterData.emitter!!.random.kotlinRandom.nextDouble() * magnitude,
-                pose.pos.z + rotatedNormal.z * context.otherEmitterData.emitter!!.random.kotlinRandom.nextDouble() * magnitude,
+                    pose.pos.x + rotatedNormal.x * context.otherEmitterData.emitter!!.random.kotlinRandom.nextDouble() * magnitude,
+                    pose.pos.y + rotatedNormal.y * context.otherEmitterData.emitter!!.random.kotlinRandom.nextDouble() * magnitude,
+                    pose.pos.z + rotatedNormal.z * context.otherEmitterData.emitter!!.random.kotlinRandom.nextDouble() * magnitude,
                 ),
                 pose.rot
             )
@@ -138,20 +136,34 @@ class SpawnEmitterSubAction(
     companion object : ComponentParser<SpawnEmitterSubAction> {
         override val id: String = "emitter_spawn"
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): SpawnEmitterSubAction? {
-            if (!(jsonElement.isJsonObject && jsonElement.asJsonObject.has("emitter"))) return null
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<SpawnEmitterSubAction> {
+            if (!(jsonElement.isJsonObject && jsonElement.asJsonObject.has("emitter"))) return Result.failure(NotMyType())
             val jsonObject = jsonElement.asJsonObject
             val emitterData = EmitterData()
             val engine = emitterEngine(emitterData)
             val unrealizedEmitterIDs = if (jsonObject.get("emitter").isJsonPrimitive) {
                 listOf(
-                    engine.compile(jsonObject.expression("emitter") ?: return null, macros, true).eval() as String
+                    (engine.compile(
+                        jsonObject.getExprOrNull("emitter")
+                            ?: return Result.failure(InvalidJsonException("Missing 'emitter' field!")), macros, true
+                    )).fold(
+                        { it.eval() as String },
+                        { return Result.failure(InvalidJsonException("Failed to get emitter id from 'emitter' field!")) })
                 )
             } else {
-                val arr = jsonObject.getAsJsonArray("emitter")
+                val arr = jsonObject["emitter"].asArrayOrNull()
+                    ?: return Result.failure(InvalidJsonException("Missing any sort of 'emitter' specification! use an 'emitter' field or array"))
                 val ids: MutableList<String> = mutableListOf()
                 for (elem in arr) {
-                    ids += engine.compile(elem.asString, macros, true).eval() as String
+                    ids += (engine.compile(
+                        elem.asStringOrNull()
+                            ?: return Result.failure(InvalidJsonException("Array of 'emitter' contains non-string values!")),
+                        macros,
+                        true
+                    ).fold(
+                        { it },
+                        { return Result.failure(it) }
+                    )).eval() as String
                 }
 
                 ids
@@ -176,7 +188,7 @@ class SpawnEmitterSubAction(
                 else -> EmitterSpace.WORLD
             }
 
-            return SpawnEmitterSubAction(unrealizedEmitterIDs, space, offsetMagnitude, rot, invert)
+            return Result.success(SpawnEmitterSubAction(unrealizedEmitterIDs, space, offsetMagnitude, rot, invert))
         }
     }
 }

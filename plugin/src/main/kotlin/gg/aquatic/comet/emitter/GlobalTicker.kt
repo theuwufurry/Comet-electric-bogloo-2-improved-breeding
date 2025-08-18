@@ -42,11 +42,9 @@ object GlobalTicker {
     val blocked = AtomicBoolean(false)
     private var tickTime = 0
     private fun tick() {
-        if (blocked.get()) {
+        if (!blocked.compareAndSet(false, true)) {
             return
         }
-
-        blocked.set(true)
 
         tickTime++
 

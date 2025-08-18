@@ -3,7 +3,7 @@ package gg.aquatic.comet.snowstorm.component.rate
 import com.google.gson.JsonElement
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.parsing.asJsonObjectOrNull
-import gg.aquatic.comet.parsing.expression
+import gg.aquatic.comet.parsing.getExprOrNull
 import gg.aquatic.comet.snowstorm.Deserializer
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
 import gg.aquatic.comet.snowstorm.deserialized.rate.RateInstant
@@ -24,7 +24,7 @@ object RateInstantDeserializer : Deserializer {
         }
 
         val numParticles =
-            jsonObject.expression("num_particles")?.let { deserializedEffect.parseExpr(it) } ?: listOf(LiteralExpr(10))
+            jsonObject.getExprOrNull("num_particles")?.let { deserializedEffect.parseExpr(it) } ?: listOf(LiteralExpr(10))
         deserializedEffect.components += RateInstant(numParticles)
     }
 }

@@ -5,6 +5,7 @@ import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyResult
 import gg.aquatic.comet.api.parsing.ComponentParser
+import gg.aquatic.comet.api.parsing.InvalidJsonException
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.particle.ParticleData
 
@@ -17,13 +18,14 @@ class ManualUpdateFrequencyComponent(private val updateTimes: List<Int>, private
     companion object : ComponentParser<ManualUpdateFrequencyComponent> {
         override val id: String = "manual_update_frequency"
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): ManualUpdateFrequencyComponent? {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<ManualUpdateFrequencyComponent> {
             val jsonObject = jsonElement.asJsonObject
-            if (!(jsonObject.has("times") && jsonObject.get("times").isJsonArray)) return null
+            if (!(jsonObject.has("times") && jsonObject.get("times").isJsonArray)) return Result.failure(
+                InvalidJsonException("Missing 'times' array or it is malformed!"))
             val timesObject = jsonObject.getAsJsonArray("times")
             val offset =
                 if (jsonObject.has("offset") && jsonObject.get("offset").isJsonPrimitive) jsonObject.get("offset").asJsonPrimitive.asInt else 0
-            return ManualUpdateFrequencyComponent(timesObject.filter { it.isJsonPrimitive }.map { it.asInt }, offset)
+            return Result.success(ManualUpdateFrequencyComponent(timesObject.filter { it.isJsonPrimitive }.map { it.asInt }, offset))
         }
     }
 

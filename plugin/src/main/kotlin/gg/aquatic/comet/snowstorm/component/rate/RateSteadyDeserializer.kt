@@ -3,7 +3,7 @@ package gg.aquatic.comet.snowstorm.component.rate
 import com.google.gson.JsonElement
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.parsing.asJsonObjectOrNull
-import gg.aquatic.comet.parsing.expression
+import gg.aquatic.comet.parsing.getExprOrNull
 import gg.aquatic.comet.snowstorm.Deserializer
 import gg.aquatic.comet.snowstorm.deserialized.DeserializedParticleEffect
 import gg.aquatic.comet.snowstorm.deserialized.rate.RateSteady
@@ -24,9 +24,9 @@ object RateSteadyDeserializer : Deserializer {
         }
 
         val spawnRate =
-            jsonObject.expression("spawn_rate")?.let { deserializedEffect.parseExpr(it) } ?: listOf(LiteralExpr(1))
+            jsonObject.getExprOrNull("spawn_rate")?.let { deserializedEffect.parseExpr(it) } ?: listOf(LiteralExpr(1))
         val maxParticles =
-            jsonObject.expression("max_particles")?.let { deserializedEffect.parseExpr(it) } ?: listOf(LiteralExpr(50))
+            jsonObject.getExprOrNull("max_particles")?.let { deserializedEffect.parseExpr(it) } ?: listOf(LiteralExpr(50))
 
         deserializedEffect.components += RateSteady(spawnRate, maxParticles)
     }

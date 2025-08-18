@@ -46,7 +46,10 @@ class MountedUnoptimizedEmitter(
     override val yawpitchSupplier: Supplier<YawPitch>?,
 ) : AbstractEmitter() {
     private val dustOptions =
-        org.bukkit.Particle.DustOptions(Color.fromRGB(Random.nextInt(255), Random.nextInt(255), Random.nextInt(255)), 0.5f)
+        org.bukkit.Particle.DustOptions(
+            Color.fromRGB(Random.nextInt(255), Random.nextInt(255), Random.nextInt(255)),
+            0.5f
+        )
 
     override val id: UUID = emitterData.id
     val emitterComponents: List<EmitterComponent> =
@@ -76,7 +79,7 @@ class MountedUnoptimizedEmitter(
     private var emitterMisses = 0
 
     override fun tick(): EmitterTickResult {
-        if (blocked.get()) {
+        if (!blocked.compareAndSet(false, true)) {
             println("${unrealizedEmitter.id} blocked!")
             return EmitterTickResult(true)
         }
@@ -104,6 +107,7 @@ class MountedUnoptimizedEmitter(
                 )
             }
 
+            blocked.set(false)
             return EmitterTickResult(false)
         }
 
@@ -147,6 +151,8 @@ class MountedUnoptimizedEmitter(
         val deadParticleIDs: MutableList<Pair<Player, MutableList<Int>>> = spawningProcessor.process(dataPackets)
 
         if (!dead && emitterData.isActive) spawnParticles()
+
+        blocked.set(false)
 
         return EmitterTickResult(true, deadParticleIDs)
     }
@@ -218,6 +224,11 @@ class MountedUnoptimizedEmitter(
     }
 
     override fun applyEmitterRotation(input: Quaternionf): Quaternionf {
-        return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(pose.rot.x, pose.rot.y, pose.rot.z, pose.rot.w).mul(input) else input
+        return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(
+            pose.rot.x,
+            pose.rot.y,
+            pose.rot.z,
+            pose.rot.w
+        ).mul(input) else input
     }
 }

@@ -7,17 +7,19 @@ import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.particleEngine
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
-import gg.aquatic.comet.parsing.expression
+import gg.aquatic.comet.parsing.getExprOrNull
+import gg.aquatic.comet.script.expr.Expr
+import gg.aquatic.comet.script.expr.JSExpr.Companion.constructExpr
+import gg.aquatic.comet.script.expr.getOrPrint
 import org.joml.Vector3f
-import javax.script.CompiledScript
 
 class ExpressionTranslationComponent(
-    private val xOffset: CompiledScript?,
-    private val yOffset: CompiledScript?,
-    private val zOffset: CompiledScript?,
-    private val xAbsoluteOffset: CompiledScript?,
-    private val yAbsoluteOffset: CompiledScript?,
-    private val zAbsolulteOffset: CompiledScript?,
+    private val xOffset: Expr<Number>?,
+    private val yOffset: Expr<Number>?,
+    private val zOffset: Expr<Number>?,
+    private val xAbsoluteOffset: Expr<Number>?,
+    private val yAbsoluteOffset: Expr<Number>?,
+    private val zAbsoluteOffset: Expr<Number>?,
     private val myParticleData: ParticleData,
     private val myEmitterData: EmitterData,
 ) : ParticleComponent {
@@ -29,19 +31,33 @@ class ExpressionTranslationComponent(
         override fun parse(
             jsonElement: JsonElement,
             macros: Map<String, Macro>?
-        ): ExpressionTranslationComponent {
+        ): Result<ExpressionTranslationComponent> {
             val jsonObject = jsonElement.asJsonObject
             val emitterData = EmitterData()
             val (engine, particleData) = particleEngine(emitterData)
 
-            return ExpressionTranslationComponent(
-                jsonObject.expression("x")?.let { engine.compile((it)) },
-                jsonObject.expression("y")?.let { engine.compile((it)) },
-                jsonObject.expression("z")?.let { engine.compile((it)) },
-                jsonObject.expression("abs_x")?.let { engine.compile((it)) },
-                jsonObject.expression("abs_y")?.let { engine.compile((it)) },
-                jsonObject.expression("abs_z")?.let { engine.compile((it)) },
-                particleData, emitterData
+            return Result.success(
+                ExpressionTranslationComponent(
+                    jsonObject.getExprOrNull("x")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
+                    jsonObject.getExprOrNull("y")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
+                    jsonObject.getExprOrNull("z")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
+                    jsonObject.getExprOrNull("abs_x")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
+                    jsonObject.getExprOrNull("abs_y")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
+                    jsonObject.getExprOrNull("abs_z")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
+                    particleData, emitterData
+                )
             )
         }
     }
@@ -51,13 +67,19 @@ class ExpressionTranslationComponent(
         myParticleData.copyFrom(otherParticleData)
 
         otherParticleData.translation = Vector3f(
-            (xOffset?.eval() as? Number)?.toFloat()?.let { it * otherEmitterData.emitter!!.environmentData.size.toFloat() } ?: 0f,
-            (yOffset?.eval() as? Number)?.toFloat()?.let { it * otherEmitterData.emitter!!.environmentData.size.toFloat() } ?: 0f,
-            (zOffset?.eval() as? Number)?.toFloat()?.let { it * otherEmitterData.emitter!!.environmentData.size.toFloat() } ?: 0f,
+            (xOffset?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toFloat()
+                ?: 0f) * otherEmitterData.emitter!!.environmentData.size.toFloat(),
+            (yOffset?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toFloat()
+                ?: 0f) * otherEmitterData.emitter!!.environmentData.size.toFloat(),
+            (zOffset?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toFloat()
+                ?: 0f) * otherEmitterData.emitter!!.environmentData.size.toFloat(),
         ).rotate(otherParticleData.rotation).add(
-            (xAbsoluteOffset?.eval() as? Number)?.toFloat()?.let { it * otherEmitterData.emitter!!.environmentData.size.toFloat() } ?: 0f,
-            (yAbsoluteOffset?.eval() as? Number)?.toFloat()?.let { it * otherEmitterData.emitter!!.environmentData.size.toFloat() } ?: 0f,
-            (zAbsolulteOffset?.eval() as? Number)?.toFloat()?.let { it * otherEmitterData.emitter!!.environmentData.size.toFloat() } ?: 0f,
+            (xAbsoluteOffset?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toFloat()
+                ?: 0f) * otherEmitterData.emitter!!.environmentData.size.toFloat(),
+            (yAbsoluteOffset?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toFloat()
+                ?: 0f) * otherEmitterData.emitter!!.environmentData.size.toFloat(),
+            (zAbsoluteOffset?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toFloat()
+                ?: 0f) * otherEmitterData.emitter!!.environmentData.size.toFloat(),
         )
     }
 

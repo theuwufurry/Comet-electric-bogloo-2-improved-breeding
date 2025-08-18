@@ -5,6 +5,7 @@ import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
 import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyResult
 import gg.aquatic.comet.api.parsing.ComponentParser
+import gg.aquatic.comet.api.parsing.InvalidJsonException
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.particle.ParticleData
 import kotlin.math.floor
@@ -16,13 +17,14 @@ class IntervalUpdateFrequencyComponent(private val interval: Int, offset: Int) :
     companion object : ComponentParser<IntervalUpdateFrequencyComponent> {
         override val id: String = "interval_update_frequency"
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): IntervalUpdateFrequencyComponent? {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<IntervalUpdateFrequencyComponent> {
             val jsonObject = jsonElement.asJsonObject
-            if (!(jsonObject.has("interval") && jsonObject.get("interval").isJsonPrimitive)) return null
+            if (!(jsonObject.has("interval") && jsonObject.get("interval").isJsonPrimitive)) return Result.failure(
+                InvalidJsonException("Missing 'interval' field!"))
             val interval = jsonObject.get("interval").asJsonPrimitive.asNumber.toInt()
             val offset =
                 if (jsonObject.has("offset") && jsonObject.get("offset").isJsonPrimitive) jsonObject.get("offset").asJsonPrimitive.asInt else 0
-            return IntervalUpdateFrequencyComponent(interval, offset)
+            return Result.success(IntervalUpdateFrequencyComponent(interval, offset))
         }
 
         fun default(): UpdateFrequencyComponent {

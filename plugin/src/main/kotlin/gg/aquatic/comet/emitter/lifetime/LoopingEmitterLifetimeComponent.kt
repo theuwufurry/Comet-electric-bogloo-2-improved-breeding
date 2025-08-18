@@ -4,17 +4,18 @@ import com.google.gson.JsonElement
 import gg.aquatic.comet.api.emitter.EmitterComponent
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.parsing.BaseComponentParser
-import gg.aquatic.comet.api.parsing.compile
 import gg.aquatic.comet.api.parsing.emitterEngine
 import gg.aquatic.comet.api.parsing.macro.Macro
-import gg.aquatic.comet.parsing.expression
+import gg.aquatic.comet.parsing.getExprOrNull
+import gg.aquatic.comet.script.expr.Expr
+import gg.aquatic.comet.script.expr.JSExpr.Companion.constructExpr
+import gg.aquatic.comet.script.expr.getOrPrint
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import javax.script.CompiledScript
 
 class LoopingEmitterLifetimeComponent(
-    private val activeTime: CompiledScript?,
-    private val sleepTime: CompiledScript?,
+    private val activeTime: Expr<Number>?,
+    private val sleepTime: Expr<Number>?,
     private val myEmitterData: EmitterData
 ) : EmitterComponent, EmitterLifetimeComponent {
     override val priority = -1
@@ -24,8 +25,8 @@ class LoopingEmitterLifetimeComponent(
     override fun init(otherEmitterData: EmitterData) {
         myEmitterData.copyFrom(otherEmitterData)
         cachedTimesMap[otherEmitterData.id] = CachedTimes(
-            activeTime?.let { (it.eval() as Number).toInt() } ?: 10,
-            sleepTime?.let { (it.eval() as Number).toInt() } ?: 0
+            activeTime?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toInt() ?: 10,
+            sleepTime?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toInt() ?: 0,
         )
     }
 
@@ -35,8 +36,8 @@ class LoopingEmitterLifetimeComponent(
         if (otherEmitterData.isActive) {
             if (otherEmitterData.age > cachedTimes.activeTime) {
                 cachedTimesMap[otherEmitterData.id] = CachedTimes(
-                    activeTime?.let { (it.eval() as Number).toInt() } ?: 10,
-                    sleepTime?.let { (it.eval() as Number).toInt() } ?: 0
+                    activeTime?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toInt() ?: 10,
+                    sleepTime?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toInt() ?: 0,
                 )
 
                 if (cachedTimes.sleepTime > 0) {
@@ -63,15 +64,25 @@ class LoopingEmitterLifetimeComponent(
     companion object : BaseComponentParser {
         override val id: String = "looping_emitter_lifetime"
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): LoopingEmitterLifetimeComponent {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<LoopingEmitterLifetimeComponent> {
             val jsonObject = jsonElement.asJsonObject
             val emitterData = EmitterData()
             val engine = emitterEngine(emitterData)
-            return LoopingEmitterLifetimeComponent(
-                jsonObject.expression("active_time")?.let { engine.compile(it, macros) },
-                jsonObject.expression("sleep_time")?.let { engine.compile(it, macros) },
+            return Result.success(LoopingEmitterLifetimeComponent(
+                jsonObject.getExprOrNull("active_time")?.constructExpr<Number>(
+                        engine, macros
+                    )?.fold(
+                        { it },
+                        { return Result.failure(it) }
+                    ),
+                jsonObject.getExprOrNull("sleep_time")?.constructExpr<Number>(
+                    engine, macros
+                )?.fold(
+                    { it },
+                    { return Result.failure(it) }
+                ),
                 emitterData
-            )
+            ))
         }
     }
 }

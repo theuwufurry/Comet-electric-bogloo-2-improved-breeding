@@ -36,8 +36,11 @@ class EmitterDeathComponent(
     companion object : BaseComponentParser {
         override val id: String = "on_emitter_death"
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {
-            return EmitterDeathComponent(Action.parse(jsonElement.asJsonArray, macros))
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<Component> {
+            return Result.success(EmitterDeathComponent(Action.parse(jsonElement.asJsonArray, macros).fold(
+                { it },
+                { return Result.failure(it) }
+            )))
         }
     }
 }

@@ -7,19 +7,22 @@ import gg.aquatic.comet.api.emitter.action.ActionContext
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.api.emitter.parent.noRollQuaternion
 import gg.aquatic.comet.api.parsing.BaseComponentParser
+import gg.aquatic.comet.api.parsing.InvalidJsonException
 import gg.aquatic.comet.api.parsing.PostInit
-import gg.aquatic.comet.api.parsing.compile
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.particleEngine
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.emitter.action.Action
-import gg.aquatic.comet.parsing.expression
+import gg.aquatic.comet.parsing.getExprOrNull
 import gg.aquatic.comet.particle.position.direction.DelegatedDirectionSubcomponent
 import gg.aquatic.comet.particle.position.direction.DirectionSubcomponent
 import gg.aquatic.comet.particle.position.direction.ExpressionDirectionSubcomponent
 import gg.aquatic.comet.particle.position.direction.RandomDirectionSubcomponent
 import gg.aquatic.comet.particle.position.initial.SpherePositionComponent
+import gg.aquatic.comet.script.expr.Expr
+import gg.aquatic.comet.script.expr.JSExpr.Companion.constructExpr
+import gg.aquatic.comet.script.expr.getOrPrint
 import org.bukkit.Bukkit
 import org.bukkit.World
 import org.bukkit.block.Block
@@ -27,7 +30,6 @@ import org.joml.Vector3d
 import org.joml.Vector3i
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import javax.script.CompiledScript
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.min
@@ -35,9 +37,9 @@ import kotlin.math.sign
 
 class MotionPositionComponent(
     private var initialVelocityComponent: DirectionSubcomponent?,
-    private val accelerationScript: Triple<CompiledScript, CompiledScript, CompiledScript>?,
-    private val dragScript: CompiledScript?,
-    private val restitutionScript: CompiledScript?,
+    private val accelerationScript: Triple<Expr<Number>?, Expr<Number>?, Expr<Number>?>?,
+    private val dragScript: Expr<Number>?,
+    private val restitutionScript: Expr<Number>?,
     private val onCollisionAction: Action?,
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData
@@ -75,15 +77,16 @@ class MotionPositionComponent(
                 )?.mul(otherEmitterData.emitter!!.environmentData.size)?.rotate(myEmitterData.emitter!!.pose.rot)
                     ?: Vector3d()
             )
+
             return
         }
 
-        val dragCoefficient = (dragScript?.eval() as? Number)?.toDouble() ?: 0.0
+        val dragCoefficient = dragScript?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble() ?: 0.0
         val acceleration = (accelerationScript?.let {
             Vector3d(
-                (it.first.eval() as Number).toDouble(),
-                (it.second.eval() as Number).toDouble(),
-                (it.third.eval() as Number).toDouble()
+                it.first?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble() ?: 0.0,
+                it.second?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble() ?: 0.0,
+                it.third?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble() ?: 0.0,
             ).mul(otherEmitterData.emitter!!.environmentData.size)
         } ?: Vector3d()).add(otherParticleData.acceleration)
 
@@ -99,7 +102,7 @@ class MotionPositionComponent(
         map[otherParticleData.id] = Vector3d(otherParticleData.relativePosition)
 
         val newPos = Vector3d(otherParticleData.relativePosition).add(velocity).add(acceleration)
-        val correction = fixCollisions(newPos, otherParticleData.acceleration)
+        val correction = fixCollisions(newPos, otherParticleData.acceleration, otherEmitterData)
         if (correction != null) {
             newPos.add(correction.vector)
 
@@ -128,14 +131,14 @@ class MotionPositionComponent(
         onCollisionAction?.execute(context)
     }
 
-    private fun fixCollisions(rawNewPos: Vector3d, acceleration: Vector3d): CorrectionResult? {
+    private fun fixCollisions(rawNewPos: Vector3d, acceleration: Vector3d, otherEmitterData: EmitterData): CorrectionResult? {
         if (restitutionScript != null) {
             val currentPos = Vector3d(myParticleData.origin).add(myParticleData.relativePosition)
             val velocity = Vector3d(rawNewPos).sub(myParticleData.relativePosition)
             val newPos = Vector3d(myParticleData.origin).add(rawNewPos)
             val block = blockAt(myEmitterData.world!!, currentPos)
 
-            val restitution = (restitutionScript.eval() as Number).toDouble()
+            val restitution = restitutionScript.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble() ?: return null
 
             val intersection = block.intersect(currentPos, velocity)
             if (intersection != null) {
@@ -354,7 +357,7 @@ class MotionPositionComponent(
         override fun parse(
             jsonElement: JsonElement,
             macros: Map<String, Macro>?
-        ): MotionPositionComponent? {
+        ): Result<MotionPositionComponent> {
             val jsonObject = jsonElement.asJsonObject
             val emitterData = EmitterData()
             val (engine, particleData) = particleEngine(emitterData)
@@ -365,17 +368,29 @@ class MotionPositionComponent(
             )
 
             if ("initial_velocity" in jsonObject.keySet()) {
-                val velocityObject = jsonObject.getAsJsonObject("initial_velocity") ?: return null
+                val velocityObject = jsonObject.getAsJsonObject("initial_velocity") ?: return Result.failure(
+                    InvalidJsonException("'initial_velocity' not a json object!")
+                )
                 velocityComponent = ExpressionDirectionSubcomponent(
-                    velocityObject.expression("x")?.let { engine.compile(it, macros) },
-                    velocityObject.expression("y")?.let { engine.compile(it, macros) },
-                    velocityObject.expression("z")?.let { engine.compile(it, macros) },
-                    velocityObject.expression("magnitude")?.let { engine.compile(it, macros) },
+                    velocityObject.getExprOrNull("x")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
+                    velocityObject.getExprOrNull("y")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
+                    velocityObject.getExprOrNull("z")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
+                    velocityObject.getExprOrNull("magnitude")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
                     particleData, emitterData
                 )
             } else if ("random_velocity" in jsonObject.keySet()) {
-                val velocityObject = jsonObject.getAsJsonObject("random_velocity") ?: return null
-                val directionPair: Pair<DirectionSubcomponent, CompiledScript>? =
+                val velocityObject = jsonObject.getAsJsonObject("random_velocity") ?: return Result.failure(
+                    InvalidJsonException("'random_velocity' is not a json object!")
+                )
+                val directionPair: Pair<DirectionSubcomponent, Expr<Number>?>? =
                     velocityObject.getAsJsonObject("bias")?.let l@{
                         if (!it.has("direction")) throw NullPointerException("bias in random_velocity missing direction!")
                         val dirObject = it.get("direction")
@@ -384,46 +399,51 @@ class MotionPositionComponent(
                                 .warning("Using outdated json array for 'direction', please switch it to 'x' 'y' 'z' format!")
                             Pair(
                                 ExpressionDirectionSubcomponent(
-                                    engine.compile(
-                                        it.getAsJsonArray("direction")[0].expression() ?: "0",
-                                        macros
-                                    ),
-                                    engine.compile(
-                                        it.getAsJsonArray("direction")[1].expression() ?: "0",
-                                        macros
-                                    ),
-                                    engine.compile(
-                                        it.getAsJsonArray("direction")[2].expression() ?: "0",
-                                        macros
-                                    ),
-                                    it.expression("magnitude")?.let { mag -> engine.compile(mag, macros) },
+                                    it.getAsJsonArray("direction")[0].getExprOrNull()
+                                        ?.constructExpr<Number>(engine, macros)
+                                        ?.fold({ it }, { return Result.failure(it) }),
+                                    it.getAsJsonArray("direction")[1].getExprOrNull()
+                                        ?.constructExpr<Number>(engine, macros)
+                                        ?.fold({ it }, { return Result.failure(it) }),
+                                    it.getAsJsonArray("direction")[2].getExprOrNull()
+                                        ?.constructExpr<Number>(engine, macros)
+                                        ?.fold({ it }, { return Result.failure(it) }),
+                                    it.getExprOrNull("magnitude")
+                                        ?.constructExpr<Number>(engine, macros)
+                                        ?.fold({ it }, { return Result.failure(it) }),
                                     particleData, emitterData
-                                ), engine.compile(it.getAsJsonPrimitive("spread").expression() ?: "0", macros)
+                                ),
+                                (it.getAsJsonPrimitive("spread").getExprOrNull()
+                                    ?.constructExpr<Number>(engine, macros)
+                                    ?.fold({ it }, { return Result.failure(it) }))
                             )
                         } else {
                             Pair(
                                 ExpressionDirectionSubcomponent(
-                                    engine.compile(
-                                        dirObject.asJsonObject.getAsJsonPrimitive("x")?.expression() ?: "0",
-                                        macros
-                                    ),
-                                    engine.compile(
-                                        dirObject.asJsonObject.getAsJsonPrimitive("y")?.expression() ?: "0",
-                                        macros
-                                    ),
-                                    engine.compile(
-                                        dirObject.asJsonObject.getAsJsonPrimitive("z")?.expression() ?: "0",
-                                        macros
-                                    ),
-                                    it.expression("magnitude")?.let { mag -> engine.compile(mag, macros) },
+                                    dirObject.asJsonObject.getAsJsonPrimitive("x")?.getExprOrNull()
+                                        ?.constructExpr<Number>(engine, macros)
+                                        ?.fold({ it }, { return Result.failure(it) }),
+                                    dirObject.asJsonObject.getAsJsonPrimitive("y")?.getExprOrNull()
+                                        ?.constructExpr<Number>(engine, macros)
+                                        ?.fold({ it }, { return Result.failure(it) }),
+                                    dirObject.asJsonObject.getAsJsonPrimitive("z")?.getExprOrNull()
+                                        ?.constructExpr<Number>(engine, macros)
+                                        ?.fold({ it }, { return Result.failure(it) }),
+                                    it.getExprOrNull("magnitude")
+                                        ?.constructExpr<Number>(engine, macros)
+                                        ?.fold({ it }, { return Result.failure(it) }),
                                     particleData, emitterData
-                                ), engine.compile(it.getAsJsonPrimitive("spread")?.expression() ?: "0", macros)
+                                ), it.getAsJsonPrimitive("spread")?.getExprOrNull()
+                                    ?.constructExpr<Number>(engine, macros)
+                                    ?.fold({ it }, { return Result.failure(it) })
                             )
                         }
                     }
 
                 velocityComponent = RandomDirectionSubcomponent(
-                    engine.compile(velocityObject.expression("magnitude")!!, macros),
+                    velocityObject.getExprOrNull("magnitude")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
                     directionPair,
                     particleData, emitterData
                 )
@@ -433,21 +453,34 @@ class MotionPositionComponent(
 
             val accelerationObject =
                 if (jsonObject.has("acceleration")) jsonObject.getAsJsonObject("acceleration") else null
-            val accelerationScript: Triple<CompiledScript, CompiledScript, CompiledScript> = Triple(
-                engine.compile(accelerationObject?.expression("x") ?: "0", macros),
-                engine.compile(accelerationObject?.expression("y") ?: "0", macros),
-                engine.compile(accelerationObject?.expression("z") ?: "0", macros)
+            val accelerationScript: Triple<Expr<Number>?, Expr<Number>?, Expr<Number>?> = Triple(
+                accelerationObject?.getExprOrNull("x")
+                    ?.constructExpr<Number>(engine, macros)
+                    ?.fold({ it }, { return Result.failure(it) }),
+                accelerationObject?.getExprOrNull("y")
+                    ?.constructExpr<Number>(engine, macros)
+                    ?.fold({ it }, { return Result.failure(it) }),
+                accelerationObject?.getExprOrNull("z")
+                    ?.constructExpr<Number>(engine, macros)
+                    ?.fold({ it }, { return Result.failure(it) }),
             )
 
-            val actions = jsonObject.getAsJsonArray("on_collision")?.let { Action.parse(it, macros) }
+            val actions = jsonObject.getAsJsonArray("on_collision")
+                ?.let { Action.parse(it, macros).fold({ it }, { return Result.failure(it) }) }
 
-            return MotionPositionComponent(
-                velocityComponent,
-                accelerationScript,
-                jsonObject.expression("drag")?.let { engine.compile(it, macros) },
-                jsonObject.expression("restitution")?.let { engine.compile(it, macros) },
-                actions,
-                emitterData, particleData
+            return Result.success(
+                MotionPositionComponent(
+                    velocityComponent,
+                    accelerationScript,
+                    jsonObject.getExprOrNull("drag")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
+                    jsonObject.getExprOrNull("restitution")
+                        ?.constructExpr<Number>(engine, macros)
+                        ?.fold({ it }, { return Result.failure(it) }),
+                    actions,
+                    emitterData, particleData
+                )
             )
         }
     }

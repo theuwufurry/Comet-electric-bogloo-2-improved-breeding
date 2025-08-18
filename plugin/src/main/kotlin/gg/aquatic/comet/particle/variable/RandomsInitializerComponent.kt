@@ -42,11 +42,13 @@ class RandomsInitializerComponent(private val emitterRandoms: Int, private val p
     companion object : BaseComponentParser {
         override val id: String = "randoms"
 
-        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Component {
+        override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<Component> {
             val jsonObject = jsonElement.asJsonObject
-            return RandomsInitializerComponent(
-                if (jsonObject.has("emitter")) jsonObject.getAsJsonPrimitive("emitter").asInt else 0,
-                if (jsonObject.has("particle")) jsonObject.getAsJsonPrimitive("particle").asInt else 0
+            return Result.success(
+                RandomsInitializerComponent(
+                    if (jsonObject.has("emitter")) jsonObject.getAsJsonPrimitive("emitter").asInt else 0,
+                    if (jsonObject.has("particle")) jsonObject.getAsJsonPrimitive("particle").asInt else 0
+                )
             )
         }
     }
