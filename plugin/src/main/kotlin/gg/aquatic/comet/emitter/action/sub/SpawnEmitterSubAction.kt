@@ -2,6 +2,7 @@ package gg.aquatic.comet.emitter.action.sub
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.action.ActionContext
@@ -43,14 +44,23 @@ class SpawnEmitterSubAction(
     private lateinit var unrealizedEmitters: List<UnrealizedEmitter>
 
     override fun realize(unrealizedEmitter: AbstractUnrealizedEmitter) {
-        unrealizedEmitters = unrealizedEmitterIDs.map {
-            ParticleJsonParser.jsonUnrealizedEmitters[it]
-                ?: throw NullPointerException("$it is not a valid emitter ID!")
+        unrealizedEmitters = unrealizedEmitterIDs.mapNotNull {
+            val r = ParticleJsonParser.jsonUnrealizedEmitters[it]
+
+            if (r == null) {
+                AbstractParticleEmitter.INSTANCE.logger.severe("$it is not a valid emitter ID!")
+            }
+
+            r
         }
     }
 
     override fun execute(context: ActionContext) {
-        val pose = context.pose ?: throw NullPointerException("Cannot use Spawn Emitter SubAction in this event!")
+        val pose = context.pose
+        if (pose == null) {
+            AbstractParticleEmitter.INSTANCE.logger.severe("Cannot use Spawn Emitter SubAction in this event!")
+            return
+        }
 
         val vEm =
             if (context.otherEmitterData.emitter!!.isPregen) context.otherEmitterData.emitter!! as VirtualEmitter else null

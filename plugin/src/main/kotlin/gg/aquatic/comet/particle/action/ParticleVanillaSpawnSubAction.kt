@@ -10,11 +10,13 @@ import gg.aquatic.comet.api.parsing.*
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.parsing.getExprOrNull
 import gg.aquatic.comet.particle.color.addDependency
+import gg.aquatic.comet.script.expr.Expr
+import gg.aquatic.comet.script.expr.JSExpr
+import gg.aquatic.comet.script.expr.JSExpr.Companion.constructExpr
 import org.bukkit.Particle
 import org.joml.Vector3d
 import org.joml.Vector3f
 import java.awt.Color
-import javax.script.CompiledScript
 
 class ParticleVanillaSpawnSubAction(
     private val compiledVanillaParticleData: CompiledVanillaParticle
@@ -33,12 +35,14 @@ class ParticleVanillaSpawnSubAction(
             jsonElement: JsonElement,
             macros: Map<String, Macro>?
         ): Result<ParticleVanillaSpawnSubAction> {
-            val obj = if (jsonElement.isJsonObject) jsonElement.asJsonObject else return Result.failure(
-                MalformedJsonException("Particle should be a json object!")
-            )
+            val obj = if (jsonElement.isJsonObject) jsonElement.asJsonObject else return Result.failure(NotMyType())
             val particle =
                 CompiledVanillaParticle.parse(obj["vanilla_particle"] ?: return Result.failure(NotMyType()), macros)
-            return Result.success(ParticleVanillaSpawnSubAction(particle.getOrNull() ?: return Result.failure(NotMyType())))
+            return Result.success(
+                ParticleVanillaSpawnSubAction(
+                    particle.fold({ it }, { return Result.failure(NotMyType()) })
+                )
+            )
         }
     }
 }
@@ -56,10 +60,10 @@ class CompiledVanillaParticle(
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<CompiledVanillaParticle> {
             val obj =
-                if (!jsonElement.isJsonObject) throw MalformedJsonException("Particle should be a json object!") else jsonElement.asJsonObject!!
+                if (!jsonElement.isJsonObject) return Result.failure(NotMyType()) else jsonElement.asJsonObject!!
             val type = Particle.valueOf(
                 obj["type"]?.asStringOrNull()?.uppercase()
-                    ?: throw MalformedJsonException("Particle data needs a type!")
+                    ?: return Result.failure(InvalidJsonException("Particle data needs a type!"))
             )
             val longDistance = obj["long_distance"]?.asBooleanOrNull() ?: false
             val offset = obj["offset"]?.asVector3fWithDefaultValues() ?: Vector3f()
@@ -68,23 +72,25 @@ class CompiledVanillaParticle(
 
             val data: CompiledData<*> = obj["data"]?.let {
                 if (type == Particle.DUST) {
-                    parseParticleDustData(it, macros)
+                    parseParticleDustData(it, macros).fold({ r -> r }, { f -> return Result.failure(f) })
                 } else CompiledData.EmptyDustData()
             } ?: CompiledData.EmptyDustData()
 
 
-            return Result.success(CompiledVanillaParticle(
-                type,
-                data,
-                longDistance,
-                Vector3d(
-                    offset.x.toDouble(),
-                    offset.y.toDouble(),
-                    offset.z.toDouble()
-                ),
-                maxSpeed,
-                count
-            ))
+            return Result.success(
+                CompiledVanillaParticle(
+                    type,
+                    data,
+                    longDistance,
+                    Vector3d(
+                        offset.x.toDouble(),
+                        offset.y.toDouble(),
+                        offset.z.toDouble()
+                    ),
+                    maxSpeed,
+                    count
+                )
+            )
         }
     }
 
@@ -114,33 +120,35 @@ class CompiledVanillaParticle(
 }
 
 interface CompiledData<T> {
-    fun realize(otherEmitterData: EmitterData, otherParticleData: gg.aquatic.comet.api.particle.ParticleData): T
+    fun realize(otherEmitterData: EmitterData, otherParticleData: gg.aquatic.comet.api.particle.ParticleData): Result<T>
 
     class EmptyDustData : CompiledData<Unit> {
         override fun realize(
             otherEmitterData: EmitterData,
             otherParticleData: gg.aquatic.comet.api.particle.ParticleData
-        ) {
-            return
+        ): Result<Unit> {
+            return Result.success(Unit)
         }
     }
 
     class CompiledDustData(
-        private val colorScript: CompiledScript,
-        private val scaleScript: CompiledScript,
+        private val colorScript: Expr<Color>,
+        private val scaleScript: Expr<Number>?,
         private val myEmitterData: EmitterData,
         private val myParticleData: gg.aquatic.comet.api.particle.ParticleData
     ) : CompiledData<ParticleDustData> {
         override fun realize(
             otherEmitterData: EmitterData,
             otherParticleData: gg.aquatic.comet.api.particle.ParticleData
-        ): ParticleDustData {
+        ): Result<ParticleDustData> {
             myEmitterData.copyFrom(otherEmitterData)
             myParticleData.copyFrom(otherParticleData)
-            val color = (colorScript.eval() as Color)
-            return ParticleDustData(
-                (scaleScript.eval() as Number).toFloat(),
-                color.red, color.green, color.blue
+            val color = colorScript.eval().fold({ it }, { return Result.failure(it) })
+            return Result.success(
+                ParticleDustData(
+                    scaleScript?.eval()?.fold({ it }, { return Result.failure(it) })?.toFloat() ?: 1f,
+                    color.red, color.green, color.blue
+                )
             )
         }
     }
@@ -153,19 +161,34 @@ interface CompiledData<T> {
     )
 }
 
-fun parseParticleDustData(jsonElement: JsonElement, macros: Map<String, Macro>?): CompiledData.CompiledDustData {
+fun parseParticleDustData(
+    jsonElement: JsonElement,
+    macros: Map<String, Macro>?
+): Result<CompiledData.CompiledDustData> {
     val obj =
-        if (jsonElement.isJsonObject) jsonElement.asJsonObject else throw MalformedJsonException("Dust particle data should be an object!")
+        if (jsonElement.isJsonObject) jsonElement.asJsonObject else return Result.failure(MalformedJsonException("Dust particle data should be an object!"))
     val emitterData = EmitterData()
     val (engine, particleData) = particleEngine(emitterData)
 
-    val colorScript =
-        engine.compile(obj.getExprOrNull("color")?.addDependency() ?: "new Color(255, 255, 255)".addDependency(), macros)
-    val scaleScript = engine.compile(obj.getExprOrNull("scale") ?: "1", macros)
+    val colorScript = obj.getExprOrNull("bg")
+        ?.addDependency()
+        ?.constructExpr<Color>(engine, macros)
+        ?.fold({ it }, { return Result.failure(it) })
+        ?: JSExpr(
+            engine.compile(
+                input = "new Color(255, 255, 255)",
+                macros = macros,
+            ).getOrThrow()
+        )
 
-    return CompiledData.CompiledDustData(
-        colorScript.getOrThrow(),
-        scaleScript.getOrThrow(),
-        emitterData, particleData
+    val scaleScript =
+        obj.getExprOrNull("scale")?.constructExpr<Number>(engine, macros)?.fold({ it }, { return Result.failure(it) })
+
+    return Result.success(
+        CompiledData.CompiledDustData(
+            colorScript,
+            scaleScript,
+            emitterData, particleData
+        )
     )
 }

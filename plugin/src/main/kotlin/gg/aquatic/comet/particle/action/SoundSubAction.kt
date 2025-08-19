@@ -68,7 +68,7 @@ class SoundSubAction(
 
             val soundIDExpr = (jsonObject.getExpr("sound_id")
                 .fold({ it }, { return Result.failure(it) }))
-                .constructExpr<String>(engine, macros)
+                .constructExpr<String>(engine, macros, true)
                 .fold({ it }, { return Result.failure(it) })
             val volumeExpr = jsonObject.getExprOrNull("volume")
                 ?.constructExpr<Number>(engine, macros)

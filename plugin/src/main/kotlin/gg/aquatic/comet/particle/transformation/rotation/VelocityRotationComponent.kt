@@ -6,6 +6,7 @@ import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.parsing.BaseComponentParser
+import gg.aquatic.comet.api.parsing.InvalidJsonException
 import gg.aquatic.comet.api.parsing.asJsonObjectOrNull
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.particleEngine
@@ -76,7 +77,7 @@ class VelocityRotationComponent(
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<Component> {
             val obj = jsonElement.asJsonObjectOrNull()
-                ?: throw MalformedJsonException("Velocity rotation component is not a json object!")
+                ?: return Result.failure(InvalidJsonException("Velocity rotation component is not a json object!"))
 
             val spriteRotation = obj.getExprOrNull("sprite_rotation")
                 ?.let { AbstractParticleEmitter.scriptEngineFactory.scriptEngine.eval(it) as Number }?.toFloat() ?: 0f

@@ -8,6 +8,7 @@ import gg.aquatic.comet.api.emitter.EmitterComponent
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.action.ActionContext
 import gg.aquatic.comet.api.parsing.BaseComponentParser
+import gg.aquatic.comet.api.parsing.InvalidJsonException
 import gg.aquatic.comet.api.parsing.PostInit
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.emitter.action.Action
@@ -40,7 +41,7 @@ class EmitterTimelineComponent(
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<Component> {
             val jsonObject =
-                if (jsonElement.isJsonObject) jsonElement.asJsonObject else throw MalformedJsonException("Malformed emitter timeline component.")
+                if (jsonElement.isJsonObject) jsonElement.asJsonObject else return Result.failure(InvalidJsonException("Malformed emitter timeline component."))
 
             val map: MutableMap<Int, Action> = mutableMapOf()
 

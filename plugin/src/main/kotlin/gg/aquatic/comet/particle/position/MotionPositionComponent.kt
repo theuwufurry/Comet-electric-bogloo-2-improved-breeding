@@ -392,7 +392,7 @@ class MotionPositionComponent(
                 )
                 val directionPair: Pair<DirectionSubcomponent, Expr<Number>?>? =
                     velocityObject.getAsJsonObject("bias")?.let l@{
-                        if (!it.has("direction")) throw NullPointerException("bias in random_velocity missing direction!")
+                        if (!it.has("direction")) return Result.failure(InvalidJsonException("bias in random_velocity missing direction!"))
                         val dirObject = it.get("direction")
                         if (dirObject.isJsonArray) {
                             Bukkit.getLogger()
