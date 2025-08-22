@@ -182,39 +182,39 @@ class VirtualEmitter(
 //            println("V.${unrealizedEmitter.id}, NEW TICK t:$time at:$absoluteTime")
         }
 
-        if (parent != null && parent.dead) {
+        if (parent != null && parent.dead.get()) {
             if (parent is Particle) {
                 val lastAbsoluteTime =
                     (parent.data.emitter!! as VirtualEmitter).path.locations[parent.data.id]!!.last().absoluteTime
 //                println("V.${unrealizedEmitter.id}, LAST PARENT TIME: $lastAbsoluteTime")
                 if (lastAbsoluteTime <= absoluteTime) {
 //                    println("V.${unrealizedEmitter.id}, PARENT DEAD t:$time at:$absoluteTime")
-                    dead = true
+                    dead.set(true)
                     emitterComponents.forEach { it.die(emitterData) }
                 } else {
-                    dead = false
+                    dead.set(false)
                 }
             } else if (parent is VirtualEmitter) {
                 if (parent.path.emitterData.isNotEmpty()) {
                     if (parent.path.emitterData.last().dead && parent.path.emitterData.last().absoluteTime <= absoluteTime) {
 //                        println("V.${unrealizedEmitter.id}, PARENT DEAD t:$time at:$absoluteTime")
-                        dead = true
+                        dead.set(true)
                         emitterComponents.forEach { it.die(emitterData) }
                     }
                 }
             } else {
 //                println("V.${unrealizedEmitter.id}, PARENT DEAD t:$time at:$absoluteTime")
-                dead = true
+                dead.set(true)
                 emitterComponents.forEach { it.die(emitterData) }
             }
         } else {
             if (emitterData.dead) {
 //                println("V.${unrealizedEmitter.id}, DATA DEAD t:$time at:$absoluteTime")
 
-                dead = true
+                dead.set(true)
                 emitterComponents.forEach { it.die(emitterData) }
             } else {
-                dead = false
+                dead.set(false)
             }
         }
 
@@ -296,12 +296,12 @@ class VirtualEmitter(
         deadParticles.clear()
 
         savedEmitterData[absoluteTime] = emitterData.clone()
-        if (((runtime.catchupTime != null && absoluteTime <= runtime.catchupTime!!) || runtime.catchupTime == null) && !dead && emitterData.isActive) {
+        if (((runtime.catchupTime != null && absoluteTime <= runtime.catchupTime!!) || runtime.catchupTime == null) && !dead.get() && emitterData.isActive) {
             spawnParticles()
         }
 
 //        println("V.${unrealizedEmitter.id}, PREKILLATTEMPT, catchup: ${runtime.catchupTime}, dead:$dead particles:${particles.isEmpty()}, at:$absoluteTime")
-        if (((runtime.catchupTime != null && absoluteTime <= runtime.catchupTime!!) || runtime.catchupTime == null) && dead && particles.isEmpty()) {
+        if (((runtime.catchupTime != null && absoluteTime <= runtime.catchupTime!!) || runtime.catchupTime == null) && dead.get() && particles.isEmpty()) {
 //            println("V.${unrealizedEmitter.id}, KILLING t:$time at:$absoluteTime")
             path.emitterData += TimestampedEmitterData(time, absoluteTime, true, emptyList())
             savedEmitterData.clear()
@@ -378,8 +378,12 @@ class VirtualEmitter(
     override val players: List<Player> = emptyList()
 
     override fun kill() {
+        dead.set(true)
+        GlobalTicker._registerEmitterRemoval(this)
+    }
+
+    override fun onKill() {
         savedEmitterData.clear()
-        dead = true
         particles.clear()
     }
 

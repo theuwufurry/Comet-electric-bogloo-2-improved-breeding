@@ -10,6 +10,7 @@ import gg.aquatic.waves.util.audience.AquaticAudience
 import org.bukkit.entity.Player
 import org.joml.Quaternionf
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
 
 abstract class AbstractEmitter : Parent {
@@ -28,9 +29,14 @@ abstract class AbstractEmitter : Parent {
 
     abstract fun kill()
 
+    /**
+     * DO NOT CALL DIRECTLY! This is called by GlobalTicker to remove your emitter! Called asynchronously!
+     */
+    abstract fun onKill()
+
     abstract fun applyEmitterRotation(input: Quaternionf): Quaternionf
 
-    override var dead: Boolean = false
+    override val dead: AtomicBoolean = AtomicBoolean(false)
 
     abstract val audience: AquaticAudience
 

@@ -35,8 +35,18 @@ object GlobalTicker {
         emitterInitializations += initialization
     }
 
-    fun addEmitter(emitter: AbstractEmitter) {
+    /**
+     * DO NOT CALL DIRECTLY
+     */
+    fun _registerEmitter(emitter: AbstractEmitter) {
         emittersToAdd += emitter
+    }
+
+    /**
+     * DO NOT CALL DIRECTLY
+     */
+    fun _registerEmitterRemoval(emitter: AbstractEmitter) {
+        emittersToKill += emitter
     }
 
     val blocked = AtomicBoolean(false)
@@ -90,8 +100,16 @@ object GlobalTicker {
 
         emitters.removeAll(deadEmitters)
 
-        emitters.addAll(emittersToAdd)
-        emittersToAdd.clear()
+        while (emittersToAdd.isNotEmpty()) {
+            val toAdd = emittersToAdd.poll() ?: break
+            emitters += toAdd
+        }
+
+        while (emittersToKill.isNotEmpty()) {
+            val toKill = emittersToKill.poll() ?: break
+            toKill.onKill()
+            emitters -= toKill
+        }
 
         val start = System.currentTimeMillis()
         while (true) {

@@ -5,6 +5,7 @@ import com.ticxo.modelengine.api.model.bone.ModelBone
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.api.emitter.parent.pose
+import java.util.concurrent.atomic.AtomicBoolean
 
 interface MEGParent : Parent {
     companion object {
@@ -24,7 +25,7 @@ interface MEGParent : Parent {
                 return bone.location.pose()
             }
 
-        override val dead: Boolean = true
+        override val dead: AtomicBoolean = AtomicBoolean()
     }
 
     class MEGModelParent(private val model: ActiveModel) : MEGParent {
@@ -32,6 +33,6 @@ interface MEGParent : Parent {
             get() {
                 return model.modeledEntity.base.location.pose()
             }
-        override val dead: Boolean = true
+        override val dead: AtomicBoolean = AtomicBoolean(true)
     }
 }

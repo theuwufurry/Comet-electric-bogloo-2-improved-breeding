@@ -198,7 +198,7 @@ data class UnrealizedEmitter(
             yawpitchSupplier = yawpitchSupplier
         )
 
-        GlobalTicker.addEmitter(e)
+        GlobalTicker._registerEmitter(e)
 
         return e
     }
