@@ -4,6 +4,7 @@ import org.bukkit.Location
 import org.bukkit.World
 import org.joml.Quaterniond
 import org.joml.Vector3d
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.atan2
 import kotlin.math.sqrt
 
@@ -15,7 +16,7 @@ enum class EmitterSpace {
 
 interface Parent {
     val pose: Pose
-    val dead: Boolean
+    val dead: AtomicBoolean
 }
 
 data class Pose(

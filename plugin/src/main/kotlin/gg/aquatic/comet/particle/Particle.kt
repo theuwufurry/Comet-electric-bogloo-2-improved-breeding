@@ -23,6 +23,7 @@ import gg.aquatic.waves.shadow.com.retrooper.packetevents.wrapper.play.server.Wr
 import org.joml.Quaterniond
 import org.joml.Quaternionf
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 
 open class Particle(override var data: ParticleData) : AbstractParticle() {
     override val id = ParticleIDProvider.id()
@@ -357,6 +358,9 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
             )
         }
 
-    override val dead: Boolean
-        get() = data.dead
+    override val dead: AtomicBoolean = AtomicBoolean(data.dead)
+        get() {
+            field.set(data.dead)
+            return field
+        }
 }

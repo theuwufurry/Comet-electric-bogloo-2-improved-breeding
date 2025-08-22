@@ -121,16 +121,16 @@ class OptimizedEmitter(
 
             if (!shouldLive) {
 //                println("O.${unrealizedEmitter.id} RUNTIME DEAD at $time")
-                if (particles.size == 0) {
+                if (particles.isEmpty()) {
 //                    println("O.${unrealizedEmitter.id} RUNTIME DEAD SUCCESSFUL at $time")
-                    dead = true
+                    dead.set(true)
                     kill()
                     blocked.set(false)
                     return EmitterTickResult(false)
                 }
             }
         } else {
-            if (dead && particles.size == 0) {
+            if (dead.get() && particles.isEmpty()) {
                 blocked.set(false)
                 return EmitterTickResult(false)
             }
@@ -259,7 +259,7 @@ class OptimizedEmitter(
         if (data != null) {
             if (data.dead) {
 //                println("O.${unrealizedEmitter.id} DATA DEAD at $time")
-                dead = true
+                dead.set(true)
             }
 
             spawnParticles(data)
@@ -459,8 +459,12 @@ class OptimizedEmitter(
     override val mount: Mount? = null
 
     override fun kill() {
+        dead.set(true)
         killed.set(true)
-        dead = true
+        GlobalTicker._registerEmitterRemoval(this)
+    }
+
+    override fun onKill() {
         killParticles(particles)
         particles.clear()
         runtime?.kill()

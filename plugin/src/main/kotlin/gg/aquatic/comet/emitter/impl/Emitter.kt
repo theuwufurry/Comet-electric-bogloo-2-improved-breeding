@@ -12,6 +12,7 @@ import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
+import gg.aquatic.comet.emitter.GlobalTicker
 import gg.aquatic.comet.emitter.SpawningProcessor
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.particle.Particle
@@ -86,12 +87,12 @@ class Emitter(
 
         emitterComponents.forEach { it.execute(emitterData) }
 
-        if (emitterData.dead || (parent != null && parent.dead)) {
-            dead = true
+        if (emitterData.dead || (parent != null && parent.dead.get())) {
+            dead.set(true)
             emitterComponents.forEach { it.die(emitterData) }
         }
 
-        if (dead && particles.isEmpty()) {
+        if (dead.get() && particles.isEmpty()) {
             if (locMisses > 0 || particleMisses > 0 || emitterMisses > 0 || displayMisses > 0) {
                 println(
                     """
@@ -148,7 +149,7 @@ class Emitter(
 
         val deadParticleIDs: MutableList<Pair<Player, MutableList<Int>>> = spawningProcessor.process(dataPackets)
 
-        if (!dead && emitterData.isActive) spawnParticles()
+        if (!dead.get() && emitterData.isActive) spawnParticles()
 
         blocked.set(false)
 
@@ -218,7 +219,11 @@ class Emitter(
     }
 
     override fun kill() {
-        dead = true
+        dead.set(true)
+        GlobalTicker._registerEmitterRemoval(this)
+    }
+
+    override fun onKill() {
         spawningProcessor.killParticles(particles)
         particles.clear()
     }
