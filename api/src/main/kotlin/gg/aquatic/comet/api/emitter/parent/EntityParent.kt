@@ -11,7 +11,7 @@ class EntityParent(val entity: Entity) : Parent {
 
     override val dead: AtomicBoolean = AtomicBoolean(entity.isDead)
         get() {
-            dead.set(entity.isDead)
+            field.set(entity.isDead)
             return field
         }
 }

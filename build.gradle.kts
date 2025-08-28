@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "gg.aquatic"
-version = "1.13.1"
+version = "1.13.2"
 
 repositories {
     mavenCentral()
