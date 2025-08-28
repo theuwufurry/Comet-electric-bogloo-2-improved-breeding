@@ -273,13 +273,13 @@ object ResourcepackCreator {
         texturesFolder.mkdirs()
 
         for (image in images) {
-            val imageFile = File(texturesFolder.path + "/" + image.name)
+            val imageFile = File(texturesFolder.path, image.name)
             val bufferedImage: BufferedImage = ImageIO.read(image)
             val argbImage = BufferedImage(bufferedImage.width, bufferedImage.height, BufferedImage.TYPE_INT_ARGB)
             val graphics = argbImage.createGraphics()
             graphics.drawImage(bufferedImage, 0, 0, null)
             graphics.dispose()
-            argbImage.ensureGrid(16)
+            argbImage.ensureGrid(bufferedImage.height)
             argbImage.ensureSize()
 
             ImageIO.write(argbImage, "png", imageFile)

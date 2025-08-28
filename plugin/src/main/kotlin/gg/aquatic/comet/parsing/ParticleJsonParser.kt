@@ -203,7 +203,7 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
                 JsonParser.parseReader(FileReader(file)).asJsonObject
             } catch (e: Exception) {
                 AbstractParticleEmitter.INSTANCE.logger.severe("Failed parsing ${file.nameWithoutExtension}! Error:")
-                e.printStackTrace()
+                AbstractParticleEmitter.INSTANCE.logger.severe(e.message)
                 continue
             }
 
@@ -276,7 +276,7 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
                 componentParsers[key]!!.parse(componentElement, macros)
                     .fold({ components += it }, {
                         AbstractParticleEmitter.INSTANCE.logger.severe("Error while parsing $key component in $id!")
-                        it.printStackTrace()
+                        AbstractParticleEmitter.INSTANCE.logger.severe(it.message)
                     })
 
                 continue
@@ -305,7 +305,7 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
                 rateComponentParsers[key]!!.parse(componentElement, macros)
                     .fold({ rateComponent = it }, {
                         AbstractParticleEmitter.INSTANCE.logger.severe("Error while parsing $key component in $id!")
-                        it.printStackTrace()
+                        AbstractParticleEmitter.INSTANCE.logger.severe(it.message)
                     })
 
                 continue
@@ -315,7 +315,7 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
                 updateFrequencyParsers[key]!!.parse(componentElement, macros)
                     .fold({ updateFrequencyComponent = it }, {
                         AbstractParticleEmitter.INSTANCE.logger.severe("Error while parsing $key component in $id!")
-                        it.printStackTrace()
+                        AbstractParticleEmitter.INSTANCE.logger.severe(it.message)
                     })
 
                 continue
@@ -325,7 +325,7 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
                 distanceCullingParser.second.parse(componentElement, macros)
                     .fold({ distanceCullingComponent = it }, {
                         AbstractParticleEmitter.INSTANCE.logger.severe("Error while parsing $key component in $id!")
-                        it.printStackTrace()
+                        AbstractParticleEmitter.INSTANCE.logger.severe(it.message)
                     })
             }
         }
