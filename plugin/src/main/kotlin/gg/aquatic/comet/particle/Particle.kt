@@ -54,7 +54,9 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
             data.interpolationDelay,
             data.transformationInterpolationDuration,
             data.teleportationDuration,
-            data.light
+            data.light,
+            data.seeThrough,
+            data.shadow,
         )
     }
 
@@ -105,7 +107,9 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                 data.interpolationDelay,
                 data.transformationInterpolationDuration,
                 data.teleportationDuration,
-                data.light
+                data.light,
+                data.seeThrough,
+                data.shadow
             ), UpdateFlags(
                 display = true,
                 transparency = true,
@@ -152,7 +156,9 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                     data.interpolationDelay,
                     data.transformationInterpolationDuration,
                     data.teleportationDuration,
-                    data.light
+                    data.light,
+                    data.seeThrough,
+                    data.shadow,
                 ), UpdateFlags(
                     display = true,
                     transparency = true,
@@ -219,7 +225,9 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                     data.interpolationDelay,
                     transformationInterpolationDuration,
                     data.teleportationDuration,
-                    data.light
+                    data.light,
+                    data.seeThrough,
+                    data.shadow,
                 )
 
             previousEntityData = newData.copy()
@@ -238,7 +246,9 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                     data.interpolationDelay,
                     transformationInterpolationDuration,
                     data.teleportationDuration,
-                    data.light
+                    data.light,
+                    data.seeThrough,
+                    data.shadow,
                 )
 
                 entityDataBuilder.getDataFor(
@@ -273,7 +283,9 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                 data.interpolationDelay,
                 data.transformationInterpolationDuration,
                 data.teleportationDuration,
-                data.light
+                data.light,
+                data.seeThrough,
+                data.shadow,
             )
         } ?: let {
             var transparency = data.color ushr 24
@@ -320,7 +332,9 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                     data.scale,
                     data.billboardConstraints, data.interpolationDelay,
                     interpolationDuration, data.teleportationDuration,
-                    data.light
+                    data.light,
+                    data.seeThrough,
+                    data.shadow,
                 )
 
             flags to newData

@@ -335,7 +335,7 @@ class VirtualEmitter(
             particleData.billboardConstraints = billboardConstraints
 
             particleComponents.forEach { it.execute(emitterData, particleData) }
-
+            
             path.hashes[particleData.id] =
                 mutableSetOf<Int>().apply { add(particleData.locHash()) } to mutableSetOf<Int>().apply {
                     add(particleData.displayHash())

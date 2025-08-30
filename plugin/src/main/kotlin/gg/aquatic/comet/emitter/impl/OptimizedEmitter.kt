@@ -333,6 +333,8 @@ class OptimizedEmitter(
             pd.displayData = firstTex.displayData
             pd.emitter = this
             pd.light = firstDisp.vec.lightData
+            pd.seeThrough = firstDisp.vec.seeThrough
+            pd.shadow = firstDisp.vec.shadow
 
             val packets = particle.getAddPacket(pd)
             bundle.addAll(packets)

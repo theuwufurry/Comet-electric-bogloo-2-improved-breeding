@@ -61,6 +61,7 @@ import gg.aquatic.comet.particle.position.MotionPositionComponent
 import gg.aquatic.comet.particle.position.PositionComponent
 import gg.aquatic.comet.particle.position.initial.InitialExpressionPositionComponent
 import gg.aquatic.comet.particle.position.initial.SpherePositionComponent
+import gg.aquatic.comet.particle.textmisc.TextMiscComponent
 import gg.aquatic.comet.particle.transformation.rotation.DirectionRotationComponent
 import gg.aquatic.comet.particle.transformation.rotation.ExpressionRotationComponent
 import gg.aquatic.comet.particle.transformation.rotation.RotationComponent
@@ -124,6 +125,8 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
 
             ConstantTextComponent,
             MiniMessageTextComponent,
+
+            TextMiscComponent,
 
             ConstantLightComponent,
 

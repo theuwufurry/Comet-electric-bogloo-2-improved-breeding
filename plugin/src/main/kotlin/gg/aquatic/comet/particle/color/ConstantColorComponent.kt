@@ -21,7 +21,6 @@ class ConstantColorComponent(
     override val priority = 0
 
     companion object : BaseComponentParser {
-
         override val id: String = "constant_color"
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<ConstantColorComponent> {

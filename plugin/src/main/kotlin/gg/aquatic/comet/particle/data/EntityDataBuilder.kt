@@ -43,7 +43,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
     override fun getDataFor(
         entityData: EntityData,
         flags: UpdateFlags,
-        initial: Boolean
+        initial: Boolean,
     ): List<EntityDataValue>? {
         return genData(entityData, flags, initial)
     }
@@ -51,7 +51,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
     private fun genData(
         component: EntityData,
         flags: UpdateFlags,
-        initial: Boolean
+        initial: Boolean,
     ): List<EntityDataValue>? {
         val entityData: MutableList<EntityDataValue> =
             mutableListOf()
@@ -61,6 +61,14 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
                 if (initial) {
                     entityData += EntityDataValue.create(23 + PACKET_OFFSET, DataSerializerTypes.INT, Int.MAX_VALUE)
                     entityData += EntityDataValue.create(24 + PACKET_OFFSET, DataSerializerTypes.INT, 0)
+
+                    var b = 0
+                    if (component.shadow) b = b or 1
+                    if (component.seeThrough) b = b or 2
+
+                    if (b != 0) {
+                        entityData += EntityDataValue.create(26 + PACKET_OFFSET, DataSerializerTypes.BYTE, b.toByte())
+                    }
                 }
 
                 if (flags.display) {
@@ -72,18 +80,37 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
 
                 if (flags.transparency) {
                     val transformedTransparency = component.transparency.coerceAtLeast(25)
-                    entityData += EntityDataValue.create(25 + PACKET_OFFSET, DataSerializerTypes.BYTE, transformedTransparency.toByte())
+                    entityData += EntityDataValue.create(
+                        25 + PACKET_OFFSET,
+                        DataSerializerTypes.BYTE,
+                        transformedTransparency.toByte()
+                    )
                 }
             }
 
             is ModelData -> {
                 if (flags.display) {
-                    entityData += EntityDataValue.create(22 + PACKET_OFFSET, DataSerializerTypes.ITEM_STACK, ResourcepackCreator.stack(displayData.id, component.color) ?: ItemStack.empty())
+                    entityData += EntityDataValue.create(
+                        22 + PACKET_OFFSET,
+                        DataSerializerTypes.ITEM_STACK,
+                        ResourcepackCreator.stack(displayData.id, component.color) ?: ItemStack.empty()
+                    )
                 }
             }
 
             is TextData -> {
                 val td = (component.displayData as TextData)
+                if (initial) {
+                    println("TEXT! shadow: ${component.shadow}, seethrough: ${component.seeThrough}")
+                    var b = 0
+                    if (component.shadow) b = b or 1
+                    if (component.seeThrough) b = b or 2
+
+                    if (b != 0) {
+                        entityData += EntityDataValue.create(26 + PACKET_OFFSET, DataSerializerTypes.BYTE, b.toByte())
+                    }
+                }
+                
                 if (flags.display) {
                     entityData += EntityDataValue.create(
                         22 + PACKET_OFFSET,
@@ -104,7 +131,11 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
                 }
 
                 if (flags.transparency) {
-                    entityData += EntityDataValue.create(25 + PACKET_OFFSET, DataSerializerTypes.BYTE, ((component.color ushr 24) + 26).coerceAtMost(255).toByte())
+                    entityData += EntityDataValue.create(
+                        25 + PACKET_OFFSET,
+                        DataSerializerTypes.BYTE,
+                        ((component.color ushr 24) + 26).coerceAtMost(255).toByte()
+                    )
                 }
             }
 
@@ -116,7 +147,11 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
         entityData += EntityDataValue.create(8, DataSerializerTypes.INT, component.interpolationDelay)
 
         if (initial || flags.transformationInterpolation) {
-            entityData += EntityDataValue.create(9, DataSerializerTypes.INT, component.transformationInterpolationDuration)
+            entityData += EntityDataValue.create(
+                9,
+                DataSerializerTypes.INT,
+                component.transformationInterpolationDuration
+            )
         }
 
         if ((initial || flags.teleportationDuration) && PACKET_OFFSET > 0) {
@@ -124,22 +159,27 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
         }
 
         if (initial) {
-            entityData += EntityDataValue.create(14 + PACKET_OFFSET, DataSerializerTypes.BYTE,
-                component.billboardConstraints.byte)
+            entityData += EntityDataValue.create(
+                14 + PACKET_OFFSET, DataSerializerTypes.BYTE,
+                component.billboardConstraints.byte
+            )
         }
 
         if (flags.scale) {
             if (!(initial && component.scale == defaultScale)) {
-                entityData += EntityDataValue.create(11 + PACKET_OFFSET, DataSerializerTypes.VECTOR3,
-                    Vector3f(component.scale.x, component.scale.y, component.scale.z))
+                entityData += EntityDataValue.create(
+                    11 + PACKET_OFFSET, DataSerializerTypes.VECTOR3,
+                    Vector3f(component.scale.x, component.scale.y, component.scale.z)
+                )
             }
         }
 
         if (flags.rotation) {
             if (!(initial && component.rotation == defaultRotation)) {
-                entityData += EntityDataValue.create(12 + PACKET_OFFSET, DataSerializerTypes.QUATERNION,
+                entityData += EntityDataValue.create(
+                    12 + PACKET_OFFSET, DataSerializerTypes.QUATERNION,
                     Quaternionf(component.rotation.x, component.rotation.y, component.rotation.z, component.rotation.w)
-                    )
+                )
             }
         }
 
@@ -154,16 +194,21 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
                 .mul(component.scale)
                 .rotate(component.rotation)
                 .add(component.translation)
-            entityData += EntityDataValue.create(10 + PACKET_OFFSET, DataSerializerTypes.VECTOR3,
-                Vector3f(offset.x,
+            entityData += EntityDataValue.create(
+                10 + PACKET_OFFSET, DataSerializerTypes.VECTOR3,
+                Vector3f(
+                    offset.x,
                     offset.y,
-                    offset.z)
+                    offset.z
+                )
             )
         }
 
         if (initial && component.lightData != null) {
-            entityData += EntityDataValue.create(15 + PACKET_OFFSET, DataSerializerTypes.INT,
-                (component.lightData!!.blocklight shl 4) or (component.lightData!!.skylight shl 20))
+            entityData += EntityDataValue.create(
+                15 + PACKET_OFFSET, DataSerializerTypes.INT,
+                (component.lightData!!.blocklight shl 4) or (component.lightData!!.skylight shl 20)
+            )
             component.lightData
         }
 
@@ -194,7 +239,8 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
             strB.append("| ROTATION: ${entityData.rotation}\n")
 
         if (flags.teleportationDuration &&
-            !flags.scale && !flags.translation && !flags.display && !flags.transformationInterpolation && !flags.transparency && !flags.rotation) {
+            !flags.scale && !flags.translation && !flags.display && !flags.transformationInterpolation && !flags.transparency && !flags.rotation
+        ) {
             strB.append("| LONELY!")
         }
 

@@ -18,6 +18,8 @@ data class EntityData(
     val transformationInterpolationDuration: Int,
     val teleportationDuration: Int,
     val lightData: LightData?,
+    val seeThrough: Boolean,
+    val shadow: Boolean,
 ) {
     fun copy(): EntityData {
         return EntityData(
@@ -33,6 +35,8 @@ data class EntityData(
             transformationInterpolationDuration,
             teleportationDuration,
             lightData,
+            seeThrough,
+            shadow
         )
     }
 }

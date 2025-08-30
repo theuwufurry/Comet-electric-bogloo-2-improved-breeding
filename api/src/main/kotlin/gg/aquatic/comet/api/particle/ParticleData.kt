@@ -32,6 +32,8 @@ data class ParticleData(
     var transformationInterpolationDuration: Int = 2,
     var teleportationDuration: Int = 1,
     var light: LightData? = null,
+    var seeThrough: Boolean = false,
+    var shadow: Boolean = false,
 ) {
     val pos: Vector3d
         get() = Vector3d(origin).add(relativePosition)
@@ -56,6 +58,10 @@ data class ParticleData(
         acceleration = other.acceleration
         interpolationDelay = other.interpolationDelay
         transformationInterpolationDuration = other.transformationInterpolationDuration
+        teleportationDuration = other.teleportationDuration
+        light = other.light
+        seeThrough = other.seeThrough
+        shadow = other.shadow
 
         variable = other.variable
 //        variable.clear()
@@ -94,6 +100,9 @@ data class ParticleData(
             interpolationDelay = interpolationDelay,
             transformationInterpolationDuration = transformationInterpolationDuration,
             teleportationDuration = teleportationDuration,
+            light = light,
+            seeThrough = seeThrough,
+            shadow = shadow,
         ).apply i@{
             this@i.variable = (this@ParticleData.variable as VariableMutableMap).clone()
         }

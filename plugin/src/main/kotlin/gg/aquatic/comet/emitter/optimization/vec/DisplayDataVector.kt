@@ -16,6 +16,8 @@ class DisplayDataVector private constructor(
     var scale: Vector3f,
     var translation: Vector3f,
     var lightData: LightData?,
+    var seeThrough: Boolean,
+    var shadow: Boolean,
     var time: Double,
     private val coefficients: DisplayDataVectorCoefficients,
 ) : Vec {
@@ -53,7 +55,7 @@ class DisplayDataVector private constructor(
         }
 
     override fun clone(): Vec {
-        return DisplayDataVector(alpha, Quaternionf(rot), Vector3f(scale), Vector3f(translation), lightData?.copy(), time, coefficients)
+        return DisplayDataVector(alpha, Quaternionf(rot), Vector3f(scale), Vector3f(translation), lightData?.copy(), seeThrough, shadow, time, coefficients)
     }
 
     override fun lengthSquared(): Double {
@@ -126,6 +128,8 @@ class DisplayDataVector private constructor(
             scale: Vector3f,
             translation: Vector3f,
             light: LightData?,
+            seeThrough: Boolean,
+            shadow: Boolean,
             time: Double,
             coefficients: DisplayDataVectorCoefficients,
         ): DisplayDataVector {
@@ -135,6 +139,8 @@ class DisplayDataVector private constructor(
                 scale,
                 translation,
                 light,
+                seeThrough,
+                shadow,
                 time,
                 coefficients,
             )
@@ -150,6 +156,8 @@ class DisplayDataVector private constructor(
                 particle.data.scale,
                 particle.data.translation,
                 particle.data.light,
+                particle.data.seeThrough,
+                particle.data.shadow,
                 particle.data.age,
                 coefficients,
             )
