@@ -1,6 +1,7 @@
 package gg.aquatic.comet.particle.action
 
 import com.google.gson.JsonElement
+import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.action.ActionContext
 import gg.aquatic.comet.api.emitter.action.SubAction
@@ -15,6 +16,7 @@ import gg.aquatic.comet.parsing.getExprOrNull
 import gg.aquatic.comet.script.expr.Expr
 import gg.aquatic.comet.script.expr.JSExpr.Companion.constructExpr
 import gg.aquatic.comet.script.expr.getOrPrint
+import org.bukkit.Bukkit
 
 //TODO: Particle Data support
 
@@ -33,11 +35,13 @@ class SoundSubAction(
             val pitch = pitchExpr?.eval()?.getOrPrint(context.otherEmitterData.emitter!!.unrealizedEmitter.id)?.toFloat() ?: 1f
 
             virtual.emitterActionsBuffer += { em ->
-                em.pose.location.world!!.playSound(
-                    em.pose.location,
-                    soundID,
-                    volume, pitch
-                )
+                Bukkit.getScheduler().runTask(AbstractParticleEmitter.INSTANCE, Runnable {
+                    em.pose.location.world!!.playSound(
+                        em.pose.location,
+                        soundID,
+                        volume, pitch
+                    )
+                })
             }
         } else {
             myEmitterData.copyFrom(context.otherEmitterData)
