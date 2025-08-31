@@ -23,7 +23,7 @@ import gg.aquatic.comet.script.expr.getOrPrint
 class FlipbookModelComponent(
     private val inputScript: Expr<Number>,
     private val modelScripts: List<Pair<Double, Expr<String>>>,
-    private val myParticleData: ParticleData, private val myEmitterData: EmitterData
+    private val myParticleData: ParticleData, private val myEmitterData: EmitterData,
 ) : ParticleComponent, ModelComponent {
     override val priority = 0
 
@@ -43,7 +43,7 @@ class FlipbookModelComponent(
                                 .fold({ it }, { return Result.failure(it) })
                                 .constructExpr<String>(engine, macros, tryAsSimpleString = true)
                                 .fold({ it }, { return Result.failure(it) })
-                            )
+                                                                                                         )
                 }
             } else if (jsonObject["models"].isJsonObject) {
                 for ((index, model) in jsonObject["models"].asJsonObject.entrySet()) {
@@ -51,60 +51,66 @@ class FlipbookModelComponent(
                             model.asStringOrNull()
                                 ?.constructExpr<String>(engine, macros, tryAsSimpleString = true)
                                 ?.fold({ it }, { return Result.failure(it) })
-                                ?: return Result.failure(InvalidJsonException("Missing model!")))
+                            ?: return Result.failure(InvalidJsonException("Missing model!")))
                 }
             } else {
                 return Result.failure(InvalidJsonException("Malformed element!"))
             }
 
 
-            return Result.success(FlipbookModelComponent(
-                jsonObject.getExpr("input")
-                    .fold({ it }, { return Result.failure(it) })
-                    .constructExpr<Number>(engine, macros)
-                    .fold({ it }, { return Result.failure(it) }),
-                models,
-                particleData, emitterData
-            ))
+            return Result.success(
+                FlipbookModelComponent(
+                    jsonObject.getExpr("input")
+                        .fold({ it }, { return Result.failure(it) })
+                        .constructExpr<Number>(engine, macros)
+                        .fold({ it }, { return Result.failure(it) }),
+                    models,
+                    particleData, emitterData
+                )
+            )
         }
     }
 
     override fun execute(otherEmitterData: EmitterData, otherParticleData: ParticleData) {
         myEmitterData.copyFrom(otherEmitterData)
         myParticleData.copyFrom(otherParticleData)
-        val inputResult = inputScript.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble() ?: return
-
+        val inputResult =
+            inputScript.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toDouble() ?: return
+        
         if (inputResult >= modelScripts.last().first) {
-            val modelID = modelScripts.last().second.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id) ?: return
+            val modelID =
+                modelScripts.last().second.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id) ?: return
             if (modelID !in ResourcepackCreator.modelMap.keys && modelID != "empty") {
                 AbstractParticleEmitter.INSTANCE.logger.warning("Invalid model id $id!")
                 return
             }
-            
+
             otherParticleData.displayData = ModelData(modelID)
             return
         }
 
         if (inputResult <= modelScripts.first().first) {
-            val modelID = modelScripts.first().second.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id) ?: return
+            val modelID =
+                modelScripts.first().second.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id) ?: return
             if (modelID !in ResourcepackCreator.modelMap.keys && modelID != "empty") {
                 AbstractParticleEmitter.INSTANCE.logger.warning("Invalid model id $id!")
                 return
             }
-            
+
             otherParticleData.displayData = ModelData(modelID)
             return
         }
 
         var i = 0
-        while (i + 1 < modelScripts.size && inputResult > modelScripts[i + 1].first) i++
-
-        val modelID = modelScripts[i].second.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id) ?: return
+        while (i + 1 < modelScripts.size && inputResult >= modelScripts[i + 1].first) i++
+        
+        val modelID =
+            modelScripts[i].second.eval().getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id) ?: return
         if (modelID !in ResourcepackCreator.modelMap.keys && modelID != "empty") {
             AbstractParticleEmitter.INSTANCE.logger.warning("Invalid model id $id!")
             return
         }
-        
+
         otherParticleData.displayData = ModelData(modelID)
     }
 
