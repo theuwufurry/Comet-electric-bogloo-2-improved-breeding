@@ -35,7 +35,7 @@ class ExpressionModelComponent(
             return Result.success(ExpressionModelComponent(
                 jsonObject.getExpr("id")
                     .fold({ it }, { return Result.failure(it) })
-                    .constructExpr<String>(engine, macros)
+                    .constructExpr<String>(engine, macros, tryAsSimpleString = true)
                     .fold({ it }, { return Result.failure(it) }),
                 emitterData,
                 particleData

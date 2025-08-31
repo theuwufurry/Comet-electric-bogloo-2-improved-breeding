@@ -39,7 +39,7 @@ class FlipbookModelComponent(
                     models += (element as JsonObject).getAsJsonPrimitive("index").asNumber.toDouble() to (
                             element.getExpr("model")
                                 .fold({ it }, { return Result.failure(it) })
-                                .constructExpr<String>(engine, macros)
+                                .constructExpr<String>(engine, macros, tryAsSimpleString = true)
                                 .fold({ it }, { return Result.failure(it) })
                             )
                 }
@@ -47,7 +47,7 @@ class FlipbookModelComponent(
                 for ((index, model) in jsonObject["models"].asJsonObject.entrySet()) {
                     models += index.toDouble() to (
                             model.asStringOrNull()
-                                ?.constructExpr<String>(engine, macros)
+                                ?.constructExpr<String>(engine, macros, tryAsSimpleString = true)
                                 ?.fold({ it }, { return Result.failure(it) })
                                 ?: return Result.failure(InvalidJsonException("Missing model!")))
                 }
