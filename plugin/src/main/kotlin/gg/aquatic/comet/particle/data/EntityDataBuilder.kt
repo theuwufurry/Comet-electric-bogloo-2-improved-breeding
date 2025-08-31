@@ -186,7 +186,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
         if (flags.rotation || flags.scale) {
             val offset = Vector3f(
                 -0.0125f,
-                0f,
+                0.025f,
                 0f
             )
 
