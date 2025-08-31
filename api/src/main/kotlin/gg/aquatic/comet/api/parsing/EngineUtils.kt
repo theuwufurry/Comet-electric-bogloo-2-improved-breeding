@@ -48,8 +48,27 @@ fun Compilable.compile(
     }
 
     output = output.replace("Math.random()", "emitter.emitter.random.kotlinRandom.nextDouble()")
+    
+    val forceJS = output.startsWith(FORCE_JS)
+
+    if (forceJS) {
+        output = output.substring(2)
+    }
+    
+    if (output.isEmpty()) {
+        return Result.failure(IllegalArgumentException("Expression is empty!"))
+    }
 
     val (compiled, e) = compileOrNull(output)
+    
+    if (forceJS) {
+        return if (compiled != null) {
+            Result.success(compiled)
+        } else {
+            Result.failure(e!!)
+        }
+    }
+
     if (tryAsSimpleString) {
         try {
             if (compiled == null) {
@@ -88,3 +107,5 @@ fun Compilable.compileOrNull(script: String): Pair<CompiledScript?, Exception?> 
         null to e
     }
 }
+
+private const val FORCE_JS = "#!"
