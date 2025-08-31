@@ -193,11 +193,11 @@ object ResourcepackCreator {
             val newTexturesObj = JsonObject()
             for ((key, value) in texturesObject.entrySet()) {
                 val asStr = value.asStringOrNull() ?: continue
-                newTexturesObj.addProperty(key, "item/$NAMESPACE/$asStr")
+                newTexturesObj.addProperty(key, "item/$NAMESPACE/${file.nameWithoutExtension}_$asStr")
 
                 val tex = File(file.path + "/" + asStr + ".png")
                 if (tex.exists()) {
-                    val newFileLoc = File(texturesFolder.path + "/" + asStr + ".png")
+                    val newFileLoc = File(texturesFolder.path, "${file.nameWithoutExtension}_$asStr.png")
                     if (!newFileLoc.exists()) {
                         tex.copyTo(newFileLoc)
                     }
