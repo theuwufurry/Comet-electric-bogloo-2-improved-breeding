@@ -24,10 +24,10 @@ import kotlin.math.asin
 import kotlin.math.atan2
 
 class VelocityRotationComponent(
-    private val spriteRotation: Float,
+    private val spriteRotation: Expr<Number>?,
     private val directedRotation: Expr<Number>?,
     private val myEmitterData: EmitterData,
-    private val myParticleData: ParticleData
+    private val myParticleData: ParticleData,
 ) : ParticleComponent, RotationComponent {
     override val priority = 0
     val oldPositionMap: MutableMap<UUID, Vector3f> = ConcurrentHashMap()
@@ -54,13 +54,16 @@ class VelocityRotationComponent(
         val yaw = atan2(delta.x, delta.z) + Math.PI.toFloat()
         val pitch = asin(delta.y) + Math.PI.toFloat() * -0.5f
 
-        val evaluatedDirectedRotation = directedRotation?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toFloat() ?: 0f
+        val evaluatedSpriteRotation =
+            spriteRotation?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toFloat() ?: 0f
+        val evaluatedDirectedRotation =
+            directedRotation?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toFloat() ?: 0f
 
         otherParticleData.rotation = Quaternionf()
             .rotationY(yaw)
             .rotateX(pitch)
             .rotateY(evaluatedDirectedRotation)
-            .rotateZ(spriteRotation)
+            .rotateZ(evaluatedSpriteRotation)
 
         oldPositionMap[otherParticleData.id] = Vector3f(
             otherParticleData.relativePosition.x.toFloat(),
@@ -77,12 +80,15 @@ class VelocityRotationComponent(
 
         override fun parse(jsonElement: JsonElement, macros: Map<String, Macro>?): Result<Component> {
             val obj = jsonElement.asJsonObjectOrNull()
-                ?: return Result.failure(InvalidJsonException("Velocity rotation component is not a json object!"))
+                      ?: return Result.failure(InvalidJsonException("Velocity rotation component is not a json object!"))
 
-            val spriteRotation = obj.getExprOrNull("sprite_rotation")
-                ?.let { AbstractParticleEmitter.scriptEngineFactory.scriptEngine.eval(it) as Number }?.toFloat() ?: 0f
             val emitterData = EmitterData()
             val (engine, particleData) = particleEngine(emitterData)
+
+            val spriteRotation = obj.getExprOrNull("sprite_rotation")
+                ?.constructExpr<Number>(engine, macros)
+                ?.fold({ it }, { return Result.failure(it) })
+
             val directedRotation = obj.getExprOrNull("directed_rotation")
                 ?.constructExpr<Number>(engine, macros)
                 ?.fold({ it }, { return Result.failure(it) })
