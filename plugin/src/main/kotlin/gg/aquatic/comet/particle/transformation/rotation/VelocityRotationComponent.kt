@@ -25,6 +25,7 @@ import kotlin.math.atan2
 
 class VelocityRotationComponent(
     private val spriteRotation: Expr<Number>?,
+    private val spriteRotationPerpendicular: Expr<Number>?,
     private val directedRotation: Expr<Number>?,
     private val myEmitterData: EmitterData,
     private val myParticleData: ParticleData,
@@ -56,12 +57,15 @@ class VelocityRotationComponent(
 
         val evaluatedSpriteRotation =
             spriteRotation?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toFloat() ?: 0f
+        val evaluatedSpriteRotationPerpendicular =
+            spriteRotationPerpendicular?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toFloat() ?: 0f
         val evaluatedDirectedRotation =
             directedRotation?.eval()?.getOrPrint(otherEmitterData.emitter!!.unrealizedEmitter.id)?.toFloat() ?: 0f
 
         otherParticleData.rotation = Quaternionf()
             .rotationY(yaw)
             .rotateX(pitch)
+            .rotateX(evaluatedSpriteRotationPerpendicular)
             .rotateY(evaluatedDirectedRotation)
             .rotateZ(evaluatedSpriteRotation)
 
@@ -89,6 +93,10 @@ class VelocityRotationComponent(
                 ?.constructExpr<Number>(engine, macros)
                 ?.fold({ it }, { return Result.failure(it) })
 
+            val spriteRotationPerpendicular = obj.getExprOrNull("sprite_rotation_perpendicular")
+                ?.constructExpr<Number>(engine, macros)
+                ?.fold({ it }, { return Result.failure(it) })
+
             val directedRotation = obj.getExprOrNull("directed_rotation")
                 ?.constructExpr<Number>(engine, macros)
                 ?.fold({ it }, { return Result.failure(it) })
@@ -96,6 +104,7 @@ class VelocityRotationComponent(
             return Result.success(
                 VelocityRotationComponent(
                     spriteRotation,
+                    spriteRotationPerpendicular,
                     directedRotation,
                     emitterData, particleData
                 )
