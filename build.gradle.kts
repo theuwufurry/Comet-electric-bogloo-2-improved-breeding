@@ -25,7 +25,7 @@ repositories {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
-    compileOnly("gg.aquatic.waves:Waves:1.3.7:publish")
+    compileOnly("gg.aquatic.waves:Waves:1.3.12:publish")
 
     compileOnly("org.openjdk.nashorn:nashorn-core:15.4")
 

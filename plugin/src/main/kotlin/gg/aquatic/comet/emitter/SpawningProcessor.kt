@@ -62,7 +62,7 @@ class SpawningProcessor(
         for (currentViewer in currentViewers) {
             deadParticleIDs += currentViewer to rawDeadParticleIDs
             for (packet in dataPackets) {
-                currentViewer.sendPacket(packet,true)
+                currentViewer.sendPacket(packet, true)
             }
         }
 
@@ -77,7 +77,7 @@ class SpawningProcessor(
 
             for (viewer in addedViewers) {
                 for (spawnPacket in spawnPackets) {
-                    viewer.sendPacket(spawnPacket,true)
+                    viewer.sendPacket(spawnPacket, true)
                 }
             }
         }
@@ -104,7 +104,7 @@ class SpawningProcessor(
     fun sendSpawns(bundle: MutableList<Any>) {
         for (player in currentViewers) {
             for (packet in bundle) {
-                player.sendPacket(packet,true)
+                player.sendPacket(packet, true)
             }
         }
     }
