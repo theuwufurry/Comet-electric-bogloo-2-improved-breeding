@@ -1,7 +1,6 @@
 package gg.aquatic.comet.api.particle.display
 
-import org.bukkit.entity.EntityType
-
+import com.github.retrooper.packetevents.protocol.entity.type.EntityType
 
 interface DisplayComponent
 

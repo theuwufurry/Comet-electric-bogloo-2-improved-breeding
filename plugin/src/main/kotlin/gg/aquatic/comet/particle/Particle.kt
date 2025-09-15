@@ -1,5 +1,10 @@
 package gg.aquatic.comet.particle
 
+import com.github.retrooper.packetevents.wrapper.PacketWrapper
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetPassengers
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity
 import gg.aquatic.comet.api.ParticleIDProvider
 import gg.aquatic.comet.api.emitter.YawPitch
 import gg.aquatic.comet.api.emitter.parent.Pose
@@ -13,8 +18,6 @@ import gg.aquatic.comet.api.particle.UpdateFlags
 import gg.aquatic.comet.api.particle.data.AbstractEntityDataBuilder
 import gg.aquatic.comet.api.particle.data.EntityData
 import gg.aquatic.comet.particle.data.EntityDataBuilder
-import gg.aquatic.waves.Waves
-import org.bukkit.Location
 import org.joml.Quaterniond
 import org.joml.Quaternionf
 import org.joml.Vector3d
@@ -64,18 +67,18 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
         data.age++
     }
 
-    override fun getAddPacket(data: ParticleData): List<Any> {
-        val result = mutableListOf<Any>()
+    override fun getAddPacket(data: ParticleData): List<PacketWrapper<*>> {
+    val result = mutableListOf<PacketWrapper<*>>()
 
         val mount = data.emitter?.mount
 
         val spawnPos = mount?.let {
-            Vector3d(
+            com.github.retrooper.packetevents.util.Vector3d(
                 mount.pos.x,
                 mount.pos.y,
                 mount.pos.z,
             )
-        } ?: Vector3d(
+        } ?: com.github.retrooper.packetevents.util.Vector3d(
             data.origin.x + data.relativePosition.x,
             data.origin.y + data.relativePosition.y,
             data.origin.z + data.relativePosition.z
@@ -83,16 +86,15 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
 
         val yawpitch = data.emitter?.yawpitchSupplier?.get() ?: YawPitch(0f, 0f)
 
-        val spawnPacket = Waves.NMS_HANDLER.createEntitySpawnPacket(
+        result += WrapperPlayServerSpawnEntity(
             id,
-            uuid,
+            Optional.of(uuid),
             data.displayData.entityType,
             spawnPos,
-            yawpitch.yaw,
-            yawpitch.pitch
+            yawpitch.pitch, yawpitch.yaw, 0f,
+            0,
+            Optional.of(com.github.retrooper.packetevents.util.Vector3d ())
         )
-
-        result += spawnPacket
 
         val nd = EntityDataBuilder.getDataFor(
             EntityData(
@@ -122,25 +124,24 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
         )
 
         if (nd != null) {
-            val entityMetaPacket = Waves.NMS_HANDLER.createEntityUpdatePacket(id, nd)
-            result += entityMetaPacket
+            result += WrapperPlayServerEntityMetadata(id, nd)
         }
 
         if (mount != null) {
             val ls = PassengerManager.passengerMap.getOrPut(data.emitter!!.mount!!.entityID) { mutableListOf() }
             ls += id
-            val ridePacket = Waves.NMS_HANDLER.createPassengersPacket(data.emitter!!.mount!!.entityID, ls.toIntArray())
-            result += ridePacket
+            result += WrapperPlayServerSetPassengers(data.emitter!!.mount!!.entityID, ls.toIntArray())
         }
 
         if (data.emitter != null && data.emitter!!.unrealizedEmitter.isDoubleSided) {
-            result += Waves.NMS_HANDLER.createEntitySpawnPacket(
+            result += WrapperPlayServerSpawnEntity(
                 invertedIDs.first,
-                uuid,
+                Optional.of(invertedIDs.second),
                 data.displayData.entityType,
                 spawnPos,
-                yawpitch.yaw,
-                yawpitch.pitch
+                yawpitch.pitch, yawpitch.yaw, 0f,
+                0,
+                Optional.of(com.github.retrooper.packetevents.util.Vector3d())
             )
 
             val inverted = EntityDataBuilder.getDataFor(
@@ -171,10 +172,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
             )
 
             if (inverted != null) {
-                result += Waves.NMS_HANDLER.createEntityUpdatePacket(
-                    invertedIDs.first,
-                    inverted
-                )
+                result += WrapperPlayServerEntityMetadata(invertedIDs.first, inverted)
             }
 
             return result
@@ -189,9 +187,9 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
         shouldUpdate: Boolean,
         data: ParticleData,
         flagOverride: UpdateFlags?,
-    ): List<Any> {
+    ): List<PacketWrapper<*>> {
         return if (shouldUpdate) {
-            val result = mutableListOf<Any>()
+            val result = mutableListOf<PacketWrapper<*>>()
             handleFullUpdate(entityDataBuilder, data, flagOverride)?.let { result += it }
 
             if (data.emitter != null && data.emitter!!.unrealizedEmitter.isDoubleSided) {
@@ -232,7 +230,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
 
             previousEntityData = newData.copy()
 
-            val result = mutableListOf<Any>()
+            val result = mutableListOf<PacketWrapper<*>>()
 
             if (data.emitter != null && data.emitter!!.unrealizedEmitter.isDoubleSided) {
                 val invertedData = EntityData(
@@ -251,17 +249,18 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                     data.shadow,
                 )
 
+
                 entityDataBuilder.getDataFor(
                     invertedData, flags, false
-                )?.let { Waves.NMS_HANDLER.createEntityUpdatePacket(invertedIDs.first, it) }?.let { result += it }
+                )?.let { WrapperPlayServerEntityMetadata(invertedIDs.first, it) }?.let { result += it }
             }
 
             entityDataBuilder.getDataFor(
                 newData, flags, false
-            )?.let { Waves.NMS_HANDLER.createEntityUpdatePacket(id, it) }?.let { result += it }
+            )?.let { WrapperPlayServerEntityMetadata(id, it) }?.let { result += it }
 
             result
-        } else listOf()
+        } else emptyList()
     }
 
     private fun handleFullUpdate(
@@ -269,7 +268,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
         data: ParticleData,
         flagOverride: UpdateFlags?,
         entityID: Int = id
-    ): Any? {
+    ): PacketWrapper<*>? {
         val (flags, newData) = flagOverride?.let {
             flagOverride to EntityData(
                 data.displayData,
@@ -346,7 +345,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
 
         return entityDataBuilder.getDataFor(
             newData, flags, false
-        ).let { Waves.NMS_HANDLER.createEntityUpdatePacket(entityID, it ?: emptyList()) }
+        ).let { WrapperPlayServerEntityMetadata(entityID, it ?: emptyList()) }
     }
 
     private fun Quaternionf.flipped(): Quaternionf {
@@ -359,15 +358,14 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
         return Quaternionf(data.emitter!!.pose.rot).mul(newThis)
     }
 
-    override fun getMovementPacket(): Any {
+    override fun getMovementPacket(): PacketWrapper<*> {
         val yawpitch = data.emitter?.yawpitchSupplier?.get() ?: YawPitch(0f, 0f)
-        return Waves.NMS_HANDLER.createTeleportPacket(
-            id, Location(
-                data.emitter!!.pose.world,
-                data.origin.x + data.relativePosition.x,
-                data.origin.y + data.relativePosition.y,
-                data.origin.z + data.relativePosition.z, yawpitch.yaw, yawpitch.pitch
-            )
+        return WrapperPlayServerEntityTeleport(
+            id, com.github.retrooper.packetevents.util.Vector3d(
+               data.origin.x + data.relativePosition.x, 
+               data.origin.y + data.relativePosition.y,
+               data.origin.z + data.relativePosition.z,
+            ), yawpitch.yaw, yawpitch.pitch, false
         )
     }
 

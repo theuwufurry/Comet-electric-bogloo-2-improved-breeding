@@ -1,11 +1,12 @@
 package gg.aquatic.comet.emitter
 
+import com.github.retrooper.packetevents.PacketEvents
+import com.github.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.api.packet.PassengerManager
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.particle.Particle
 import gg.aquatic.waves.Waves
-import gg.aquatic.waves.util.sendPacket
 import org.bukkit.entity.Player
 import java.util.concurrent.ConcurrentHashMap
 
@@ -51,7 +52,7 @@ class SpawningProcessor(
         currentViewers += addedViewers
     }
 
-    fun process(dataPackets: MutableList<Any>): MutableList<Pair<Player, MutableList<Int>>> {
+    fun process(dataPackets: MutableList<PacketWrapper<*>>): MutableList<Pair<Player, MutableList<Int>>> {
         emitter.particles.removeAll(deadParticles)
         val rawDeadParticleIDs = deadParticles.flatMap { it.entityIDs }.toMutableList()
         val deadParticleIDs: MutableList<Pair<Player, MutableList<Int>>> = mutableListOf()
@@ -62,7 +63,7 @@ class SpawningProcessor(
         for (currentViewer in currentViewers) {
             deadParticleIDs += currentViewer to rawDeadParticleIDs
             for (packet in dataPackets) {
-                currentViewer.sendPacket(packet, true)
+                PacketEvents.getAPI().playerManager.sendPacketSilently(currentViewer, packet)
             }
         }
 
@@ -71,13 +72,13 @@ class SpawningProcessor(
         }
 
         if (emitter.unrealizedEmitter.persistent) {
-            val spawnPackets: List<Any> by lazy {
+            val spawnPackets: List<PacketWrapper<*>> by lazy {
                 emitter.getSpawnPackets()
             }
 
             for (viewer in addedViewers) {
                 for (spawnPacket in spawnPackets) {
-                    viewer.sendPacket(spawnPacket, true)
+                    PacketEvents.getAPI().playerManager.sendPacketSilently(viewer, spawnPacket)
                 }
             }
         }
@@ -97,14 +98,14 @@ class SpawningProcessor(
         val destroyPacket = Waves.NMS_HANDLER.createDestroyEntitiesPacket(*ids)
         for (player in currentViewers) {
             PassengerManager.passengerMap[player.entityId]?.removeAll(ls)
-            player.sendPacket(destroyPacket, true)
+            PacketEvents.getAPI().playerManager.sendPacketSilently(player, destroyPacket)
         }
     }
 
-    fun sendSpawns(bundle: MutableList<Any>) {
+    fun sendSpawns(bundle: MutableList<PacketWrapper<*>>) {
         for (player in currentViewers) {
             for (packet in bundle) {
-                player.sendPacket(packet, true)
+                PacketEvents.getAPI().playerManager.sendPacketSilently(player, packet)
             }
         }
     }

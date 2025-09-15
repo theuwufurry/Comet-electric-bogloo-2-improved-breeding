@@ -40,6 +40,7 @@ subprojects {
         compileOnly("com.ticxo.modelengine:ModelEngine:R4.0.7")
 
         implementation(files("gradle/build/libs/Mengshe-0.0.2.18.jar"))
+        compileOnly("com.github.retrooper:packetevents-spigot:2.9.5")
     }
 
     kotlin {

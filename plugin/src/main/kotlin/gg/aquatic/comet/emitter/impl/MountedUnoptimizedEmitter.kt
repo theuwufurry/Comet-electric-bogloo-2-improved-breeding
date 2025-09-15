@@ -1,5 +1,6 @@
 package gg.aquatic.comet.emitter.impl
 
+import com.github.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.Mount
 import gg.aquatic.comet.api.emitter.*
@@ -112,7 +113,7 @@ class MountedUnoptimizedEmitter(
             return EmitterTickResult(false)
         }
 
-        val dataPackets: MutableList<Any> = mutableListOf()
+        val dataPackets: MutableList<PacketWrapper<*>> = mutableListOf()
 
         for (particle in particles) {
             fun die() {
@@ -159,7 +160,7 @@ class MountedUnoptimizedEmitter(
     }
 
     private fun spawnParticles() {
-        val bundle: MutableList<Any> = mutableListOf()
+        val bundle: MutableList<PacketWrapper<*>> = mutableListOf()
         repeat(rateComponent.toEmit(emitterData)) {
             val particleData = ParticleData(random.uuid())
             val particle = Particle(particleData)
@@ -214,7 +215,7 @@ class MountedUnoptimizedEmitter(
         )
     }
 
-    override fun getSpawnPackets(): List<Any> {
+    override fun getSpawnPackets(): List<PacketWrapper<*>> {
         return particles.flatMap { it.getAddPacket() }
     }
 

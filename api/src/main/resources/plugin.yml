@@ -6,6 +6,9 @@ libraries:
   - org.openjdk.nashorn:nashorn-core:15.4
 depend:
   - Waves
+  - packetevents
+
+load: POSTWORLD
 
 permissions:
   comet.admin:

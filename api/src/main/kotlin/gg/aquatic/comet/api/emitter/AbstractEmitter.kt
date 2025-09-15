@@ -1,5 +1,6 @@
 package gg.aquatic.comet.api.emitter
 
+import com.github.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.comet.api.Mount
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.parent.Parent
@@ -48,7 +49,7 @@ abstract class AbstractEmitter : Parent {
 
     abstract val yawpitchSupplier: Supplier<YawPitch>?
 
-    abstract fun getSpawnPackets(): List<Any>
+    abstract fun getSpawnPackets(): List<PacketWrapper<*>>
 
     abstract fun realize(
         unrealizedEmitter: AbstractUnrealizedEmitter,

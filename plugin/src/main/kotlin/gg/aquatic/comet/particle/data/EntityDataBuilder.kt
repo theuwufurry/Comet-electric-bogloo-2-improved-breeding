@@ -1,6 +1,8 @@
 package gg.aquatic.comet.particle.data
 
 
+import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes
+import com.github.retrooper.packetevents.util.Quaternion4f
 import gg.aquatic.comet.api.parsing.resourcepack.ResourcepackCreator
 import gg.aquatic.comet.api.particle.UpdateFlags
 import gg.aquatic.comet.api.particle.data.AbstractEntityDataBuilder
@@ -8,8 +10,7 @@ import gg.aquatic.comet.api.particle.data.EntityData
 import gg.aquatic.comet.api.particle.display.model.ModelData
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
 import gg.aquatic.comet.api.particle.display.text.TextData
-import gg.aquatic.waves.api.nms.entity.DataSerializerTypes
-import gg.aquatic.waves.api.nms.entity.EntityDataValue
+import io.github.retrooper.packetevents.util.SpigotConversionUtil
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
@@ -44,7 +45,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
         entityData: EntityData,
         flags: UpdateFlags,
         initial: Boolean,
-    ): List<EntityDataValue>? {
+    ): List<PEntityData<*>>? {
         return genData(entityData, flags, initial)
     }
 
@@ -52,37 +53,51 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
         component: EntityData,
         flags: UpdateFlags,
         initial: Boolean,
-    ): List<EntityDataValue>? {
-        val entityData: MutableList<EntityDataValue> =
+    ): List<PEntityData<*>>? {
+        val entityData: MutableList<PEntityData<*>> =
             mutableListOf()
 
         when (val displayData = component.displayData) {
             is SpriteData -> {
                 if (initial) {
-                    entityData += EntityDataValue.create(23 + PACKET_OFFSET, DataSerializerTypes.INT, Int.MAX_VALUE)
-                    entityData += EntityDataValue.create(24 + PACKET_OFFSET, DataSerializerTypes.INT, 0)
+                    entityData += PEntityData(
+                        23 + PACKET_OFFSET,
+                        EntityDataTypes.INT,
+                        Int.MAX_VALUE,
+                    )
+                    entityData += PEntityData(
+                        24 + PACKET_OFFSET,
+                        EntityDataTypes.INT,
+                        0,
+                    )
 
                     var b = 0
                     if (component.shadow) b = b or 1
                     if (component.seeThrough) b = b or 2
 
                     if (b != 0) {
-                        entityData += EntityDataValue.create(26 + PACKET_OFFSET, DataSerializerTypes.BYTE, b.toByte())
+                        PEntityData(
+                            26 + PACKET_OFFSET,
+                            EntityDataTypes.BYTE,
+                            b.toByte()
+                        )
                     }
                 }
 
                 if (flags.display) {
-                    entityData += EntityDataValue.create(
-                        22 + PACKET_OFFSET, DataSerializerTypes.COMPONENT, Component.translatable(displayData.id)
+                    entityData += PEntityData(
+                        22 + PACKET_OFFSET,
+                        EntityDataTypes.ADV_COMPONENT,
+                        Component.translatable(displayData.id)
                             .color(TextColor.color(component.color and 0xFFFFFF)).font(key)
                     )
                 }
 
                 if (flags.transparency) {
                     val transformedTransparency = component.transparency.coerceAtLeast(25)
-                    entityData += EntityDataValue.create(
+                    entityData += PEntityData(
                         25 + PACKET_OFFSET,
-                        DataSerializerTypes.BYTE,
+                        EntityDataTypes.BYTE,
                         transformedTransparency.toByte()
                     )
                 }
@@ -90,10 +105,15 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
 
             is ModelData -> {
                 if (flags.display) {
-                    entityData += EntityDataValue.create(
+                    entityData += PEntityData(
                         22 + PACKET_OFFSET,
-                        DataSerializerTypes.ITEM_STACK,
-                        ResourcepackCreator.stack(displayData.id, component.color) ?: ItemStack.empty()
+                        EntityDataTypes.ITEMSTACK,
+                        SpigotConversionUtil.fromBukkitItemStack(
+                            ResourcepackCreator.stack(
+                                displayData.id,
+                                component.color
+                            ) ?: ItemStack.empty()
+                        )
                     )
                 }
             }
@@ -107,33 +127,37 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
                     if (component.seeThrough) b = b or 2
 
                     if (b != 0) {
-                        entityData += EntityDataValue.create(26 + PACKET_OFFSET, DataSerializerTypes.BYTE, b.toByte())
+                        entityData += PEntityData(
+                            26 + PACKET_OFFSET,
+                            EntityDataTypes.BYTE,
+                            b.toByte()
+                        )
                     }
                 }
-                
+
                 if (flags.display) {
-                    entityData += EntityDataValue.create(
+                    entityData += PEntityData(
                         22 + PACKET_OFFSET,
-                        DataSerializerTypes.COMPONENT,
+                        EntityDataTypes.ADV_COMPONENT,
                         td.with(component.color and 0xFFFFFF)
                     )
-                    entityData += EntityDataValue.create(
+                    entityData += PEntityData(
                         23 + PACKET_OFFSET,
-                        DataSerializerTypes.INT,
+                        EntityDataTypes.INT,
                         td.lineWidth,
                     )
 
-                    entityData += EntityDataValue.create(
+                    entityData += PEntityData(
                         24 + PACKET_OFFSET,
-                        DataSerializerTypes.INT,
+                        EntityDataTypes.INT,
                         td.backgroundColor,
                     )
                 }
 
                 if (flags.transparency) {
-                    entityData += EntityDataValue.create(
+                    entityData += PEntityData(
                         25 + PACKET_OFFSET,
-                        DataSerializerTypes.BYTE,
+                        EntityDataTypes.BYTE,
                         ((component.color ushr 24) + 26).coerceAtMost(255).toByte()
                     )
                 }
@@ -144,41 +168,48 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
             }
         }
 
-        entityData += EntityDataValue.create(8, DataSerializerTypes.INT, component.interpolationDelay)
+        entityData += PEntityData(8, EntityDataTypes.INT, component.interpolationDelay)
 
         if (initial || flags.transformationInterpolation) {
-            entityData += EntityDataValue.create(
+            entityData += PEntityData(
                 9,
-                DataSerializerTypes.INT,
+                EntityDataTypes.INT,
                 component.transformationInterpolationDuration
             )
         }
 
         if ((initial || flags.teleportationDuration) && PACKET_OFFSET > 0) {
-            entityData += EntityDataValue.create(10, DataSerializerTypes.INT, component.teleportationDuration)
+            entityData += PEntityData(
+                10,
+                EntityDataTypes.INT,
+                component.teleportationDuration
+            )
         }
 
         if (initial) {
-            entityData += EntityDataValue.create(
-                14 + PACKET_OFFSET, DataSerializerTypes.BYTE,
+            entityData += PEntityData(
+                14 + PACKET_OFFSET,
+                EntityDataTypes.BYTE,
                 component.billboardConstraints.byte
             )
         }
 
         if (flags.scale) {
             if (!(initial && component.scale == defaultScale)) {
-                entityData += EntityDataValue.create(
-                    11 + PACKET_OFFSET, DataSerializerTypes.VECTOR3,
-                    Vector3f(component.scale.x, component.scale.y, component.scale.z)
+                entityData += PEntityData(
+                    11 + PACKET_OFFSET,
+                    EntityDataTypes.VECTOR3F,
+                    com.github.retrooper.packetevents.util.Vector3f(component.scale.x, component.scale.y, component.scale.z)
                 )
             }
         }
 
         if (flags.rotation) {
             if (!(initial && component.rotation == defaultRotation)) {
-                entityData += EntityDataValue.create(
-                    12 + PACKET_OFFSET, DataSerializerTypes.QUATERNION,
-                    Quaternionf(component.rotation.x, component.rotation.y, component.rotation.z, component.rotation.w)
+                entityData += PEntityData(
+                    12 + PACKET_OFFSET,
+                    EntityDataTypes.QUATERNION,
+                    Quaternion4f(component.rotation.x, component.rotation.y, component.rotation.z, component.rotation.w)
                 )
             }
         }
@@ -194,9 +225,10 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
                 .mul(component.scale)
                 .rotate(component.rotation)
                 .add(component.translation)
-            entityData += EntityDataValue.create(
-                10 + PACKET_OFFSET, DataSerializerTypes.VECTOR3,
-                Vector3f(
+            entityData += PEntityData(
+                10 + PACKET_OFFSET,
+                EntityDataTypes.VECTOR3F,
+                com.github.retrooper.packetevents.util.Vector3f(
                     offset.x,
                     offset.y,
                     offset.z
@@ -205,8 +237,9 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
         }
 
         if (initial && component.lightData != null) {
-            entityData += EntityDataValue.create(
-                15 + PACKET_OFFSET, DataSerializerTypes.INT,
+            entityData += PEntityData(
+                15 + PACKET_OFFSET,
+                EntityDataTypes.INT,
                 (component.lightData!!.blocklight shl 4) or (component.lightData!!.skylight shl 20)
             )
             component.lightData
@@ -247,3 +280,5 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
         println(strB)
     }
 }
+
+private typealias PEntityData<T> = com.github.retrooper.packetevents.protocol.entity.data.EntityData<T>

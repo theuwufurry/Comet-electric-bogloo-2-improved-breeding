@@ -1,5 +1,6 @@
 package gg.aquatic.comet.api.particle
 
+import com.github.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.particle.data.AbstractEntityDataBuilder
 
@@ -8,11 +9,11 @@ abstract class AbstractParticle : Parent {
     abstract val id: Int
     abstract val entityIDs: List<Int>
     abstract fun tick()
-    abstract fun getAddPacket(data: ParticleData = this.data): List<Any>
+    abstract fun getAddPacket(data: ParticleData = this.data): List<PacketWrapper<*>>
 
-    abstract fun updatePackets(entityDataBuilder: AbstractEntityDataBuilder, shouldUpdate: Boolean, data: ParticleData = this.data, flagOverride: UpdateFlags?): List<Any>
+    abstract fun updatePackets(entityDataBuilder: AbstractEntityDataBuilder, shouldUpdate: Boolean, data: ParticleData = this.data, flagOverride: UpdateFlags?): List<PacketWrapper<*>>
 
-    abstract fun getMovementPacket(): Any
+    abstract fun getMovementPacket(): PacketWrapper<*>
 }
 
 data class UpdateFlags(
