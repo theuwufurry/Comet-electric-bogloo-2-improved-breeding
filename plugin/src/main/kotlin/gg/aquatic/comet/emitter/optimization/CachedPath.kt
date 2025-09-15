@@ -2,6 +2,7 @@ package gg.aquatic.comet.emitter.optimization
 
 import com.ixume.optimization.TimestampedDisplayData
 import com.ixume.optimization.TimestampedTextData
+import com.ixume.optimization.math.Quaternion
 import com.ixume.optimization.optimize
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
 import gg.aquatic.comet.emitter.optimization.vec.DisplayDataVector
@@ -22,10 +23,11 @@ optimize in between w/ douglas for everything else
  * @param considerColorTex Whether to consider color and textures in optimizations. False is faster.
  */
 data class CachedPath(
-    private val locTol: Double = 0.05,
-    private val dispTol: Double = 0.05,
-    private val colTol: Double = 32.0,
-    private val considerColorTex: Boolean
+    private val locTol: Double,
+    private val dispTol: Double,
+    private val rotTol: Double,
+    private val colTol: Double,
+    private val considerColorTex: Boolean,
 ) {
     val emitterData: MutableList<TimestampedEmitterData> = mutableListOf()
     val emitterActions: MutableList<TimestampedEmitterActions> = mutableListOf()
@@ -55,12 +57,13 @@ data class CachedPath(
                 mengsheOptimizeFinishedParticle(
                     path = this,
                     finishedParticle = finishedParticle,
-                    ptol = locTol,
-                    stol = dispTol,
-                    ctol = colTol,
+                    positionTolerance = locTol,
+                    scaleTolerance = dispTol,
+                    colorTolerance = colTol,
+                    rotTolerance = rotTol,
                 )
             }
-            
+
             val d = t.toDuration(DurationUnit.NANOSECONDS)
             println("Optimization took $d !")
         }
@@ -80,7 +83,7 @@ data class CachedPath(
 
 private fun simplifyColors(
     toSimplify: MutableList<TimestampedColoredTexture>,
-    tolerance: Double
+    tolerance: Double,
 ): MutableList<TimestampedColoredTexture> {
     if (toSimplify.size < 3) return toSimplify
 
@@ -104,7 +107,7 @@ private fun simplifyColors(
 
 private fun simplfiyLocs(
     toSimplify: MutableList<TimestampedPos>,
-    tolerance: Double
+    tolerance: Double,
 ): MutableList<TimestampedPos> {
     if (toSimplify.size < 3) return toSimplify
 
@@ -155,7 +158,7 @@ private fun fillTransparency(
 
 private fun simplifyDisplayData(
     toSimplify: MutableList<TimestampedTransformableData>,
-    tolerance: Double
+    tolerance: Double,
 ): MutableList<TimestampedTransformableData> {
     if (toSimplify.size < 3) return toSimplify
 
@@ -191,14 +194,14 @@ private fun <T : TimestampedData> douglas(sqTolerance: Double, nodes: List<T>): 
     if (CachedPath.DEBUG_DISPLAY_DATA >= 2 && start is DisplayDataVector) {
         println(
             "|||||||||||||||||||||||||||||||||\n" +
-                    "| SIZE: ${nodes.size}\n" +
-                    "-> START: \n" +
-                    start + "\n" +
-                    "-> END: \n" +
-                    end + "\n" +
-                    "-> DELTA: \n" +
-                    delta + "\n" +
-                    "| LENGTH: $sqDeltaLength\n"
+            "| SIZE: ${nodes.size}\n" +
+            "-> START: \n" +
+            start + "\n" +
+            "-> END: \n" +
+            end + "\n" +
+            "-> DELTA: \n" +
+            delta + "\n" +
+            "| LENGTH: $sqDeltaLength\n"
         )
     }
 
@@ -216,12 +219,12 @@ private fun <T : TimestampedData> douglas(sqTolerance: Double, nodes: List<T>): 
         if (CachedPath.DEBUG_DISPLAY_DATA >= 2 && start is DisplayDataVector) {
             println(
                 "-------------------------------\n" +
-                        "| INDEX: $i\n" +
-                        "-> OFFSET:\n" +
-                        offset + "\n" +
-                        "| SQ: $sqDeltaLength\n" +
-                        "| DOT: ${offset.dot(delta)}\n" +
-                        "| SQDISTANCE:${sqDistance}\n"
+                "| INDEX: $i\n" +
+                "-> OFFSET:\n" +
+                offset + "\n" +
+                "| SQ: $sqDeltaLength\n" +
+                "| DOT: ${offset.dot(delta)}\n" +
+                "| SQDISTANCE:${sqDistance}\n"
             )
         }
 
@@ -244,9 +247,10 @@ private fun <T : TimestampedData> douglas(sqTolerance: Double, nodes: List<T>): 
 private fun mengsheOptimizeFinishedParticle(
     path: CachedPath,
     finishedParticle: UUID,
-    ptol: Double,
-    stol: Double,
-    ctol: Double,
+    positionTolerance: Double,
+    scaleTolerance: Double,
+    colorTolerance: Double,
+    rotTolerance: Double,
 ) {
     val ip = path.internalLocations[finishedParticle]!!
     val it = path.internalTransformableData[finishedParticle]!!
@@ -255,24 +259,25 @@ private fun mengsheOptimizeFinishedParticle(
     val mengshePositions = ip.map { it.mengshe() }
     val mengsheDisplay = it.map { it.mengshe() }
     val mengsheText = ic.map { it.mengshe() }
-    
+
     val p = optimize(
-        ptol = ptol,
-        stol = stol,
-        ctol = ctol,
+        positionTolerance = positionTolerance,
+        scaleTolerance = scaleTolerance,
+        rotTolerance = rotTolerance,
+        colorTolerance = colorTolerance,
         posData = mengshePositions,
         displayData = mengsheDisplay,
         textData = mengsheText,
     )
-    
+
     println("positions: ${p.positions}")
     println("display: ${p.displayData}")
     println("text: ${p.textData}")
-    
+
     val optimizedPositions = p.positions.map { ip[it] }.toMutableList()
     val optimizedDisplay = p.displayData.map { idx -> it[idx] }.toMutableList()
     val optimizedText = p.textData.map { ic[it] }.toMutableList()
-    
+
     path.locations[finishedParticle] = optimizedPositions
     path.transformableData[finishedParticle] = optimizedDisplay
     path.coloredTextureData[finishedParticle] = optimizedText
@@ -293,6 +298,8 @@ fun TimestampedTransformableData.mengshe(): TimestampedDisplayData {
         scaleX = vec.scale.x.toDouble(),
         scaleY = vec.scale.y.toDouble(),
         scaleZ = vec.scale.z.toDouble(),
+
+        rot = Quaternion(vec.rot.x.toDouble(), vec.rot.y.toDouble(), vec.rot.z.toDouble(), vec.rot.w.toDouble()),
     )
 }
 
