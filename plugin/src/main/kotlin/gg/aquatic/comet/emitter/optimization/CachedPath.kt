@@ -1,9 +1,16 @@
 package gg.aquatic.comet.emitter.optimization
 
+import com.ixume.optimization.TimestampedDisplayData
+import com.ixume.optimization.TimestampedTextData
+import com.ixume.optimization.optimize
+import gg.aquatic.comet.api.particle.display.sprite.SpriteData
 import gg.aquatic.comet.emitter.optimization.vec.DisplayDataVector
+import java.awt.Color
 import java.util.*
 import kotlin.math.pow
 import kotlin.system.measureNanoTime
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 /*
 colors ARE important, use radial check
@@ -44,113 +51,18 @@ data class CachedPath(
 
     fun optimizeFinished(): CachedPath {
         for (finishedParticle in finishedParticles) {
-            val locs = run locs@{
-                val v = internalLocations[finishedParticle]!!
-                val b = v.size
-                val r = simplfiyLocs(v, locTol)
-                if (DEBUG_LOCS >= 0.5) {
-                    println(
-                        "--L--\n" + "$b -> ${r.size}"
-                    )
-                }
-
-                if (DEBUG_LOCS >= 2) {
-                    for (a in r) {
-                        println(a)
-                    }
-                }
-
-                locations[finishedParticle] = r
-                r
+            val t = measureNanoTime {
+                mengsheOptimizeFinishedParticle(
+                    path = this,
+                    finishedParticle = finishedParticle,
+                    ptol = locTol,
+                    stol = dispTol,
+                    ctol = colTol,
+                )
             }
-
-            val transformables = run trans@{
-                val v = internalTransformableData[finishedParticle]!!
-                val b = v.size
-                val r = simplifyDisplayData(v, dispTol)
-
-                if (DEBUG_DISPLAY_DATA >= 0.5) {
-                    println(
-                        "--DD--\n" + "$b -> ${r.size}"
-                    )
-                }
-
-                if (DEBUG_DISPLAY_DATA >= 2) {
-                    for (a in r) {
-                        println(a)
-                    }
-                }
-
-                transformableData[finishedParticle] = r
-                r
-            }
-
-            val colorTex = run coltex@{
-                val v = coloredTextureData[finishedParticle]!!
-                val b = v.size
-                val r = simplifyColors(v, colTol)
-                if (DEBUG_COL_TEX >= 0.5) {
-                    println("--CD--\n" + "$b -> ${r.size}")
-                }
-
-                if (DEBUG_COL_TEX >= 2) {
-                    for (a in r) {
-                        println(a)
-                    }
-                }
-
-                coloredTextureData[finishedParticle] = r
-                r
-            }
-
-            val locTimes = locs.map { it.time }
-            val transformableTimes = transformables.map { it.time }
-            val colorTexTimes = colorTex.map { it.time }
-            val ddTimes = mutableListOf<Int>()
-
-            ddTimes += transformableTimes
-            if (considerColorTex) ddTimes += colorTexTimes
-            val internalTransformables = internalTransformableData[finishedParticle]!!
-            val filledTimes = fillTransparency(internalTransformables)
-            if (DEBUG_DISPLAY_DATA >= 1) println("  | FILLED: $filledTimes")
-            ddTimes += filledTimes
-            ddTimes.sort()
-
-            val r: OptimizationResult
-            if (DEBUG_LOCS >= 1) println("===============")
-            if (DEBUG_LOCS >= 1) println("  | LOC TIMES: $locTimes")
-            if (DEBUG_LOCS >= 1) println("  | T TIMES: $transformableTimes")
-            if (considerColorTex) if (DEBUG_LOCS >= 1) println("  | TEX TIMES: $colorTexTimes")
-            if (DEBUG_LOCS >= 1) println("  | DDTIMES: $ddTimes")
-            val t = measureNanoTime { r = actualize(optimize(locTimes, ddTimes.toList())) }
-
-            if (DEBUG_LOCS >= 1) println("[[[[[[ OPTIMIZED ]]]]]]")
-            if (DEBUG_LOCS >= 1) println(" | TOOK: ${t / 1_000_000.0} ms")
-            if (DEBUG_LOCS >= 1) println(" | TPS: ${r.tps}")
-            if (DEBUG_LOCS >= 1) println(" | UPDATES: ${r.updates}")
-            if (DEBUG_LOCS >= 1) println(" | DD: ${r.ddUpdates}")
-            if (DEBUG_LOCS >= 1) println(" | COST: ${r.cost}")
-
-            val internalLocs = internalLocations[finishedParticle]!!
-            //assemble tp locations
-            val mappedLocs = r.tps.map { tpTime -> internalLocs.first { iLoc -> iLoc.time == tpTime } }.toMutableList()
-            locations[finishedParticle] = mappedLocs
-
-            val allUpdates = r.updates.toSortedSet()
-            allUpdates.addAll(r.ddUpdates)
-            allUpdates.addAll(transformableTimes)
-            allUpdates.addAll(filledTimes)
-            if (considerColorTex) allUpdates.addAll(colorTexTimes)
-
-            if (DEBUG_LOCS >= 1) println("  | ALL UPDATES: $allUpdates")
-
-            val mappedTransformables =
-                allUpdates.map { u -> internalTransformables.first { iTransformable -> iTransformable.time == u } }
-                    .toMutableList()
-            transformableData[finishedParticle] = mappedTransformables
-
-//            internalLocations.remove(finishedParticle)
-//            internalTransformableData.remove(finishedParticle)
+            
+            val d = t.toDuration(DurationUnit.NANOSECONDS)
+            println("Optimization took $d !")
         }
 
         finishedParticles.clear()
@@ -327,4 +239,67 @@ private fun <T : TimestampedData> douglas(sqTolerance: Double, nodes: List<T>): 
             nodes.subList(index + 1, nodes.size)
         )
     }
+}
+
+private fun mengsheOptimizeFinishedParticle(
+    path: CachedPath,
+    finishedParticle: UUID,
+    ptol: Double,
+    stol: Double,
+    ctol: Double,
+) {
+    val ip = path.internalLocations[finishedParticle]!!
+    val it = path.internalTransformableData[finishedParticle]!!
+    val ic = path.coloredTextureData[finishedParticle]!!
+
+    val mengshePositions = ip.map { it.mengshe() }
+    val mengsheDisplay = it.map { it.mengshe() }
+    val mengsheText = ic.map { it.mengshe() }
+    
+    val p = optimize(
+        ptol = ptol,
+        stol = stol,
+        ctol = ctol,
+        posData = mengshePositions,
+        displayData = mengsheDisplay,
+        textData = mengsheText,
+    )
+    
+    println("positions: ${p.positions}")
+    println("display: ${p.displayData}")
+    println("text: ${p.textData}")
+    
+    val optimizedPositions = p.positions.map { ip[it] }.toMutableList()
+    val optimizedDisplay = p.displayData.map { idx -> it[idx] }.toMutableList()
+    val optimizedText = p.textData.map { ic[it] }.toMutableList()
+    
+    path.locations[finishedParticle] = optimizedPositions
+    path.transformableData[finishedParticle] = optimizedDisplay
+    path.coloredTextureData[finishedParticle] = optimizedText
+}
+
+fun TimestampedPos.mengshe(): com.ixume.optimization.TimestampedPos {
+    return com.ixume.optimization.TimestampedPos(
+        t = vec.time.toInt(),
+        x = vec.vec.x,
+        y = vec.vec.y,
+        z = vec.vec.z,
+    )
+}
+
+fun TimestampedTransformableData.mengshe(): TimestampedDisplayData {
+    return TimestampedDisplayData(
+        t = vec.time.toInt(),
+        scaleX = vec.scale.x.toDouble(),
+        scaleY = vec.scale.y.toDouble(),
+        scaleZ = vec.scale.z.toDouble(),
+    )
+}
+
+fun TimestampedColoredTexture.mengshe(): TimestampedTextData {
+    return TimestampedTextData(
+        t = time,
+        content = (this.displayData as SpriteData).id,
+        color = Color(color),
+    )
 }

@@ -38,7 +38,9 @@ class RandomDirectionSubcomponent(
     }
 
     private fun randomVector(emitter: AbstractEmitter, magnitude: Double, dir: Vector3d?, spread: Double?): Vector3d {
-        if (dir == null || spread == null) return randomVector(emitter, magnitude)
+        if (dir == null || spread == null) {
+            return randomVector(emitter, magnitude)
+        }
         val randomAngle = emitter.random.kotlinRandom.nextDouble() * Math.PI * 2.0
         val randomRadius = sqrt(emitter.random.kotlinRandom.nextDouble()) * spread
         val point = Vector3d(cos(randomAngle) * randomRadius, 1.0, sin(randomAngle) * randomRadius)

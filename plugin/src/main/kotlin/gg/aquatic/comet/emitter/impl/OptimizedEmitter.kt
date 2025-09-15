@@ -116,9 +116,9 @@ class OptimizedEmitter(
                     shouldLive = runtime!!.step(time)
                 }.toDouble() / 1_000_000.0
 
-            if (DEBUG_DISPLAY_DATA >= 0.5 || DEBUG_LOCS >= 0.5) {
-                println("${unrealizedEmitter.id} took ${t}ms to step!")
-            }
+//            if (DEBUG_DISPLAY_DATA >= 0.5 || DEBUG_LOCS >= 0.5) {
+//                println("${unrealizedEmitter.id} took ${t}ms to step!")
+//            }
 
             if (!shouldLive) {
 //                println("O.${unrealizedEmitter.id} RUNTIME DEAD at $time")
@@ -158,7 +158,6 @@ class OptimizedEmitter(
                     )
                 }
 
-                var teleportationDuration: Int? = null
                 val locs = cachedEmitterPath.locations[particle.data.id] ?: return@optimized
                 locs.withIndex().firstOrNull { it.value.time == particle.data.age.toInt() }
                     ?.let { (i, cp) ->
@@ -184,15 +183,6 @@ class OptimizedEmitter(
                                     nextPos.vec.vec.z,
                                 )
                             )
-
-                            val nnextPos = locs.getOrNull(i + 2)
-                            if (nnextPos != null) {
-                                val dt = nnextPos.time - nextPos.time
-                                if (dt != nextPos.time - cp.time) {
-                                    if (DEBUG_LOCS >= 1) println("-> TP DURATION : ${dt + 1}")
-                                    teleportationDuration = dt + 1
-                                }
-                            }
                         }
                     }
                 val (color: Int?, dD: DisplayData?) =
@@ -229,10 +219,22 @@ class OptimizedEmitter(
 
                             //TODO: make sure transparency works
                             val flags = UpdateFlags()
+                            /*
+                            update teleport duration if we're between tp update such that the next one requires a different period
+                             */
+                            if (locs.none { it.time == particle.data.age.toInt() }) {
+                                val prevTP = locs.withIndex().lastOrNull { it.value.time < particle.data.age.toInt() }
+                                val nextTP = locs.withIndex().firstOrNull { it.value.time >= particle.data.age.toInt() }
 
-                            if (teleportationDuration != null) {
-                                nd.teleportationDuration = teleportationDuration!!
-                                flags.teleportationDuration = true
+                                if (prevTP != null && nextTP != null) {
+                                    val nnextTP = locs.withIndex().firstOrNull { it.value.time > nextTP.value.time }
+                                    if (nnextTP != null) {
+                                        val nnTPD = nnextTP.value.time - nextTP.value.time
+                                        println("in ${nextTP.value.time - prevTP.value.time}, nnext - next: $nnTPD")
+                                        nd.teleportationDuration = nnTPD + 1
+                                        flags.teleportationDuration = true
+                                    }
+                                }
                             }
 
                             flags.display = color != null
@@ -476,7 +478,7 @@ class OptimizedEmitter(
     }
 
     companion object {
-        val DEBUG_LOCS = 0.0
+        val DEBUG_LOCS = 2.0
         val DEBUG_DISPLAY_DATA = 0.0
         val DEBUG_TEXTURE_DATA = 0.0
     }
