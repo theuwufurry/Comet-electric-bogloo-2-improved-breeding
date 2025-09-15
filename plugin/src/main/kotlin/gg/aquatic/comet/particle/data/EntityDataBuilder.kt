@@ -38,7 +38,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
 
     private val key = Key.key(ResourcepackCreator.NAMESPACE, ResourcepackCreator.FONT_NAME)
 
-    private val DEBUG = 1
+    private val DEBUG = 0
 
     override fun getDataFor(
         entityData: EntityData,

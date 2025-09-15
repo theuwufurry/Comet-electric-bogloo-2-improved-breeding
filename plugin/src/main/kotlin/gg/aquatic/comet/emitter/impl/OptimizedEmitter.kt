@@ -187,7 +187,7 @@ class OptimizedEmitter(
                     }
                 val (color: Int?, dD: DisplayData?) =
                     (cachedEmitterPath.coloredTextureData[particle.data.id]
-                        ?: return@optimized).firstOrNull { it.time == particle.data.age.toInt() }
+                     ?: return@optimized).firstOrNull { it.time == particle.data.age.toInt() }
                         ?.let { it.color to it.displayData } ?: (null to null)
                 val transformableData = cachedEmitterPath.transformableData[particle.data.id] ?: return@optimized
 
@@ -211,7 +211,7 @@ class OptimizedEmitter(
 
                             if (prevDt == 1 && nextDatum.vec.alpha * 255.0 <= 127.0 && cp.vec.alpha * 255.0 > 127.0) {
                                 nd.transformationInterpolationDuration = -2
-                            }else if (prevDt == 1 && cp.vec.alpha * 255.0 <= 127.0 && nextDatum.vec.alpha * 255.0 > 127.0) {
+                            } else if (prevDt == 1 && cp.vec.alpha * 255.0 <= 127.0 && nextDatum.vec.alpha * 255.0 > 127.0) {
                                 nd.transformationInterpolationDuration = -2
                             } else {
                                 nd.transformationInterpolationDuration = prevDt
@@ -222,7 +222,16 @@ class OptimizedEmitter(
                             /*
                             update teleport duration if we're between tp update such that the next one requires a different period
                              */
-                            if (locs.none { it.time == particle.data.age.toInt() }) {
+
+                            if (particle.data.age.toInt() == 0) {
+                                // if it's the start and the pos regions are like [0, 1, t ], then we need to update here for tp duration to be t - 1
+                                if (locs.any { it.time == 1 } && locs.size > 2) {
+                                    val tpD = locs[2].time - locs[1].time
+//                                    println("initial tpD: $tpD")
+                                    nd.teleportationDuration = tpD + 1
+                                    flags.teleportationDuration = true
+                                }
+                            } else if (locs.none { it.time == particle.data.age.toInt() }) {
                                 val prevTP = locs.withIndex().lastOrNull { it.value.time < particle.data.age.toInt() }
                                 val nextTP = locs.withIndex().firstOrNull { it.value.time >= particle.data.age.toInt() }
 
@@ -230,7 +239,7 @@ class OptimizedEmitter(
                                     val nnextTP = locs.withIndex().firstOrNull { it.value.time > nextTP.value.time }
                                     if (nnextTP != null) {
                                         val nnTPD = nnextTP.value.time - nextTP.value.time
-                                        println("in ${nextTP.value.time - prevTP.value.time}, nnext - next: $nnTPD")
+//                                        println("in ${nextTP.value.time - prevTP.value.time}, nnext - next: $nnTPD")
                                         nd.teleportationDuration = nnTPD + 1
                                         flags.teleportationDuration = true
                                     }
@@ -359,7 +368,7 @@ class OptimizedEmitter(
         environmentData: EnvironmentData,
         audience: AquaticAudience,
         random: DeterministicRandom,
-        uuid: UUID
+        uuid: UUID,
     ) {
         unrealizedEmitter.internalRealize(
             parent,
@@ -406,7 +415,7 @@ class OptimizedEmitter(
                     }
                 val (color: Int?, dD: DisplayData?) =
                     (cachedEmitterPath.coloredTextureData[particle.data.id]
-                        ?: return@u).firstOrNull { it.time >= particle.data.age.toInt() }
+                     ?: return@u).firstOrNull { it.time >= particle.data.age.toInt() }
                         ?.let { it.color to it.displayData } ?: (null to null)
                 val transformableData = cachedEmitterPath.transformableData[particle.data.id] ?: return@u
 
@@ -474,11 +483,16 @@ class OptimizedEmitter(
     }
 
     override fun applyEmitterRotation(input: Quaternionf): Quaternionf {
-        return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(pose.rot.x, pose.rot.y, pose.rot.z, pose.rot.w).mul(input) else input
+        return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(
+            pose.rot.x,
+            pose.rot.y,
+            pose.rot.z,
+            pose.rot.w
+        ).mul(input) else input
     }
 
     companion object {
-        val DEBUG_LOCS = 2.0
+        val DEBUG_LOCS = 0.0
         val DEBUG_DISPLAY_DATA = 0.0
         val DEBUG_TEXTURE_DATA = 0.0
     }
