@@ -1,5 +1,6 @@
 package gg.aquatic.comet
 
+import com.github.retrooper.packetevents.PacketEvents
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.CometRegistry
 import gg.aquatic.comet.api.parsing.resourcepack.ResourcepackCreator
@@ -71,6 +72,8 @@ class ParticleEmitter : AbstractParticleEmitter() {
     override fun onDisable() {
         ParticleJsonParser.onDisable()
         GlobalTicker.disable()
+
+        PacketEvents.getAPI().terminate()
     }
 
     private fun initializeHooks() {

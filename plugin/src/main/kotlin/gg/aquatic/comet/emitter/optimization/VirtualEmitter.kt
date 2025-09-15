@@ -1,5 +1,6 @@
 package gg.aquatic.comet.emitter.optimization
 
+import com.github.retrooper.packetevents.wrapper.PacketWrapper
 import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.Mount
 import gg.aquatic.comet.api.emitter.*
@@ -413,7 +414,7 @@ class VirtualEmitter(
         )
     }
 
-    override fun getSpawnPackets(): List<Any> {
+    override fun getSpawnPackets(): List<PacketWrapper<*>> {
         return emptyList()
     }
 }

@@ -1,5 +1,7 @@
 package gg.aquatic.comet.emitter.impl
 
+import com.github.retrooper.packetevents.wrapper.PacketWrapper
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport
 import gg.aquatic.comet.api.Component
 import gg.aquatic.comet.api.Mount
 import gg.aquatic.comet.api.emitter.*
@@ -137,7 +139,7 @@ class OptimizedEmitter(
             }
         }
 
-        val dataPackets: MutableList<Any> = mutableListOf()
+        val dataPackets: MutableList<PacketWrapper<*>> = mutableListOf()
 
         cachedEmitterPath.emitterActions.firstOrNull { it.time == time }?.let { emData ->
             emData.actions.forEach { a ->
@@ -175,14 +177,13 @@ class OptimizedEmitter(
                         val nextPos = locs.getOrNull(i + 1)
                         if (nextPos != null) {
                             if (DEBUG_LOCS >= 2) println("TP | ${nextPos.vec.vec.x} ${nextPos.vec.vec.y} ${nextPos.vec.vec.z}")
-                            dataPackets += Waves.NMS_HANDLER.createTeleportPacket(
+                            dataPackets += WrapperPlayServerEntityTeleport(
                                 particle.id,
-                                Location(
-                                    Bukkit.getWorlds().first(),
+                                com.github.retrooper.packetevents.util.Vector3d(
                                     nextPos.vec.vec.x,
                                     nextPos.vec.vec.y,
                                     nextPos.vec.vec.z,
-                                )
+                                ), 0f, 0f, false
                             )
 
                             val nnextPos = locs.getOrNull(i + 2)
@@ -278,7 +279,7 @@ class OptimizedEmitter(
     private fun spawnParticles(timestampedEmitterData: TimestampedEmitterData) {
 //        if (timestampedEmitterData.spawns.isNotEmpty()) println("O.${unrealizedEmitter.id} SPAWNING t:$time")
 
-        val bundle: MutableList<Any> = mutableListOf()
+        val bundle: MutableList<PacketWrapper<*>> = mutableListOf()
         for (spawn in timestampedEmitterData.spawns) {
             val particleData = ParticleData(spawn)
             particleData.emitter = this
@@ -371,8 +372,8 @@ class OptimizedEmitter(
         )
     }
 
-    override fun getSpawnPackets(): List<Any> {
-        val packets = mutableListOf<Any>()
+    override fun getSpawnPackets(): List<PacketWrapper<*>> {
+        val packets = mutableListOf<PacketWrapper<*>>()
         for (particle in particles) {
             val locs = cachedEmitterPath.locations[particle.data.id] ?: continue
             run u@{

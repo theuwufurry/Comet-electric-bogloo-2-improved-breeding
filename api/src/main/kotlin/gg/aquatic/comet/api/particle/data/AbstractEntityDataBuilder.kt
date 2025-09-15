@@ -9,6 +9,6 @@ abstract class AbstractEntityDataBuilder {
         entityData: EntityData,
         flags: UpdateFlags,
         initial: Boolean
-    ): List<EntityDataValue>?
+    ): List<com.github.retrooper.packetevents.protocol.entity.data.EntityData<*>>?
 
 }

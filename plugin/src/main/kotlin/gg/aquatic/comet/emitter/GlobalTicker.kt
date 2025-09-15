@@ -1,11 +1,12 @@
 package gg.aquatic.comet.emitter
 
+import com.github.retrooper.packetevents.PacketEvents
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.api.packet.PassengerManager
 import gg.aquatic.comet.emitter.optimization.CachedPath
 import gg.aquatic.waves.Waves
-import gg.aquatic.waves.util.sendPacket
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitTask
@@ -94,8 +95,8 @@ object GlobalTicker {
 
         for ((player, ids) in playerDeadParticleMap) {
             PassengerManager.passengerMap[player.entityId]?.removeAll(ids)
-            val destroyPacket = Waves.NMS_HANDLER.createDestroyEntitiesPacket(*ids.toIntArray())
-            player.sendPacket(destroyPacket, true)
+            val destroyPacket = WrapperPlayServerDestroyEntities(*ids.toIntArray())
+            PacketEvents.getAPI().playerManager.sendPacketSilently(player, destroyPacket)
         }
 
         emitters.removeAll(deadEmitters)
