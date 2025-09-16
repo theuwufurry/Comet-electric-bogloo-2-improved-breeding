@@ -88,8 +88,8 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
                     entityData += PEntityData(
                         22 + PACKET_OFFSET,
                         EntityDataTypes.ADV_COMPONENT,
-                        Component.translatable(displayData.id)
-                            .color(TextColor.color(component.color and 0xFFFFFF)).font(key)
+                        Component.text(ResourcepackCreator.charMap[displayData.id]!!)
+                            .color(TextColor.color(component.color and 0xFFFFFF))
                     )
                 }
 

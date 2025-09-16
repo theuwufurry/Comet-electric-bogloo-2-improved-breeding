@@ -66,7 +66,6 @@ data class CachedPath(
             }
 
             val d = t.toDuration(DurationUnit.NANOSECONDS)
-            println("Optimization took $d !")
         }
 
         finishedParticles.clear()

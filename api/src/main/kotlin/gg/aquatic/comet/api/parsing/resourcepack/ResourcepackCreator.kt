@@ -27,6 +27,7 @@ object ResourcepackCreator {
     private const val PARTICLES_PNG = "particles.png"
 
     val modelMap: MutableMap<String, ModelData> = mutableMapOf()
+    val charMap: MutableMap<String, Char> = mutableMapOf()
 
     fun stack(id: String, color: Int): ItemStack? {
         val md = modelMap[id] ?: return null
@@ -312,7 +313,7 @@ object ResourcepackCreator {
                 val count = width / height
                 val chars = StringBuilder()
 
-                for (i in 0 until count) {
+                repeat(count) {
                     chars.append(index.toString())
                     index++
                 }
@@ -333,7 +334,12 @@ object ResourcepackCreator {
         completeObject.add("providers", providers)
 
         val gson = GsonBuilder().setPrettyPrinting().create()
-        font.writeText(gson.toJson(completeObject))
+        val s = gson.toJson(completeObject)
+        font.writeText(s)
+
+        val mcFont = File(dataFolder.path + "/output/$RP_NAME/assets/minecraft/font/default.json")
+        mcFont.parentFile.mkdirs()
+        mcFont.writeText(s)
     }
 
     private fun genLang(images: List<File>) {
@@ -352,6 +358,7 @@ object ResourcepackCreator {
 
             if (width % height != 0) {
                 jsonObject.addProperty(image.nameWithoutExtension, index.toString())
+                charMap[image.nameWithoutExtension] = index
                 index++
             } else {
                 val count = width / height
@@ -359,10 +366,12 @@ object ResourcepackCreator {
                 if (count > 1) {
                     for (i in 0 until count) {
                         jsonObject.addProperty(image.nameWithoutExtension + "." + i, index.toString())
+                        charMap[image.nameWithoutExtension + "." + i] = index
                         index++
                     }
                 } else {
                     jsonObject.addProperty(image.nameWithoutExtension, index.toString())
+                    charMap[image.nameWithoutExtension] = index
                     index++
                 }
             }
