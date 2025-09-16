@@ -63,7 +63,7 @@ class SpawningProcessor(
         for (currentViewer in currentViewers) {
             deadParticleIDs += currentViewer to rawDeadParticleIDs
             for (packet in dataPackets) {
-                PacketEvents.getAPI().playerManager.sendPacketSilently(currentViewer, packet)
+                PacketEvents.getAPI().playerManager.sendPacket(currentViewer, packet)
             }
         }
 
@@ -78,7 +78,7 @@ class SpawningProcessor(
 
             for (viewer in addedViewers) {
                 for (spawnPacket in spawnPackets) {
-                    PacketEvents.getAPI().playerManager.sendPacketSilently(viewer, spawnPacket)
+                    PacketEvents.getAPI().playerManager.sendPacket(viewer, spawnPacket)
                 }
             }
         }
@@ -98,14 +98,14 @@ class SpawningProcessor(
         val destroyPacket = Waves.NMS_HANDLER.createDestroyEntitiesPacket(*ids)
         for (player in currentViewers) {
             PassengerManager.passengerMap[player.entityId]?.removeAll(ls)
-            PacketEvents.getAPI().playerManager.sendPacketSilently(player, destroyPacket)
+            PacketEvents.getAPI().playerManager.sendPacket(player, destroyPacket)
         }
     }
 
     fun sendSpawns(bundle: MutableList<PacketWrapper<*>>) {
         for (player in currentViewers) {
             for (packet in bundle) {
-                PacketEvents.getAPI().playerManager.sendPacketSilently(player, packet)
+                PacketEvents.getAPI().playerManager.sendPacket(player, packet)
             }
         }
     }

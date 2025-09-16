@@ -1,5 +1,6 @@
 package gg.aquatic.comet.emitter.optimization
 
+import com.ixume.optimization.Costs
 import com.ixume.optimization.TimestampedDisplayData
 import com.ixume.optimization.TimestampedTextData
 import com.ixume.optimization.math.Quaternion
@@ -268,6 +269,7 @@ private fun mengsheOptimizeFinishedParticle(
         posData = mengshePositions,
         displayData = mengsheDisplay,
         textData = mengsheText,
+        costs = Costs.DEFAULT,
     )
 
     println("positions: ${p.positions}")
