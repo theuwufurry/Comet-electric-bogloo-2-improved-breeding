@@ -270,11 +270,12 @@ private fun mengsheOptimizeFinishedParticle(
         displayData = mengsheDisplay,
         textData = mengsheText,
         costs = Costs.DEFAULT,
+        debugInfo = false,
     )
 
-    println("positions: ${p.positions}")
-    println("display: ${p.displayData}")
-    println("text: ${p.textData}")
+//    println("positions: ${p.positions}")
+//    println("display: ${p.displayData}")
+//    println("text: ${p.textData}")
 
     val optimizedPositions = p.positions.map { ip[it] }.toMutableList()
     val optimizedDisplay = p.displayData.map { idx -> it[idx] }.toMutableList()

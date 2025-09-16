@@ -20,6 +20,7 @@ data class EntityData(
     val lightData: LightData?,
     val seeThrough: Boolean,
     val shadow: Boolean,
+    val sensitiveCentering: Boolean,
 ) {
     fun copy(): EntityData {
         return EntityData(
@@ -36,7 +37,8 @@ data class EntityData(
             teleportationDuration,
             lightData,
             seeThrough,
-            shadow
+            shadow,
+            sensitiveCentering,
         )
     }
 }

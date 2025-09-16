@@ -60,6 +60,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
             data.light,
             data.seeThrough,
             data.shadow,
+            data.sensitiveCentering,
         )
     }
 
@@ -111,7 +112,8 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                 data.teleportationDuration,
                 data.light,
                 data.seeThrough,
-                data.shadow
+                data.shadow,
+                data.sensitiveCentering,
             ), UpdateFlags(
                 display = true,
                 transparency = true,
@@ -160,6 +162,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                     data.light,
                     data.seeThrough,
                     data.shadow,
+                    data.sensitiveCentering,
                 ), UpdateFlags(
                     display = true,
                     transparency = true,
@@ -226,6 +229,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                     data.light,
                     data.seeThrough,
                     data.shadow,
+                    data.sensitiveCentering,
                 )
 
             previousEntityData = newData.copy()
@@ -247,6 +251,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                     data.light,
                     data.seeThrough,
                     data.shadow,
+                    data.sensitiveCentering,
                 )
 
 
@@ -285,6 +290,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                 data.light,
                 data.seeThrough,
                 data.shadow,
+                data.sensitiveCentering,
             )
         } ?: let {
             var transparency = data.color ushr 24
@@ -334,6 +340,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                     data.light,
                     data.seeThrough,
                     data.shadow,
+                    data.sensitiveCentering,
                 )
 
             flags to newData

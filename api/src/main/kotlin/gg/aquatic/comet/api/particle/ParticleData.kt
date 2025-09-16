@@ -34,6 +34,7 @@ data class ParticleData(
     var light: LightData? = null,
     var seeThrough: Boolean = false,
     var shadow: Boolean = false,
+    var sensitiveCentering: Boolean = true,
 ) {
     val pos: Vector3d
         get() = Vector3d(origin).add(relativePosition)
@@ -62,10 +63,9 @@ data class ParticleData(
         light = other.light
         seeThrough = other.seeThrough
         shadow = other.shadow
+        sensitiveCentering = other.sensitiveCentering
 
         variable = other.variable
-//        variable.clear()
-//        variable.putAll(other.variable)
     }
 
     var variable: MutableMap<String, Any> = VariableMutableMap()
@@ -103,6 +103,7 @@ data class ParticleData(
             light = light,
             seeThrough = seeThrough,
             shadow = shadow,
+            sensitiveCentering = sensitiveCentering,
         ).apply i@{
             this@i.variable = (this@ParticleData.variable as VariableMutableMap).clone()
         }

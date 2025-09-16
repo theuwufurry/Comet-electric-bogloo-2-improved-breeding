@@ -214,7 +214,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
             }
         }
 
-        if (flags.rotation || flags.scale) {
+        if (component.sensitiveCentering && (flags.rotation || flags.scale)) {
             val offset = Vector3f(
                 -0.0125f,
                 0.025f,

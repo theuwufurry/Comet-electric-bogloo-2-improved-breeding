@@ -55,6 +55,7 @@ import gg.aquatic.comet.particle.display.text.MiniMessageTextComponent
 import gg.aquatic.comet.particle.lifetime.ParticleLifetimeComponent
 import gg.aquatic.comet.particle.lifetime.ParticleLifetimeExpressionComponent
 import gg.aquatic.comet.particle.light.ConstantLightComponent
+import gg.aquatic.comet.particle.optimization.SensitiveCenteringComponent
 import gg.aquatic.comet.particle.position.AttractorPositionComponent
 import gg.aquatic.comet.particle.position.ExpressionPositionComponent
 import gg.aquatic.comet.particle.position.MotionPositionComponent
@@ -127,6 +128,7 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
             MiniMessageTextComponent,
 
             TextMiscComponent,
+            SensitiveCenteringComponent,
 
             ConstantLightComponent,
 

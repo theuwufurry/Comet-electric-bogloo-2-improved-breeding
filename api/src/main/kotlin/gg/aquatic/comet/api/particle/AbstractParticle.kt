@@ -39,7 +39,7 @@ data class UpdateFlags(
             rotation = true,
             scale = true,
             transformationInterpolation = true,
-            teleportationDuration = true
+            teleportationDuration = true,
         )
 
         fun delta(curr: ParticleData, prev: ParticleData): UpdateFlags {
