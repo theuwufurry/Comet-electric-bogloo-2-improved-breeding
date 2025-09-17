@@ -45,14 +45,16 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
         entityData: EntityData,
         flags: UpdateFlags,
         initial: Boolean,
+        useUAP: Boolean,
     ): List<PEntityData<*>>? {
-        return genData(entityData, flags, initial)
+        return genData(entityData, flags, initial, useUAP)
     }
 
     private fun genData(
         component: EntityData,
         flags: UpdateFlags,
         initial: Boolean,
+        useUAP: Boolean,
     ): List<PEntityData<*>>? {
         val entityData: MutableList<PEntityData<*>> =
             mutableListOf()
@@ -85,11 +87,16 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
                 }
 
                 if (flags.display) {
+                    var component = Component.text(ResourcepackCreator.charMap[displayData.content]!!)
+                        .color(TextColor.color(component.color and 0xFFFFFF))
+                    if (!useUAP) {
+                        println("sending with font")
+                        component = component.font(key)
+                    }
                     entityData += PEntityData(
                         22 + PACKET_OFFSET,
                         EntityDataTypes.ADV_COMPONENT,
-                        Component.text(ResourcepackCreator.charMap[displayData.content]!!)
-                            .color(TextColor.color(component.color and 0xFFFFFF))
+                        component
                     )
                 }
 

@@ -8,7 +8,8 @@ abstract class AbstractEntityDataBuilder {
     abstract fun getDataFor(
         entityData: EntityData,
         flags: UpdateFlags,
-        initial: Boolean
+        initial: Boolean,
+        useUAP: Boolean,
     ): List<com.github.retrooper.packetevents.protocol.entity.data.EntityData<*>>?
 
 }

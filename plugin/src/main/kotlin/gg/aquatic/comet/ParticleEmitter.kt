@@ -10,6 +10,7 @@ import gg.aquatic.comet.emitter.GlobalTicker
 import gg.aquatic.comet.hook.IHook
 import gg.aquatic.comet.hook.modelengine.ModelEngineHook
 import gg.aquatic.comet.hook.mythicmobs.MythicMobsHook
+import gg.aquatic.comet.parsing.ConfigLoader
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.particle.macro.CatmullParser
 import gg.aquatic.comet.particle.macro.HermiteParser
@@ -28,9 +29,9 @@ class ParticleEmitter : AbstractParticleEmitter() {
         MINIMESSAGE = MiniMessage.miniMessage()
 
         scriptEngineFactory = NashornScriptEngineFactory()
-
         initializeMacros()
 
+        ConfigLoader.init()
         ParticleJsonParser.init()
         CometRegistry.jsonParser = ParticleJsonParser
 

@@ -1,9 +1,12 @@
 package gg.aquatic.comet.command
 
+import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.parsing.resourcepack.ResourcepackCreator
+import gg.aquatic.comet.emitter.GlobalTicker
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.waves.command.ICommand
 import org.bukkit.command.CommandSender
+import java.io.File
 
 object ReloadParticleScriptsCommand : ICommand {
 
@@ -13,7 +16,12 @@ object ReloadParticleScriptsCommand : ICommand {
             return
         }
 
+        GlobalTicker.killInstances()
+
         ParticleJsonParser.parseJsons()
+
+        AbstractParticleEmitter.INSTANCE.saveResource("config.yml", false)
+        AbstractParticleEmitter.INSTANCE.config.load(File(AbstractParticleEmitter.INSTANCE.dataFolder, "config.yml"))
 
         ResourcepackCreator.genPack()
 

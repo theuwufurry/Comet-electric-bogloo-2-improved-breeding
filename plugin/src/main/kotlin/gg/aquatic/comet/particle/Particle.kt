@@ -5,6 +5,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEn
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetPassengers
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity
+import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.ParticleIDProvider
 import gg.aquatic.comet.api.emitter.YawPitch
 import gg.aquatic.comet.api.emitter.parent.Pose
@@ -27,6 +28,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 open class Particle(override var data: ParticleData) : AbstractParticle() {
     override val id = ParticleIDProvider.id()
     private val uuid = UUID.randomUUID()
+    
+    private val useUAP = AbstractParticleEmitter.INSTANCE.config.getBoolean("use-pua", false)
 
     private val invertedIDs: Pair<Int, UUID> by lazy {
         val dr = DeterministicRandom(id + uuid.hashCode())
@@ -122,7 +125,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                 scale = true,
                 transformationInterpolation = true,
                 teleportationDuration = true
-            ), true
+            ), true, useUAP
         )
 
         if (nd != null) {
@@ -171,7 +174,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
                     scale = true,
                     transformationInterpolation = true,
                     teleportationDuration = true
-                ), true
+                ), true, useUAP
             )
 
             if (inverted != null) {
@@ -256,12 +259,12 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
 
 
                 entityDataBuilder.getDataFor(
-                    invertedData, flags, false
+                    invertedData, flags, false, useUAP
                 )?.let { WrapperPlayServerEntityMetadata(invertedIDs.first, it) }?.let { result += it }
             }
 
             entityDataBuilder.getDataFor(
-                newData, flags, false
+                newData, flags, false, useUAP
             )?.let { WrapperPlayServerEntityMetadata(id, it) }?.let { result += it }
 
             result
@@ -351,7 +354,7 @@ open class Particle(override var data: ParticleData) : AbstractParticle() {
         previousEntityData = newData.copy()
 
         return entityDataBuilder.getDataFor(
-            newData, flags, false
+            newData, flags, false, useUAP
         ).let { WrapperPlayServerEntityMetadata(entityID, it ?: emptyList()) }
     }
 

@@ -2,6 +2,7 @@ package gg.aquatic.comet.emitter
 
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.wrapper.PacketWrapper
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
 import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.api.packet.PassengerManager
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
@@ -95,7 +96,7 @@ class SpawningProcessor(
         if (particlesToKill.isEmpty()) return
         val ls = particlesToKill.flatMap { it.entityIDs }
         val ids = ls.toIntArray()
-        val destroyPacket = Waves.NMS_HANDLER.createDestroyEntitiesPacket(*ids)
+        val destroyPacket = WrapperPlayServerDestroyEntities(*ids)
         for (player in currentViewers) {
             PassengerManager.passengerMap[player.entityId]?.removeAll(ls)
             PacketEvents.getAPI().playerManager.sendPacketSilently(player, destroyPacket)
