@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "gg.aquatic"
-version = "1.15.0"
+version = "1.15.1"
 
 kotlin {
     jvmToolchain(21)
