@@ -1,11 +1,10 @@
 package gg.aquatic.comet.emitter.optimization
 
 import com.ixume.optimization.Costs
+import com.ixume.optimization.LocalPacketOptimizer
 import com.ixume.optimization.TimestampedContentData
 import com.ixume.optimization.TimestampedDisplayData
 import com.ixume.optimization.math.Quaternion
-import com.ixume.optimization.optimize
-import gg.aquatic.comet.api.particle.display.sprite.SpriteData
 import java.awt.Color
 import java.util.*
 import kotlin.system.measureNanoTime
@@ -27,6 +26,8 @@ data class CachedPath(
     private val opacityTol: Double,
     private val considerColorTex: Boolean,
 ) {
+    private val optimizer = LocalPacketOptimizer()
+    
     val emitterData: MutableList<TimestampedEmitterData> = mutableListOf()
     val emitterActions: MutableList<TimestampedEmitterActions> = mutableListOf()
     val particleActions: MutableMap<UUID, MutableList<TimestampedParticleActions>> = mutableMapOf()
@@ -53,6 +54,7 @@ data class CachedPath(
         for (finishedParticle in finishedParticles) {
             val t = measureNanoTime {
                 mengsheOptimizeFinishedParticle(
+                    optimizer = optimizer,
                     path = this,
                     finishedParticle = finishedParticle,
                     positionTolerance = locTol,
@@ -76,6 +78,7 @@ data class CachedPath(
 }
 
 private fun mengsheOptimizeFinishedParticle(
+    optimizer: LocalPacketOptimizer,
     path: CachedPath,
     finishedParticle: UUID,
     positionTolerance: Double,
@@ -92,7 +95,7 @@ private fun mengsheOptimizeFinishedParticle(
     val mengsheDisplay = it.map { it.mengshe() }
     val mengsheText = ic.map { it.mengshe() }
 
-    val p = optimize(
+    val p = optimizer.optimizeSegmented(
         positionTolerance = positionTolerance,
         scaleTolerance = scaleTolerance,
         rotTolerance = rotTolerance,
@@ -103,6 +106,7 @@ private fun mengsheOptimizeFinishedParticle(
         textData = mengsheText,
         costs = Costs.DEFAULT,
         debugInfo = false,
+        interval = 100,
     )
 
 //    println("positions: ${p.positions}")
