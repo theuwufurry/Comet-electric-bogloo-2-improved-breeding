@@ -76,7 +76,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
                     if (component.seeThrough) b = b or 2
 
                     if (b != 0) {
-                        PEntityData(
+                        entityData += PEntityData(
                             26 + PACKET_OFFSET,
                             EntityDataTypes.BYTE,
                             b.toByte()
