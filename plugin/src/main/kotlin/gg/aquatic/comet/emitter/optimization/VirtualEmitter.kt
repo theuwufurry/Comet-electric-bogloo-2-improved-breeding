@@ -82,7 +82,7 @@ class VirtualEmitter(
 
     private val path: CachedPath = CachedPath(
         (environmentData.data["loc_tol"] as? Number)?.toDouble() ?: 0.2,
-        (environmentData.data["disp_tol"] as? Number)?.toDouble() ?: 0.1,
+        (environmentData.data["scale_tol"] as? Number)?.toDouble() ?: 0.1,
         (environmentData.data["rot_tol"] as? Number)?.toDouble() ?: 0.1,
         (environmentData.data["col_tol"] as? Number)?.toDouble() ?: 24.0,
         (environmentData.data["opacity_tol"] as? Number)?.toDouble() ?: 24.0,
