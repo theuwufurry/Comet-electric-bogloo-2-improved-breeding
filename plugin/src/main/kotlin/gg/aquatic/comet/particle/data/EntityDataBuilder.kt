@@ -88,7 +88,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
                     entityData += PEntityData(
                         22 + PACKET_OFFSET,
                         EntityDataTypes.ADV_COMPONENT,
-                        Component.text(ResourcepackCreator.charMap[displayData.id]!!)
+                        Component.text(ResourcepackCreator.charMap[displayData.content]!!)
                             .color(TextColor.color(component.color and 0xFFFFFF))
                     )
                 }
@@ -110,7 +110,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
                         EntityDataTypes.ITEMSTACK,
                         SpigotConversionUtil.fromBukkitItemStack(
                             ResourcepackCreator.stack(
-                                displayData.id,
+                                displayData.content,
                                 component.color
                             ) ?: ItemStack.empty()
                         )
@@ -121,7 +121,6 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
             is TextData -> {
                 val td = (component.displayData as TextData)
                 if (initial) {
-                    println("TEXT! shadow: ${component.shadow}, seethrough: ${component.seeThrough}")
                     var b = 0
                     if (component.shadow) b = b or 1
                     if (component.seeThrough) b = b or 2
@@ -199,7 +198,11 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
                 entityData += PEntityData(
                     11 + PACKET_OFFSET,
                     EntityDataTypes.VECTOR3F,
-                    com.github.retrooper.packetevents.util.Vector3f(component.scale.x, component.scale.y, component.scale.z)
+                    com.github.retrooper.packetevents.util.Vector3f(
+                        component.scale.x,
+                        component.scale.y,
+                        component.scale.z
+                    )
                 )
             }
         }

@@ -6,7 +6,7 @@ import org.joml.Quaternionf
 import org.joml.Vector3f
 
 data class EntityData(
-    val displayData: DisplayData,
+    val displayData: DisplayData<*>,
     val color: Int,
     val transparency: Int,
     val reserveTransparency: Int?,

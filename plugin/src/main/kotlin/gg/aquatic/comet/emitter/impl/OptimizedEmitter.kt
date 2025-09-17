@@ -186,7 +186,7 @@ class OptimizedEmitter(
                             )
                         }
                     }
-                val (color: Int?, dD: DisplayData?) =
+                val (color: Int?, dD: DisplayData<*>?) =
                     (cachedEmitterPath.coloredTextureData[particle.data.id]
                      ?: return@optimized).firstOrNull { it.time == particle.data.age.toInt() }
                         ?.let { it.color to it.displayData } ?: (null to null)
@@ -414,7 +414,7 @@ class OptimizedEmitter(
                             }
                         }
                     }
-                val (color: Int?, dD: DisplayData?) =
+                val (color: Int?, dD: DisplayData<*>?) =
                     (cachedEmitterPath.coloredTextureData[particle.data.id]
                      ?: return@u).firstOrNull { it.time >= particle.data.age.toInt() }
                         ?.let { it.color to it.displayData } ?: (null to null)

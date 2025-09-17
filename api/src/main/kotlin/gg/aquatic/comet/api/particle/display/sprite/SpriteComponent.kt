@@ -6,9 +6,9 @@ import gg.aquatic.comet.api.particle.display.DisplayData
 
 interface SpriteComponent : DisplayComponent
 
-data class SpriteData(val id: String) : DisplayData {
+data class SpriteData(override val content: String) : DisplayData<String> {
     override val entityType: com.github.retrooper.packetevents.protocol.entity.type.EntityType = EntityTypes.TEXT_DISPLAY
-    override fun copy(): DisplayData {
-        return SpriteData(id)
+    override fun copy(): DisplayData<String> {
+        return SpriteData(content)
     }
 }

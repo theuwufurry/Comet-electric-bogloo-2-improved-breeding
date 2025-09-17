@@ -1,18 +1,14 @@
 package gg.aquatic.comet.emitter.optimization
 
 import com.ixume.optimization.Costs
+import com.ixume.optimization.TimestampedContentData
 import com.ixume.optimization.TimestampedDisplayData
-import com.ixume.optimization.TimestampedTextData
 import com.ixume.optimization.math.Quaternion
 import com.ixume.optimization.optimize
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
-import gg.aquatic.comet.emitter.optimization.vec.DisplayDataVector
 import java.awt.Color
 import java.util.*
-import kotlin.math.pow
 import kotlin.system.measureNanoTime
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
 
 /*
 colors ARE important, use radial check
@@ -28,6 +24,7 @@ data class CachedPath(
     private val dispTol: Double,
     private val rotTol: Double,
     private val colTol: Double,
+    private val opacityTol: Double,
     private val considerColorTex: Boolean,
 ) {
     val emitterData: MutableList<TimestampedEmitterData> = mutableListOf()
@@ -62,185 +59,19 @@ data class CachedPath(
                     scaleTolerance = dispTol,
                     colorTolerance = colTol,
                     rotTolerance = rotTol,
+                    opacityTolerance = opacityTol,
                 )
             }
 
-            val d = t.toDuration(DurationUnit.NANOSECONDS)
+//            val d = t.toDuration(DurationUnit.NANOSECONDS)
+//            
+//            println("Optimization took $d!")
+//            println("| Path had ${internalLocations[finishedParticle]?.size} nodes!")
         }
 
         finishedParticles.clear()
 
         return this
-    }
-
-    companion object {
-        // 0 - off, 1 - size, 2 - list
-        val DEBUG_LOCS = 0.0
-        val DEBUG_DISPLAY_DATA = 0.0
-        val DEBUG_COL_TEX = 0.0
-    }
-}
-
-private fun simplifyColors(
-    toSimplify: MutableList<TimestampedColoredTexture>,
-    tolerance: Double,
-): MutableList<TimestampedColoredTexture> {
-    if (toSimplify.size < 3) return toSimplify
-
-    val sqTolerance = tolerance * tolerance
-    val radialSimplified: MutableList<TimestampedColoredTexture> = mutableListOf(toSimplify.first())
-
-    var lastPoint = toSimplify.first()
-
-    for (i in 1 until toSimplify.size - 1) {
-        val currNode = toSimplify[i]
-        if (lastPoint.displayData != currNode.displayData || lastPoint.distanceSquared(currNode) > sqTolerance) {
-            radialSimplified += currNode
-            lastPoint = currNode
-        }
-    }
-
-    radialSimplified += toSimplify.last()
-
-    return radialSimplified
-}
-
-private fun simplfiyLocs(
-    toSimplify: MutableList<TimestampedPos>,
-    tolerance: Double,
-): MutableList<TimestampedPos> {
-    if (toSimplify.size < 3) return toSimplify
-
-    val sqTolerance = tolerance * tolerance
-    val radialSimplified: MutableList<TimestampedPos> = mutableListOf(toSimplify.first())
-
-    var lastPoint = toSimplify.first()
-
-    for (i in 1 until toSimplify.size - 1) {
-        val currNode = toSimplify[i]
-        if (lastPoint.vec.distanceSquared(currNode.vec) > sqTolerance) {
-            radialSimplified += currNode
-            lastPoint = currNode
-        }
-    }
-
-    radialSimplified += toSimplify.last()
-
-    return (listOf(toSimplify.first()) + douglas(
-        sqTolerance,
-        radialSimplified
-    ) + listOf(toSimplify.last())).toMutableList()
-
-}
-
-/**
- * Fills in 127 boundary crosses
- * @return Times of filled transparencies.
- */
-private fun fillTransparency(
-    full: MutableList<TimestampedTransformableData>,
-): List<Int> {
-    val times = mutableListOf<Int>()
-    var prev = full.first()
-    for (i in 1..<full.size) {
-        val curr = full[i]
-
-        if (prev.vec.alpha * 255.0 > 127.0 && curr.vec.alpha * 255.0 <= 127.0) {
-            times += prev.time
-            times += curr.time
-        }
-
-        prev = curr
-    }
-
-    return times
-}
-
-private fun simplifyDisplayData(
-    toSimplify: MutableList<TimestampedTransformableData>,
-    tolerance: Double,
-): MutableList<TimestampedTransformableData> {
-    if (toSimplify.size < 3) return toSimplify
-
-    val sqTolerance = tolerance * tolerance
-    val radialSimplified: MutableList<TimestampedTransformableData> = mutableListOf(toSimplify.first())
-
-    var lastPoint = toSimplify.first()
-
-    for (i in 1 until toSimplify.size - 1) {
-        val currNode = toSimplify[i]
-        if (lastPoint.vec.distanceSquared(currNode.vec) > sqTolerance) {
-            radialSimplified += currNode
-            lastPoint = currNode
-        }
-    }
-
-    radialSimplified += toSimplify.last()
-
-    return (listOf(toSimplify.first()) + douglas(
-        sqTolerance,
-        radialSimplified
-    ) + listOf(toSimplify.last())).toMutableList()
-}
-
-private fun <T : TimestampedData> douglas(sqTolerance: Double, nodes: List<T>): List<T> {
-    if (nodes.size < 3) return emptyList()
-
-    val start = nodes.first().vec
-    val end = nodes.last().vec
-
-    val delta = end.clone().sub(start)
-    val sqDeltaLength = delta.lengthSquared()
-    if (CachedPath.DEBUG_DISPLAY_DATA >= 2 && start is DisplayDataVector) {
-        println(
-            "|||||||||||||||||||||||||||||||||\n" +
-            "| SIZE: ${nodes.size}\n" +
-            "-> START: \n" +
-            start + "\n" +
-            "-> END: \n" +
-            end + "\n" +
-            "-> DELTA: \n" +
-            delta + "\n" +
-            "| LENGTH: $sqDeltaLength\n"
-        )
-    }
-
-    var max = 0.0
-    var index = -1
-
-    for (i in 1 until nodes.size - 1) {
-        //guaranteed to be no division by 0 bcs of radial distance preprocessing
-        val offset = start.clone().sub(nodes[i].vec)
-
-        val sqDistance = if (sqDeltaLength <= 0.0)
-            offset.lengthSquared()
-        else ((offset.lengthSquared() * sqDeltaLength) - offset.dot(delta).pow(2)) / sqDeltaLength
-
-        if (CachedPath.DEBUG_DISPLAY_DATA >= 2 && start is DisplayDataVector) {
-            println(
-                "-------------------------------\n" +
-                "| INDEX: $i\n" +
-                "-> OFFSET:\n" +
-                offset + "\n" +
-                "| SQ: $sqDeltaLength\n" +
-                "| DOT: ${offset.dot(delta)}\n" +
-                "| SQDISTANCE:${sqDistance}\n"
-            )
-        }
-
-        if (sqDistance > sqTolerance && sqDistance > max) {
-            max = sqDistance
-            index = i
-        }
-    }
-
-    if (index == -1) return emptyList()
-    else {
-        val pivot = nodes[index]
-        return douglas(sqTolerance, nodes.subList(0, index + 1)) + pivot + douglas(
-            sqTolerance,
-            nodes.subList(index + 1, nodes.size)
-        )
     }
 }
 
@@ -251,6 +82,7 @@ private fun mengsheOptimizeFinishedParticle(
     scaleTolerance: Double,
     colorTolerance: Double,
     rotTolerance: Double,
+    opacityTolerance: Double,
 ) {
     val ip = path.internalLocations[finishedParticle]!!
     val it = path.internalTransformableData[finishedParticle]!!
@@ -265,6 +97,7 @@ private fun mengsheOptimizeFinishedParticle(
         scaleTolerance = scaleTolerance,
         rotTolerance = rotTolerance,
         colorTolerance = colorTolerance,
+        opacityTolerance = opacityTolerance,
         posData = mengshePositions,
         displayData = mengsheDisplay,
         textData = mengsheText,
@@ -302,13 +135,15 @@ fun TimestampedTransformableData.mengshe(): TimestampedDisplayData {
         scaleZ = vec.scale.z.toDouble(),
 
         rot = Quaternion(vec.rot.x.toDouble(), vec.rot.y.toDouble(), vec.rot.z.toDouble(), vec.rot.w.toDouble()),
+
+        opacity = (vec.alpha * 256.0).toInt().coerceIn(25..255)
     )
 }
 
-fun TimestampedColoredTexture.mengshe(): TimestampedTextData {
-    return TimestampedTextData(
+fun TimestampedColoredTexture.mengshe(): TimestampedContentData {
+    return TimestampedContentData(
         t = time,
-        content = (this.displayData as SpriteData).id,
+        content = this.displayData.content,
         color = Color(color),
     )
 }

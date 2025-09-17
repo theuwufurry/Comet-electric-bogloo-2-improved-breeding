@@ -4,7 +4,8 @@ import com.github.retrooper.packetevents.protocol.entity.type.EntityType
 
 interface DisplayComponent
 
-interface DisplayData {
+interface DisplayData<T : Any> {
     val entityType: EntityType
-    fun copy(): DisplayData
+    fun copy(): DisplayData<T>
+    val content: T
 }

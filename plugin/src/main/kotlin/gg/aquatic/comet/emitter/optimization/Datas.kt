@@ -33,7 +33,7 @@ class TimestampedColoredTexture(
     private val r: Int,
     private val g: Int,
     private val b: Int,
-    val displayData: DisplayData,
+    val displayData: DisplayData<*>,
 ) {
     val color = (r shl 16) or (g shl 8) or b
     fun distanceSquared(other: TimestampedColoredTexture): Int {

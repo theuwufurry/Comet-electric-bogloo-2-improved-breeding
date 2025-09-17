@@ -6,20 +6,20 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
 
 class ComponentTextData(
-    val component: Component,
+    override val content: Component,
     override val backgroundColor: Int,
     override val lineWidth: Int,
     val colored: Boolean,
-) : TextData {
+) : TextData<Component> {
     override val entityType: com.github.retrooper.packetevents.protocol.entity.type.EntityType = EntityTypes.TEXT_DISPLAY
 
     override fun with(color: Int): Component {
-        return if (colored) component.color(TextColor.color(color)) else component
+        return if (colored) content.color(TextColor.color(color)) else content
     }
 
-    override fun copy(): DisplayData {
+    override fun copy(): DisplayData<Component> {
         return ComponentTextData(
-            component, backgroundColor, lineWidth, colored
+            content, backgroundColor, lineWidth, colored
         )
     }
 }

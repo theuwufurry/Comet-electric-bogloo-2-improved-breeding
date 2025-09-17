@@ -17,7 +17,7 @@ data class ParticleData(
     var dead: Boolean = false,
     var age: Double = 0.0,
     var maxLife: Int = 0,
-    var displayData: DisplayData = SpriteData(""),
+    var displayData: DisplayData<*> = SpriteData(""),
     var color: Int = 0,
     var origin: Vector3d = Vector3d(),
     var relativePosition: Vector3d = Vector3d(),
