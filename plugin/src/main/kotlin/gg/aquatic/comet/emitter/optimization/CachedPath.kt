@@ -8,6 +8,8 @@ import com.ixume.optimization.math.Quaternion
 import java.awt.Color
 import java.util.*
 import kotlin.system.measureNanoTime
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 /*
 colors ARE important, use radial check
@@ -50,7 +52,7 @@ data class CachedPath(
 
     val finishedParticles = mutableListOf<UUID>()
 
-    fun optimizeFinished(): CachedPath {
+    fun optimizeFinished(interval: Int): CachedPath {
         for (finishedParticle in finishedParticles) {
             val t = measureNanoTime {
                 mengsheOptimizeFinishedParticle(
@@ -62,12 +64,13 @@ data class CachedPath(
                     colorTolerance = colTol,
                     rotTolerance = rotTol,
                     opacityTolerance = opacityTol,
+                    interval = interval,
                 )
             }
 
-//            val d = t.toDuration(DurationUnit.NANOSECONDS)
+            val d = t.toDuration(DurationUnit.NANOSECONDS)
 //            
-//            println("Optimization took $d!")
+            println("Optimization took $d!")
 //            println("| Path had ${internalLocations[finishedParticle]?.size} nodes!")
         }
 
@@ -86,6 +89,7 @@ private fun mengsheOptimizeFinishedParticle(
     colorTolerance: Double,
     rotTolerance: Double,
     opacityTolerance: Double,
+    interval: Int,
 ) {
     val ip = path.internalLocations[finishedParticle]!!
     val it = path.internalTransformableData[finishedParticle]!!
@@ -106,7 +110,7 @@ private fun mengsheOptimizeFinishedParticle(
         textData = mengsheText,
         costs = Costs.DEFAULT,
         debugInfo = false,
-        interval = 100,
+        interval = interval,
     )
 
 //    println("positions: ${p.positions}")

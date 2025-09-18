@@ -12,6 +12,7 @@ data class EmitterData(
     var world: World? = null,
     var location: Location = Location(null, 0.0, 0.0, 0.0),
     var isActive: Boolean = true,
+    var optimizationInterval: Int = 100,
 ) {
     fun copyFrom(other: EmitterData) {
         id = other.id
@@ -21,6 +22,7 @@ data class EmitterData(
         world = other.world
         location = other.location
         isActive = other.isActive
+        optimizationInterval = other.optimizationInterval
 
         variable = other.variable
 //        variable.clear()
@@ -31,7 +33,7 @@ data class EmitterData(
     val externalVariable: MutableMap<String, Any> = MapWrapper(::variable)
 
     fun clone(): EmitterData {
-        return EmitterData(id, dead, emitter, age, world, location.clone(), isActive).apply i@{
+        return EmitterData(id, dead, emitter, age, world, location.clone(), isActive, optimizationInterval).apply i@{
             this@i.variable = (this@EmitterData.variable as VariableMutableMap).clone()
         }
     }

@@ -39,7 +39,6 @@ subprojects {
         compileOnly("io.lumine:Mythic-Dist:5.6.1")
         compileOnly("com.ticxo.modelengine:ModelEngine:R4.0.7")
 
-        implementation(files("gradle/build/libs/Mengshe-0.0.3.12.jar"))
         compileOnly("com.github.retrooper:packetevents-spigot:2.9.5")
     }
 

@@ -317,7 +317,7 @@ class VirtualEmitter(
             absoluteTime = runtime.catchupTime!!
         }
 
-        path.optimizeFinished()
+        path.optimizeFinished(emitterData.optimizationInterval)
 
         return EmitterTickResult(true)
     }

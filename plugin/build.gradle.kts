@@ -6,6 +6,7 @@ version = parent!!.version
 
 dependencies {
     implementation(project(":api"))
+    implementation(files("gradle/build/libs/Mengshe-0.0.3.21.jar"))
 }
 
 tasks {

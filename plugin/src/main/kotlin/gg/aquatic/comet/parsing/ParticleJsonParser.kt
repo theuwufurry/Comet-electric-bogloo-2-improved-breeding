@@ -30,6 +30,7 @@ import gg.aquatic.comet.emitter.action.event.EmitterTickComponent
 import gg.aquatic.comet.emitter.action.event.EmitterTimelineComponent
 import gg.aquatic.comet.emitter.environment.EnvironmentDataComponent
 import gg.aquatic.comet.emitter.lifetime.*
+import gg.aquatic.comet.emitter.optimization.OptimizationIntervalComponent
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.IntervalUpdateFrequencyComponent
 import gg.aquatic.comet.emitter.optimization.updatefrequency.ManualUpdateFrequencyComponent
@@ -129,6 +130,7 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
 
             TextMiscComponent,
             SensitiveCenteringComponent,
+            OptimizationIntervalComponent,
 
             ConstantLightComponent,
 
