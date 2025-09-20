@@ -25,6 +25,7 @@ object PackageManager {
         }
 
         val ls = packagesDir.listFiles()!!
+        ls.sortBy { it.name }
         for (packageFile in ls) {
             if (!packageFile.isDirectory) {
                 AbstractParticleEmitter.INSTANCE.logger.warning("Expected package ${packageFile.name} to be a directory!")
