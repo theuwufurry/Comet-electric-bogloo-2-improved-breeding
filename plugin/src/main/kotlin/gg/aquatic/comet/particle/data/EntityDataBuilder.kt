@@ -90,7 +90,6 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
                     var component = Component.text(ResourcepackCreator.charMap[displayData.content]!!)
                         .color(TextColor.color(component.color and 0xFFFFFF))
                     if (!useUAP) {
-                        println("sending with font")
                         component = component.font(key)
                     }
                     entityData += PEntityData(
