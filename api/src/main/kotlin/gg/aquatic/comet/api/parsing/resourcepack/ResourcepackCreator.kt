@@ -6,6 +6,7 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.parsing.asStringOrNull
+import gg.aquatic.comet.api.parsing.resourcepack.packages.PackageManager
 import gg.aquatic.waves.Waves
 import gg.aquatic.waves.util.version.ServerVersion
 import org.bukkit.Material
@@ -74,7 +75,7 @@ object ResourcepackCreator {
 
         initTextures(texturesFolder)
 
-        val images: MutableList<File> = mutableListOf()
+        val images = mutableListOf<Texture>()
 
         val oldRPFolder = File(dataFolder.path + "/output/$RP_NAME")
         if (oldRPFolder.exists()) oldRPFolder.deleteRecursively()
@@ -82,34 +83,38 @@ object ResourcepackCreator {
         if (texturesFolder.exists()) {
             for (file in texturesFolder.listFiles()!!) {
                 if (file.extension != "png") continue
-                images += file
+                images += Texture(null,file)
             }
 
-            if (uvs.size != 0) {
+            if (uvs.isNotEmpty()) {
                 val tempDir = File(dataFolder, ".temp/")
                 tempDir.mkdirs()
 
                 genUVs(images, tempDir)
 
-                images += tempDir.listFiles()!!.filter { it.extension == "png" }
+                images += tempDir.listFiles()!!.filter { it.extension == "png" }.map { Texture(null, it) }
             }
-
-            genSprites(images)
         }
+        
+        images += PackageManager.packages.flatMap { it.textures }
+
+        genSprites(images)
 
         val tempDir = File(dataFolder, ".temp/")
         tempDir.deleteRecursively()
 
         val modelFolder = File(dataFolder.path + "/models")
+        val models: MutableList<Model> = mutableListOf()
 
         if (modelFolder.exists()) {
-            val models: MutableList<File> = mutableListOf()
             for (file in modelFolder.listFiles()!!) {
-                if (file.isDirectory) models += file
+                if (file.isDirectory) models += Model(null, file)
             }
-
-            genModels(models)
         }
+        
+        models += PackageManager.packages.flatMap { it.models }
+
+        genModels(models)
 
         uvs.clear()
 
@@ -125,7 +130,7 @@ object ResourcepackCreator {
         }
     }
 
-    private fun genModels(files: List<File>) {
+    private fun genModels(files: List<Model>) {
         val dataFolder = AbstractParticleEmitter.INSTANCE.dataFolder
 
         val itemFolder = File(dataFolder.path + "/output/$RP_NAME/assets/minecraft/items")
@@ -182,10 +187,10 @@ object ResourcepackCreator {
         var count = 100
 
         for (file in files) {
-            val model = File(file.path + "/" + file.nameWithoutExtension + ".json")
+            val model = File(file.file.path + "/" + file.modelName + ".json")
             if (!model.exists()) continue
 
-            val newModel = File(modelFolder.path + "/" + model.name)
+            val newModel = File(modelFolder.path + "/" + file.name + ".json")
             model.copyTo(newModel)
 
             val rootObject = JsonParser.parseReader(FileReader(newModel)).asJsonObject
@@ -196,7 +201,7 @@ object ResourcepackCreator {
                 val asStr = value.asStringOrNull() ?: continue
                 newTexturesObj.addProperty(key, "item/$NAMESPACE/${file.nameWithoutExtension}_$asStr")
 
-                val tex = File(file.path + "/" + asStr + ".png")
+                val tex = File(file.file.path + "/" + asStr + ".png")
                 if (tex.exists()) {
                     val newFileLoc = File(texturesFolder.path, "${file.nameWithoutExtension}_$asStr.png")
                     if (!newFileLoc.exists()) {
@@ -252,7 +257,7 @@ object ResourcepackCreator {
         itemTarget.writeText(gson.toJson(itemObj))
     }
 
-    private fun genSprites(images: List<File>) {
+    private fun genSprites(images: List<Texture>) {
         val dataFolder = AbstractParticleEmitter.INSTANCE.dataFolder
 
         val packImage = File(dataFolder.path + "/output/$RP_NAME/pack.png")
@@ -267,15 +272,15 @@ object ResourcepackCreator {
         genLang(images)
     }
 
-    private fun genImages(images: List<File>) {
+    private fun genImages(images: List<Texture>) {
         val dataFolder = AbstractParticleEmitter.INSTANCE.dataFolder
 
         val texturesFolder = File(dataFolder.path + "/output/$RP_NAME/assets/$NAMESPACE/textures/font")
         texturesFolder.mkdirs()
 
         for (image in images) {
-            val imageFile = File(texturesFolder.path, image.name)
-            val bufferedImage: BufferedImage = ImageIO.read(image)
+            val imageFile = File(texturesFolder.path, "${image.name}")
+            val bufferedImage: BufferedImage = ImageIO.read(image.file)
             val argbImage = BufferedImage(bufferedImage.width, bufferedImage.height, BufferedImage.TYPE_INT_ARGB)
             val graphics = argbImage.createGraphics()
             graphics.drawImage(bufferedImage, 0, 0, null)
@@ -287,7 +292,7 @@ object ResourcepackCreator {
         }
     }
 
-    private fun genFont(images: List<File>) {
+    private fun genFont(images: List<Texture>) {
         val dataFolder = AbstractParticleEmitter.INSTANCE.dataFolder
 
         val font = File(dataFolder.path + "/output/$RP_NAME/assets/$NAMESPACE/font/$FONT_NAME.json")
@@ -297,7 +302,7 @@ object ResourcepackCreator {
         var index = '\uE000'
 
         for (image in images) {
-            val bufferedImage: BufferedImage = ImageIO.read(image)
+            val bufferedImage: BufferedImage = ImageIO.read(image.file)
 
             val width = bufferedImage.width
             val height = bufferedImage.height
@@ -342,7 +347,7 @@ object ResourcepackCreator {
         mcFont.writeText(s)
     }
 
-    private fun genLang(images: List<File>) {
+    private fun genLang(images: List<Texture>) {
         val dataFolder = AbstractParticleEmitter.INSTANCE.dataFolder
 
         val lang = File(dataFolder.path + "/output/$RP_NAME/assets/$NAMESPACE/lang/en_us.json")
@@ -352,7 +357,7 @@ object ResourcepackCreator {
         var index = '\uE000'
 
         for (image in images) {
-            val bufferedImage: BufferedImage = ImageIO.read(image) ?: continue
+            val bufferedImage: BufferedImage = ImageIO.read(image.file) ?: continue
             val width = bufferedImage.width
             val height = bufferedImage.height
 
@@ -381,18 +386,18 @@ object ResourcepackCreator {
         lang.writeText(gson.toJson(jsonObject))
     }
 
-    private fun genUVs(images: List<File>, targetDir: File) {
+    private fun genUVs(images: List<Texture>, targetDir: File) {
         val dataFolder = AbstractParticleEmitter.INSTANCE.dataFolder
         if (!dataFolder.exists()) return
 
         for ((coords, size, name) in uvs) {
-            val image = images.firstOrNull { it.nameWithoutExtension == name }
+            val image = images.firstOrNull { it.namespace == null && it.file.nameWithoutExtension == name }
             if (image == null) {
                 AbstractParticleEmitter.INSTANCE.logger.warning("UV $name does not having a provided texture!")
                 continue
             }
 
-            val bufferedImage: BufferedImage = ImageIO.read(image)
+            val bufferedImage: BufferedImage = ImageIO.read(image.file)
             if (bufferedImage.width < coords.x + size.x || bufferedImage.height < coords.y + size.y) {
                 AbstractParticleEmitter.INSTANCE.logger.warning("$name is too small for the specified uv size!")
                 continue

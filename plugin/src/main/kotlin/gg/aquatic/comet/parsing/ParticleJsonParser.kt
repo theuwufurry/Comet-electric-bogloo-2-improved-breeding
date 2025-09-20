@@ -37,6 +37,7 @@ import gg.aquatic.comet.emitter.optimization.updatefrequency.ManualUpdateFrequen
 import gg.aquatic.comet.emitter.rate.InstantRateComponent
 import gg.aquatic.comet.emitter.rate.ManualRateComponent
 import gg.aquatic.comet.emitter.rate.SteadyRateComponent
+import gg.aquatic.comet.api.parsing.resourcepack.packages.PackageManager
 import gg.aquatic.comet.particle.action.event.ParticleDeathComponent
 import gg.aquatic.comet.particle.action.event.ParticleInitComponent
 import gg.aquatic.comet.particle.action.event.ParticleTickComponent
@@ -218,7 +219,26 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
             emitter?.run {
                 unrealizedEmitters += file.nameWithoutExtension to emitter
             } ?: run {
-                AbstractParticleEmitter.INSTANCE.logger.warning("""Field "components" is null in ${file.name}!""")
+                AbstractParticleEmitter.INSTANCE.logger.warning("""Field "components" is null in ${file.nameWithoutExtension}!""")
+            }
+        }
+        
+        for (pack in PackageManager.packages) {
+            for (file in pack.effects) {
+                val rootObject = try {
+                    JsonParser.parseReader(FileReader(file)).asJsonObject
+                } catch (e: Exception) {
+                    AbstractParticleEmitter.INSTANCE.logger.severe("Failed parsing ${pack.name}.${file.nameWithoutExtension}! Error:")
+                    AbstractParticleEmitter.INSTANCE.logger.severe(e.message)
+                    continue
+                }
+
+                val emitter = parseComponents(rootObject, file.nameWithoutExtension)
+                emitter?.run {
+                    unrealizedEmitters += "${pack.name}.${file.nameWithoutExtension}" to emitter
+                } ?: run {
+                    AbstractParticleEmitter.INSTANCE.logger.warning("""Field "components" is null in ${pack.name}.${file.nameWithoutExtension}!""")
+                }
             }
         }
 
@@ -231,7 +251,7 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
         return jsonUnrealizedEmitters[id]
     }
 
-    fun recursivelyFindJsons(dir: File): Set<File> {
+    fun recursivelyFindJsons(dir: File): MutableSet<File> {
         val files: MutableSet<File> = mutableSetOf()
         for (file in dir.listFiles()!!) {
             if (file.isDirectory) {

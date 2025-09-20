@@ -1,7 +1,5 @@
 package gg.aquatic.comet
 
-import com.github.retrooper.packetevents.PacketEvents
-import com.github.retrooper.packetevents.event.PacketListenerPriority
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.CometRegistry
 import gg.aquatic.comet.api.parsing.resourcepack.ResourcepackCreator
@@ -12,6 +10,7 @@ import gg.aquatic.comet.hook.modelengine.ModelEngineHook
 import gg.aquatic.comet.hook.mythicmobs.MythicMobsHook
 import gg.aquatic.comet.parsing.ConfigLoader
 import gg.aquatic.comet.parsing.ParticleJsonParser
+import gg.aquatic.comet.api.parsing.resourcepack.packages.PackageManager
 import gg.aquatic.comet.particle.macro.CatmullParser
 import gg.aquatic.comet.particle.macro.HermiteParser
 import gg.aquatic.comet.particle.macro.LinearParser
@@ -32,6 +31,7 @@ class ParticleEmitter : AbstractParticleEmitter() {
         initializeMacros()
 
         ConfigLoader.init()
+        PackageManager.compile()
         ParticleJsonParser.init()
         CometRegistry.jsonParser = ParticleJsonParser
 
@@ -74,8 +74,6 @@ class ParticleEmitter : AbstractParticleEmitter() {
     override fun onDisable() {
         ParticleJsonParser.onDisable()
         GlobalTicker.disable()
-
-        PacketEvents.getAPI().terminate()
     }
 
     private fun initializeHooks() {

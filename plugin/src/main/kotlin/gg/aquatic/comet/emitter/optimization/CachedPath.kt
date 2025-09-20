@@ -70,7 +70,7 @@ data class CachedPath(
 
             val d = t.toDuration(DurationUnit.NANOSECONDS)
 //            
-            println("Optimization took $d!")
+//            println("Optimization took $d!")
 //            println("| Path had ${internalLocations[finishedParticle]?.size} nodes!")
         }
 

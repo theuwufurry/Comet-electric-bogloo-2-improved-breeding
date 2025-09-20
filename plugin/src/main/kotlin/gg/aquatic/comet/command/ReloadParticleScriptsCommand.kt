@@ -2,6 +2,7 @@ package gg.aquatic.comet.command
 
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.parsing.resourcepack.ResourcepackCreator
+import gg.aquatic.comet.api.parsing.resourcepack.packages.PackageManager
 import gg.aquatic.comet.emitter.GlobalTicker
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.waves.command.ICommand
@@ -16,7 +17,11 @@ object ReloadParticleScriptsCommand : ICommand {
             return
         }
 
+        sender.sendMessage("Reloading Comet...")
+
         GlobalTicker.killInstances()
+
+        PackageManager.compile()
 
         ParticleJsonParser.parseJsons()
 
