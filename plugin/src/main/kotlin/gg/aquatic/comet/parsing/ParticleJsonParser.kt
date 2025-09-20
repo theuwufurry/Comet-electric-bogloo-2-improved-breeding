@@ -20,6 +20,7 @@ import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.parsing.*
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.api.parsing.macro.MacrosParser
+import gg.aquatic.comet.api.parsing.resourcepack.packages.PackageManager
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
 import gg.aquatic.comet.api.particle.display.DisplayComponent
 import gg.aquatic.comet.emitter.GlobalTicker
@@ -37,7 +38,6 @@ import gg.aquatic.comet.emitter.optimization.updatefrequency.ManualUpdateFrequen
 import gg.aquatic.comet.emitter.rate.InstantRateComponent
 import gg.aquatic.comet.emitter.rate.ManualRateComponent
 import gg.aquatic.comet.emitter.rate.SteadyRateComponent
-import gg.aquatic.comet.api.parsing.resourcepack.packages.PackageManager
 import gg.aquatic.comet.particle.action.event.ParticleDeathComponent
 import gg.aquatic.comet.particle.action.event.ParticleInitComponent
 import gg.aquatic.comet.particle.action.event.ParticleTickComponent
@@ -76,7 +76,9 @@ import gg.aquatic.comet.particle.variable.RandomsInitializerComponent
 import gg.aquatic.comet.snowstorm.SnowstormTranspiler
 import org.joml.Vector3d
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileReader
+import java.util.zip.CRC32
 
 fun JsonObject.getExprOrNull(field: String): String? {
     if (field !in keySet()) return null
@@ -104,6 +106,8 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
     lateinit var distanceCullingParser: Pair<String, ComponentParser<DistanceCullingComponent>>
 
     private const val DEFAULT_LOOKAHEAD = 1
+
+    private val fileChecksums = mutableMapOf<String, EffectFile>()
 
     fun init() {
         for (parser in listOf(
@@ -206,34 +210,20 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
 
         GlobalTicker.killInstances()
 
-        for (file in effects) {
-            val rootObject = try {
-                JsonParser.parseReader(FileReader(file)).asJsonObject
-            } catch (e: Exception) {
-                AbstractParticleEmitter.INSTANCE.logger.severe("Failed parsing ${file.nameWithoutExtension}! Error:")
-                AbstractParticleEmitter.INSTANCE.logger.severe(e.message)
-                continue
-            }
+        val newChecksums = mutableMapOf<String, EffectFile>()
 
-            val emitter = parseComponents(rootObject, file.nameWithoutExtension)
+        for (file in effects) {
+            val emitter = parseUnrealizedEmitter(file, newChecksums)
             emitter?.run {
                 unrealizedEmitters += file.nameWithoutExtension to emitter
             } ?: run {
                 AbstractParticleEmitter.INSTANCE.logger.warning("""Field "components" is null in ${file.nameWithoutExtension}!""")
             }
         }
-        
+
         for (pack in PackageManager.packages) {
             for (file in pack.effects) {
-                val rootObject = try {
-                    JsonParser.parseReader(FileReader(file)).asJsonObject
-                } catch (e: Exception) {
-                    AbstractParticleEmitter.INSTANCE.logger.severe("Failed parsing ${pack.name}.${file.nameWithoutExtension}! Error:")
-                    AbstractParticleEmitter.INSTANCE.logger.severe(e.message)
-                    continue
-                }
-
-                val emitter = parseComponents(rootObject, file.nameWithoutExtension)
+                val emitter = parseUnrealizedEmitter(file, newChecksums)
                 emitter?.run {
                     unrealizedEmitters += "${pack.name}.${file.nameWithoutExtension}" to emitter
                 } ?: run {
@@ -245,6 +235,30 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
         jsonUnrealizedEmitters = unrealizedEmitters
 
         postInit()
+
+        fileChecksums.clear()
+        fileChecksums += newChecksums
+    }
+
+    private fun parseUnrealizedEmitter(file: File, newChecksums: MutableMap<String, EffectFile>): UnrealizedEmitter? {
+        val cs = file.checksum()
+        val existing = fileChecksums[file.path]
+        if (existing != null && existing.checksum == cs) {
+            newChecksums[file.path] = existing
+            return existing.emitter
+        }
+
+        val rootObject = try {
+            JsonParser.parseReader(FileReader(file)).asJsonObject
+        } catch (e: Exception) {
+            AbstractParticleEmitter.INSTANCE.logger.severe("Failed parsing ${file.nameWithoutExtension}! Error:")
+            AbstractParticleEmitter.INSTANCE.logger.severe(e.message)
+            return null
+        }
+
+        val em = parseComponents(rootObject, file.nameWithoutExtension) ?: return null
+        newChecksums[file.path] = EffectFile(cs, em)
+        return em
     }
 
     override fun getUnrealizedEmitterByID(id: String): AbstractUnrealizedEmitter? {
@@ -393,4 +407,19 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
     fun onDisable() {
         jsonUnrealizedEmitters.clear()
     }
+}
+
+fun File.checksum(): Long {
+    val crc = CRC32()
+
+    FileInputStream(this).use { fis ->
+        val buffer = ByteArray(8192)
+        var bytesRead: Int
+
+        while (fis.read(buffer).also { bytesRead = it } != -1) {
+            crc.update(buffer, 0, bytesRead)
+        }
+    }
+
+    return crc.value
 }
