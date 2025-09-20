@@ -83,7 +83,7 @@ object ResourcepackCreator {
         if (texturesFolder.exists()) {
             for (file in texturesFolder.listFiles()!!) {
                 if (file.extension != "png") continue
-                images += Texture(null,file)
+                images += Texture(null, file)
             }
 
             if (uvs.isNotEmpty()) {
@@ -95,8 +95,10 @@ object ResourcepackCreator {
                 images += tempDir.listFiles()!!.filter { it.extension == "png" }.map { Texture(null, it) }
             }
         }
-        
+
         images += PackageManager.packages.flatMap { it.textures }
+
+        images.sortBy { it.name }
 
         genSprites(images)
 
@@ -111,8 +113,10 @@ object ResourcepackCreator {
                 if (file.isDirectory) models += Model(null, file)
             }
         }
-        
+
         models += PackageManager.packages.flatMap { it.models }
+
+        models.sortBy { it.name }
 
         genModels(models)
 
@@ -125,6 +129,8 @@ object ResourcepackCreator {
             for (file in soundsFolder.listFiles()!!) {
                 soundFiles += file
             }
+
+            soundFiles.sortBy { it.name }
 
             genSounds(soundFiles)
         }
