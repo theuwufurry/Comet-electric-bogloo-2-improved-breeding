@@ -23,7 +23,8 @@ object ResourcepackCreator {
     private const val RP_META = "pack.mcmeta"
     private const val ITEM = "amethyst_shard"
     private val ITEM_TYPE = Material.AMETHYST_SHARD
-    const val NAMESPACE = "p"
+    lateinit var NAMESPACE: String
+    var modelDataStartIdx = 100
     const val FONT_NAME = "d"
     private const val PARTICLES_PNG = "particles.png"
 
@@ -66,7 +67,10 @@ object ResourcepackCreator {
         }
     }
 
-    fun genPack() {
+    fun reload() {
+        NAMESPACE = AbstractParticleEmitter.INSTANCE.config.getString("namespace", "p") ?: "p"
+        modelDataStartIdx = AbstractParticleEmitter.INSTANCE.config.getInt("model-data-start", 100)
+
         val dataFolder = AbstractParticleEmitter.INSTANCE.dataFolder
         dataFolder.mkdirs()
 
@@ -190,7 +194,7 @@ object ResourcepackCreator {
 
         val overridesArr = JsonArray()
 
-        var count = 100
+        var count = modelDataStartIdx
 
         for (file in files) {
             val model = File(file.file.path + "/" + file.modelName + ".json")

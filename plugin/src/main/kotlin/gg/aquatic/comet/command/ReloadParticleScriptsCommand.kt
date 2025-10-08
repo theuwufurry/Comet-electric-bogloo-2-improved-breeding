@@ -28,7 +28,7 @@ object ReloadParticleScriptsCommand : ICommand {
         AbstractParticleEmitter.INSTANCE.saveResource("config.yml", false)
         AbstractParticleEmitter.INSTANCE.config.load(File(AbstractParticleEmitter.INSTANCE.dataFolder, "config.yml"))
 
-        ResourcepackCreator.genPack()
+        ResourcepackCreator.reload()
 
         sender.sendMessage("Comet has been reloaded!")
     }

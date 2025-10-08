@@ -38,7 +38,7 @@ class ParticleEmitter : AbstractParticleEmitter() {
         ParticleJsonParser.parseJsons()
         dataFolder.mkdir()
 
-        ResourcepackCreator.genPack()
+        ResourcepackCreator.reload()
 
         GlobalTicker.init()
 

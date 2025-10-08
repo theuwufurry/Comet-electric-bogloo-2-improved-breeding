@@ -37,7 +37,8 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
     private val defaultRotation = Quaternionf(0f, 0f, 0f, 1f)
     private val defaultScale = Vector3f(1f)
 
-    private val key = Key.key(ResourcepackCreator.NAMESPACE, ResourcepackCreator.FONT_NAME)
+    @Volatile
+    private var key = Key.key(ResourcepackCreator.NAMESPACE, ResourcepackCreator.FONT_NAME)
 
     private val DEBUG = 0
 
@@ -56,6 +57,10 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
         initial: Boolean,
         useUAP: Boolean,
     ): List<PEntityData<*>>? {
+        if (key.namespace() != ResourcepackCreator.NAMESPACE) {
+            key = Key.key(ResourcepackCreator.NAMESPACE, ResourcepackCreator.FONT_NAME)
+        }
+
         val entityData: MutableList<PEntityData<*>> =
             mutableListOf()
 
@@ -117,7 +122,7 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
                         SpigotConversionUtil.fromBukkitItemStack(
                             ResourcepackCreator.stack(
                                 displayData.content,
-                                component.color
+                                component.color,
                             ) ?: ItemStack.empty()
                         )
                     )
