@@ -338,7 +338,7 @@ class VirtualEmitter(
             particleData.billboardConstraints = billboardConstraints
 
             particleComponents.forEach { it.execute(emitterData, particleData) }
-            
+
             path.hashes[particleData.id] =
                 mutableSetOf<Int>().apply { add(particleData.locHash()) } to mutableSetOf<Int>().apply {
                     add(particleData.displayHash())
@@ -391,7 +391,12 @@ class VirtualEmitter(
     }
 
     override fun applyEmitterRotation(input: Quaternionf): Quaternionf {
-        return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(pose.rot.x, pose.rot.y, pose.rot.z, pose.rot.w).mul(input) else input
+        return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(
+            pose.rot.x,
+            pose.rot.y,
+            pose.rot.z,
+            pose.rot.w
+        ).mul(input) else input
     }
 
     override fun realize(
@@ -401,7 +406,7 @@ class VirtualEmitter(
         environmentData: EnvironmentData,
         audience: AquaticAudience,
         random: DeterministicRandom,
-        uuid: UUID
+        uuid: UUID,
     ) {
         (unrealizedEmitter as UnrealizedEmitter).virtualRealize(
             parent,
