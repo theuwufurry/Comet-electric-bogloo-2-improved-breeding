@@ -69,6 +69,8 @@ class SpawnPhysicsBodySubAction(
 
         }
 
+        val emitter = context.otherEmitterData.emitter!!
+
         if (context.otherEmitterData.emitter!!.isPregen) {
             val virtual = context.otherEmitterData.emitter!! as VirtualEmitter
             if (context.otherParticleData == null) {
@@ -87,6 +89,14 @@ class SpawnPhysicsBodySubAction(
                                     uuid
                                 )
                             }
+
+                            emitter.registerOnKill {
+                                Bukkit.getScheduler().runTask(
+                                    AbstractParticleEmitter.INSTANCE,
+                                    Runnable {
+                                        it.physicsWorld.removeBody(it)
+                                    })
+                            }
                         }
                     }
                 }
@@ -104,7 +114,14 @@ class SpawnPhysicsBodySubAction(
                                 em.random,
                                 uuid
                             )
+                        }
 
+                        emitter.registerOnKill {
+                            Bukkit.getScheduler().runTask(
+                                AbstractParticleEmitter.INSTANCE,
+                                Runnable {
+                                    it.physicsWorld.removeBody(it)
+                                })
                         }
                     }
                 }
@@ -112,6 +129,14 @@ class SpawnPhysicsBodySubAction(
         } else {
             action(pose) {
                 parent.body = it
+
+                emitter.registerOnKill {
+                    Bukkit.getScheduler().runTask(
+                        AbstractParticleEmitter.INSTANCE,
+                        Runnable {
+                            it.physicsWorld.removeBody(it)
+                        })
+                }
             }
         }
 

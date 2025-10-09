@@ -69,6 +69,7 @@ object GlobalTicker {
                     val result = emitter.tick()
                     if (!result.alive) {
 //                        println("GLOBAL.EMITTERDEAD!")
+                        emitter.onKill()
                         deadEmitters += emitter
                         emitterCache -= emitter.id
                     }

@@ -24,6 +24,7 @@ import org.bukkit.entity.Player
 import org.joml.Quaternionf
 import org.joml.Vector3d
 import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
 import kotlin.random.Random
@@ -60,6 +61,12 @@ class MountedUnoptimizedEmitter(
         components.filterIsInstance<ParticleComponent>().sortedBy { it.priority }
 
     override val random: DeterministicRandom = DeterministicRandom(seed)
+
+    private val onKillActions = ConcurrentLinkedQueue<() -> Unit>()
+
+    override fun registerOnKill(action: () -> Unit) {
+        onKillActions += action
+    }
 
     //origin can change, rotation can change
     override val particles: MutableList<Particle> = mutableListOf()
@@ -225,6 +232,8 @@ class MountedUnoptimizedEmitter(
     }
 
     override fun onKill() {
+        onKillActions.forEach { it() }
+        onKillActions.clear()
         spawningProcessor.killParticles(particles)
         particles.clear()
     }

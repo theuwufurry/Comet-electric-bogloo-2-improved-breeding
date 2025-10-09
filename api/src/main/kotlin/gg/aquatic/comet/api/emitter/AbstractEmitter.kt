@@ -35,6 +35,11 @@ abstract class AbstractEmitter : Parent {
      */
     abstract fun onKill()
 
+    /**
+     * Register an action to be executed when the emitter is killed
+     */
+    abstract fun registerOnKill(action: () -> Unit)
+
     abstract fun applyEmitterRotation(input: Quaternionf): Quaternionf
 
     override val dead: AtomicBoolean = AtomicBoolean(false)

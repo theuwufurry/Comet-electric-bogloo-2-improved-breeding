@@ -22,14 +22,12 @@ import gg.aquatic.comet.emitter.optimization.VirtualRuntime
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.particle.Particle
 import gg.aquatic.comet.particle.data.EntityDataBuilder
-import gg.aquatic.waves.Waves
 import gg.aquatic.waves.util.audience.AquaticAudience
-import org.bukkit.Bukkit
-import org.bukkit.Location
 import org.bukkit.entity.Player
 import org.joml.Quaternionf
 import org.joml.Vector3d
 import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
 import kotlin.random.Random
@@ -58,6 +56,12 @@ class OptimizedEmitter(
     private val spawningProcessor = SpawningProcessor(this, distanceCullingComponent)
     private val blocked = AtomicBoolean(false)
     private val killed = AtomicBoolean(false)
+
+    private val onKillActions = ConcurrentLinkedQueue<() -> Unit>()
+
+    override fun registerOnKill(action: () -> Unit) {
+        onKillActions += action
+    }
 
     private val cachedEmitterPath: CachedPath
     private val runtime: VirtualRuntime?
@@ -478,6 +482,9 @@ class OptimizedEmitter(
     }
 
     override fun onKill() {
+        onKillActions.forEach { it() }
+        onKillActions.clear()
+       
         killParticles(particles)
         particles.clear()
         runtime?.kill()

@@ -25,6 +25,7 @@ import org.bukkit.entity.Player
 import org.joml.Quaternionf
 import org.joml.Vector3d
 import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
 import kotlin.random.Random
@@ -54,6 +55,12 @@ class Emitter(
         components.filterIsInstance<ParticleComponent>().sortedBy { it.priority }
 
     override val random: DeterministicRandom = DeterministicRandom(seed)
+
+    private val onKillActions = ConcurrentLinkedQueue<() -> Unit>()
+
+    override fun registerOnKill(action: () -> Unit) {
+        onKillActions += action
+    }
 
     //origin can change, rotation can change
     override val particles: MutableList<Particle> = mutableListOf()
@@ -133,11 +140,13 @@ class Emitter(
                 }
             }
 
-            dataPackets.addAll(particle.updatePackets(
-                entityDataBuilder = EntityDataBuilder,
-                shouldUpdate = shouldUpdate.shouldUpdate,
-                flagOverride = null
-            ))
+            dataPackets.addAll(
+                particle.updatePackets(
+                    entityDataBuilder = EntityDataBuilder,
+                    shouldUpdate = shouldUpdate.shouldUpdate,
+                    flagOverride = null
+                )
+            )
 //            ).let { dataPackets += it }
 
             if (particle.data.dead) {
@@ -198,7 +207,7 @@ class Emitter(
         environmentData: EnvironmentData,
         audience: AquaticAudience,
         random: DeterministicRandom,
-        uuid: UUID
+        uuid: UUID,
     ) {
         unrealizedEmitter.internalRealize(
             parent,
@@ -224,11 +233,18 @@ class Emitter(
     }
 
     override fun onKill() {
+        onKillActions.forEach { it() }
+        onKillActions.clear()
         spawningProcessor.killParticles(particles)
         particles.clear()
     }
 
     override fun applyEmitterRotation(input: Quaternionf): Quaternionf {
-        return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(pose.rot.x, pose.rot.y, pose.rot.z, pose.rot.w).mul(input) else input
+        return if (billboardConstraints == BillboardConstraints.FIXED) Quaternionf(
+            pose.rot.x,
+            pose.rot.y,
+            pose.rot.z,
+            pose.rot.w
+        ).mul(input) else input
     }
 }

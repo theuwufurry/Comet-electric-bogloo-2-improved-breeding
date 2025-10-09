@@ -67,6 +67,8 @@ class VirtualEmitter(
         emitter = this@VirtualEmitter
     }
 
+    override fun registerOnKill(action: () -> Unit) { }
+    
     override val id: UUID = emitterData.id
 
     var absoluteTime = timeOffset
