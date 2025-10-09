@@ -13,7 +13,6 @@ import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.api.parsing.*
 import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.emitter.UnrealizedEmitter
-import gg.aquatic.comet.emitter.optimization.TimestampedParticleActions
 import gg.aquatic.comet.emitter.optimization.VirtualEmitter
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.parsing.getExprOrNull
@@ -39,7 +38,7 @@ class SpawnEmitterSubAction(
     private val space: EmitterSpace,
     private val magnitude: Float,
     private val rot: Vector3d?,
-    private val invert: Boolean
+    private val invert: Boolean,
 ) : SubAction, PostInit {
     private lateinit var unrealizedEmitters: List<UnrealizedEmitter>
 
@@ -91,27 +90,16 @@ class SpawnEmitterSubAction(
 
             vEm?.let {
                 if (space == EmitterSpace.PARENT_PARTICLE) {
-                    (it.particleActionsBuffer[context.otherParticleData!!.id] ?: run {
-                        val a = TimestampedParticleActions(
-                            context.otherParticleData!!.age.toInt(),
-                            it.absoluteTime,
-                            mutableListOf()
+                    it.addParticleAction(context.otherParticleData!!) { em, pd ->
+                        em.realize(
+                            unrealizedEmitter,
+                            pd,
+                            subPose,
+                            em.environmentData,
+                            em.audience,
+                            em.random,
+                            uuid
                         )
-                        it.particleActionsBuffer[context.otherParticleData!!.id] = a
-                        a
-                    }).let { actionsBuffer ->
-//                        println("O.PASPAWNING ${unrealizedEmitter.id} at ${it.absoluteTime}")
-                        actionsBuffer.actions += { em, pd ->
-                            em.realize(
-                                unrealizedEmitter,
-                                pd,
-                                subPose,
-                                em.environmentData,
-                                em.audience,
-                                em.random,
-                                uuid
-                            )
-                        }
                     }
                 } else {
                     it.emitterActionsBuffer.let { actionsBuffer ->
@@ -155,19 +143,19 @@ class SpawnEmitterSubAction(
                 listOf(
                     (engine.compile(
                         jsonObject.getExprOrNull("emitter")
-                            ?: return Result.failure(InvalidJsonException("Missing 'emitter' field!")), macros, true
+                        ?: return Result.failure(InvalidJsonException("Missing 'emitter' field!")), macros, true
                     )).fold(
                         { it.eval() as String },
                         { return Result.failure(InvalidJsonException("Failed to get emitter id from 'emitter' field!")) })
                 )
             } else {
                 val arr = jsonObject["emitter"].asArrayOrNull()
-                    ?: return Result.failure(InvalidJsonException("Missing any sort of 'emitter' specification! use an 'emitter' field or array"))
+                          ?: return Result.failure(InvalidJsonException("Missing any sort of 'emitter' specification! use an 'emitter' field or array"))
                 val ids: MutableList<String> = mutableListOf()
                 for (elem in arr) {
                     ids += (engine.compile(
                         elem.asStringOrNull()
-                            ?: return Result.failure(InvalidJsonException("Array of 'emitter' contains non-string values!")),
+                        ?: return Result.failure(InvalidJsonException("Array of 'emitter' contains non-string values!")),
                         macros,
                         true
                     ).fold(

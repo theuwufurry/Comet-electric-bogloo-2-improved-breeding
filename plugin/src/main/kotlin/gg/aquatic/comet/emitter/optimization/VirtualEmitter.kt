@@ -9,6 +9,7 @@ import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.api.emitter.random.DeterministicRandom
 import gg.aquatic.comet.api.emitter.rate.RateComponent
+import gg.aquatic.comet.api.particle.AbstractParticle
 import gg.aquatic.comet.api.particle.ParticleComponent
 import gg.aquatic.comet.api.particle.ParticleData
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
@@ -379,6 +380,18 @@ class VirtualEmitter(
     }
 
     override val players: List<Player> = emptyList()
+
+    fun addParticleAction(data: ParticleData, action: (AbstractEmitter, AbstractParticle) -> Unit) {
+        (particleActionsBuffer[data.id] ?: run {
+                        val a = TimestampedParticleActions(
+                            data.age.toInt(),
+                            absoluteTime,
+                            mutableListOf()
+                        )
+                        particleActionsBuffer[data.id] = a
+                        a
+                    }).actions += action
+    }
 
     override fun kill() {
         dead.set(true)

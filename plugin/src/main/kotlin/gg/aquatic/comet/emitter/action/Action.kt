@@ -15,6 +15,7 @@ import gg.aquatic.comet.particle.action.ParticleCommandSubAction
 import gg.aquatic.comet.particle.action.ParticleDieSubAction
 import gg.aquatic.comet.particle.action.ParticleVanillaSpawnSubAction
 import gg.aquatic.comet.particle.action.SoundSubAction
+import gg.aquatic.comet.udar.SpawnPhysicsBodySubAction
 
 class Action(
     override val subActions: List<SubAction>,
@@ -27,7 +28,8 @@ class Action(
             JavascriptSubAction,
             ParticleCommandSubAction,
             ParticleVanillaSpawnSubAction,
-            SoundSubAction
+            SoundSubAction,
+            SpawnPhysicsBodySubAction,
         )
 
         private val parserMap = subActionParsers.associateBy { it.id }
@@ -37,9 +39,9 @@ class Action(
             for (element in jsonArray) {
                 if (element.isJsonObject) {
                     val obj = element.asJsonObject
-                    obj.get("action_id")?.let { id ->
+                    obj.get(ACTION_ID_FIELD)?.let { id ->
                         if (id.isJsonPrimitive && id.asJsonPrimitive.isString) {
-                            println("action_id: $id")
+                            println("$ACTION_ID_FIELD: $id")
                             (parserMap[id.asJsonPrimitive.asString]
                              ?: return Result.failure(InvalidJsonException("No action has the id $id!")))
                                 .parse(element, macros)
@@ -53,7 +55,7 @@ class Action(
                                     }
                                 )
                         } else {
-                            return Result.failure(InvalidJsonException("Expected action_id to be a string!"))
+                            return Result.failure(InvalidJsonException("Expected $ACTION_ID_FIELD to be a string!"))
                         }
                     }
                 }
@@ -78,3 +80,5 @@ class Action(
         subActions.forEach { it.execute(context) }
     }
 }
+
+const val ACTION_ID_FIELD = "action_id"

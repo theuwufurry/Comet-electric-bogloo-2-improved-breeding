@@ -3,6 +3,7 @@ package gg.aquatic.comet.particle.data
 
 import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes
 import com.github.retrooper.packetevents.util.Quaternion4f
+import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.parsing.resourcepack.ResourcepackCreator
 import gg.aquatic.comet.api.particle.UpdateFlags
 import gg.aquatic.comet.api.particle.data.AbstractEntityDataBuilder
@@ -92,7 +93,13 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
                 }
 
                 if (flags.display) {
-                    var component = Component.text(ResourcepackCreator.charMap[displayData.content]!!)
+                    val char = ResourcepackCreator.charMap[displayData.content]
+                    if (char == null) {
+                        AbstractParticleEmitter.INSTANCE.logger.severe("Could not find a matching char for ${displayData.content}! Map: ${ResourcepackCreator.charMap}")
+                        return null
+                    }
+
+                    var component = Component.text(char)
                         .color(TextColor.color(component.color and 0xFFFFFF))
                     if (!useUAP) {
                         component = component.font(key)
