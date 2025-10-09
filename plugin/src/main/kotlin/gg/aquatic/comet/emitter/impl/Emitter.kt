@@ -163,7 +163,7 @@ class Emitter(
             val particle = Particle(particleData)
             particleData.emitter = this
             particleData.particle = particle
-            particleData.origin = pose.pos
+            particleData.origin = Vector3d(pose.pos)
             particleData.billboardConstraints = billboardConstraints
             particleData.interpolationDelay = updateFrequencyComponent.interpolationDelay
             particleData.transformationInterpolationDuration = updateFrequencyComponent.initialInterpolationDuration

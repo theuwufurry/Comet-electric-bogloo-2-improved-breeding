@@ -15,7 +15,7 @@ import gg.aquatic.comet.api.parsing.macro.Macro
 import gg.aquatic.comet.emitter.UnrealizedEmitter
 import gg.aquatic.comet.emitter.optimization.VirtualEmitter
 import gg.aquatic.comet.parsing.ParticleJsonParser
-import gg.aquatic.comet.parsing.getExprOrNull
+import gg.aquatic.comet.parsing.asUnrealizedEmitters
 import org.joml.Quaterniond
 import org.joml.Vector3d
 
@@ -139,33 +139,7 @@ class SpawnEmitterSubAction(
             val jsonObject = jsonElement.asJsonObject
             val emitterData = EmitterData()
             val engine = emitterEngine(emitterData)
-            val unrealizedEmitterIDs = if (jsonObject.get("emitter").isJsonPrimitive) {
-                listOf(
-                    (engine.compile(
-                        jsonObject.getExprOrNull("emitter")
-                        ?: return Result.failure(InvalidJsonException("Missing 'emitter' field!")), macros, true
-                    )).fold(
-                        { it.eval() as String },
-                        { return Result.failure(InvalidJsonException("Failed to get emitter id from 'emitter' field!")) })
-                )
-            } else {
-                val arr = jsonObject["emitter"].asArrayOrNull()
-                          ?: return Result.failure(InvalidJsonException("Missing any sort of 'emitter' specification! use an 'emitter' field or array"))
-                val ids: MutableList<String> = mutableListOf()
-                for (elem in arr) {
-                    ids += (engine.compile(
-                        elem.asStringOrNull()
-                        ?: return Result.failure(InvalidJsonException("Array of 'emitter' contains non-string values!")),
-                        macros,
-                        true
-                    ).fold(
-                        { it },
-                        { return Result.failure(it) }
-                    )).eval() as String
-                }
-
-                ids
-            }
+            val unrealizedEmitterIDs = jsonObject.get("emitter")?.asUnrealizedEmitters(engine, macros)?.getOrElse { return Result.failure(it) } ?: listOf()
 
             val rot = jsonObject["rot"]?.let {
                 if (!it.isJsonObject) return@let null
@@ -185,6 +159,8 @@ class SpawnEmitterSubAction(
                 "parent_particle" -> EmitterSpace.PARENT_PARTICLE
                 else -> EmitterSpace.WORLD
             }
+            
+            println("Unrealized emitter ids: $unrealizedEmitterIDs")
 
             return Result.success(SpawnEmitterSubAction(unrealizedEmitterIDs, space, offsetMagnitude, rot, invert))
         }

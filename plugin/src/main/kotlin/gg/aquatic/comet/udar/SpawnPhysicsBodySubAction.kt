@@ -1,64 +1,134 @@
 package gg.aquatic.comet.udar
 
 import com.google.gson.JsonElement
+import com.ixume.udar.body.active.ActiveBody
 import com.ixume.udar.body.active.Cuboid
 import com.ixume.udar.body.active.blockEntity
 import com.ixume.udar.physicsWorld
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
+import gg.aquatic.comet.api.emitter.EmitterData
 import gg.aquatic.comet.api.emitter.action.ActionContext
 import gg.aquatic.comet.api.emitter.action.SubAction
+import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.api.parsing.ComponentParser
 import gg.aquatic.comet.api.parsing.NotMyType
 import gg.aquatic.comet.api.parsing.PostInit
+import gg.aquatic.comet.api.parsing.emitterEngine
 import gg.aquatic.comet.api.parsing.macro.Macro
+import gg.aquatic.comet.emitter.UnrealizedEmitter
 import gg.aquatic.comet.emitter.action.ACTION_ID_FIELD
 import gg.aquatic.comet.emitter.optimization.VirtualEmitter
+import gg.aquatic.comet.parsing.ParticleJsonParser
+import gg.aquatic.comet.parsing.asUnrealizedEmitters
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.joml.Quaterniond
 import org.joml.Vector3d
+import java.util.concurrent.atomic.AtomicBoolean
 
 class SpawnPhysicsBodySubAction(
-//    private val unrealizedEmitterIDs: List<String>,
+    private val unrealizedEmitterIDs: List<String>,
 ) : SubAction, PostInit {
-//    private lateinit var unrealizedEmitters: List<UnrealizedEmitter>
+    private lateinit var unrealizedEmitters: List<UnrealizedEmitter>
 
     override fun realize(unrealizedEmitter: AbstractUnrealizedEmitter) {
-//        unrealizedEmitters = unrealizedEmitterIDs.mapNotNull {
-//            val r = ParticleJsonParser.jsonUnrealizedEmitters[it]
-//
-//            if (r == null) {
-//                AbstractParticleEmitter.INSTANCE.logger.severe("$it is not a valid emitter ID!")
-//            }
-//
-//            r
-//        }
+        unrealizedEmitters = unrealizedEmitterIDs.mapNotNull {
+            val r = ParticleJsonParser.jsonUnrealizedEmitters[it]
+
+            if (r == null) {
+                AbstractParticleEmitter.INSTANCE.logger.severe("$it is not a valid emitter ID!")
+            }
+
+            r
+        }
     }
 
     override fun execute(context: ActionContext) {
         val pose = context.pose ?: return
 
+        val uuid = context.otherEmitterData.emitter!!.random.uuid()
+
+        val parent = object : Parent {
+            var body: ActiveBody? = null
+            override val pose: Pose
+                get() {
+                    return body?.let {
+                        Pose(
+                            world = it.world,
+                            pos = it.pos,
+                            rot = it.q,
+                        )
+                    } ?: pose
+                }
+            override val dead: AtomicBoolean
+                get() {
+                    return body?.dead ?: AtomicBoolean(false)
+                }
+
+        }
+
         if (context.otherEmitterData.emitter!!.isPregen) {
             val virtual = context.otherEmitterData.emitter!! as VirtualEmitter
             if (context.otherParticleData == null) {
                 virtual.emitterActionsBuffer.let { actionsBuffer ->
-                    actionsBuffer += { _ ->
-                        spawnBody(pose)
+                    actionsBuffer += { em ->
+                        action(pose) {
+                            parent.body = it
+                            for (unrealizedEmitter in unrealizedEmitters) {
+                                em.realize(
+                                    unrealizedEmitter,
+                                    parent,
+                                    pose,
+                                    em.environmentData,
+                                    em.audience,
+                                    em.random,
+                                    uuid
+                                )
+                            }
+                        }
                     }
                 }
             } else {
-                virtual.addParticleAction(context.otherParticleData!!) { _, _ ->
-                    spawnBody(pose)
+                virtual.addParticleAction(context.otherParticleData!!) { em, pd ->
+                    action(pose) {
+                        parent.body = it
+                        for (unrealizedEmitter in unrealizedEmitters) {
+                            em.realize(
+                                unrealizedEmitter,
+                                parent,
+                                pose,
+                                em.environmentData,
+                                em.audience,
+                                em.random,
+                                uuid
+                            )
+
+                        }
+                    }
                 }
             }
         } else {
-            spawnBody(pose)
+            action(pose) {
+                parent.body = it
+            }
+        }
+
+        for (unrealizedEmitter in unrealizedEmitters) {
+            context.otherEmitterData.emitter!!.realize(
+                unrealizedEmitter,
+                parent,
+                pose,
+                context.otherEmitterData.emitter!!.environmentData,
+                context.otherEmitterData.emitter!!.audience,
+                context.otherEmitterData.emitter!!.random,
+                uuid,
+            )
         }
     }
 
-    private fun spawnBody(pose: Pose) {
+    private inline fun action(pose: Pose, crossinline after: (ActiveBody) -> Unit) {
         val physicsWorld = pose.location.world.physicsWorld ?: return
 
         Bukkit.getScheduler().runTask(AbstractParticleEmitter.INSTANCE, Runnable {
@@ -76,6 +146,7 @@ class SpawnPhysicsBodySubAction(
                     hasGravity = true
                 ).blockEntity(Material.COPPER_BLOCK)
             physicsWorld.registerBody(body)
+            after(body)
         })
     }
 
@@ -93,7 +164,14 @@ class SpawnPhysicsBodySubAction(
             if (!actionIDElem.asJsonPrimitive.isString) return Result.failure(NotMyType())
             if (actionIDElem.asJsonPrimitive.asString != id) return Result.failure(NotMyType())
 
-            return Result.success(SpawnPhysicsBodySubAction())
+            val emitterData = EmitterData()
+            val engine = emitterEngine(emitterData)
+
+            val unrealizedEmitterIDs =
+                obj.get("emitter")?.asUnrealizedEmitters(engine, macros)?.getOrElse { return Result.failure(it) }
+                ?: listOf()
+
+            return Result.success(SpawnPhysicsBodySubAction(unrealizedEmitterIDs))
         }
     }
 }

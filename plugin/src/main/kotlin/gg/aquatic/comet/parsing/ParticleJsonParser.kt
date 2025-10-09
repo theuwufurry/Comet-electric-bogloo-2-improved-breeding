@@ -79,6 +79,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileReader
 import java.util.zip.CRC32
+import javax.script.Compilable
 
 fun JsonObject.getExprOrNull(field: String): String? {
     if (field !in keySet()) return null
@@ -422,4 +423,39 @@ fun File.checksum(): Long {
     }
 
     return crc.value
+}
+
+fun JsonElement.asUnrealizedEmitters(
+    engine: Compilable,
+    macros: Map<String, Macro>?,
+): Result<List<String>> {
+    val unrealizedEmitterIDs = if (isJsonPrimitive) {
+        listOf(
+            (engine.compile(
+                getExprOrNull()
+                ?: return Result.failure(InvalidJsonException("Missing 'emitter' field!")), macros, true
+            )).fold(
+                { it.eval() as String },
+                { return Result.failure(InvalidJsonException("Failed to get emitter id from 'emitter' field!")) })
+        )
+    } else {
+        val arr = asArrayOrNull()
+                  ?: return Result.failure(InvalidJsonException("Missing any sort of 'emitter' specification! use an 'emitter' field or array"))
+        val ids: MutableList<String> = mutableListOf()
+        for (elem in arr) {
+            ids += (engine.compile(
+                elem.asStringOrNull()
+                ?: return Result.failure(InvalidJsonException("Array of 'emitter' contains non-string values!")),
+                macros,
+                true
+            ).fold(
+                { it },
+                { return Result.failure(it) }
+            )).eval() as String
+        }
+
+        ids
+    }
+
+    return Result.success(unrealizedEmitterIDs)
 }
