@@ -47,23 +47,22 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
         entityData: EntityData,
         flags: UpdateFlags,
         initial: Boolean,
-        useUAP: Boolean,
+        usePUA: Boolean,
     ): List<PEntityData<*>>? {
-        return genData(entityData, flags, initial, useUAP)
+        return genData(entityData, flags, initial, usePUA)
     }
 
     private fun genData(
         component: EntityData,
         flags: UpdateFlags,
         initial: Boolean,
-        useUAP: Boolean,
+        usePUA: Boolean,
     ): List<PEntityData<*>>? {
         if (key.namespace() != ResourcepackCreator.NAMESPACE) {
             key = Key.key(ResourcepackCreator.NAMESPACE, ResourcepackCreator.FONT_NAME)
         }
 
-        val entityData: MutableList<PEntityData<*>> =
-            mutableListOf()
+        val entityData: MutableList<PEntityData<*>> = mutableListOf()
 
         when (val displayData = component.displayData) {
             is SpriteData -> {
@@ -101,9 +100,10 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
 
                     var component = Component.text(char)
                         .color(TextColor.color(component.color and 0xFFFFFF))
-                    if (!useUAP) {
+                    if (!usePUA) {
                         component = component.font(key)
                     }
+
                     entityData += PEntityData(
                         22 + PACKET_OFFSET,
                         EntityDataTypes.ADV_COMPONENT,
@@ -302,4 +302,4 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
     }
 }
 
-private typealias PEntityData<T> = com.github.retrooper.packetevents.protocol.entity.data.EntityData<T>
+typealias PEntityData<T> = com.github.retrooper.packetevents.protocol.entity.data.EntityData<T>

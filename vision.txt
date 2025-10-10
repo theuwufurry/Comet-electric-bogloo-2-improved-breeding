@@ -1,0 +1,48 @@
+invariants for optimization:
+- emitters don't depend on each other
+
+- simulate particle fully at its time of conception
+- particle may depend on state of emitter in the future
+  => simulate emitter into future lazily
+
+what about dynamic parents for example
+- can simulate fine if data is accurate at particle conception (which it should be)
+- can't simulate dynamic parents into the future (call these objects temporal)
+
+if at time T a particle P is spawned and at some time T + n it has a behavior change based on a temporal variable, this is impossible to simulate
+temporal discrepancy === discrepancy due to inaccurate temporal data
+
+emitter data depends on temporal data; update it properly once we get to that real time
+
+create a Runtime interface to abstract over everything an emitter might access
+- abstracts over the time so that we can schedule them separately in Virtual
+- still has accessors for temporal data (world, entities, etc)
+
+for example for sound sub action, runtime would provide abstraction over this... so we need abstractions over temporal change methods
+	 emitter and particle data changing is inherently non-temporal, so no worries about this
+
+spawning emitters is similarly temporal
+
+how would spawning an emitter bound to a particle go?
+	emitter needs to access pose of its parent
+		particle is already fully created
+	provide parent abstraction through the runtime???
+
+would be very useful if could add to what information this Runtime has access to at runtime
+	Runtime has to be very powerful in this case... which is annoying
+	visitor pattern would require knowledge of implementation...
+
+temporal actions *eventually* require something to be done in the real world anyway... so just package it as a lambda?
+
+what about things we have to clean up?
+	(for example physics object)
+	add as a lambda
+
+ParticleData has a clear purpose - represents the data for a particle; ParticleComponent s modify it in order to create change
+EmitterData is what EmitterComponent s modify to reflect changes in the emitter
+	for example whether it's active, dead, its age, its pose
+	these changes can just be done directly on the Emitter though
+	however EmitterData also holds the variable for JS API
+		just transfer this to a separate mechanism
+
+JS bindings depend on a single object as their source of truth

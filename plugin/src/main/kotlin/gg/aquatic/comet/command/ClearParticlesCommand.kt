@@ -1,7 +1,9 @@
 package gg.aquatic.comet.command
 
 import gg.aquatic.comet.emitter.GlobalTicker
+import gg.aquatic.comet.v2.runtime.WorldRuntime.Companion.cometRuntime
 import gg.aquatic.waves.command.ICommand
+import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 
 object ClearParticlesCommand : ICommand {
@@ -13,6 +15,10 @@ object ClearParticlesCommand : ICommand {
         }
 
         GlobalTicker.killInstances()
+        
+        for (world in Bukkit.getWorlds()) {
+            world.cometRuntime
+        }
 
         sender.sendMessage("Emitters have been cleared!")
     }

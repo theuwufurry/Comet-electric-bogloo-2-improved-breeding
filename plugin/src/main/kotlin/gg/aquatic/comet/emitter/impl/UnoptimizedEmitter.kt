@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
 import kotlin.random.Random
 
-class Emitter(
+class UnoptimizedEmitter(
     val parent: Parent? = null,
     val components: List<Component>,
     val rateComponent: RateComponent,

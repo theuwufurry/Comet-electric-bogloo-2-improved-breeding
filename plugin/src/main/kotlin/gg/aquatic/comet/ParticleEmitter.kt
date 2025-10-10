@@ -3,6 +3,7 @@ package gg.aquatic.comet
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.CometRegistry
 import gg.aquatic.comet.api.parsing.resourcepack.ResourcepackCreator
+import gg.aquatic.comet.api.parsing.resourcepack.packages.PackageManager
 import gg.aquatic.comet.command.*
 import gg.aquatic.comet.emitter.GlobalTicker
 import gg.aquatic.comet.hook.IHook
@@ -10,10 +11,10 @@ import gg.aquatic.comet.hook.modelengine.ModelEngineHook
 import gg.aquatic.comet.hook.mythicmobs.MythicMobsHook
 import gg.aquatic.comet.parsing.ConfigLoader
 import gg.aquatic.comet.parsing.ParticleJsonParser
-import gg.aquatic.comet.api.parsing.resourcepack.packages.PackageManager
 import gg.aquatic.comet.particle.macro.CatmullParser
 import gg.aquatic.comet.particle.macro.HermiteParser
 import gg.aquatic.comet.particle.macro.LinearParser
+import gg.aquatic.comet.v2.parsing.V2Parser
 import gg.aquatic.waves.command.AquaticBaseCommand
 import gg.aquatic.waves.command.register
 import net.kyori.adventure.text.minimessage.MiniMessage
@@ -43,7 +44,8 @@ class ParticleEmitter : AbstractParticleEmitter() {
         GlobalTicker.init()
 
         AquaticBaseCommand(
-            "comet", "Base command of Comet plugin", mutableListOf(), mutableMapOf(
+            "comet", "Base command of Comet plugin", mutableListOf(),
+            mutableMapOf(
                 "reload" to ReloadParticleScriptsCommand,
                 "spawn" to SpawnCommand,
                 "clear" to ClearParticlesCommand,
@@ -51,12 +53,16 @@ class ParticleEmitter : AbstractParticleEmitter() {
                 "at" to AtCommand,
                 "mount" to MountedSpawnCommand,
                 "info" to InfoCommand,
-                "kill" to KillCommand
+                "kill" to KillCommand,
+
+                "spawn2" to V2SpawnCommand,
             ),
             helpMessage = { DummyMessage },
         ).register("comet")
 
         initializeHooks()
+
+        V2Parser.load()
 
         println(
             """
@@ -74,6 +80,7 @@ class ParticleEmitter : AbstractParticleEmitter() {
     override fun onDisable() {
         ParticleJsonParser.onDisable()
         GlobalTicker.disable()
+        V2Parser.disable()
     }
 
     private fun initializeHooks() {
@@ -107,7 +114,7 @@ fun <T> T.applyIf(condition: Boolean, action: T.() -> Unit): T {
 
 data class Result<out R, out E>(
     val result: R,
-    val errors: List<E>
+    val errors: List<E>,
 ) {
     companion object {
         infix fun <R, E> R.with(other: List<E>): Result<R, E> {

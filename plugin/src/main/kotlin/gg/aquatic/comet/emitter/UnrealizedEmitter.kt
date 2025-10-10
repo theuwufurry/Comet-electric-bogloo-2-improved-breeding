@@ -15,7 +15,7 @@ import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.api.emitter.random.DeterministicRandom
 import gg.aquatic.comet.api.emitter.rate.RateComponent
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
-import gg.aquatic.comet.emitter.impl.Emitter
+import gg.aquatic.comet.emitter.impl.UnoptimizedEmitter
 import gg.aquatic.comet.emitter.impl.MountedUnoptimizedEmitter
 import gg.aquatic.comet.emitter.impl.OptimizedEmitter
 import gg.aquatic.comet.emitter.optimization.VirtualEmitter
@@ -97,7 +97,7 @@ data class UnrealizedEmitter(
                     rateComponent,
                     distanceCullingComponent,
                     billboardConstraints, pose, emitterData, this, environmentData, audience, false, yawpitchSupplier = yawpitchSupplier
-                ) else Emitter(
+                ) else UnoptimizedEmitter(
                     parent,
                     components,
                     rateComponent,
@@ -182,7 +182,7 @@ data class UnrealizedEmitter(
             true,
             seed = random.kotlinRandom.nextInt(),
             yawpitchSupplier
-        ) else Emitter(
+        ) else UnoptimizedEmitter(
             parent,
             components,
             rateComponent,
