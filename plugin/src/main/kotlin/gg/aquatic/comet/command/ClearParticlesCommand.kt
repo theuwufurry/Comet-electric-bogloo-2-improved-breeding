@@ -15,9 +15,9 @@ object ClearParticlesCommand : ICommand {
         }
 
         GlobalTicker.killInstances()
-        
+
         for (world in Bukkit.getWorlds()) {
-            world.cometRuntime
+            world.cometRuntime.clear()
         }
 
         sender.sendMessage("Emitters have been cleared!")
