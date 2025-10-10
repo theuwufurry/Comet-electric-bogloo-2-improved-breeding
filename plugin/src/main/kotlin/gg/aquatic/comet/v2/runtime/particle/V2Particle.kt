@@ -18,6 +18,8 @@ class V2Particle(val data: V2ParticleData) {
 
     private lateinit var previousEntityData: EntityData
 
+    val entityIDs: List<Int> = listOf(id)
+
     fun init() {
         previousEntityData = EntityData(
             data.displayData,

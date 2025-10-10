@@ -5,7 +5,10 @@ import gg.aquatic.comet.api.parsing.resourcepack.ResourcepackCreator
 import gg.aquatic.comet.api.parsing.resourcepack.packages.PackageManager
 import gg.aquatic.comet.emitter.GlobalTicker
 import gg.aquatic.comet.parsing.ParticleJsonParser
+import gg.aquatic.comet.v2.parsing.V2Parser
+import gg.aquatic.comet.v2.runtime.WorldRuntime.Companion.cometRuntime
 import gg.aquatic.waves.command.ICommand
+import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import java.io.File
 
@@ -29,6 +32,11 @@ object ReloadParticleScriptsCommand : ICommand {
         AbstractParticleEmitter.INSTANCE.config.load(File(AbstractParticleEmitter.INSTANCE.dataFolder, "config.yml"))
 
         ResourcepackCreator.reload()
+
+        for (world in Bukkit.getWorlds()) {
+            world.cometRuntime.clear()
+        }
+        V2Parser.load()
 
         sender.sendMessage("Comet has been reloaded!")
     }

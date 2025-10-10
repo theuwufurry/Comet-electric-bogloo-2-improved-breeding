@@ -1,24 +1,25 @@
 package gg.aquatic.comet.v2.runtime.emitter
 
+import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.v2.parsing.api.JSEffectAPI
 import gg.aquatic.comet.v2.parsing.api.V2ParticleData
-import org.graalvm.polyglot.HostAccess
+import org.graalvm.polyglot.proxy.ProxyObject
 import java.util.concurrent.atomic.AtomicBoolean
 
-interface Effect {
-    val api: JSEffectAPI
+abstract class Effect : ProxyObject {
+    abstract val api: JSEffectAPI
+    abstract val pose: Pose
 
-    fun tick()
+    abstract fun tick()
 
-    @HostAccess.Export
-    fun createParticle(): V2ParticleData
+    abstract fun createParticle(): V2ParticleData
 
     /**
      * Must be called on same thread as effect
      */
-    fun onKill()
-    
-    val valid: AtomicBoolean
+    abstract fun onKill()
 
-    fun spawnParticle(data: V2ParticleData)
+    abstract val valid: AtomicBoolean
+
+    abstract fun spawnParticle(data: V2ParticleData)
 }

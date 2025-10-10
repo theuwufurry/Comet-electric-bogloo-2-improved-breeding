@@ -1,5 +1,6 @@
 package gg.aquatic.comet.udar
 
+import com.ixume.udar.body.Body
 import com.ixume.udar.body.active.ActiveBody
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose

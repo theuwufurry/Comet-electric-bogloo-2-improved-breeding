@@ -3,10 +3,8 @@ package gg.aquatic.comet.v2.parsing
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.v2.parsing.api.DefaultAPI
 import gg.aquatic.comet.v2.parsing.api.JSEffectAPI
-import org.graalvm.polyglot.Context
-import org.graalvm.polyglot.Engine
-import org.graalvm.polyglot.HostAccess
-import org.graalvm.polyglot.Source
+import org.graalvm.polyglot.*
+import org.joml.Vector3d
 import java.io.File
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
@@ -16,7 +14,22 @@ import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.nameWithoutExtension
 
 object V2Parser {
-    private val engine = Engine.newBuilder("js").build()
+    private val vector3DMapping = HostAccess.newBuilder()
+        .targetTypeMapping(
+            Value::class.java,
+            Vector3d::class.java,
+            { value -> value.hasMembers() },
+            { value ->
+                Vector3d(
+                    value.getMember("x").asDouble(),
+                    value.getMember("y").asDouble(),
+                    value.getMember("z").asDouble()
+                )
+            }
+        )
+        .build()
+    private val engine = Engine.newBuilder("js")
+        .build()
     private val contexts = mutableListOf<Context>()
 
     val effects = mutableMapOf<String, JSEffectAPI>()
@@ -36,6 +49,7 @@ object V2Parser {
                 val context = Context.newBuilder("js")
                     .engine(engine)
                     .allowAllAccess(true)
+                    .allowPolyglotAccess(PolyglotAccess.ALL)
                     .build()
                 contexts += context
 
