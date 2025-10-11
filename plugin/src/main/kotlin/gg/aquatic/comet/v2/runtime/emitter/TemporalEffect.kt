@@ -9,6 +9,7 @@ import gg.aquatic.comet.v2.parsing.api.V2EffectProxy
 import gg.aquatic.comet.v2.parsing.api.V2ParticleData
 import gg.aquatic.comet.v2.runtime.EmitterRuntime
 import gg.aquatic.comet.v2.runtime.particle.V2Particle
+import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.joml.Vector3d
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
@@ -50,9 +51,16 @@ class TemporalEffect(
 
         val dataPackets: MutableList<PacketWrapper<*>> = mutableListOf()
 
+        val killedIDs = IntArrayList()
+
         for (particle in particles) {
             val data = particle.data
             api.invokeParticleTick(data)
+
+            if (data.dead) {
+                killedIDs.addAll(particle.entityIDs)
+                continue
+            }
 
             dataPackets += particle.update()
             dataPackets += particle.getPositionPacket()
@@ -69,12 +77,20 @@ class TemporalEffect(
             particles += particleToAdd
         }
 
+        val destroyPacket = if (killedIDs.isEmpty()) null else {
+            WrapperPlayServerDestroyEntities(*killedIDs.toIntArray())
+        }
+
         for (player in runtime.players) {
             val show =
                 api.invokeShowPlayer(player) ?: (player.location.distance(pose.location) <= 32.0) //TODO: Culling!
             if (show) {
                 for (packet in dataPackets) {
                     PacketEvents.getAPI().playerManager.sendPacketSilently(player, packet)
+                }
+
+                if (destroyPacket != null) {
+                    PacketEvents.getAPI().playerManager.sendPacketSilently(player, destroyPacket)
                 }
             }
         }

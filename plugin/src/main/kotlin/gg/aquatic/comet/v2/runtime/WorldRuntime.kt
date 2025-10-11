@@ -16,6 +16,9 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.system.measureNanoTime
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 class WorldRuntime(
     val world: World,
@@ -44,16 +47,22 @@ class WorldRuntime(
             if (!blocked.compareAndSet(false, true)) return@Runnable
 
             try {
-                if (loadedAPIs.compareAndSet(false, true)) {
-                    loadAPIs()
-                    var request: Pair<String, (JSEffectAPI?) -> Unit>? = null
-                    while (apiRequests.poll()?.let { request = it } != null) {
-                        request!!
-                        request.second(apis[request.first])
+                val t = measureNanoTime {
+                    if (loadedAPIs.compareAndSet(false, true)) {
+                        loadAPIs()
+                        var request: Pair<String, (JSEffectAPI?) -> Unit>? = null
+                        while (apiRequests.poll()?.let { request = it } != null) {
+                            request!!
+                            request.second(apis[request.first])
+                        }
                     }
+
+                    tick()
                 }
 
-                tick()
+                if (world.name == "world") {
+                    println("Tick took ${t.toDuration(DurationUnit.NANOSECONDS)}")
+                }
             } finally {
                 blocked.set(false)
             }

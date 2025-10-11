@@ -16,6 +16,7 @@ import java.util.*
 data class V2ParticleData(
     val effect: Effect,
     val uuid: UUID = UUID.randomUUID(),
+    var dead: Boolean = false,
     var age: Int = 0,
     var displayData: DisplayData<*> = SpriteData(""),
     var color: Int = -1,
@@ -37,6 +38,7 @@ data class V2ParticleData(
     private val defaultFields = arrayOf(
         "effect",
         "uuid",
+        "dead",
         "age",
         "displayData",
         "color",
@@ -65,6 +67,7 @@ data class V2ParticleData(
         return when (key) {
             "effect" -> effect
             "uuid" -> uuid
+            "dead" -> dead
             "age" -> age
             "displayData" -> displayData
             "color" -> color
@@ -105,6 +108,7 @@ data class V2ParticleData(
             value?.let {
                 when (key) {
                     "age" -> age = it.asInt()
+                    "dead" -> dead = it.asBoolean()
                     "displayData" -> displayData = it.`as`(DisplayData::class.java)
                     "color" -> color = it.asInt()
                     "translation" -> translation = it.`as`(Vector3f::class.java)
