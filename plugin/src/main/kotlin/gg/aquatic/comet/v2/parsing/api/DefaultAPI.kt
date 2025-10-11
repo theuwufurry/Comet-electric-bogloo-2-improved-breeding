@@ -33,8 +33,8 @@ object DefaultAPI {
         x: Double, y: Double, z: Double,
         callback: Value? = null,
     ) {
-        val effect = effect.asProxyObject<Effect>()
-        val world = effect.pose.world
+        val effect = effect.asProxyObject<V2EffectProxy>()
+        val world = effect.effect.pose.world
         val physicsWorld = world.physicsWorld ?: return
         Bukkit.getScheduler().runTask(AbstractParticleEmitter.INSTANCE, Runnable {
             val body =
@@ -51,7 +51,7 @@ object DefaultAPI {
                     hasGravity = true
                 ).blockEntity(Material.COPPER_BLOCK)
             physicsWorld.registerBody(body)
-            effect.registerOnKill {
+            effect.effect.registerOnKill {
                 Bukkit.getScheduler().runTask(AbstractParticleEmitter.INSTANCE, Runnable {
                     physicsWorld.removeBody(body)
                 })
@@ -59,7 +59,7 @@ object DefaultAPI {
 
             callback?.let {
                 world.cometRuntime.submitExecutable(object : BoundExecutable {
-                    override val effect: Effect = effect
+                    override val effect: Effect = effect.effect
 
                     override fun execute(world: World) {
                         callback.execute(PhysicsBodyWrapper(body))
@@ -76,8 +76,8 @@ object DefaultAPI {
         options: Value,
         callback: Value? = null,
     ) {
-        val effect = effect.asProxyObject<Effect>()
-        val world = effect.pose.world
+        val effect = effect.asProxyObject<V2EffectProxy>()
+        val world = effect.effect.pose.world
         val pos = options.getMember("pos").`as`(Vector3d::class.java)
         val parent = options.getMember("parent")?.`as`(Parent::class.java)
 
@@ -92,7 +92,7 @@ object DefaultAPI {
         ) {
             callback?.let {
                 world.cometRuntime.submitExecutable(object : BoundExecutable {
-                    override val effect: Effect = effect
+                    override val effect: Effect = effect.effect
 
                     override fun execute(world: World) {
                         it.execute(world)

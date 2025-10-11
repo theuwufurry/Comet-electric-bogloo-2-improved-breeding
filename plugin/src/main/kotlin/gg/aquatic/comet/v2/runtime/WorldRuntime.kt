@@ -43,11 +43,8 @@ class WorldRuntime(
         task = Bukkit.getScheduler().runTaskTimerAsynchronously(AbstractParticleEmitter.INSTANCE, Runnable {
             if (!blocked.compareAndSet(false, true)) return@Runnable
 
-//            if (world.name == "world") println("TICK")
-
             try {
                 if (loadedAPIs.compareAndSet(false, true)) {
-//                    if (world.name == "world") println(" - LOADED APIS")
                     loadAPIs()
                     var request: Pair<String, (JSEffectAPI?) -> Unit>? = null
                     while (apiRequests.poll()?.let { request = it } != null) {
@@ -96,21 +93,9 @@ class WorldRuntime(
     }
 
     private fun tick() {
-//        if (world.name == "world") {
-//            println(" * TICK")
-//            println(" | initializations: ${initializationRequests.size}")
-//            println(" | removals: ${effectsToRemove.size}")
-//            println(" | executables: ${toExecute.size}")
-//            println(" | consumers: ${toConsume.size}")
-//        }
-
         processInitializations()
         processRemovals()
         processExecutables()
-
-//        if (world.name == "world") {
-//            println(" | effects: ${effects.size}")
-//        }
 
         for (emitter in effects) {
             emitter.tick()
@@ -159,6 +144,10 @@ class WorldRuntime(
 
     fun registerRequest(request: EffectInitializationRequest) {
         initializationRequests += request
+    }
+
+    override fun remove(effect: Effect) {
+        effectsToRemove += effect
     }
 
     override fun submitExecutable(boundExecutable: BoundExecutable) {

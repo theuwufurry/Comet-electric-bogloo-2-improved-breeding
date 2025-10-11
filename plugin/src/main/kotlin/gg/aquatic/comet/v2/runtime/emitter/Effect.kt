@@ -3,10 +3,11 @@ package gg.aquatic.comet.v2.runtime.emitter
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.v2.parsing.api.JSEffectAPI
 import gg.aquatic.comet.v2.parsing.api.V2ParticleData
-import org.graalvm.polyglot.proxy.ProxyObject
+import gg.aquatic.comet.v2.runtime.EmitterRuntime
 import java.util.concurrent.atomic.AtomicBoolean
 
-interface Effect : ProxyObject {
+interface Effect {
+    val runtime: EmitterRuntime
     val api: JSEffectAPI
     val pose: Pose
 

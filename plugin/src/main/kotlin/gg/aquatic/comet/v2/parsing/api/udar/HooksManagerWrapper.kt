@@ -3,6 +3,7 @@ package gg.aquatic.comet.v2.parsing.api.udar
 import com.ixume.udar.body.active.hook.CollisionContext
 import com.ixume.udar.body.active.hook.HookManager
 import com.ixume.udar.body.active.hook.RemovalLambda
+import gg.aquatic.comet.v2.parsing.api.V2EffectProxy
 import gg.aquatic.comet.v2.runtime.EmitterRuntime
 import gg.aquatic.comet.v2.runtime.emitter.Effect
 import gg.aquatic.comet.v2.runtime.executable.BoundExecutable
@@ -16,13 +17,13 @@ data class HooksManagerWrapper(val runtime: EmitterRuntime, val hooksManager: Ho
 
     private val addCollisionListener = ProxyExecutable { args ->
         if (args.size != 2) throw IllegalArgumentException("Expected 2 argument!")
-        val effect = args[0]!!.asProxyObject<Effect>()
+        val effect = args[0]!!.asProxyObject<V2EffectProxy>()
         val lambda = args[1]!!
         if (!lambda.canExecute()) throw IllegalArgumentException("Expected 2nd arg to be executable!")
 
         val listener = { context: CollisionContext, removal: RemovalLambda ->
             runtime.submitExecutable(object : BoundExecutable {
-                override val effect: Effect = effect
+                override val effect: Effect = effect.effect
 
                 override fun execute(world: World) {
                     lambda.executeVoid(context.x, context.y, context.z, context.impulse)
@@ -35,7 +36,7 @@ data class HooksManagerWrapper(val runtime: EmitterRuntime, val hooksManager: Ho
         }
 
         hooksManager.registerOnCollisionListener(listener)
-        effect.registerOnKill { hooksManager.deregisterOnCollisionListener(listener) }
+        effect.effect.registerOnKill { hooksManager.deregisterOnCollisionListener(listener) }
     }
 
     override fun getMember(key: String?): Any? {

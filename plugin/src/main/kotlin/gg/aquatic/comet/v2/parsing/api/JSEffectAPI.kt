@@ -3,7 +3,6 @@ package gg.aquatic.comet.v2.parsing.api
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.v2.runtime.EffectInitializationRequest
 import gg.aquatic.comet.v2.runtime.WorldRuntime.Companion.cometRuntime
-import gg.aquatic.comet.v2.runtime.emitter.Effect
 import org.bukkit.World
 import org.bukkit.entity.Player
 import org.graalvm.polyglot.Context
@@ -33,7 +32,7 @@ class JSEffectAPI(
         distinctCallbacks[name] = callback
     }
 
-    fun invokeEffectInit(effect: Effect) {
+    fun invokeEffectInit(effect: V2EffectProxy) {
         listeners[EFFECT_INIT_EVENT_ID]?.forEach { listener ->
             try {
                 listener.executeVoid(effect)
@@ -44,7 +43,7 @@ class JSEffectAPI(
         }
     }
 
-    fun invokeEffectTick(effect: Effect) {
+    fun invokeEffectTick(effect: V2EffectProxy) {
         listeners[EFFECT_TICK_EVENT_ID]?.forEach { listener ->
             try {
                 listener.executeVoid(effect)

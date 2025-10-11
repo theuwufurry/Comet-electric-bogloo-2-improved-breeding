@@ -1,8 +1,6 @@
 package gg.aquatic.comet.v2.parsing
 
 import gg.aquatic.comet.api.AbstractParticleEmitter
-import gg.aquatic.comet.v2.runtime.emitter.Effect
-import gg.aquatic.comet.v2.runtime.emitter.TemporalEffect
 import org.graalvm.polyglot.Engine
 import org.graalvm.polyglot.HostAccess
 import org.graalvm.polyglot.Source
