@@ -32,7 +32,7 @@ data class V2ParticleData(
     var shadow: Boolean = false,
     var sensitiveCentering: Boolean = false,
     var origin: Vector3d = Vector3d(),
-    var relativePosition: Vector3d = Vector3d(),
+    var relPos: Vector3d = Vector3d(),
 ) : ProxyObject {
 
     private val defaultFields = arrayOf(
@@ -54,7 +54,7 @@ data class V2ParticleData(
         "shadow",
         "sensitiveCentering",
         "origin",
-        "relativePosition",
+        "relPos",
         "spawn",
     )
 
@@ -83,7 +83,7 @@ data class V2ParticleData(
             "shadow" -> shadow
             "sensitiveCentering" -> sensitiveCentering
             "origin" -> origin
-            "relativePosition" -> relativePosition
+            "relPos" -> relPos
             "spawn" -> spawnExecutable
             else -> extraData[key]
         }
@@ -123,7 +123,7 @@ data class V2ParticleData(
                     "shadow" -> shadow = it.asBoolean()
                     "sensitiveCentering" -> sensitiveCentering = it.asBoolean()
                     "origin" -> origin = it.`as`(Vector3d::class.java)
-                    "relativePosition" -> relativePosition = it.`as`(Vector3d::class.java)
+                    "relPos" -> relPos = it.`as`(Vector3d::class.java)
                 }
             }
         } else {

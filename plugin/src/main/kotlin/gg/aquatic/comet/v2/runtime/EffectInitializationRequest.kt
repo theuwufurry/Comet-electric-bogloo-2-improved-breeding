@@ -1,5 +1,6 @@
 package gg.aquatic.comet.v2.runtime
 
+import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.v2.parsing.api.JSEffectAPI
 import gg.aquatic.comet.v2.runtime.emitter.Effect
@@ -17,5 +18,6 @@ after: Consumer<AbstractEmitter>,
 class EffectInitializationRequest(
     val unrealized: JSEffectAPI,
     val pose: Pose,
+    val parent: Parent?,
     val after: Consumer<Effect>
 )

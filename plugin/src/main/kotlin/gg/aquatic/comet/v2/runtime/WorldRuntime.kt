@@ -3,7 +3,9 @@ package gg.aquatic.comet.v2.runtime
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.v2.parsing.V2Parser
 import gg.aquatic.comet.v2.parsing.api.DefaultAPI
+import gg.aquatic.comet.v2.parsing.api.EffectRuntimeProxy
 import gg.aquatic.comet.v2.parsing.api.JSEffectAPI
+import gg.aquatic.comet.v2.runtime.context.WorldContext
 import gg.aquatic.comet.v2.runtime.emitter.Effect
 import gg.aquatic.comet.v2.runtime.emitter.TemporalEffect
 import gg.aquatic.comet.v2.runtime.executable.BoundExecutable
@@ -17,12 +19,10 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.system.measureNanoTime
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
 
 class WorldRuntime(
     val world: World,
-) : EmitterRuntime {
+) : EffectRuntime {
     private val initialized = AtomicBoolean(false)
     override val players: Collection<Player>
         get() = world.players
@@ -39,6 +39,9 @@ class WorldRuntime(
     private val blocked = AtomicBoolean(false)
 
     private val apiRequests = ConcurrentLinkedQueue<Pair<String, (JSEffectAPI?) -> Unit>>()
+
+    override val proxy = EffectRuntimeProxy(this)
+    private val worldContext = WorldContext.construct(world)
 
     fun init() {
         if (!initialized.compareAndSet(false, true)) return
@@ -82,6 +85,7 @@ class WorldRuntime(
             val context = Context.newBuilder("js")
                 .engine(V2Parser.engine)
                 .allowHostAccess(V2Parser.hostAccess)
+                .allowAllAccess(true)
                 .build()
 
             val api = JSEffectAPI(context)
@@ -117,7 +121,7 @@ class WorldRuntime(
             exec!!
 
             if (exec.effect in effects) {
-                exec.execute(world)
+                exec.execute(worldContext)
             } else {
                 exec.invalidate()
             }
@@ -129,13 +133,15 @@ class WorldRuntime(
         var req: EffectInitializationRequest? = null
         while (initializationRequests.poll()?.let { req = it } != null) {
             req!!
-            val emitter = TemporalEffect(
-                pose = req.pose,
+            val effect = TemporalEffect(
+                relPose = req.pose,
                 runtime = this,
                 api = req.unrealized,
+                parent = req.parent,
             )
 
-            added += emitter
+            req.after.accept(effect)
+            added += effect
         }
 
         effects += added

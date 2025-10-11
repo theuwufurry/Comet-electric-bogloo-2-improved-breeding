@@ -4,7 +4,8 @@ import com.ixume.udar.body.active.hook.CollisionContext
 import com.ixume.udar.body.active.hook.HookManager
 import com.ixume.udar.body.active.hook.RemovalLambda
 import gg.aquatic.comet.v2.parsing.api.V2EffectProxy
-import gg.aquatic.comet.v2.runtime.EmitterRuntime
+import gg.aquatic.comet.v2.runtime.EffectRuntime
+import gg.aquatic.comet.v2.runtime.context.WorldContext
 import gg.aquatic.comet.v2.runtime.emitter.Effect
 import gg.aquatic.comet.v2.runtime.executable.BoundExecutable
 import org.bukkit.World
@@ -12,7 +13,7 @@ import org.graalvm.polyglot.Value
 import org.graalvm.polyglot.proxy.ProxyExecutable
 import org.graalvm.polyglot.proxy.ProxyObject
 
-data class HooksManagerWrapper(val runtime: EmitterRuntime, val hooksManager: HookManager) : ProxyObject {
+data class HooksManagerWrapper(val runtime: EffectRuntime, val hooksManager: HookManager) : ProxyObject {
     private val keys = arrayOf("addCollisionListener")
 
     private val addCollisionListener = ProxyExecutable { args ->
@@ -21,12 +22,12 @@ data class HooksManagerWrapper(val runtime: EmitterRuntime, val hooksManager: Ho
         val lambda = args[1]!!
         if (!lambda.canExecute()) throw IllegalArgumentException("Expected 2nd arg to be executable!")
 
-        val listener = { context: CollisionContext, removal: RemovalLambda ->
+        val listener = { collisionContext: CollisionContext, removal: RemovalLambda ->
             runtime.submitExecutable(object : BoundExecutable {
                 override val effect: Effect = effect.effect
 
-                override fun execute(world: World) {
-                    lambda.executeVoid(context.x, context.y, context.z, context.impulse)
+                override fun execute(context: WorldContext) {
+                    lambda.executeVoid(collisionContext.x, collisionContext.y, collisionContext.z, collisionContext.impulse)
                 }
 
                 override fun invalidate() {

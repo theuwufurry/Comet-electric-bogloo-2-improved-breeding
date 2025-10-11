@@ -1,6 +1,7 @@
 package gg.aquatic.comet.v2.parsing
 
 import gg.aquatic.comet.api.AbstractParticleEmitter
+import gg.aquatic.comet.v2.parsing.api.udar.PhysicsBodyWrapper
 import org.graalvm.polyglot.Engine
 import org.graalvm.polyglot.HostAccess
 import org.graalvm.polyglot.Source
@@ -40,6 +41,12 @@ object V2Parser {
                     value.getMemberOrNull("z")?.asFloat() ?: 0f,
                 )
             }
+        )
+        .targetTypeMapping(
+            Value::class.java,
+            PhysicsBodyWrapper::class.java,
+            { value -> value.isProxyObject },
+            { value -> value.asProxyObject() }
         )
         .allowPublicAccess(true)
         .build()

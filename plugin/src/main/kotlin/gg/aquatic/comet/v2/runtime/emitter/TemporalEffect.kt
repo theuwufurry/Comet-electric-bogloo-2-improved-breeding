@@ -3,11 +3,12 @@ package gg.aquatic.comet.v2.runtime.emitter
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.wrapper.PacketWrapper
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
+import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.v2.parsing.api.JSEffectAPI
 import gg.aquatic.comet.v2.parsing.api.V2EffectProxy
 import gg.aquatic.comet.v2.parsing.api.V2ParticleData
-import gg.aquatic.comet.v2.runtime.EmitterRuntime
+import gg.aquatic.comet.v2.runtime.EffectRuntime
 import gg.aquatic.comet.v2.runtime.particle.V2Particle
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.joml.Vector3d
@@ -18,9 +19,10 @@ import java.util.concurrent.atomic.AtomicBoolean
  * No fancy tricks, just executes everything in sequence. Unoptimized.
  */
 class TemporalEffect(
-    override val pose: Pose,
-    override val runtime: EmitterRuntime,
+    override val relPose: Pose,
+    override val runtime: EffectRuntime,
     override val api: JSEffectAPI,
+    override var parent: Parent?,
 ) : Effect {
     val particles = mutableListOf<V2Particle>()
     val particlesToAdd = mutableListOf<V2Particle>()
@@ -30,7 +32,21 @@ class TemporalEffect(
     private val blocked = AtomicBoolean(false)
     override val valid = AtomicBoolean(true)
 
-    private val proxy = V2EffectProxy(this)
+    override val proxy = V2EffectProxy(this)
+
+    override val pose: Pose
+        get() = relPose.let {
+            val p = parent
+            if (p != null) {
+                Pose(
+                    world = it.world,
+                    pos = Vector3d(it.pos).add(p.pose.pos),
+                    rot = it.rot
+                )
+            } else {
+                it
+            }
+        }
 
     init {
         blocked.set(true)
@@ -58,6 +74,7 @@ class TemporalEffect(
             api.invokeParticleTick(data)
 
             if (data.dead) {
+                api.invokeParticleDeath(data)
                 killedIDs.addAll(particle.entityIDs)
                 continue
             }
@@ -67,6 +84,7 @@ class TemporalEffect(
         }
 
         if (proxy.dead) {
+            api.invokeEffectDeath(proxy)
             valid.set(false)
             runtime.remove(this)
             return
@@ -83,7 +101,7 @@ class TemporalEffect(
 
         for (player in runtime.players) {
             val show =
-                api.invokeShowPlayer(player) ?: (player.location.distance(pose.location) <= 32.0) //TODO: Culling!
+                api.invokeShowPlayer(player) ?: (player.location.distance(pose.location) <= 128.0) //TODO: Culling!
             if (show) {
                 for (packet in dataPackets) {
                     PacketEvents.getAPI().playerManager.sendPacketSilently(player, packet)

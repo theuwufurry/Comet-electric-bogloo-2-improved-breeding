@@ -1,5 +1,6 @@
 package gg.aquatic.comet.v2.parsing.api
 
+import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.v2.runtime.emitter.Effect
 import org.graalvm.polyglot.Value
 import org.graalvm.polyglot.proxy.ProxyExecutable
@@ -10,8 +11,10 @@ class V2EffectProxy(val effect: Effect) : ProxyObject {
     private val defaultFields = arrayOf(
         "age",
         "dead",
+        "relPos",
         "pos",
         "rot",
+        "parent",
         "runtime",
         "createParticle",
     )
@@ -20,9 +23,7 @@ class V2EffectProxy(val effect: Effect) : ProxyObject {
     private val extraData = mutableMapOf<String, Any?>()
 
     private val createParticleCallable = ProxyExecutable {
-        val data = V2ParticleData(effect = effect)
-        data.origin = Vector3d(effect.pose.pos)
-        data
+        return@ProxyExecutable effect.createParticle()
     }
 
     var age = 0
@@ -32,9 +33,11 @@ class V2EffectProxy(val effect: Effect) : ProxyObject {
         return when (key) {
             "age" -> age
             "dead" -> dead
+            "relPos" -> effect.relPose.pos
             "pos" -> effect.pose.pos
             "rot" -> effect.pose.rot
-            "runtime" -> effect.runtime
+            "parent" -> effect.parent
+            "runtime" -> effect.runtime.proxy
             "createParticle" -> createParticleCallable
             else -> extraData[key]
         }
@@ -52,15 +55,17 @@ class V2EffectProxy(val effect: Effect) : ProxyObject {
         if (key == null) return
         if (key in defaultFields) {
             if (key == "runtime" ||
-                key == "createParticle"
+                key == "createParticle" ||
+                key == "pos"
             ) throw UnsupportedOperationException()
 
             when (key) {
                 "age" -> age = value!!.asInt()
                 "dead" -> dead = value!!.asBoolean()
-                "pos" -> {
+                "parent" -> effect.parent = value!!.`as`(Parent::class.java)
+                "relPos" -> {
                     val vec = value!!.`as`(Vector3d::class.java)
-                    effect.pose.pos.set(vec)
+                    effect.relPose.pos.set(vec)
                 }
             }
         } else {

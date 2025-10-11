@@ -45,9 +45,9 @@ class V2Particle(val data: V2ParticleData) {
         val result = mutableListOf<PacketWrapper<*>>()
 
         val spawnPos = Vector3d(
-            data.origin.x + data.relativePosition.x,
-            data.origin.y + data.relativePosition.y,
-            data.origin.z + data.relativePosition.z
+            data.origin.x + data.relPos.x,
+            data.origin.y + data.relPos.y,
+            data.origin.z + data.relPos.z
         )
 
 
@@ -143,9 +143,9 @@ class V2Particle(val data: V2ParticleData) {
     fun getPositionPacket(): PacketWrapper<*> {
         return WrapperPlayServerEntityTeleport(
             id, Vector3d(
-                data.origin.x + data.relativePosition.x,
-                data.origin.y + data.relativePosition.y,
-                data.origin.z + data.relativePosition.z,
+                data.origin.x + data.relPos.x,
+                data.origin.y + data.relPos.y,
+                data.origin.z + data.relPos.z,
             ), 0f, 0f, false
         )
     }

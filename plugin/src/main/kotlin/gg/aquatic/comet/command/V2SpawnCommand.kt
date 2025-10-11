@@ -92,7 +92,11 @@ object V2SpawnCommand : ICommand {
 
             val location = Location(world, x, y, z, yaw, pitch)
             val pose = location.pose()
-            api.realize(world, pose)
+            api.realize(
+                world = world, 
+                pose = pose,
+                parent = null,
+            )
         }
     }
 

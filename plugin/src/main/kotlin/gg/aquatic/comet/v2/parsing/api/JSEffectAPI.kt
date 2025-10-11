@@ -1,8 +1,10 @@
 package gg.aquatic.comet.v2.parsing.api
 
+import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.v2.runtime.EffectInitializationRequest
 import gg.aquatic.comet.v2.runtime.WorldRuntime.Companion.cometRuntime
+import gg.aquatic.comet.v2.runtime.emitter.Effect
 import org.bukkit.World
 import org.bukkit.entity.Player
 import org.graalvm.polyglot.Context
@@ -54,6 +56,17 @@ class JSEffectAPI(
         }
     }
 
+    fun invokeEffectDeath(effect: V2EffectProxy) {
+        listeners[EFFECT_DEATH_EVENT_ID]?.forEach { listener ->
+            try {
+                listener.executeVoid(effect)
+            } catch (e: Exception) {
+                println("Error invoking listener for $EFFECT_DEATH_EVENT_ID")
+                println(e.message)
+            }
+        }
+    }
+
     fun invokeParticleInit(particleData: V2ParticleData) {
         listeners[PARTICLE_INIT_EVENT_ID]?.forEach { listener ->
             try {
@@ -71,6 +84,17 @@ class JSEffectAPI(
                 listener.executeVoid(particleData)
             } catch (e: Exception) {
                 println("Error invoking listener for $PARTICLE_TICK_EVENT_ID")
+                println(e.message)
+            }
+        }
+    }
+
+    fun invokeParticleDeath(particleData: V2ParticleData) {
+        listeners[PARTICLE_DEATH_EVENT_ID]?.forEach { listener ->
+            try {
+                listener.executeVoid(particleData)
+            } catch (e: Exception) {
+                println("Error invoking listener for $PARTICLE_DEATH_EVENT_ID")
                 println(e.message)
             }
         }
@@ -98,12 +122,17 @@ class JSEffectAPI(
     fun realize(
         world: World,
         pose: Pose,
+        parent: Parent?,
+        callback: (Effect) -> Unit = {},
     ) {
         world.cometRuntime.registerRequest(
             EffectInitializationRequest(
                 unrealized = this,
                 pose = pose,
-            ) {})
+                parent = parent,
+                callback
+            )
+        )
     }
 
     fun close() {
@@ -113,9 +142,11 @@ class JSEffectAPI(
     companion object {
         const val EFFECT_INIT_EVENT_ID = "effectInit"
         const val EFFECT_TICK_EVENT_ID = "effectTick"
+        const val EFFECT_DEATH_EVENT_ID = "effectDeath"
 
         const val PARTICLE_INIT_EVENT_ID = "particleInit"
         const val PARTICLE_TICK_EVENT_ID = "particleTick"
+        const val PARTICLE_DEATH_EVENT_ID = "particleDeath"
 
         const val SHOW_PLAYER_CALLBACK_ID = "showPlayer"
     }
