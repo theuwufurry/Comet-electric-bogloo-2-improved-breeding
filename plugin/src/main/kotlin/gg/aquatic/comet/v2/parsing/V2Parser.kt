@@ -23,9 +23,9 @@ object V2Parser {
             { value -> value.hasMembers() },
             { value ->
                 Vector3d(
-                    value.getMember("x").asDouble(),
-                    value.getMember("y").asDouble(),
-                    value.getMember("z").asDouble()
+                    value.getMemberOrNull("x")?.asDouble() ?: 0.0,
+                    value.getMemberOrNull("y")?.asDouble() ?: 0.0,
+                    value.getMemberOrNull("z")?.asDouble() ?: 0.0,
                 )
             }
         )
@@ -35,9 +35,9 @@ object V2Parser {
             { value -> value.hasMembers() },
             { value ->
                 Vector3f(
-                    value.getMember("x").asFloat(),
-                    value.getMember("y").asFloat(),
-                    value.getMember("z").asFloat(),
+                    value.getMemberOrNull("x")?.asFloat() ?: 0f,
+                    value.getMemberOrNull("y")?.asFloat() ?: 0f,
+                    value.getMemberOrNull("z")?.asFloat() ?: 0f,
                 )
             }
         )
@@ -74,4 +74,8 @@ object V2Parser {
     fun disable() {
         engine.close()
     }
+}
+
+fun Value.getMemberOrNull(identifier: String): Value? {
+    return if (hasMember(identifier)) getMember(identifier) else null
 }

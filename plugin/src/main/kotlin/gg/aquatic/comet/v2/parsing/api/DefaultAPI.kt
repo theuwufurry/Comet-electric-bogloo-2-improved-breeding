@@ -37,6 +37,15 @@ object DefaultAPI {
         val scale = options.getMember("scale")?.let {
             if (it.isNull) null else it.asDouble()
         } ?: 1.0
+        val hasGravity = options.getMember("hasGravity")?.let {
+            if (it.isNull) null else it.asBoolean()
+        } ?: true
+        val velocity = options.getMember("velocity")?.let {
+            if (it.isNull) null else it.`as`(Vector3d::class.java)
+        } ?: Vector3d()
+        val omega = options.getMember("omega")?.let {
+            if (it.isNull) null else it.`as`(Vector3d::class.java)
+        } ?: Vector3d()
 
         val effect = effect.asProxyObject<V2EffectProxy>()
         val world = effect.effect.pose.world
@@ -44,6 +53,10 @@ object DefaultAPI {
         Bukkit.getScheduler().runTask(AbstractParticleEmitter.INSTANCE, Runnable {
             val model = RPManager.modelMap[modelID] ?: return@Runnable
             val body = JavaModelBody.construct(physicsWorld, pos, model, scale)
+            body.hasGravity = hasGravity
+            body.velocity.set(velocity)
+            body.omega.set(omega)
+
             physicsWorld.registerBody(body)
             effect.effect.registerOnKill {
                 Bukkit.getScheduler().runTask(AbstractParticleEmitter.INSTANCE, Runnable {
