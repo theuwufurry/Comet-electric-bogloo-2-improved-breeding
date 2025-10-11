@@ -12,6 +12,7 @@ import org.graalvm.polyglot.HostAccess
 import org.graalvm.polyglot.Value
 import org.graalvm.polyglot.proxy.ProxyExecutable
 import org.joml.Vector3d
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -21,9 +22,11 @@ class TemporalEffect(
     override val pose: Pose,
     val runtime: EmitterRuntime,
     override val api: JSEffectAPI,
-) : Effect() {
+) : Effect {
     val particles = mutableListOf<V2Particle>()
     val particlesToAdd = mutableListOf<V2Particle>()
+
+    private val onKill = CopyOnWriteArrayList<() -> Unit>()
 
     private val blocked = AtomicBoolean(false)
     override val valid = AtomicBoolean(true)
@@ -89,6 +92,8 @@ class TemporalEffect(
 
     override fun onKill() {
         valid.set(false)
+        onKill.forEach { it() }
+        onKill.clear()
 
         val ls = particles.flatMap { it.entityIDs }
         val ids = ls.toIntArray()
@@ -96,8 +101,12 @@ class TemporalEffect(
         for (player in runtime.players) {
             PacketEvents.getAPI().playerManager.sendPacketSilently(player, destroyPacket)
         }
-        
+
         particles.clear()
+    }
+
+    override fun registerOnKill(callable: () -> Unit) {
+        onKill += callable
     }
 
     private val members = arrayOf("pos", "rot", "runtime", "createParticle")

@@ -33,7 +33,6 @@ class JSEffectAPI(
         distinctCallbacks[name] = callback
     }
 
-    @Synchronized
     fun invokeEffectInit(effect: Effect) {
         listeners[EFFECT_INIT_EVENT_ID]?.forEach { listener ->
             try {
@@ -45,7 +44,6 @@ class JSEffectAPI(
         }
     }
 
-    @Synchronized
     fun invokeEffectTick(effect: Effect) {
         listeners[EFFECT_TICK_EVENT_ID]?.forEach { listener ->
             try {
@@ -57,7 +55,6 @@ class JSEffectAPI(
         }
     }
 
-    @Synchronized
     fun invokeParticleInit(particleData: V2ParticleData) {
         listeners[PARTICLE_INIT_EVENT_ID]?.forEach { listener ->
             try {
@@ -69,7 +66,6 @@ class JSEffectAPI(
         }
     }
 
-    @Synchronized
     fun invokeParticleTick(particleData: V2ParticleData) {
         listeners[PARTICLE_TICK_EVENT_ID]?.forEach { listener ->
             try {
@@ -81,12 +77,10 @@ class JSEffectAPI(
         }
     }
 
-    @Synchronized
     fun invokeShowPlayer(player: Player): Boolean? {
         return distinctCallbacks[SHOW_PLAYER_CALLBACK_ID]?.execute(player)?.asBoolean()
     }
 
-    @Synchronized
     fun invokeListeners(event: String, vararg args: Any?) {
         listeners[event]?.forEach { listener ->
             try {
@@ -98,7 +92,6 @@ class JSEffectAPI(
         }
     }
 
-    @Synchronized
     fun invokeCallback(name: String, vararg args: Any?): Value? {
         return distinctCallbacks[name]?.execute(*args)
     }
@@ -112,6 +105,10 @@ class JSEffectAPI(
                 unrealized = this,
                 pose = pose,
             ) {})
+    }
+
+    fun close() {
+        context.close()
     }
 
     companion object {

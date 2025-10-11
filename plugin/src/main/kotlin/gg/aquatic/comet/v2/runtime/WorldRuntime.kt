@@ -1,42 +1,116 @@
 package gg.aquatic.comet.v2.runtime
 
 import gg.aquatic.comet.api.AbstractParticleEmitter
+import gg.aquatic.comet.v2.parsing.V2Parser
+import gg.aquatic.comet.v2.parsing.api.DefaultAPI
+import gg.aquatic.comet.v2.parsing.api.JSEffectAPI
 import gg.aquatic.comet.v2.runtime.emitter.Effect
 import gg.aquatic.comet.v2.runtime.emitter.TemporalEffect
+import gg.aquatic.comet.v2.runtime.executable.BoundExecutable
 import org.bukkit.Bukkit
 import org.bukkit.World
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitTask
-import org.graalvm.polyglot.Value
+import org.graalvm.polyglot.Context
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.function.Consumer
+import java.util.concurrent.atomic.AtomicBoolean
 
 class WorldRuntime(
     val world: World,
 ) : EmitterRuntime {
+    private val initialized = AtomicBoolean(false)
     override val players: Collection<Player>
         get() = world.players
 
-    private val toExecute = ConcurrentLinkedQueue<Value>()
-    private val toConsume = ConcurrentLinkedQueue<Consumer<World>>()
+    private val apis = mutableMapOf<String, JSEffectAPI>()
+
+    private val toExecute = ConcurrentLinkedQueue<BoundExecutable>()
     private val initializationRequests = ConcurrentLinkedQueue<EffectInitializationRequest>()
     private val effectsToRemove = ConcurrentLinkedQueue<Effect>()
     private val effects = CopyOnWriteArrayList<Effect>()
 
     private var task: BukkitTask? = null
+    private val loadedAPIs = AtomicBoolean(false)
+    private val blocked = AtomicBoolean(false)
 
-    init {
-        runtimes[world] = this
+    private val apiRequests = ConcurrentLinkedQueue<Pair<String, (JSEffectAPI?) -> Unit>>()
+
+    fun init() {
+        if (!initialized.compareAndSet(false, true)) return
+
         task = Bukkit.getScheduler().runTaskTimerAsynchronously(AbstractParticleEmitter.INSTANCE, Runnable {
-            tick()
+            if (!blocked.compareAndSet(false, true)) return@Runnable
+
+//            if (world.name == "world") println("TICK")
+
+            try {
+                if (loadedAPIs.compareAndSet(false, true)) {
+//                    if (world.name == "world") println(" - LOADED APIS")
+                    loadAPIs()
+                    var request: Pair<String, (JSEffectAPI?) -> Unit>? = null
+                    while (apiRequests.poll()?.let { request = it } != null) {
+                        request!!
+                        request.second(apis[request.first])
+                    }
+                }
+
+                tick()
+            } finally {
+                blocked.set(false)
+            }
         }, 1, 1)
     }
 
+    fun reload() {
+        loadedAPIs.set(false)
+    }
+
+    private fun loadAPIs() {
+        apis.values.forEach { it.close() }
+        apis.clear()
+        clear()
+
+        for ((id, source) in V2Parser.effects) {
+            val context = Context.newBuilder("js")
+                .engine(V2Parser.engine)
+                .allowHostAccess(V2Parser.hostAccess)
+                .build()
+
+            val api = JSEffectAPI(context)
+            context.getBindings("js").putMember("effect", api)
+            context.getBindings("js").putMember("comet", DefaultAPI)
+            context.eval(source)
+
+            apis[id] = api
+        }
+    }
+
+    fun getAPI(id: String, after: (JSEffectAPI?) -> Unit) {
+        if (loadedAPIs.get()) {
+            after(apis[id])
+        } else {
+            apiRequests += id to after
+        }
+    }
+
     private fun tick() {
+//        if (world.name == "world") {
+//            println(" * TICK")
+//            println(" | initializations: ${initializationRequests.size}")
+//            println(" | removals: ${effectsToRemove.size}")
+//            println(" | executables: ${toExecute.size}")
+//            println(" | consumers: ${toConsume.size}")
+//        }
+
         processInitializations()
         processRemovals()
         processExecutables()
+
+//        if (world.name == "world") {
+//            println(" | effects: ${effects.size}")
+//        }
 
         for (emitter in effects) {
             emitter.tick()
@@ -44,14 +118,15 @@ class WorldRuntime(
     }
 
     private fun processExecutables() {
-        var exec: Value? = null
+        var exec: BoundExecutable? = null
         while (toExecute.poll()?.let { exec = it } != null) {
-            exec!!.execute(world)
-        }
+            exec!!
 
-        var consumer: Consumer<World>? = null
-        while (toConsume.poll()?.let { consumer = it } != null) {
-            consumer!!.accept(world)
+            if (exec.effect in effects) {
+                exec.execute(world)
+            } else {
+                exec.invalidate()
+            }
         }
     }
 
@@ -86,31 +161,32 @@ class WorldRuntime(
         initializationRequests += request
     }
 
-    override fun submitExecutable(executable: Value) {
-        check(executable.canExecute())
-        toExecute += executable
-    }
-
-    override fun submitExecutable(executable: Consumer<World>) {
-        toConsume += executable
+    override fun submitExecutable(boundExecutable: BoundExecutable) {
+        toExecute += boundExecutable
     }
 
     fun clear() {
+        toExecute.clear()
         initializationRequests.clear()
         effectsToRemove += effects
     }
 
     fun kill() {
+        toExecute.clear()
         initializationRequests.clear()
         task?.cancel()
         task = null
+
+        apis.values.forEach { it.close() }
+        apis.clear()
+
         runtimes -= world
     }
 
     companion object {
-        val runtimes = mutableMapOf<World, WorldRuntime>()
+        val runtimes = ConcurrentHashMap<World, WorldRuntime>()
 
         val World.cometRuntime: WorldRuntime
-            get() = runtimes.getOrPut(this) { WorldRuntime(this) }
+            get() = runtimes.getOrPut(this) { WorldRuntime(this) }.also { it.init() }
     }
 }

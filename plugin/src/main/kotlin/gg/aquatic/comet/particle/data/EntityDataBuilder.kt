@@ -92,23 +92,25 @@ object EntityDataBuilder : AbstractEntityDataBuilder() {
                 }
 
                 if (flags.display) {
-                    val char = ResourcepackCreator.charMap[displayData.content]
-                    if (char == null) {
-                        AbstractParticleEmitter.INSTANCE.logger.severe("Could not find a matching char for ${displayData.content}! Map: ${ResourcepackCreator.charMap}")
-                        return null
-                    }
+                    if (displayData.content.isNotEmpty()) {
+                        val char = ResourcepackCreator.charMap[displayData.content]
+                        if (char == null) {
+                            AbstractParticleEmitter.INSTANCE.logger.severe("Could not find a matching char for ${displayData.content}! Map: ${ResourcepackCreator.charMap}")
+                            return null
+                        }
 
-                    var component = Component.text(char)
-                        .color(TextColor.color(component.color and 0xFFFFFF))
-                    if (!usePUA) {
-                        component = component.font(key)
-                    }
+                        var component = Component.text(char)
+                            .color(TextColor.color(component.color and 0xFFFFFF))
+                        if (!usePUA) {
+                            component = component.font(key)
+                        }
 
-                    entityData += PEntityData(
-                        22 + PACKET_OFFSET,
-                        EntityDataTypes.ADV_COMPONENT,
-                        component
-                    )
+                        entityData += PEntityData(
+                            22 + PACKET_OFFSET,
+                            EntityDataTypes.ADV_COMPONENT,
+                            component
+                        )
+                    }
                 }
 
                 if (flags.transparency) {

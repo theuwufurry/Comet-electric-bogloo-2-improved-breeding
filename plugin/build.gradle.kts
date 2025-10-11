@@ -9,7 +9,7 @@ dependencies {
     implementation(files("gradle/build/libs/Mengshe-0.0.3.23.jar"))
     implementation("org.graalvm.polyglot:polyglot:25.0.0")
     implementation("org.graalvm.polyglot:js:25.0.0")
-    compileOnly(files("gradle/build/libs/Udar-0.2.0.jar"))
+    compileOnly(files("gradle/build/libs/udar-0.4.0.1.jar"))
 }
 
 tasks {

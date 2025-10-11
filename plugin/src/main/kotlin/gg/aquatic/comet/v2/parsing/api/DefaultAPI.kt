@@ -11,7 +11,10 @@ import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.udar.UdarBodyParent
+import gg.aquatic.comet.v2.parsing.api.udar.PhysicsBodyWrapper
 import gg.aquatic.comet.v2.runtime.WorldRuntime.Companion.cometRuntime
+import gg.aquatic.comet.v2.runtime.emitter.Effect
+import gg.aquatic.comet.v2.runtime.executable.BoundExecutable
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.World
@@ -26,11 +29,13 @@ object DefaultAPI {
 
     @JvmOverloads
     fun spawnPhysicsObject(
-        world: World,
+        effect: Value,
         x: Double, y: Double, z: Double,
         callback: Value? = null,
     ) {
-        check(callback == null || callback.canExecute())
+        val effect = effect.asProxyObject<Effect>()
+        val world = effect.pose.world
+        val physicsWorld = world.physicsWorld ?: return
         Bukkit.getScheduler().runTask(AbstractParticleEmitter.INSTANCE, Runnable {
             val body =
                 Cuboid(
@@ -45,24 +50,34 @@ object DefaultAPI {
                     density = 1.0,
                     hasGravity = true
                 ).blockEntity(Material.COPPER_BLOCK)
-            world.physicsWorld?.registerBody(body)
+            physicsWorld.registerBody(body)
+            effect.registerOnKill {
+                Bukkit.getScheduler().runTask(AbstractParticleEmitter.INSTANCE, Runnable {
+                    physicsWorld.removeBody(body)
+                })
+            }
+
             callback?.let {
-                world.cometRuntime.submitExecutable {
-                    callback.execute(body)
-                }
+                world.cometRuntime.submitExecutable(object : BoundExecutable {
+                    override val effect: Effect = effect
+
+                    override fun execute(world: World) {
+                        callback.execute(PhysicsBodyWrapper(body))
+                    }
+                })
             }
         })
     }
 
     @JvmOverloads
     fun spawnEmitter(
-        world: World,
+        effect: Value,
         emitterID: String,
         options: Value,
         callback: Value? = null,
     ) {
-        check(callback == null || callback.canExecute())
-
+        val effect = effect.asProxyObject<Effect>()
+        val world = effect.pose.world
         val pos = options.getMember("pos").`as`(Vector3d::class.java)
         val parent = options.getMember("parent")?.`as`(Parent::class.java)
 
@@ -75,7 +90,15 @@ object DefaultAPI {
             mount = null,
             yawpitchSupplier = null,
         ) {
-            callback?.let { world.cometRuntime.submitExecutable(it) }
+            callback?.let {
+                world.cometRuntime.submitExecutable(object : BoundExecutable {
+                    override val effect: Effect = effect
+
+                    override fun execute(world: World) {
+                        it.execute(world)
+                    }
+                })
+            }
         }
     }
 

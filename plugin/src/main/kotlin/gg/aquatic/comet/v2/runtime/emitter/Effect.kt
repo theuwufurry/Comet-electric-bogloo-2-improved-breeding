@@ -6,20 +6,22 @@ import gg.aquatic.comet.v2.parsing.api.V2ParticleData
 import org.graalvm.polyglot.proxy.ProxyObject
 import java.util.concurrent.atomic.AtomicBoolean
 
-abstract class Effect : ProxyObject {
-    abstract val api: JSEffectAPI
-    abstract val pose: Pose
+interface Effect : ProxyObject {
+    val api: JSEffectAPI
+    val pose: Pose
 
-    abstract fun tick()
+    fun tick()
 
-    abstract fun createParticle(): V2ParticleData
+    fun createParticle(): V2ParticleData
 
     /**
      * Must be called on same thread as effect
      */
-    abstract fun onKill()
+    fun onKill()
 
-    abstract val valid: AtomicBoolean
+    fun registerOnKill(callable: () -> Unit)
 
-    abstract fun spawnParticle(data: V2ParticleData)
+    val valid: AtomicBoolean
+
+    fun spawnParticle(data: V2ParticleData)
 }

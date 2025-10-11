@@ -33,10 +33,10 @@ object ReloadParticleScriptsCommand : ICommand {
 
         ResourcepackCreator.reload()
 
-        for (world in Bukkit.getWorlds()) {
-            world.cometRuntime.clear()
-        }
         V2Parser.load()
+        for (world in Bukkit.getWorlds()) {
+            world.cometRuntime.reload()
+        }
 
         sender.sendMessage("Comet has been reloaded!")
     }

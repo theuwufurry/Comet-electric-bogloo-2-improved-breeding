@@ -15,9 +15,11 @@ import gg.aquatic.comet.particle.macro.CatmullParser
 import gg.aquatic.comet.particle.macro.HermiteParser
 import gg.aquatic.comet.particle.macro.LinearParser
 import gg.aquatic.comet.v2.parsing.V2Parser
+import gg.aquatic.comet.v2.runtime.WorldRuntime.Companion.cometRuntime
 import gg.aquatic.waves.command.AquaticBaseCommand
 import gg.aquatic.waves.command.register
 import net.kyori.adventure.text.minimessage.MiniMessage
+import org.bukkit.Bukkit
 import org.joml.Vector3f
 import org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory
 

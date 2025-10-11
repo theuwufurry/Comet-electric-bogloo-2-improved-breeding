@@ -1,10 +1,14 @@
 package gg.aquatic.comet.v2.parsing
 
 import gg.aquatic.comet.api.AbstractParticleEmitter
-import gg.aquatic.comet.v2.parsing.api.DefaultAPI
-import gg.aquatic.comet.v2.parsing.api.JSEffectAPI
-import org.graalvm.polyglot.*
+import gg.aquatic.comet.v2.runtime.emitter.Effect
+import gg.aquatic.comet.v2.runtime.emitter.TemporalEffect
+import org.graalvm.polyglot.Engine
+import org.graalvm.polyglot.HostAccess
+import org.graalvm.polyglot.Source
+import org.graalvm.polyglot.Value
 import org.joml.Vector3d
+import org.joml.Vector3f
 import java.io.File
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
@@ -14,7 +18,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.nameWithoutExtension
 
 object V2Parser {
-    private val vector3DMapping = HostAccess.newBuilder()
+    val hostAccess: HostAccess = HostAccess.newBuilder()
         .targetTypeMapping(
             Value::class.java,
             Vector3d::class.java,
@@ -27,15 +31,25 @@ object V2Parser {
                 )
             }
         )
+        .targetTypeMapping(
+            Value::class.java,
+            Vector3f::class.java,
+            { value -> value.hasMembers() },
+            { value ->
+                Vector3f(
+                    value.getMember("x").asFloat(),
+                    value.getMember("y").asFloat(),
+                    value.getMember("z").asFloat(),
+                )
+            }
+        )
+        .allowPublicAccess(true)
         .build()
-    private val engine = Engine.newBuilder("js")
+    val engine: Engine = Engine.newBuilder("js")
         .build()
-    private val contexts = mutableListOf<Context>()
-
-    val effects = mutableMapOf<String, JSEffectAPI>()
+    val effects = mutableMapOf<String, Source>()
 
     fun load() {
-        contexts.clear()
         effects.clear()
 
         val dataFolder = AbstractParticleEmitter.INSTANCE.dataFolder
@@ -46,25 +60,13 @@ object V2Parser {
 
         Files.walkFileTree(modulesFolder.toPath(), object : SimpleFileVisitor<Path>() {
             override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-                val context = Context.newBuilder("js")
-                    .engine(engine)
-                    .allowAllAccess(true)
-                    .allowPolyglotAccess(PolyglotAccess.ALL)
-                    .build()
-                contexts += context
-
-                val api = JSEffectAPI(context)
-                effects[file.nameWithoutExtension] = api
-                context.getBindings("js").putMember("effect", api)
-                context.getBindings("js").putMember("comet", DefaultAPI)
-
                 val str = file.toFile().readText()
 
                 val source = Source.newBuilder("js", str, "${file.nameWithoutExtension}.js")
                     .cached(true)
                     .build()
 
-                context.eval(source)
+                effects[file.nameWithoutExtension] = source
 
                 return FileVisitResult.CONTINUE
             }
@@ -72,7 +74,6 @@ object V2Parser {
     }
 
     fun disable() {
-        contexts.forEach { it.close() }
         engine.close()
     }
 }
