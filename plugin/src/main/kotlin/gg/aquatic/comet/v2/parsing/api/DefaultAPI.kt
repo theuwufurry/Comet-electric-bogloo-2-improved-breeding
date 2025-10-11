@@ -1,9 +1,9 @@
 package gg.aquatic.comet.v2.parsing.api
 
 import com.ixume.udar.body.active.ActiveBody
-import com.ixume.udar.body.active.Cuboid
-import com.ixume.udar.body.active.blockEntity
+import com.ixume.udar.body.active.JavaModelBody
 import com.ixume.udar.physicsWorld
+import com.ixume.udar.rp.RPManager
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.parent.Parent
@@ -16,7 +16,6 @@ import gg.aquatic.comet.v2.runtime.WorldRuntime.Companion.cometRuntime
 import gg.aquatic.comet.v2.runtime.emitter.Effect
 import gg.aquatic.comet.v2.runtime.executable.BoundExecutable
 import org.bukkit.Bukkit
-import org.bukkit.Material
 import org.bukkit.World
 import org.graalvm.polyglot.Value
 import org.joml.Quaterniond
@@ -28,28 +27,23 @@ object DefaultAPI {
     }
 
     @JvmOverloads
-    fun spawnPhysicsObject(
+    fun spawnPhysicsModel(
         effect: Value,
-        x: Double, y: Double, z: Double,
+        options: Value,
         callback: Value? = null,
     ) {
+        val modelID = options.getMember("id").asString()
+        val pos = options.getMember("pos").`as`(Vector3d::class.java)
+        val scale = options.getMember("scale")?.let {
+            if (it.isNull) null else it.asDouble()
+        } ?: 1.0
+
         val effect = effect.asProxyObject<V2EffectProxy>()
         val world = effect.effect.pose.world
         val physicsWorld = world.physicsWorld ?: return
         Bukkit.getScheduler().runTask(AbstractParticleEmitter.INSTANCE, Runnable {
-            val body =
-                Cuboid(
-                    world = world,
-                    pos = Vector3d(x, y, z),
-                    velocity = Vector3d(),
-                    q = Quaterniond(),
-                    omega = Vector3d(),
-                    width = 1.0,
-                    height = 1.0,
-                    length = 1.0,
-                    density = 1.0,
-                    hasGravity = true
-                ).blockEntity(Material.COPPER_BLOCK)
+            val model = RPManager.modelMap[modelID] ?: return@Runnable
+            val body = JavaModelBody.construct(physicsWorld, pos, model, scale)
             physicsWorld.registerBody(body)
             effect.effect.registerOnKill {
                 Bukkit.getScheduler().runTask(AbstractParticleEmitter.INSTANCE, Runnable {

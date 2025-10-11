@@ -60,9 +60,9 @@ class WorldRuntime(
                     tick()
                 }
 
-                if (world.name == "world") {
-                    println("Tick took ${t.toDuration(DurationUnit.NANOSECONDS)}")
-                }
+//                if (world.name == "world") {
+//                    println("Tick took ${t.toDuration(DurationUnit.NANOSECONDS)}")
+//                }
             } finally {
                 blocked.set(false)
             }
