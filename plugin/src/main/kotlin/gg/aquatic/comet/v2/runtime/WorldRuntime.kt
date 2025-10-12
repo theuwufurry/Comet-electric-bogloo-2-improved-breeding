@@ -5,6 +5,7 @@ import gg.aquatic.comet.v2.parsing.V2Parser
 import gg.aquatic.comet.v2.parsing.api.default.DefaultAPI
 import gg.aquatic.comet.v2.parsing.api.EffectRuntimeProxy
 import gg.aquatic.comet.v2.parsing.api.JSEffectAPI
+import gg.aquatic.comet.v2.parsing.api.default.DefaultAPI.loadAPI
 import gg.aquatic.comet.v2.runtime.context.WorldContext
 import gg.aquatic.comet.v2.runtime.emitter.Effect
 import gg.aquatic.comet.v2.runtime.emitter.TemporalEffect
@@ -93,7 +94,7 @@ class WorldRuntime(
 
             val api = JSEffectAPI(context)
             context.getBindings("js").putMember("effect", api)
-            context.getBindings("js").putMember("comet", DefaultAPI)
+            context.loadAPI()
             context.eval(source)
 
             apis[id] = api

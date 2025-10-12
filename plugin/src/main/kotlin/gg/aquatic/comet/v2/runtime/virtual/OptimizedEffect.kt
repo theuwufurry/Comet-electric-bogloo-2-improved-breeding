@@ -36,7 +36,7 @@ class OptimizedEffect(
 ) : Effect {
     override val uuid: UUID = UUID.randomUUID()
     private val blocked = AtomicBoolean(false)
-    private var time = 1
+    private var time = 0
     override val pose: Pose
         get() = relPose.let {
             val p = parent

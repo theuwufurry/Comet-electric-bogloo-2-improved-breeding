@@ -120,9 +120,6 @@ class ParticleStory(
 
     fun initializeEntity(): List<PacketWrapper<*>> {
         check(positions.isNotEmpty())
-        positionsCursor = 1
-        transformableCursor = 1
-        contentCursor = 1
 
         val result = mutableListOf<PacketWrapper<*>>()
 
@@ -137,7 +134,6 @@ class ParticleStory(
         if (nextPos != null) teleportationDuration = nextPos.time - pos.time + 1
         var transformDuration = 1
         if (nextTransform != null) transformDuration = nextTransform.time - transform.time
-
 
         result += WrapperPlayServerSpawnEntity(
             id,
@@ -204,11 +200,16 @@ class ParticleStory(
         val result = mutableListOf<PacketWrapper<*>>()
 
         var tpd = previousData.teleportationDuration
-        val currPos = optimizedPositions[positionsCursor]
+        var currPos = optimizedPositions[positionsCursor]
+//        while (currPos.time < time) {
+//            positionsCursor++
+//            currPos = optimizedPositions[positionsCursor]
+//        }
+
         if (currPos.time == time) {
             positionsCursor++
 
-            if (positionsCursor + 1 >= optimizedPositions.size) {
+            if (positionsCursor >= optimizedPositions.size) {
                 // LAST
                 return EntityUpdateResult.Dead
             } else {
@@ -226,7 +227,12 @@ class ParticleStory(
         var displayData = previousData.displayData
         var updateContent = false
         if (contentCursor < optimizedContent.size) { // if larger, then we don't need to update anything anyway. content doesn't require lookahead
-            val currContent = optimizedContent[contentCursor]
+            var currContent = optimizedContent[contentCursor]
+//            while (currContent.time < time) {
+//                contentCursor++
+//                currContent = optimizedContent[contentCursor]
+//            }
+
             if (currContent.time == time) {
                 contentCursor++
                 updateContent = true
@@ -235,12 +241,16 @@ class ParticleStory(
             }
         }
 
-        val currTransform = optimizedTransformable[transformableCursor]
+        var currTransform = optimizedTransformable[transformableCursor]
+//        while (currTransform.time < time) {
+//            transformableCursor++
+//            currTransform = optimizedTransformable[transformableCursor]
+//        }
 
         if (currTransform.time == time) {
             transformableCursor++
 
-            if (transformableCursor + 1 >= optimizedTransformable.size) {
+            if (transformableCursor >= optimizedTransformable.size) {
                 // LAST
                 return EntityUpdateResult.Dead
             } else {
