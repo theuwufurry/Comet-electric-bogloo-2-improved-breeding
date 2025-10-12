@@ -8,9 +8,8 @@ import gg.aquatic.comet.v2.runtime.emitter.Effect
 import org.graalvm.polyglot.Value
 import org.graalvm.polyglot.proxy.ProxyExecutable
 import org.graalvm.polyglot.proxy.ProxyObject
-import org.joml.Quaternionf
+import org.joml.Quaterniond
 import org.joml.Vector3d
-import org.joml.Vector3f
 import java.util.*
 
 data class V2ParticleData(
@@ -20,9 +19,9 @@ data class V2ParticleData(
     var age: Int = 0,
     var displayData: DisplayData<*> = SpriteData(""),
     var color: Int = -1,
-    var translation: Vector3f = Vector3f(),
-    var rotation: Quaternionf = Quaternionf(),
-    var scale: Vector3f = Vector3f(1f),
+    var translation: Vector3d = Vector3d(),
+    var rotation: Quaterniond = Quaterniond(),
+    var scale: Vector3d = Vector3d(1.0),
     var billboardConstraints: BillboardConstraints = BillboardConstraints.CENTER,
     var interpolationDelay: Int = 0,
     var transformationInterpolationDuration: Int = 2,
@@ -105,9 +104,9 @@ data class V2ParticleData(
                     "dead" -> dead = it.asBoolean()
                     "displayData" -> displayData = it.`as`(DisplayData::class.java)
                     "color" -> color = it.asInt()
-                    "translation" -> translation = it.`as`(Vector3f::class.java)
-                    "rotation" -> rotation = it.`as`(Quaternionf::class.java)
-                    "scale" -> scale = it.`as`(Vector3f::class.java)
+                    "translation" -> translation = it.`as`(Vector3d::class.java)
+                    "rotation" -> rotation = it.`as`(Quaterniond::class.java)
+                    "scale" -> scale = it.`as`(Vector3d::class.java)
                     "billboardConstraints" -> billboardConstraints = it.`as`(BillboardConstraints::class.java)
                     "light" -> light = it.`as`(LightData::class.java)
                     "seeThrough" -> seeThrough = it.asBoolean()

@@ -10,6 +10,8 @@ import gg.aquatic.comet.api.particle.UpdateFlags
 import gg.aquatic.comet.api.particle.data.EntityData
 import gg.aquatic.comet.particle.data.EntityDataBuilder
 import gg.aquatic.comet.v2.parsing.api.V2ParticleData
+import org.joml.Quaternionf
+import org.joml.Vector3f
 import java.util.*
 
 class V2Particle(val data: V2ParticleData) {
@@ -26,9 +28,22 @@ class V2Particle(val data: V2ParticleData) {
             data.color,
             data.color ushr 24,
             null,
-            data.translation,
-            data.rotation,
-            data.scale,
+            Vector3f(
+                data.translation.x.toFloat(),
+                data.translation.y.toFloat(),
+                data.translation.z.toFloat(),
+            ),
+            Quaternionf(
+                data.rotation.x.toFloat(),
+                data.rotation.y.toFloat(),
+                data.rotation.z.toFloat(),
+                data.rotation.w.toFloat(),
+            ),
+            Vector3f(
+                data.scale.x.toFloat(),
+                data.scale.y.toFloat(),
+                data.scale.z.toFloat(),
+            ),
             data.billboardConstraints,
             data.interpolationDelay,
             data.transformationInterpolationDuration,
@@ -66,9 +81,22 @@ class V2Particle(val data: V2ParticleData) {
                 data.color,
                 data.color ushr 24,
                 null,
-                data.translation,
-                data.rotation,
-                data.scale,
+                Vector3f(
+                    data.translation.x.toFloat(),
+                    data.translation.y.toFloat(),
+                    data.translation.z.toFloat(),
+                ),
+                Quaternionf(
+                    data.rotation.x.toFloat(),
+                    data.rotation.y.toFloat(),
+                    data.rotation.z.toFloat(),
+                    data.rotation.w.toFloat(),
+                ),
+                Vector3f(
+                    data.scale.x.toFloat(),
+                    data.scale.y.toFloat(),
+                    data.scale.z.toFloat(),
+                ),
                 data.billboardConstraints,
                 data.interpolationDelay,
                 data.transformationInterpolationDuration,
@@ -120,9 +148,22 @@ class V2Particle(val data: V2ParticleData) {
                 data.displayData,
                 data.color,
                 transparency, null,
-                data.translation,
-                data.rotation,
-                data.scale,
+                Vector3f(
+                    data.translation.x.toFloat(),
+                    data.translation.y.toFloat(),
+                    data.translation.z.toFloat(),
+                ),
+                Quaternionf(
+                    data.rotation.x.toFloat(),
+                    data.rotation.y.toFloat(),
+                    data.rotation.z.toFloat(),
+                    data.rotation.w.toFloat(),
+                ),
+                Vector3f(
+                    data.scale.x.toFloat(),
+                    data.scale.y.toFloat(),
+                    data.scale.z.toFloat(),
+                ),
                 data.billboardConstraints, data.interpolationDelay,
                 interpolationDuration, data.teleportationDuration,
                 data.light,

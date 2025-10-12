@@ -50,13 +50,13 @@ class ParticleStory(
 
         transformable += TimestampedTransformable(
             time = time,
-            scaleX = p.scale.x,
-            scaleY = p.scale.y,
-            scaleZ = p.scale.z,
-            rotX = p.rotation.x,
-            rotY = p.rotation.y,
-            rotZ = p.rotation.z,
-            rotW = p.rotation.w,
+            scaleX = p.scale.x.toFloat(),
+            scaleY = p.scale.y.toFloat(),
+            scaleZ = p.scale.z.toFloat(),
+            rotX = p.rotation.x.toFloat(),
+            rotY = p.rotation.y.toFloat(),
+            rotZ = p.rotation.z.toFloat(),
+            rotW = p.rotation.w.toFloat(),
             opacity = p.color ushr 24,
         )
 
