@@ -3,6 +3,7 @@ package gg.aquatic.comet.v2.parsing.api.default
 import com.ixume.udar.body.active.ActiveBody
 import gg.aquatic.comet.api.particle.LightData
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
+import gg.aquatic.comet.particle.macro.CatmullEvaluator
 import gg.aquatic.comet.udar.UdarBodyParent
 import gg.aquatic.comet.v2.parsing.api.udar.PhysicsBodyWrapper
 import gg.aquatic.comet.v2.parsing.getMemberOrNull
@@ -49,6 +50,30 @@ object DefaultAPI {
 
     fun rate(rate: Double): RateProvider {
         return RateProvider(rate)
+    }
+
+    fun curve(options: Value): Curve {
+        val data = options.getMember("data")
+        val xs = mutableListOf<Double>()
+        val ys = mutableListOf<Double>()
+        var i = 0L
+        val s = data.arraySize
+        while (i < s) {
+            val elem = data.getArrayElement(i)
+            xs += elem.getArrayElement(0).asDouble()
+            ys += elem.getArrayElement(1).asDouble()
+            i++
+        }
+
+        return when (options.getMember("type").asString()) {
+            "catmull" -> {
+                CatmullCurve(CatmullEvaluator.Companion.fromPoints(ys, xs))
+            }
+           
+            "linear" -> LinearCurve(xs.toDoubleArray(), ys.toDoubleArray())
+
+            else -> throw IllegalArgumentException()
+        }
     }
 
     val defaultBindings = ConcurrentHashMap<String, Any>().apply {

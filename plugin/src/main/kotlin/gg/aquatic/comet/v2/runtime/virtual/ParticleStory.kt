@@ -200,7 +200,7 @@ class ParticleStory(
         val result = mutableListOf<PacketWrapper<*>>()
 
         var tpd = previousData.teleportationDuration
-        var currPos = optimizedPositions[positionsCursor]
+        val currPos = optimizedPositions[positionsCursor]
 //        while (currPos.time < time) {
 //            positionsCursor++
 //            currPos = optimizedPositions[positionsCursor]
@@ -227,7 +227,7 @@ class ParticleStory(
         var displayData = previousData.displayData
         var updateContent = false
         if (contentCursor < optimizedContent.size) { // if larger, then we don't need to update anything anyway. content doesn't require lookahead
-            var currContent = optimizedContent[contentCursor]
+            val currContent = optimizedContent[contentCursor]
 //            while (currContent.time < time) {
 //                contentCursor++
 //                currContent = optimizedContent[contentCursor]
@@ -241,7 +241,7 @@ class ParticleStory(
             }
         }
 
-        var currTransform = optimizedTransformable[transformableCursor]
+        val currTransform = optimizedTransformable[transformableCursor]
 //        while (currTransform.time < time) {
 //            transformableCursor++
 //            currTransform = optimizedTransformable[transformableCursor]
@@ -273,7 +273,7 @@ class ParticleStory(
                         next.scaleZ,
                     ),
                     billboard,
-                    tpd,
+                    0,
                     next.time - currTransform.time + 1,
                     tpd,
                     lightData,
@@ -282,26 +282,28 @@ class ParticleStory(
                     sensitiveCentering,
                 )
 
-                val metadata = EntityDataBuilder.getDataFor(
-                    data,
-                    flags = UpdateFlags(
-                        display = updateContent,
-                        transparency = previousData.transparency != data.transparency,
-                        translation = false,
-                        rotation = previousData.rotation != data.rotation,
-                        scale = previousData.scale != data.scale,
-                        transformationInterpolation = previousData.transformationInterpolationDuration != data.transformationInterpolationDuration,
-                        teleportationDuration = previousData.teleportationDuration != data.teleportationDuration,
-                    ),
-                    initial = false,
-                    usePUA = false,
+                val flags = UpdateFlags(
+                    display = updateContent,
+                    transparency = previousData.transparency != data.transparency,
+                    translation = false,
+                    rotation = previousData.rotation != data.rotation,
+                    scale = previousData.scale != data.scale,
+                    transformationInterpolation = previousData.transformationInterpolationDuration != data.transformationInterpolationDuration,
+                    teleportationDuration = previousData.teleportationDuration != data.teleportationDuration,
                 )
 
-                previousData = data.copy()
+                if (flags.anyRelevantTrue()) {
+                    val metadata = EntityDataBuilder.getDataFor(
+                        data,
+                        flags = flags,
+                        initial = false,
+                        usePUA = false,
+                    )
 
-                if (metadata != null) {
                     result += WrapperPlayServerEntityMetadata(id, metadata)
                 }
+
+                previousData = data.copy()
             }
         }
 

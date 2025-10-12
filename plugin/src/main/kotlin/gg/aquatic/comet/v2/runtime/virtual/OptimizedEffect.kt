@@ -104,7 +104,7 @@ class OptimizedEffect(
 
         for (player in runtime.players) {
             val show =
-                api.invokeShowPlayer(player) ?: (player.location.distance(pose.location) <= 128.0) //TODO: Culling!
+                api.invokeShowPlayer(player) ?: (player.location.distance(pose.location) <= 1024.0) //TODO: Culling!
             if (show) {
                 for (packet in dataPackets) {
                     PacketEvents.getAPI().playerManager.sendPacketSilently(player, packet)
