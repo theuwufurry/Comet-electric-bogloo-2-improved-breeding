@@ -9,4 +9,5 @@ class Package(
     val textures: List<Texture>,
     val models: List<Model>,
     val effects: List<File>,
+    val js: List<File>,
 )

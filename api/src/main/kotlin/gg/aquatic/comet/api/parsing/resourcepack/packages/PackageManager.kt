@@ -35,6 +35,7 @@ object PackageManager {
             val textures = mutableListOf<Texture>()
             val models = mutableListOf<Model>()
             val effects = mutableListOf<File>()
+            val js = mutableListOf<File>()
 
             val texturesDir = File(packageFile, "textures")
             if (texturesDir.exists() && texturesDir.isDirectory) {
@@ -65,10 +66,20 @@ object PackageManager {
                     }
                 }
             }
-            
-            packages += Package(packageFile.nameWithoutExtension, textures, models, effects)
+
+            val jsDir = File(packageFile, "js")
+            if (jsDir.exists() && jsDir.isDirectory) {
+                val ls = jsDir.listFiles()!!
+                for (f in ls) {
+                    if (f.extension == "js") {
+                        js += f
+                    }
+                }
+            }
+
+            packages += Package(packageFile.nameWithoutExtension, textures, models, effects, js)
         }
-        
+
         this.packages = packages
     }
 }

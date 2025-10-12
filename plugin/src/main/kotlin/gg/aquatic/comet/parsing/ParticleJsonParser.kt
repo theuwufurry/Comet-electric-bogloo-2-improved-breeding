@@ -74,6 +74,7 @@ import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
 import gg.aquatic.comet.particle.transformation.translation.ExpressionTranslationComponent
 import gg.aquatic.comet.particle.variable.RandomsInitializerComponent
 import gg.aquatic.comet.snowstorm.SnowstormTranspiler
+import gg.aquatic.comet.v2.parsing.V2Parser
 import org.joml.Vector3d
 import java.io.File
 import java.io.FileInputStream
