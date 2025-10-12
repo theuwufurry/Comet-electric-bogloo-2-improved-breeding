@@ -2,7 +2,7 @@ package gg.aquatic.comet.v2.runtime
 
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.v2.parsing.V2Parser
-import gg.aquatic.comet.v2.parsing.api.DefaultAPI
+import gg.aquatic.comet.v2.parsing.api.default.DefaultAPI
 import gg.aquatic.comet.v2.parsing.api.EffectRuntimeProxy
 import gg.aquatic.comet.v2.parsing.api.JSEffectAPI
 import gg.aquatic.comet.v2.runtime.context.WorldContext
