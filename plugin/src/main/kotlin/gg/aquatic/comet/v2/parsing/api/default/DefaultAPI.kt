@@ -47,6 +47,10 @@ object DefaultAPI {
         })
     }
 
+    fun rate(rate: Double): RateProvider {
+        return RateProvider(rate)
+    }
+
     val defaultBindings = ConcurrentHashMap<String, Any>().apply {
         this["comet"] = DefaultAPI
     }
