@@ -5,6 +5,7 @@ import gg.aquatic.comet.api.particle.display.DisplayData
 import org.joml.Quaternionf
 import org.joml.Vector3f
 
+@JvmRecord
 data class EntityData(
     val displayData: DisplayData<*>,
     val color: Int,

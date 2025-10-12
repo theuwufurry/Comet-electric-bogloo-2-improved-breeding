@@ -46,9 +46,6 @@ data class V2ParticleData(
         "rotation",
         "scale",
         "billboardConstraints",
-        "interpolationDelay",
-        "transformationInterpolationDuration",
-        "teleportationDuration",
         "light",
         "seeThrough",
         "shadow",
@@ -75,9 +72,6 @@ data class V2ParticleData(
             "rotation" -> rotation
             "scale" -> scale
             "billboardConstraints" -> billboardConstraints
-            "interpolationDelay" -> interpolationDelay
-            "transformationInterpolationDuration" -> transformationInterpolationDuration
-            "teleportationDuration" -> teleportationDuration
             "light" -> light
             "seeThrough" -> seeThrough
             "shadow" -> shadow
@@ -115,9 +109,6 @@ data class V2ParticleData(
                     "rotation" -> rotation = it.`as`(Quaternionf::class.java)
                     "scale" -> scale = it.`as`(Vector3f::class.java)
                     "billboardConstraints" -> billboardConstraints = it.`as`(BillboardConstraints::class.java)
-                    "interpolationDelay" -> interpolationDelay = it.asInt()
-                    "transformationInterpolationDuration" -> transformationInterpolationDuration = it.asInt()
-                    "teleportationDuration" -> teleportationDuration = it.asInt()
                     "light" -> light = it.`as`(LightData::class.java)
                     "seeThrough" -> seeThrough = it.asBoolean()
                     "shadow" -> shadow = it.asBoolean()

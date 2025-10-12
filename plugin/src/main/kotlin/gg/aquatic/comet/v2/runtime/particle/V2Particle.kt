@@ -50,7 +50,6 @@ class V2Particle(val data: V2ParticleData) {
             data.origin.z + data.relPos.z
         )
 
-
         result += WrapperPlayServerSpawnEntity(
             id,
             Optional.of(uuid),

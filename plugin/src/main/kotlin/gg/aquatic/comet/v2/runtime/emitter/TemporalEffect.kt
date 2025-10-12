@@ -12,6 +12,7 @@ import gg.aquatic.comet.v2.runtime.EffectRuntime
 import gg.aquatic.comet.v2.runtime.particle.V2Particle
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.joml.Vector3d
+import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -24,13 +25,19 @@ class TemporalEffect(
     override val api: JSEffectAPI,
     override var parent: Parent?,
 ) : Effect {
+    override val uuid: UUID = UUID.randomUUID()
     val particles = mutableListOf<V2Particle>()
     val particlesToAdd = mutableListOf<V2Particle>()
 
     private val onKill = CopyOnWriteArrayList<() -> Unit>()
 
     private val blocked = AtomicBoolean(false)
-    override val valid = AtomicBoolean(true)
+    private val validAtomic = AtomicBoolean(true)
+    override var valid: Boolean
+        get() = validAtomic.get()
+        set(value) {
+            validAtomic.set(value)
+        }
 
     override val proxy = V2EffectProxy(this)
 
@@ -57,11 +64,10 @@ class TemporalEffect(
     }
 
     override fun tick() {
-        if (!valid.get()) return
+        if (!valid) return
 
-        blocked.set(true)
+        if (!blocked.compareAndSet(false, true)) return
 
-        particlesToAdd.clear()
 
         api.invokeEffectTick(proxy)
 
@@ -85,7 +91,7 @@ class TemporalEffect(
 
         if (proxy.dead) {
             api.invokeEffectDeath(proxy)
-            valid.set(false)
+            valid = false
             runtime.remove(this)
             return
         }
@@ -94,6 +100,8 @@ class TemporalEffect(
             dataPackets += particleToAdd.getAddPacket()
             particles += particleToAdd
         }
+
+        particlesToAdd.clear()
 
         val destroyPacket = if (killedIDs.isEmpty()) null else {
             WrapperPlayServerDestroyEntities(*killedIDs.toIntArray())
@@ -113,7 +121,7 @@ class TemporalEffect(
             }
         }
 
-        blocked.set(true)
+        blocked.set(false)
     }
 
     override fun createParticle(): V2ParticleData {
@@ -132,7 +140,7 @@ class TemporalEffect(
     }
 
     override fun onKill() {
-        valid.set(false)
+        valid = false
         onKill.forEach { it() }
         onKill.clear()
 
@@ -149,5 +157,4 @@ class TemporalEffect(
     override fun registerOnKill(callable: () -> Unit) {
         onKill += callable
     }
-
 }

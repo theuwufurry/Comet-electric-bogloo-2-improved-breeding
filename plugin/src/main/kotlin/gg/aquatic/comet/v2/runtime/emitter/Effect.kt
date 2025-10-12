@@ -6,9 +6,11 @@ import gg.aquatic.comet.v2.parsing.api.JSEffectAPI
 import gg.aquatic.comet.v2.parsing.api.V2EffectProxy
 import gg.aquatic.comet.v2.parsing.api.V2ParticleData
 import gg.aquatic.comet.v2.runtime.EffectRuntime
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 
 interface Effect {
+    val uuid: UUID
     val runtime: EffectRuntime
     val api: JSEffectAPI
     val proxy: V2EffectProxy
@@ -27,7 +29,7 @@ interface Effect {
 
     fun registerOnKill(callable: () -> Unit)
 
-    val valid: AtomicBoolean
+    var valid: Boolean
 
     fun spawnParticle(data: V2ParticleData)
 }

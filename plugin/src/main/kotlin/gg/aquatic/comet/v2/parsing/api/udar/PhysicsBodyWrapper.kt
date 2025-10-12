@@ -2,14 +2,14 @@ package gg.aquatic.comet.v2.parsing.api.udar
 
 import com.ixume.udar.body.active.ActiveBody
 import gg.aquatic.comet.api.AbstractParticleEmitter
+import gg.aquatic.comet.v2.runtime.EffectRuntime
 import gg.aquatic.comet.v2.runtime.WorldRuntime.Companion.cometRuntime
 import org.bukkit.Bukkit
 import org.graalvm.polyglot.Value
 import org.graalvm.polyglot.proxy.ProxyExecutable
 import org.graalvm.polyglot.proxy.ProxyObject
 
-data class PhysicsBodyWrapper(val actual: ActiveBody) : ProxyObject {
-    private val runtime = actual.world.cometRuntime
+data class PhysicsBodyWrapper(val actual: ActiveBody, val runtime: EffectRuntime) : ProxyObject {
     private val keys = arrayOf(
         "actual",
         "hookManager",

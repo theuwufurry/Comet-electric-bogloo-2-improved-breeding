@@ -51,7 +51,7 @@ class WorldContext(
                 this += Method("spawnPhysicsModel") {
                     val effectArg = it[0]!!
                     val options = it[1]!!
-                    val callback = it[2]
+                    val callback = it.getOrNull(2)
 
                     val modelID = options.getMember("id").asString()
                     val pos = options.getMember("pos").`as`(Vector3d::class.java)
@@ -63,6 +63,7 @@ class WorldContext(
                     val effect = effectArg.asProxyObject<V2EffectProxy>()
                     val world = effect.effect.relPose.world
                     val physicsWorld = world.physicsWorld ?: return@Method null
+                    val worldRuntime = world.cometRuntime
                     Bukkit.getScheduler().runTask(AbstractParticleEmitter.Companion.INSTANCE, Runnable {
                         val model = RPManager.modelMap[modelID] ?: return@Runnable
                         val body = JavaModelBody.Companion.construct(physicsWorld, pos, model, scale)
@@ -78,11 +79,11 @@ class WorldContext(
                         }
 
                         callback?.let {
-                            world.cometRuntime.submitExecutable(object : BoundExecutable {
+                            worldRuntime.submitExecutable(object : BoundExecutable {
                                 override val effect: Effect = effect.effect
 
                                 override fun execute(context: WorldContext) {
-                                    callback.execute(PhysicsBodyWrapper(body))
+                                    callback.execute(PhysicsBodyWrapper(body, worldRuntime))
                                 }
                             })
                         }
@@ -92,7 +93,7 @@ class WorldContext(
                     val effectArg = args[0]!!
                     val emitterID = args[1]!!.asString()
                     val options = args[2]!!
-                    val callback = args[3]
+                    val callback = args.getOrNull(3)
 
                     val effect = effectArg.asProxyObject<V2EffectProxy>()
                     val world = effect.effect.relPose.world
@@ -124,7 +125,7 @@ class WorldContext(
                     val effectArg = args[0]!!
                     val id = args[1]!!.asString()
                     val options = args[2]!!
-                    val callback = args[3]
+                    val callback = args.getOrNull(3)
 
                     val effect = effectArg.asProxyObject<V2EffectProxy>()
                     val world = effect.effect.relPose.world

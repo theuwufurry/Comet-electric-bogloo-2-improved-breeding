@@ -9,11 +9,13 @@ import gg.aquatic.comet.v2.runtime.context.WorldContext
 import gg.aquatic.comet.v2.runtime.emitter.Effect
 import gg.aquatic.comet.v2.runtime.emitter.TemporalEffect
 import gg.aquatic.comet.v2.runtime.executable.BoundExecutable
+import gg.aquatic.comet.v2.runtime.virtual.OptimizedEffect
 import org.bukkit.Bukkit
 import org.bukkit.World
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitTask
 import org.graalvm.polyglot.Context
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
@@ -32,6 +34,7 @@ class WorldRuntime(
     private val toExecute = ConcurrentLinkedQueue<BoundExecutable>()
     private val initializationRequests = ConcurrentLinkedQueue<EffectInitializationRequest>()
     private val effectsToRemove = ConcurrentLinkedQueue<Effect>()
+    private val uuids = CopyOnWriteArrayList<UUID>()
     private val effects = CopyOnWriteArrayList<Effect>()
 
     private var task: BukkitTask? = null
@@ -120,7 +123,7 @@ class WorldRuntime(
         while (toExecute.poll()?.let { exec = it } != null) {
             exec!!
 
-            if (exec.effect in effects) {
+            if (exec.effect.uuid in uuids) {
                 exec.execute(worldContext)
             } else {
                 exec.invalidate()
@@ -133,7 +136,12 @@ class WorldRuntime(
         var req: EffectInitializationRequest? = null
         while (initializationRequests.poll()?.let { req = it } != null) {
             req!!
-            val effect = TemporalEffect(
+            val effect = if (req.unrealized.optimization.enabled) OptimizedEffect(
+                relPose = req.pose,
+                runtime = this,
+                api = req.unrealized,
+                parent = req.parent,
+            ) else TemporalEffect(
                 relPose = req.pose,
                 runtime = this,
                 api = req.unrealized,
@@ -142,16 +150,19 @@ class WorldRuntime(
 
             req.after.accept(effect)
             added += effect
+            uuids += effect.uuid
         }
 
         effects += added
     }
 
     private fun processRemovals() {
-        effects -= effectsToRemove
         var effect: Effect? = null
         while (effectsToRemove.poll()?.let { effect = it } != null) {
             effect!!
+
+            effects -= effect
+            uuids -= effect.uuid
 
             effect.onKill()
         }

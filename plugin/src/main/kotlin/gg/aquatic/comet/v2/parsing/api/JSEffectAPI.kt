@@ -5,6 +5,7 @@ import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.v2.runtime.EffectInitializationRequest
 import gg.aquatic.comet.v2.runtime.WorldRuntime.Companion.cometRuntime
 import gg.aquatic.comet.v2.runtime.emitter.Effect
+import gg.aquatic.comet.v2.runtime.virtual.OptimizationSettings
 import org.bukkit.World
 import org.bukkit.entity.Player
 import org.graalvm.polyglot.Context
@@ -14,6 +15,16 @@ import org.graalvm.polyglot.Value
 class JSEffectAPI(
     val context: Context,
 ) {
+    @JvmField val optimization = OptimizationSettings(
+        enabled = true,
+        positionTolerance = 0.1,
+        scaleTolerance = 0.1,
+        colorTolerance = 24.0,
+        rotTolerance = 0.1,
+        opacityTolerance = 24.0,
+        interval = 100
+    )
+    
     val listeners = mutableMapOf<String, MutableList<Value>>()
     val distinctCallbacks = mutableMapOf<String, Value>()
 
@@ -40,7 +51,7 @@ class JSEffectAPI(
                 listener.executeVoid(effect)
             } catch (e: Exception) {
                 println("Error invoking listener for $EFFECT_TICK_EVENT_ID")
-                println(e.message)
+                e.printStackTrace()
             }
         }
     }
@@ -51,7 +62,7 @@ class JSEffectAPI(
                 listener.executeVoid(effect)
             } catch (e: Exception) {
                 println("Error invoking listener for $EFFECT_TICK_EVENT_ID")
-                println(e.message)
+                e.printStackTrace()
             }
         }
     }
@@ -62,7 +73,7 @@ class JSEffectAPI(
                 listener.executeVoid(effect)
             } catch (e: Exception) {
                 println("Error invoking listener for $EFFECT_DEATH_EVENT_ID")
-                println(e.message)
+                e.printStackTrace()
             }
         }
     }
@@ -73,7 +84,7 @@ class JSEffectAPI(
                 listener.executeVoid(particleData)
             } catch (e: Exception) {
                 println("Error invoking listener for $PARTICLE_INIT_EVENT_ID")
-                println(e.message)
+                e.printStackTrace()
             }
         }
     }
@@ -84,7 +95,7 @@ class JSEffectAPI(
                 listener.executeVoid(particleData)
             } catch (e: Exception) {
                 println("Error invoking listener for $PARTICLE_TICK_EVENT_ID")
-                println(e.message)
+                e.printStackTrace()
             }
         }
     }
@@ -95,7 +106,7 @@ class JSEffectAPI(
                 listener.executeVoid(particleData)
             } catch (e: Exception) {
                 println("Error invoking listener for $PARTICLE_DEATH_EVENT_ID")
-                println(e.message)
+                e.printStackTrace()
             }
         }
     }
@@ -110,7 +121,7 @@ class JSEffectAPI(
                 listener.executeVoid(*args)
             } catch (e: Exception) {
                 println("Error invoking listener for $event: ${e.message}")
-                println(e.message)
+                e.printStackTrace()
             }
         }
     }
