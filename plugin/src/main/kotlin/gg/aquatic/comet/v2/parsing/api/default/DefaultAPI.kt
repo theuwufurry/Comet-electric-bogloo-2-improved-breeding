@@ -16,6 +16,10 @@ object DefaultAPI {
         return SpriteData(id)
     }
 
+    fun sprite(id: String): SpriteData {
+        return SpriteData(id)
+    }
+
     fun light(sky: Int, block: Int): LightData {
         return LightData(sky, block)
     }

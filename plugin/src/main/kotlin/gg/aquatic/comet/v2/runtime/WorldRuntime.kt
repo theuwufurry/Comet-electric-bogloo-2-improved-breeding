@@ -2,10 +2,10 @@ package gg.aquatic.comet.v2.runtime
 
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.v2.parsing.V2Parser
-import gg.aquatic.comet.v2.parsing.api.default.DefaultAPI
 import gg.aquatic.comet.v2.parsing.api.EffectRuntimeProxy
 import gg.aquatic.comet.v2.parsing.api.JSEffectAPI
 import gg.aquatic.comet.v2.parsing.api.default.DefaultAPI.loadAPI
+import gg.aquatic.comet.v2.parsing.context.JSContextProvider
 import gg.aquatic.comet.v2.runtime.context.WorldContext
 import gg.aquatic.comet.v2.runtime.emitter.Effect
 import gg.aquatic.comet.v2.runtime.emitter.TemporalEffect
@@ -15,7 +15,6 @@ import org.bukkit.Bukkit
 import org.bukkit.World
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitTask
-import org.graalvm.polyglot.Context
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -86,11 +85,7 @@ class WorldRuntime(
         clear()
 
         for ((id, source) in V2Parser.effects) {
-            val context = Context.newBuilder("js")
-                .engine(V2Parser.engine)
-                .allowHostAccess(V2Parser.hostAccess)
-                .allowAllAccess(true)
-                .build()
+            val context = JSContextProvider.createContext()
 
             val api = JSEffectAPI(context)
             context.getBindings("js").putMember("effect", api)
