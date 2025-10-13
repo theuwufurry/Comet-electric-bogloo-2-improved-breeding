@@ -23,28 +23,45 @@ object JSContextProvider {
 
     val hostAccessProcessors = CopyOnWriteArrayList<Consumer<HostAccess.Builder>>().apply {
         this += Consumer { hostAccess ->
-            hostAccess.targetTypeMapping(
-                Value::class.java,
-                Vector3d::class.java,
-                { value -> value.hasMembers() },
-                { value ->
-                    Vector3d(
-                        value.getMemberOrNull("x")?.asDouble() ?: 0.0,
-                        value.getMemberOrNull("y")?.asDouble() ?: 0.0,
-                        value.getMemberOrNull("z")?.asDouble() ?: 0.0,
-                    )
-                }
-            )
+            hostAccess
+                .targetTypeMapping(
+                    Value::class.java,
+                    Vector3d::class.java,
+                    { value -> value.hasMembers() || value.hasArrayElements() },
+                    { value ->
+                        if (value.hasArrayElements()) {
+                            Vector3d(
+                                value.getArrayElement(0L).asDouble(),
+                                value.getArrayElement(1L).asDouble(),
+                                value.getArrayElement(2L).asDouble(),
+                            )
+                        } else {
+                            Vector3d(
+                                value.getMemberOrNull("x")?.asDouble() ?: 0.0,
+                                value.getMemberOrNull("y")?.asDouble() ?: 0.0,
+                                value.getMemberOrNull("z")?.asDouble() ?: 0.0,
+                            )
+                        }
+                    }
+                )
                 .targetTypeMapping(
                     Value::class.java,
                     Vector3f::class.java,
-                    { value -> value.hasMembers() },
+                    { value -> value.hasMembers() || value.hasArrayElements() },
                     { value ->
-                        Vector3f(
-                            value.getMemberOrNull("x")?.asFloat() ?: 0f,
-                            value.getMemberOrNull("y")?.asFloat() ?: 0f,
-                            value.getMemberOrNull("z")?.asFloat() ?: 0f,
-                        )
+                        if (value.hasArrayElements()) {
+                            Vector3f(
+                                value.getArrayElement(0L).asDouble().toFloat(),
+                                value.getArrayElement(1L).asDouble().toFloat(),
+                                value.getArrayElement(2L).asDouble().toFloat(),
+                            )
+                        } else {
+                            Vector3f(
+                                value.getMemberOrNull("x")?.asDouble()?.toFloat() ?: 0f,
+                                value.getMemberOrNull("y")?.asDouble()?.toFloat() ?: 0f,
+                                value.getMemberOrNull("z")?.asDouble()?.toFloat() ?: 0f,
+                            )
+                        }
                     }
                 )
                 .targetTypeMapping(

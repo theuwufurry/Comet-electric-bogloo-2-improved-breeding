@@ -255,6 +255,10 @@ class ParticleStory(
                 return EntityUpdateResult.Dead
             } else {
                 val next = optimizedTransformable[transformableCursor]
+                val interpolationDuration =
+                    if (previousData.transparency > 127 != next.opacity > 127)
+                        0
+                    else next.time - currTransform.time + 1
                 val data = EntityData(
                     displayData,
                     color,
@@ -274,7 +278,7 @@ class ParticleStory(
                     ),
                     billboard,
                     0,
-                    next.time - currTransform.time + 1,
+                    interpolationDuration,
                     tpd,
                     lightData,
                     seeThrough,

@@ -1,6 +1,5 @@
 package gg.aquatic.comet.v2.parsing.api.default
 
-import com.ixume.udar.body.active.ActiveBody
 import gg.aquatic.comet.api.particle.LightData
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
 import gg.aquatic.comet.particle.macro.CatmullEvaluator
@@ -9,6 +8,7 @@ import gg.aquatic.comet.v2.parsing.api.udar.PhysicsBodyWrapper
 import gg.aquatic.comet.v2.parsing.getMemberOrNull
 import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.Value
+import org.joml.Vector3d
 import java.util.concurrent.ConcurrentHashMap
 
 object DefaultAPI {
@@ -24,12 +24,9 @@ object DefaultAPI {
         return LightData(sky, block)
     }
 
-    fun parentOf(body: ActiveBody): UdarBodyParent {
-        return UdarBodyParent(body)
-    }
-
-    fun parentOf(body: PhysicsBodyWrapper): UdarBodyParent {
-        return UdarBodyParent(body.actual)
+    @JvmOverloads
+    fun parentOf(body: PhysicsBodyWrapper, relPos: Vector3d = Vector3d()): UdarBodyParent {
+        return UdarBodyParent(body.actual, relPos)
     }
 
     fun colorOf(r: Int, g: Int, b: Int): Int {
@@ -73,7 +70,7 @@ object DefaultAPI {
             "catmull" -> {
                 CatmullCurve(CatmullEvaluator.Companion.fromPoints(ys, xs))
             }
-           
+
             "linear" -> LinearCurve(xs.toDoubleArray(), ys.toDoubleArray())
 
             else -> throw IllegalArgumentException()
