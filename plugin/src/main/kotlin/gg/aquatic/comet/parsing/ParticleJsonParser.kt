@@ -74,7 +74,6 @@ import gg.aquatic.comet.particle.transformation.scale.ScaleComponent
 import gg.aquatic.comet.particle.transformation.translation.ExpressionTranslationComponent
 import gg.aquatic.comet.particle.variable.RandomsInitializerComponent
 import gg.aquatic.comet.snowstorm.SnowstormTranspiler
-import gg.aquatic.comet.v2.parsing.V2Parser
 import org.joml.Vector3d
 import java.io.File
 import java.io.FileInputStream
@@ -250,12 +249,15 @@ object ParticleJsonParser : AbstractParticleJsonParser() {
             return existing.emitter
         }
 
+        val reader = FileReader(file)
         val rootObject = try {
-            JsonParser.parseReader(FileReader(file)).asJsonObject
+            JsonParser.parseReader(reader).asJsonObject
         } catch (e: Exception) {
             AbstractParticleEmitter.INSTANCE.logger.severe("Failed parsing ${file.nameWithoutExtension}! Error:")
             AbstractParticleEmitter.INSTANCE.logger.severe(e.message)
             return null
+        } finally {
+            reader.close()
         }
 
         val em = parseComponents(rootObject, file.nameWithoutExtension) ?: return null

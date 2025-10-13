@@ -1,5 +1,7 @@
 package gg.aquatic.comet.command
 
+import com.google.gson.JsonNull
+import com.google.gson.JsonParser
 import gg.aquatic.comet.api.emitter.environment.parseEnvironmentData
 import gg.aquatic.comet.api.emitter.parent.pose
 import gg.aquatic.comet.v2.parsing.V2Parser
@@ -61,7 +63,7 @@ object V2SpawnCommand : ICommand {
             val (yaw, pitch, data) = try {
                 when (args.size) {
                     7 -> {
-                        Triple(0f, 0f, args[6].parseEnvironmentData())
+                        Triple(0f, 0f, JsonParser.parseString(args[6])!!)
                     }
 
                     in 8..9 -> {
@@ -77,12 +79,11 @@ object V2SpawnCommand : ICommand {
                             return@getAPI
                         }
 
-                        val data = (if (args.size == 9) args[8] else "{}").parseEnvironmentData()
-                        Triple(yaw, pitch, data)
+                        Triple(yaw, pitch, JsonNull.INSTANCE!!)
                     }
 
                     else -> {
-                        Triple(0f, 0f, "{}".parseEnvironmentData())
+                        Triple(0f, 0f, JsonNull.INSTANCE!!)
                     }
                 }
             } catch (ignored: Exception) {
@@ -96,6 +97,7 @@ object V2SpawnCommand : ICommand {
                 world = world, 
                 pose = pose,
                 parent = null,
+                data = data,
             )
         }
     }

@@ -3,11 +3,13 @@ package gg.aquatic.comet.v2.runtime.emitter
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.wrapper.PacketWrapper
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
+import com.google.gson.JsonElement
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.v2.parsing.api.JSEffectAPI
 import gg.aquatic.comet.v2.parsing.api.V2EffectProxy
 import gg.aquatic.comet.v2.parsing.api.V2ParticleData
+import gg.aquatic.comet.v2.parsing.api.json.JsonElementProxy
 import gg.aquatic.comet.v2.runtime.EffectRuntime
 import gg.aquatic.comet.v2.runtime.particle.V2Particle
 import it.unimi.dsi.fastutil.ints.IntArrayList
@@ -24,6 +26,7 @@ class TemporalEffect(
     override val runtime: EffectRuntime,
     override val api: JSEffectAPI,
     override var parent: Parent?,
+    val data: JsonElement,
 ) : Effect {
     override val uuid: UUID = UUID.randomUUID()
     val particles = mutableListOf<V2Particle>()
@@ -39,7 +42,7 @@ class TemporalEffect(
             validAtomic.set(value)
         }
 
-    override val proxy = V2EffectProxy(this)
+    override val proxy = V2EffectProxy(this, data)
 
     override val pose: Pose
         get() = relPose.let {

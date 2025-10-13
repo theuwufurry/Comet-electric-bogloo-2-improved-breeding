@@ -1,5 +1,6 @@
 package gg.aquatic.comet.v2.runtime.virtual
 
+import com.google.gson.JsonElement
 import com.ixume.optimization.LocalPacketOptimizer
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
@@ -21,6 +22,7 @@ class VirtualEffect(
     override val runtime: EffectRuntime,
     override val api: JSEffectAPI,
     override var parent: Parent?,
+    val data: JsonElement,
 ) : Effect {
     private val optimizer = LocalPacketOptimizer()
     private var time = 1
@@ -31,7 +33,7 @@ class VirtualEffect(
 
     override var valid = true
 
-    override val proxy = V2EffectProxy(this)
+    override val proxy = V2EffectProxy(this, data)
 
     override val pose: Pose
         get() = relPose.let {

@@ -61,7 +61,7 @@ data class V2ParticleData(
 
     override fun getMember(key: String?): Any? {
         return when (key) {
-            "effect" -> effect
+            "effect" -> effect.proxy
             "uuid" -> uuid
             "dead" -> dead
             "age" -> age

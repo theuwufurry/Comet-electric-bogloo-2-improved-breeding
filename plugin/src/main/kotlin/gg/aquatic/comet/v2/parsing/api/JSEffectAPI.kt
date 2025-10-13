@@ -1,5 +1,6 @@
 package gg.aquatic.comet.v2.parsing.api
 
+import com.google.gson.JsonElement
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.v2.runtime.EffectInitializationRequest
@@ -134,6 +135,7 @@ class JSEffectAPI(
         world: World,
         pose: Pose,
         parent: Parent?,
+        data: JsonElement,
         callback: (Effect) -> Unit = {},
     ) {
         world.cometRuntime.registerRequest(
@@ -141,6 +143,7 @@ class JSEffectAPI(
                 unrealized = this,
                 pose = pose,
                 parent = parent,
+                data = data,
                 callback
             )
         )

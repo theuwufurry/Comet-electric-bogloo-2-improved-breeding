@@ -1,5 +1,6 @@
 package gg.aquatic.comet.v2.runtime.context
 
+import com.google.gson.JsonNull
 import com.ixume.udar.body.active.JavaModelBody
 import com.ixume.udar.physicsWorld
 import com.ixume.udar.rp.RPManager
@@ -9,7 +10,9 @@ import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.v2.parsing.api.V2EffectProxy
+import gg.aquatic.comet.v2.parsing.api.json.JsonElementProxy
 import gg.aquatic.comet.v2.parsing.api.udar.PhysicsBodyWrapper
+import gg.aquatic.comet.v2.parsing.getMemberOrNull
 import gg.aquatic.comet.v2.runtime.WorldRuntime.Companion.cometRuntime
 import gg.aquatic.comet.v2.runtime.emitter.Effect
 import gg.aquatic.comet.v2.runtime.executable.BoundExecutable
@@ -130,8 +133,9 @@ class WorldContext(
                     val effect = effectArg.asProxyObject<V2EffectProxy>()
                     val world = effect.effect.relPose.world
                     val runtime = world.cometRuntime
-                    val pos = options.getMember("relPos")?.`as`(Vector3d::class.java) ?: Vector3d()
+                    val pos = options.getMemberOrNull("relPos")?.`as`(Vector3d::class.java) ?: Vector3d()
                     val parent = options.getMember("parent")?.`as`(Parent::class.java)
+                    val data = options.getMemberOrNull("data")?.asProxyObject<JsonElementProxy>()?.backer ?: JsonNull.INSTANCE
 
                     runtime.getAPI(id) { api ->
                         api ?: return@getAPI
@@ -144,6 +148,7 @@ class WorldContext(
                                 rot = Quaterniond(),
                             ),
                             parent = parent,
+                            data = data,
                         ) { eff -> callback?.executeVoid(eff.proxy) }
                     }
                 }

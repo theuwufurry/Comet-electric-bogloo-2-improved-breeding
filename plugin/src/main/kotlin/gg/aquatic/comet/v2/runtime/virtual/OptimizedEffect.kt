@@ -3,6 +3,7 @@ package gg.aquatic.comet.v2.runtime.virtual
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.wrapper.PacketWrapper
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
+import com.google.gson.JsonElement
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.v2.parsing.api.JSEffectAPI
@@ -33,6 +34,7 @@ class OptimizedEffect(
     override val runtime: EffectRuntime,
     override val api: JSEffectAPI,
     override var parent: Parent?,
+    val data: JsonElement,
 ) : Effect {
     override val uuid: UUID = UUID.randomUUID()
     private val blocked = AtomicBoolean(false)
@@ -57,7 +59,7 @@ class OptimizedEffect(
             validAtomic.set(value)
         }
 
-    private val virtualRuntime = VirtualRuntime(uuid, relPose, api, parent)
+    private val virtualRuntime = VirtualRuntime(uuid, relPose, api, parent, data)
     private val ongoingStories = mutableListOf<ParticleStory>()
 
     override fun tick() {

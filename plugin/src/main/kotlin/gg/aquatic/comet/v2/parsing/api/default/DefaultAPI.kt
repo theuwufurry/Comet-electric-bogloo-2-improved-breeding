@@ -1,9 +1,11 @@
 package gg.aquatic.comet.v2.parsing.api.default
 
+import com.google.gson.JsonPrimitive
 import gg.aquatic.comet.api.particle.LightData
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
 import gg.aquatic.comet.particle.macro.CatmullEvaluator
 import gg.aquatic.comet.udar.UdarBodyParent
+import gg.aquatic.comet.v2.parsing.api.json.JsonElementProxy
 import gg.aquatic.comet.v2.parsing.api.udar.PhysicsBodyWrapper
 import gg.aquatic.comet.v2.parsing.getMemberOrNull
 import org.graalvm.polyglot.Context
@@ -75,6 +77,18 @@ object DefaultAPI {
 
             else -> throw IllegalArgumentException()
         }
+    }
+    
+    fun element(value: String): JsonElementProxy {
+        return JsonElementProxy(JsonPrimitive(value))
+    }
+    
+    fun element(value: Double): JsonElementProxy {
+        return JsonElementProxy(JsonPrimitive(value))
+    }
+
+    fun element(value: Boolean): JsonElementProxy {
+        return JsonElementProxy(JsonPrimitive(value))
     }
 
     val defaultBindings = ConcurrentHashMap<String, Any>().apply {

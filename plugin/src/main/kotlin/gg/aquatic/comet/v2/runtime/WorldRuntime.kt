@@ -137,11 +137,13 @@ class WorldRuntime(
                 runtime = this,
                 api = req.unrealized,
                 parent = req.parent,
+                data = req.data,
             ) else TemporalEffect(
                 relPose = req.pose,
                 runtime = this,
                 api = req.unrealized,
                 parent = req.parent,
+                data = req.data,
             )
 
             req.after.accept(effect)

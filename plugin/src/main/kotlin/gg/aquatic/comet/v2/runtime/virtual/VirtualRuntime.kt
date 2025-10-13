@@ -1,5 +1,6 @@
 package gg.aquatic.comet.v2.runtime.virtual
 
+import com.google.gson.JsonElement
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.v2.parsing.api.EffectRuntimeProxy
@@ -16,6 +17,7 @@ class VirtualRuntime(
     val relPose: Pose,
     val api: JSEffectAPI,
     var parent: Parent?,
+    val data: JsonElement,
 ) : EffectRuntime {
     override val proxy: EffectRuntimeProxy = EffectRuntimeProxy(this)
     val timestampedExecutables = Int2ObjectOpenHashMap<MutableList<BoundExecutable>>().apply {
@@ -28,6 +30,7 @@ class VirtualRuntime(
         runtime = this,
         api = api,
         parent = parent,
+        data = data,
     )
 
     init {

@@ -1,13 +1,19 @@
 package gg.aquatic.comet.v2.parsing.api
 
+import com.google.gson.JsonElement
 import gg.aquatic.comet.api.emitter.parent.Parent
+import gg.aquatic.comet.v2.parsing.api.json.JsonElementProxy
 import gg.aquatic.comet.v2.runtime.emitter.Effect
 import org.graalvm.polyglot.Value
 import org.graalvm.polyglot.proxy.ProxyExecutable
 import org.graalvm.polyglot.proxy.ProxyObject
 import org.joml.Vector3d
 
-class V2EffectProxy(val effect: Effect) : ProxyObject {
+class V2EffectProxy(
+    val effect: Effect,
+    val data: JsonElement,
+) : ProxyObject {
+    private var dataProxy = JsonElementProxy(data)
     private val defaultFields = arrayOf(
         "age",
         "dead",
@@ -17,6 +23,7 @@ class V2EffectProxy(val effect: Effect) : ProxyObject {
         "parent",
         "runtime",
         "createParticle",
+        "data",
     )
 
     private val allFields = mutableSetOf<String>().also { it += defaultFields }
@@ -39,6 +46,7 @@ class V2EffectProxy(val effect: Effect) : ProxyObject {
             "parent" -> effect.parent
             "runtime" -> effect.runtime.proxy
             "createParticle" -> createParticleCallable
+            "data" -> dataProxy
             else -> extraData[key]
         }
     }
@@ -67,6 +75,7 @@ class V2EffectProxy(val effect: Effect) : ProxyObject {
                     val vec = value!!.`as`(Vector3d::class.java)
                     effect.relPose.pos.set(vec)
                 }
+                "data" -> dataProxy = value!!.asProxyObject()
             }
         } else {
             allFields += key
