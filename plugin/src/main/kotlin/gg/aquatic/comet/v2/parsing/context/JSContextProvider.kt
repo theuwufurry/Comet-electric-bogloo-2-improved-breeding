@@ -72,7 +72,10 @@ object JSContextProvider {
                 )
         }
         this += Consumer { hostAccess ->
-            hostAccess.allowPublicAccess(true)
+            hostAccess
+                .allowPublicAccess(true)
+                .allowIterableAccess(true)
+                .allowIteratorAccess(true)
         }
     }
 

@@ -10,7 +10,6 @@ import gg.aquatic.comet.v2.parsing.api.V2ParticleData
 import gg.aquatic.comet.v2.runtime.EffectRuntime
 import gg.aquatic.comet.v2.runtime.audience.Audience
 import gg.aquatic.comet.v2.runtime.emitter.Effect
-import gg.aquatic.comet.v2.runtime.particle.RealParticle
 import org.joml.Vector3d
 import java.util.UUID
 import kotlin.system.measureNanoTime
@@ -23,6 +22,7 @@ class VirtualEffect(
     override var parent: Parent?,
     override val audience: Audience,
     val data: JsonElement,
+    val extraData: MutableMap<String, Any?>,
 ) : Effect {
     private val optimizer = LocalPacketOptimizer()
     private var time = 1
@@ -33,7 +33,7 @@ class VirtualEffect(
 
     override var valid = true
 
-    override val proxy = V2EffectProxy(this, data)
+    override val proxy = V2EffectProxy(this, data, extraData)
 
     override val pose: Pose
         get() = relPose.let {

@@ -20,6 +20,7 @@ class VirtualRuntime(
     var parent: Parent?,
     val audience: Audience,
     val data: JsonElement,
+    extraData: MutableMap<String, Any?>,
 ) : EffectRuntime {
     override val proxy: EffectRuntimeProxy = EffectRuntimeProxy(this)
     val timestampedExecutables = Int2ObjectOpenHashMap<MutableList<BoundExecutable>>().apply {
@@ -34,6 +35,7 @@ class VirtualRuntime(
         parent = parent,
         audience = audience,
         data = data,
+        extraData = extraData,
     )
 
     init {

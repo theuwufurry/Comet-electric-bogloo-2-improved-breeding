@@ -132,6 +132,7 @@ class JSEffectAPI(
         pose: Pose,
         parent: Parent?,
         data: JsonElement,
+        extraData: MutableMap<String, Any?>,
         audience: Audience,
         callback: (Effect) -> Unit = {},
     ) {
@@ -141,6 +142,7 @@ class JSEffectAPI(
                 pose = pose,
                 parent = parent,
                 data = data,
+                extraData = extraData,
                 audience = audience,
                 callback
             )

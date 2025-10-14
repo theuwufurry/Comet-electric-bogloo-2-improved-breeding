@@ -36,6 +36,7 @@ class OptimizedEffect(
     override var parent: Parent?,
     override val audience: Audience,
     val data: JsonElement,
+    extraData: MutableMap<String, Any?>,
 ) : Effect {
     override val uuid: UUID = UUID.randomUUID()
     private val blocked = AtomicBoolean(false)
@@ -60,7 +61,7 @@ class OptimizedEffect(
             validAtomic.set(value)
         }
 
-    private val virtualRuntime = VirtualRuntime(uuid, relPose, api, parent, audience, data)
+    private val virtualRuntime = VirtualRuntime(uuid, relPose, api, parent, audience, data, extraData)
     private val ongoingStories = mutableListOf<ParticleStory>()
 
     private val audienceProcessor = V2AudienceProcessor(this)

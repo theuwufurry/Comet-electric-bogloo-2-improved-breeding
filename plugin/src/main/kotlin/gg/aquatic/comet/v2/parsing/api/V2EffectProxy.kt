@@ -12,22 +12,14 @@ import org.joml.Vector3d
 class V2EffectProxy(
     val effect: Effect,
     val data: JsonElement,
+    val extraData: MutableMap<String, Any?>,
 ) : ProxyObject {
     private var dataProxy = JsonElementProxy(data)
-    private val defaultFields = arrayOf(
-        "age",
-        "dead",
-        "relPos",
-        "pos",
-        "rot",
-        "parent",
-        "runtime",
-        "createParticle",
-        "data",
-    )
 
-    private val allFields = mutableSetOf<String>().also { it += defaultFields }
-    private val extraData = mutableMapOf<String, Any?>()
+    private val allFields = mutableSetOf<String>().also {
+        it += defaultFields
+        it += extraData.keys
+    }
 
     private val createParticleCallable = ProxyExecutable {
         return@ProxyExecutable effect.createParticle()
@@ -47,6 +39,7 @@ class V2EffectProxy(
             "runtime" -> effect.runtime.proxy
             "createParticle" -> createParticleCallable
             "data" -> dataProxy
+            "audience" -> AudienceProxy(effect.audience)
             else -> extraData[key]
         }
     }
@@ -64,7 +57,8 @@ class V2EffectProxy(
         if (key in defaultFields) {
             if (key == "runtime" ||
                 key == "createParticle" ||
-                key == "pos"
+                key == "pos" ||
+                key == "audience"
             ) throw UnsupportedOperationException()
 
             when (key) {
@@ -75,11 +69,27 @@ class V2EffectProxy(
                     val vec = value!!.`as`(Vector3d::class.java)
                     effect.relPose.pos.set(vec)
                 }
+
                 "data" -> dataProxy = value!!.asProxyObject()
             }
         } else {
             allFields += key
             extraData[key] = value
         }
+    }
+
+    companion object {
+        private val defaultFields = arrayOf(
+            "age",
+            "dead",
+            "relPos",
+            "pos",
+            "rot",
+            "parent",
+            "runtime",
+            "createParticle",
+            "data",
+            "audience",
+        )
     }
 }

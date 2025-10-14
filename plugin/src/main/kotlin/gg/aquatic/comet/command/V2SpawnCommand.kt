@@ -5,7 +5,7 @@ import com.google.gson.JsonParser
 import gg.aquatic.comet.api.emitter.parent.pose
 import gg.aquatic.comet.v2.parsing.V2Parser
 import gg.aquatic.comet.v2.runtime.WorldRuntime.Companion.cometRuntime
-import gg.aquatic.comet.v2.runtime.audience.GlobalAudience
+import gg.aquatic.comet.v2.runtime.audience.WorldAudience
 import gg.aquatic.waves.command.ICommand
 import org.bukkit.Bukkit
 import org.bukkit.Location
@@ -94,11 +94,12 @@ object V2SpawnCommand : ICommand {
             val location = Location(world, x, y, z, yaw, pitch)
             val pose = location.pose()
             api.realize(
-                world = world, 
+                world = world,
                 pose = pose,
                 parent = null,
-                audience = GlobalAudience(),
+                audience = WorldAudience(world),
                 data = data,
+                extraData = mutableMapOf(),
             )
         }
     }

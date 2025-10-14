@@ -9,13 +9,13 @@ import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.parsing.ParticleJsonParser
+import gg.aquatic.comet.v2.parsing.api.AudienceProxy
 import gg.aquatic.comet.v2.parsing.api.V2EffectProxy
 import gg.aquatic.comet.v2.parsing.api.json.JsonElementProxy
 import gg.aquatic.comet.v2.parsing.api.udar.PhysicsBodyWrapper
 import gg.aquatic.comet.v2.parsing.getMemberOrNull
 import gg.aquatic.comet.v2.runtime.WorldRuntime.Companion.cometRuntime
-import gg.aquatic.comet.v2.runtime.audience.Audience
-import gg.aquatic.comet.v2.runtime.audience.GlobalAudience
+import gg.aquatic.comet.v2.runtime.audience.WorldAudience
 import gg.aquatic.comet.v2.runtime.emitter.Effect
 import gg.aquatic.comet.v2.runtime.executable.BoundExecutable
 import org.bukkit.Bukkit
@@ -137,8 +137,22 @@ class WorldContext(
                     val runtime = world.cometRuntime
                     val pos = options.getMemberOrNull("relPos")?.`as`(Vector3d::class.java) ?: Vector3d()
                     val parent = options.getMember("parent")?.`as`(Parent::class.java)
-                    val audience = options.getMemberOrNull("audience")?.`as`(Audience::class.java) ?: GlobalAudience()
-                    val data = options.getMemberOrNull("data")?.asProxyObject<JsonElementProxy>()?.backer ?: JsonNull.INSTANCE
+                    val audience =
+                        options.getMemberOrNull("audience")?.asProxyObject<AudienceProxy>()?.audience ?: WorldAudience(
+                            world
+                        )
+                    val data =
+                        options.getMemberOrNull("data")?.asProxyObject<JsonElementProxy>()?.backer ?: JsonNull.INSTANCE
+                    val extraData = options.getMemberOrNull("extra")?.let {
+                        check(it.hasMembers())
+                        val m = mutableMapOf<String, Any?>()
+                        val keys = it.memberKeys
+                        for (key in keys) {
+                            m[key] = it.getMember(key)
+                        }
+
+                        m
+                    } ?: mutableMapOf()
 
                     runtime.getAPI(id) { api ->
                         api ?: return@getAPI
@@ -153,6 +167,7 @@ class WorldContext(
                             parent = parent,
                             audience = audience,
                             data = data,
+                            extraData = extraData,
                         ) { eff -> callback?.executeVoid(eff.proxy) }
                     }
                 }

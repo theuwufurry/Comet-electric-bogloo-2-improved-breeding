@@ -5,9 +5,12 @@ import gg.aquatic.comet.api.particle.LightData
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
 import gg.aquatic.comet.particle.macro.CatmullEvaluator
 import gg.aquatic.comet.udar.UdarBodyParent
+import gg.aquatic.comet.v2.parsing.api.AudienceProxy
 import gg.aquatic.comet.v2.parsing.api.json.JsonElementProxy
 import gg.aquatic.comet.v2.parsing.api.udar.PhysicsBodyWrapper
 import gg.aquatic.comet.v2.parsing.getMemberOrNull
+import gg.aquatic.comet.v2.runtime.audience.SingletonAudience
+import org.bukkit.entity.Player
 import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.Value
 import org.joml.Vector3d
@@ -78,17 +81,21 @@ object DefaultAPI {
             else -> throw IllegalArgumentException()
         }
     }
-    
+
     fun element(value: String): JsonElementProxy {
         return JsonElementProxy(JsonPrimitive(value))
     }
-    
+
     fun element(value: Double): JsonElementProxy {
         return JsonElementProxy(JsonPrimitive(value))
     }
 
     fun element(value: Boolean): JsonElementProxy {
         return JsonElementProxy(JsonPrimitive(value))
+    }
+
+    fun audience(player: Player): AudienceProxy {
+        return AudienceProxy(SingletonAudience(player))
     }
 
     val defaultBindings = ConcurrentHashMap<String, Any>().apply {

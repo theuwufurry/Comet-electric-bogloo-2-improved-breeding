@@ -29,6 +29,7 @@ class TemporalEffect(
     override var parent: Parent?,
     override val audience: Audience,
     val data: JsonElement,
+    extraData: MutableMap<String, Any?>,
 ) : Effect {
     override val uuid: UUID = UUID.randomUUID()
     val particles = mutableListOf<RealParticle>()
@@ -44,7 +45,7 @@ class TemporalEffect(
             validAtomic.set(value)
         }
 
-    override val proxy = V2EffectProxy(this, data)
+    override val proxy = V2EffectProxy(this, data, extraData)
 
     override val pose: Pose
         get() = relPose.let {

@@ -22,6 +22,7 @@ class EffectInitializationRequest(
     val pose: Pose,
     val parent: Parent?,
     val data: JsonElement,
+    val extraData: MutableMap<String, Any?>,
     val audience: Audience,
     val after: Consumer<Effect>
 )

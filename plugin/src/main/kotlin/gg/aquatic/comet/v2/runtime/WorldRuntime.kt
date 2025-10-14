@@ -137,6 +137,7 @@ class WorldRuntime(
                 parent = req.parent,
                 data = req.data,
                 audience = req.audience,
+                extraData = req.extraData,
             ) else TemporalEffect(
                 relPose = req.pose,
                 runtime = this,
@@ -144,6 +145,7 @@ class WorldRuntime(
                 parent = req.parent,
                 audience = req.audience,
                 data = req.data,
+                extraData = req.extraData,
             )
 
             req.after.accept(effect)
