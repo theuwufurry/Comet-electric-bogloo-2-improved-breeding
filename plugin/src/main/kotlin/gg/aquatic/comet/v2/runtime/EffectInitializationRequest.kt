@@ -4,6 +4,7 @@ import com.google.gson.JsonElement
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.v2.parsing.api.JSEffectAPI
+import gg.aquatic.comet.v2.runtime.audience.Audience
 import gg.aquatic.comet.v2.runtime.emitter.Effect
 import java.util.function.Consumer
 
@@ -21,5 +22,6 @@ class EffectInitializationRequest(
     val pose: Pose,
     val parent: Parent?,
     val data: JsonElement,
+    val audience: Audience,
     val after: Consumer<Effect>
 )

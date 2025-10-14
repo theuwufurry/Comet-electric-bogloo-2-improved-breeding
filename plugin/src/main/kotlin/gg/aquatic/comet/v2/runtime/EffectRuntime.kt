@@ -9,8 +9,6 @@ import org.bukkit.entity.Player
  * Provides an abstraction over the environment an emitter can access.
  */
 interface EffectRuntime {
-    val players: Collection<Player>
-
     fun submitExecutable(boundExecutable: BoundExecutable)
     fun remove(effect: Effect)
 

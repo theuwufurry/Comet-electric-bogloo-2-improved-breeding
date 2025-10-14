@@ -2,10 +2,10 @@ package gg.aquatic.comet.command
 
 import com.google.gson.JsonNull
 import com.google.gson.JsonParser
-import gg.aquatic.comet.api.emitter.environment.parseEnvironmentData
 import gg.aquatic.comet.api.emitter.parent.pose
 import gg.aquatic.comet.v2.parsing.V2Parser
 import gg.aquatic.comet.v2.runtime.WorldRuntime.Companion.cometRuntime
+import gg.aquatic.comet.v2.runtime.audience.GlobalAudience
 import gg.aquatic.waves.command.ICommand
 import org.bukkit.Bukkit
 import org.bukkit.Location
@@ -97,6 +97,7 @@ object V2SpawnCommand : ICommand {
                 world = world, 
                 pose = pose,
                 parent = null,
+                audience = GlobalAudience(),
                 data = data,
             )
         }

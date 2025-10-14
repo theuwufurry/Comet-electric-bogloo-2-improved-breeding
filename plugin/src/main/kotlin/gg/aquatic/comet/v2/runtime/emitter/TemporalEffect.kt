@@ -9,9 +9,10 @@ import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.v2.parsing.api.JSEffectAPI
 import gg.aquatic.comet.v2.parsing.api.V2EffectProxy
 import gg.aquatic.comet.v2.parsing.api.V2ParticleData
-import gg.aquatic.comet.v2.parsing.api.json.JsonElementProxy
 import gg.aquatic.comet.v2.runtime.EffectRuntime
-import gg.aquatic.comet.v2.runtime.particle.V2Particle
+import gg.aquatic.comet.v2.runtime.V2AudienceProcessor
+import gg.aquatic.comet.v2.runtime.audience.Audience
+import gg.aquatic.comet.v2.runtime.particle.RealParticle
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.joml.Vector3d
 import java.util.UUID
@@ -26,11 +27,12 @@ class TemporalEffect(
     override val runtime: EffectRuntime,
     override val api: JSEffectAPI,
     override var parent: Parent?,
+    override val audience: Audience,
     val data: JsonElement,
 ) : Effect {
     override val uuid: UUID = UUID.randomUUID()
-    val particles = mutableListOf<V2Particle>()
-    val particlesToAdd = mutableListOf<V2Particle>()
+    val particles = mutableListOf<RealParticle>()
+    val particlesToAdd = mutableListOf<RealParticle>()
 
     private val onKill = CopyOnWriteArrayList<() -> Unit>()
 
@@ -66,6 +68,8 @@ class TemporalEffect(
         blocked.set(false)
     }
 
+    private val audienceProcessor = V2AudienceProcessor(this)
+
     override fun tick() {
         if (!valid) return
 
@@ -75,7 +79,6 @@ class TemporalEffect(
         api.invokeEffectTick(proxy)
 
         val dataPackets: MutableList<PacketWrapper<*>> = mutableListOf()
-
         val killedIDs = IntArrayList()
 
         for (particle in particles) {
@@ -96,6 +99,7 @@ class TemporalEffect(
             api.invokeEffectDeath(proxy)
             valid = false
             runtime.remove(this)
+            audienceProcessor.kill(particles)
             return
         }
 
@@ -106,23 +110,11 @@ class TemporalEffect(
 
         particlesToAdd.clear()
 
-        val destroyPacket = if (killedIDs.isEmpty()) null else {
-            WrapperPlayServerDestroyEntities(*killedIDs.toIntArray())
-        }
-
-        for (player in runtime.players) {
-            val show =
-                api.invokeShowPlayer(player) ?: (player.location.distance(pose.location) <= 128.0) //TODO: Culling!
-            if (show) {
-                for (packet in dataPackets) {
-                    PacketEvents.getAPI().playerManager.sendPacketSilently(player, packet)
-                }
-
-                if (destroyPacket != null) {
-                    PacketEvents.getAPI().playerManager.sendPacketSilently(player, destroyPacket)
-                }
-            }
-        }
+        audienceProcessor.update(
+            currentParticles = particles,
+            dataPackets = dataPackets,
+            deadIDs = killedIDs,
+        )
 
         blocked.set(false)
     }
@@ -134,7 +126,7 @@ class TemporalEffect(
     }
 
     override fun spawnParticle(data: V2ParticleData) {
-        val particle = V2Particle(data)
+        val particle = RealParticle(data)
 
         api.invokeParticleInit(data)
         particle.init()
@@ -146,14 +138,7 @@ class TemporalEffect(
         valid = false
         onKill.forEach { it() }
         onKill.clear()
-
-        val ls = particles.flatMap { it.entityIDs }
-        val ids = ls.toIntArray()
-        val destroyPacket = WrapperPlayServerDestroyEntities(*ids)
-        for (player in runtime.players) {
-            PacketEvents.getAPI().playerManager.sendPacketSilently(player, destroyPacket)
-        }
-
+        audienceProcessor.kill(particles)
         particles.clear()
     }
 

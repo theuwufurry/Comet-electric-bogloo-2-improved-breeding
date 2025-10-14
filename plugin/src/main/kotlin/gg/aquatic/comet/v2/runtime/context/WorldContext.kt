@@ -14,6 +14,8 @@ import gg.aquatic.comet.v2.parsing.api.json.JsonElementProxy
 import gg.aquatic.comet.v2.parsing.api.udar.PhysicsBodyWrapper
 import gg.aquatic.comet.v2.parsing.getMemberOrNull
 import gg.aquatic.comet.v2.runtime.WorldRuntime.Companion.cometRuntime
+import gg.aquatic.comet.v2.runtime.audience.Audience
+import gg.aquatic.comet.v2.runtime.audience.GlobalAudience
 import gg.aquatic.comet.v2.runtime.emitter.Effect
 import gg.aquatic.comet.v2.runtime.executable.BoundExecutable
 import org.bukkit.Bukkit
@@ -135,6 +137,7 @@ class WorldContext(
                     val runtime = world.cometRuntime
                     val pos = options.getMemberOrNull("relPos")?.`as`(Vector3d::class.java) ?: Vector3d()
                     val parent = options.getMember("parent")?.`as`(Parent::class.java)
+                    val audience = options.getMemberOrNull("audience")?.`as`(Audience::class.java) ?: GlobalAudience()
                     val data = options.getMemberOrNull("data")?.asProxyObject<JsonElementProxy>()?.backer ?: JsonNull.INSTANCE
 
                     runtime.getAPI(id) { api ->
@@ -148,6 +151,7 @@ class WorldContext(
                                 rot = Quaterniond(),
                             ),
                             parent = parent,
+                            audience = audience,
                             data = data,
                         ) { eff -> callback?.executeVoid(eff.proxy) }
                     }

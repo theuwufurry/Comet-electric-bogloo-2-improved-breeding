@@ -1,8 +1,6 @@
 package gg.aquatic.comet.v2.runtime.virtual
 
-import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.wrapper.PacketWrapper
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
 import com.google.gson.JsonElement
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
@@ -10,6 +8,8 @@ import gg.aquatic.comet.v2.parsing.api.JSEffectAPI
 import gg.aquatic.comet.v2.parsing.api.V2EffectProxy
 import gg.aquatic.comet.v2.parsing.api.V2ParticleData
 import gg.aquatic.comet.v2.runtime.EffectRuntime
+import gg.aquatic.comet.v2.runtime.V2AudienceProcessor
+import gg.aquatic.comet.v2.runtime.audience.Audience
 import gg.aquatic.comet.v2.runtime.emitter.Effect
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.joml.Vector3d
@@ -34,6 +34,7 @@ class OptimizedEffect(
     override val runtime: EffectRuntime,
     override val api: JSEffectAPI,
     override var parent: Parent?,
+    override val audience: Audience,
     val data: JsonElement,
 ) : Effect {
     override val uuid: UUID = UUID.randomUUID()
@@ -59,8 +60,10 @@ class OptimizedEffect(
             validAtomic.set(value)
         }
 
-    private val virtualRuntime = VirtualRuntime(uuid, relPose, api, parent, data)
+    private val virtualRuntime = VirtualRuntime(uuid, relPose, api, parent, audience, data)
     private val ongoingStories = mutableListOf<ParticleStory>()
+
+    private val audienceProcessor = V2AudienceProcessor(this)
 
     override fun tick() {
         if (!blocked.compareAndSet(false, true)) return
@@ -100,34 +103,16 @@ class OptimizedEffect(
         ongoingStories += newStories
         newStories.clear()
 
-        val destroyPacket = if (killedIDs.isEmpty()) null else {
-            WrapperPlayServerDestroyEntities(*killedIDs.toIntArray())
-        }
-
-        for (player in runtime.players) {
-            val show =
-                api.invokeShowPlayer(player) ?: (player.location.distance(pose.location) <= 1024.0) //TODO: Culling!
-            if (show) {
-                for (packet in dataPackets) {
-                    PacketEvents.getAPI().playerManager.sendPacketSilently(player, packet)
-                }
-
-                if (destroyPacket != null) {
-                    PacketEvents.getAPI().playerManager.sendPacketSilently(player, destroyPacket)
-                }
-            }
-        }
+        audienceProcessor.update(
+            currentParticles = ongoingStories,
+            dataPackets = dataPackets,
+            deadIDs = killedIDs,
+        )
 
         if (dead) {
             valid = false
             runtime.remove(this)
-
-            val ids = ongoingStories.map { it.id }.toIntArray()
-            val destroyPacket = WrapperPlayServerDestroyEntities(*ids)
-            for (player in runtime.players) {
-                PacketEvents.getAPI().playerManager.sendPacketSilently(player, destroyPacket)
-            }
-
+            audienceProcessor.kill(ongoingStories)
             ongoingStories.clear()
         }
 
@@ -139,13 +124,7 @@ class OptimizedEffect(
     override fun onKill() {
         valid = false
         virtualRuntime.onKill()
-
-        val ids = ongoingStories.map { it.id }.toIntArray()
-        val destroyPacket = WrapperPlayServerDestroyEntities(*ids)
-        for (player in runtime.players) {
-            PacketEvents.getAPI().playerManager.sendPacketSilently(player, destroyPacket)
-        }
-
+        audienceProcessor.kill(ongoingStories)
         ongoingStories.clear()
     }
 

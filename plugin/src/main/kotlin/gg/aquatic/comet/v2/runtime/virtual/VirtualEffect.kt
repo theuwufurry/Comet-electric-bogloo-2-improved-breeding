@@ -8,13 +8,12 @@ import gg.aquatic.comet.v2.parsing.api.JSEffectAPI
 import gg.aquatic.comet.v2.parsing.api.V2EffectProxy
 import gg.aquatic.comet.v2.parsing.api.V2ParticleData
 import gg.aquatic.comet.v2.runtime.EffectRuntime
+import gg.aquatic.comet.v2.runtime.audience.Audience
 import gg.aquatic.comet.v2.runtime.emitter.Effect
-import gg.aquatic.comet.v2.runtime.particle.V2Particle
+import gg.aquatic.comet.v2.runtime.particle.RealParticle
 import org.joml.Vector3d
 import java.util.UUID
 import kotlin.system.measureNanoTime
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
 
 class VirtualEffect(
     override val uuid: UUID,
@@ -22,13 +21,14 @@ class VirtualEffect(
     override val runtime: EffectRuntime,
     override val api: JSEffectAPI,
     override var parent: Parent?,
+    override val audience: Audience,
     val data: JsonElement,
 ) : Effect {
     private val optimizer = LocalPacketOptimizer()
     private var time = 1
     var status: Status = Status.Other
     val stories = mutableListOf<ParticleStory>()
-    val particlesToAdd = mutableListOf<V2Particle>()
+    val particlesToAdd = mutableListOf<V2ParticleData>()
     private val onKill = mutableListOf<() -> Unit>()
 
     override var valid = true
@@ -72,8 +72,7 @@ class VirtualEffect(
 
         status = Status.Other
 
-        for (particleToAdd in particlesToAdd) {
-            val data = particleToAdd.data
+        for (data in particlesToAdd) {
             val story = ParticleStory(
                 startTime = time,
                 lightData = data.light,
@@ -130,14 +129,11 @@ class VirtualEffect(
     }
 
     override fun spawnParticle(data: V2ParticleData) {
-        val particle = V2Particle(data)
-
         status = Status.Particle(time)
         api.invokeParticleInit(data)
         status = Status.Other
-        particle.init()
 
-        particlesToAdd += particle
+        particlesToAdd += data
     }
 
     override fun onKill() {

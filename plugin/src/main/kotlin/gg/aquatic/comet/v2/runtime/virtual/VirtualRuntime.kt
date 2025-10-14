@@ -6,6 +6,7 @@ import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.v2.parsing.api.EffectRuntimeProxy
 import gg.aquatic.comet.v2.parsing.api.JSEffectAPI
 import gg.aquatic.comet.v2.runtime.EffectRuntime
+import gg.aquatic.comet.v2.runtime.audience.Audience
 import gg.aquatic.comet.v2.runtime.emitter.Effect
 import gg.aquatic.comet.v2.runtime.executable.BoundExecutable
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
@@ -17,6 +18,7 @@ class VirtualRuntime(
     val relPose: Pose,
     val api: JSEffectAPI,
     var parent: Parent?,
+    val audience: Audience,
     val data: JsonElement,
 ) : EffectRuntime {
     override val proxy: EffectRuntimeProxy = EffectRuntimeProxy(this)
@@ -30,6 +32,7 @@ class VirtualRuntime(
         runtime = this,
         api = api,
         parent = parent,
+        audience = audience,
         data = data,
     )
 
@@ -60,7 +63,4 @@ class VirtualRuntime(
     override fun remove(effect: Effect) {
         check(this.effect == effect)
     }
-
-    override val players: Collection<Player>
-        get() = throw UnsupportedOperationException()
 }

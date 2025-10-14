@@ -13,6 +13,7 @@ import gg.aquatic.comet.api.particle.data.BillboardConstraints
 import gg.aquatic.comet.api.particle.data.EntityData
 import gg.aquatic.comet.particle.data.EntityDataBuilder
 import gg.aquatic.comet.v2.parsing.api.V2ParticleData
+import gg.aquatic.comet.v2.runtime.particle.V2Particle
 import org.joml.Quaternionf
 import org.joml.Vector3f
 import java.util.*
@@ -28,8 +29,8 @@ class ParticleStory(
     val seeThrough: Boolean,
     val shadow: Boolean,
     val sensitiveCentering: Boolean,
-) {
-    val id = ParticleIDProvider.id()
+) : V2Particle {
+    override val id = ParticleIDProvider.id()
     val uuid: UUID = UUID.randomUUID()
 
     private val positions = mutableListOf<TimestampedPosition>()
@@ -312,6 +313,79 @@ class ParticleStory(
         }
 
         return EntityUpdateResult.Update(result)
+    }
+
+    override fun getAddPacket(): List<PacketWrapper<*>> {
+        // this is called to fill in new arrivals. 
+        val currPos = optimizedPositions[positionsCursor]
+        var tpd = 0
+        if (positionsCursor + 1 < optimizedPositions.size) {
+            tpd = optimizedPositions[positionsCursor + 1].time - currPos.time
+        }
+        val currTransformable = optimizedTransformable[transformableCursor]
+        var transformationInterpolation = 0
+        if (transformableCursor + 1 < optimizedTransformable.size) {
+            transformationInterpolation = optimizedTransformable[transformableCursor + 1].time - currTransformable.time
+        }
+        
+        val currContent = optimizedContent[contentCursor]
+
+        val result = mutableListOf<PacketWrapper<*>>()
+
+        val spawnPos = Vector3d(currPos.x, currPos.y, currPos.z)
+
+        result += WrapperPlayServerSpawnEntity(
+            id,
+            Optional.of(uuid),
+            currContent.data.entityType,
+            spawnPos,
+            0f, 0f, 0f,
+            0,
+            Optional.of(Vector3d())
+        )
+
+        val nd = EntityDataBuilder.getDataFor(
+            EntityData(
+                currContent.data,
+                currContent.color,
+                currTransformable.opacity,
+                null,
+                VECTOR3F_0,
+                Quaternionf(
+                    currTransformable.rotX,
+                    currTransformable.rotY,
+                    currTransformable.rotZ,
+                    currTransformable.rotW,
+                ),
+                Vector3f(
+                    currTransformable.scaleX,
+                    currTransformable.scaleY,
+                    currTransformable.scaleZ,
+                ),
+                billboard,
+                0,
+                transformationInterpolation,
+                tpd,
+                lightData,
+                seeThrough,
+                shadow,
+                sensitiveCentering,
+            ), UpdateFlags(
+                display = true,
+                transparency = true,
+                translation = true,
+                rotation = true,
+                scale = true,
+                transformationInterpolation = true,
+                teleportationDuration = true
+            ), initial = true, usePUA = false
+        )
+
+        if (nd != null) {
+            result += WrapperPlayServerEntityMetadata(id, nd)
+        }
+
+        return result
     }
 
     sealed interface EntityUpdateResult {

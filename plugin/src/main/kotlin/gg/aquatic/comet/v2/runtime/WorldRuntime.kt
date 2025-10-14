@@ -26,8 +26,6 @@ class WorldRuntime(
     val world: World,
 ) : EffectRuntime {
     private val initialized = AtomicBoolean(false)
-    override val players: Collection<Player>
-        get() = world.players
 
     private val apis = mutableMapOf<String, JSEffectAPI>()
 
@@ -138,11 +136,13 @@ class WorldRuntime(
                 api = req.unrealized,
                 parent = req.parent,
                 data = req.data,
+                audience = req.audience,
             ) else TemporalEffect(
                 relPose = req.pose,
                 runtime = this,
                 api = req.unrealized,
                 parent = req.parent,
+                audience = req.audience,
                 data = req.data,
             )
 

@@ -5,10 +5,10 @@ import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.v2.runtime.EffectInitializationRequest
 import gg.aquatic.comet.v2.runtime.WorldRuntime.Companion.cometRuntime
+import gg.aquatic.comet.v2.runtime.audience.Audience
 import gg.aquatic.comet.v2.runtime.emitter.Effect
 import gg.aquatic.comet.v2.runtime.virtual.OptimizationSettings
 import org.bukkit.World
-import org.bukkit.entity.Player
 import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.HostAccess
 import org.graalvm.polyglot.Value
@@ -112,10 +112,6 @@ class JSEffectAPI(
         }
     }
 
-    fun invokeShowPlayer(player: Player): Boolean? {
-        return distinctCallbacks[SHOW_PLAYER_CALLBACK_ID]?.execute(player)?.asBoolean()
-    }
-
     fun invokeListeners(event: String, vararg args: Any?) {
         listeners[event]?.forEach { listener ->
             try {
@@ -136,6 +132,7 @@ class JSEffectAPI(
         pose: Pose,
         parent: Parent?,
         data: JsonElement,
+        audience: Audience,
         callback: (Effect) -> Unit = {},
     ) {
         world.cometRuntime.registerRequest(
@@ -144,6 +141,7 @@ class JSEffectAPI(
                 pose = pose,
                 parent = parent,
                 data = data,
+                audience = audience,
                 callback
             )
         )
@@ -161,7 +159,5 @@ class JSEffectAPI(
         const val PARTICLE_INIT_EVENT_ID = "particleInit"
         const val PARTICLE_TICK_EVENT_ID = "particleTick"
         const val PARTICLE_DEATH_EVENT_ID = "particleDeath"
-
-        const val SHOW_PLAYER_CALLBACK_ID = "showPlayer"
     }
 }

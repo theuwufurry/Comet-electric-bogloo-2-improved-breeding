@@ -6,8 +6,8 @@ import gg.aquatic.comet.v2.parsing.api.JSEffectAPI
 import gg.aquatic.comet.v2.parsing.api.V2EffectProxy
 import gg.aquatic.comet.v2.parsing.api.V2ParticleData
 import gg.aquatic.comet.v2.runtime.EffectRuntime
-import java.util.UUID
-import java.util.concurrent.atomic.AtomicBoolean
+import gg.aquatic.comet.v2.runtime.audience.Audience
+import java.util.*
 
 interface Effect {
     val uuid: UUID
@@ -17,6 +17,8 @@ interface Effect {
     var parent: Parent?
     val relPose: Pose
     val pose: Pose
+
+    val audience: Audience
 
     fun tick()
 
