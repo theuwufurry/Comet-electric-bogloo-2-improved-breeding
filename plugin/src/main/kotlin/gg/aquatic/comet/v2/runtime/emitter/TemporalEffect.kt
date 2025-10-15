@@ -1,8 +1,6 @@
 package gg.aquatic.comet.v2.runtime.emitter
 
-import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.wrapper.PacketWrapper
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
 import com.google.gson.JsonElement
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
@@ -15,7 +13,7 @@ import gg.aquatic.comet.v2.runtime.audience.Audience
 import gg.aquatic.comet.v2.runtime.particle.RealParticle
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.joml.Vector3d
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -82,6 +80,8 @@ class TemporalEffect(
         val dataPackets: MutableList<PacketWrapper<*>> = mutableListOf()
         val killedIDs = IntArrayList()
 
+        val particlesToRemove = mutableListOf<RealParticle>()
+
         for (particle in particles) {
             val data = particle.data
             api.invokeParticleTick(data)
@@ -89,12 +89,15 @@ class TemporalEffect(
             if (data.dead) {
                 api.invokeParticleDeath(data)
                 killedIDs.addAll(particle.entityIDs)
+                particlesToRemove += particle
                 continue
             }
 
             dataPackets += particle.update()
             dataPackets += particle.getPositionPacket()
         }
+
+        particles -= particlesToRemove
 
         if (proxy.dead) {
             api.invokeEffectDeath(proxy)
