@@ -2,6 +2,7 @@ package gg.aquatic.comet.v2.parsing.api.default
 
 import com.google.gson.JsonPrimitive
 import gg.aquatic.comet.api.particle.LightData
+import gg.aquatic.comet.api.particle.display.model.ModelData
 import gg.aquatic.comet.api.particle.display.sprite.SpriteData
 import gg.aquatic.comet.particle.macro.CatmullEvaluator
 import gg.aquatic.comet.udar.UdarBodyParent
@@ -23,6 +24,10 @@ object DefaultAPI {
 
     fun sprite(id: String): SpriteData {
         return SpriteData(id)
+    }
+
+    fun model(id: String): ModelData {
+        return ModelData(id)
     }
 
     fun light(sky: Int, block: Int): LightData {
@@ -100,6 +105,7 @@ object DefaultAPI {
 
     val defaultBindings = ConcurrentHashMap<String, Any>().apply {
         this["comet"] = DefaultAPI
+        this["BILLBOARD"] = Billboard
     }
 
     fun Context.loadAPI() {

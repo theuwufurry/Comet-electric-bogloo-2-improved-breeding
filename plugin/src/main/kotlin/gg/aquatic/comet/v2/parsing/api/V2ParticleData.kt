@@ -44,7 +44,7 @@ data class V2ParticleData(
         "translation",
         "rotation",
         "scale",
-        "billboardConstraints",
+        "billboard",
         "light",
         "seeThrough",
         "shadow",
@@ -70,7 +70,7 @@ data class V2ParticleData(
             "translation" -> translation
             "rotation" -> rotation
             "scale" -> scale
-            "billboardConstraints" -> billboardConstraints
+            "billboard" -> billboardConstraints
             "light" -> light
             "seeThrough" -> seeThrough
             "shadow" -> shadow
@@ -107,7 +107,7 @@ data class V2ParticleData(
                     "translation" -> translation = it.`as`(Vector3d::class.java)
                     "rotation" -> rotation = it.`as`(Quaterniond::class.java)
                     "scale" -> scale = it.`as`(Vector3d::class.java)
-                    "billboardConstraints" -> billboardConstraints = it.`as`(BillboardConstraints::class.java)
+                    "billboard" -> billboardConstraints = it.`as`(BillboardConstraints::class.java)
                     "light" -> light = it.`as`(LightData::class.java)
                     "seeThrough" -> seeThrough = it.asBoolean()
                     "shadow" -> shadow = it.asBoolean()
