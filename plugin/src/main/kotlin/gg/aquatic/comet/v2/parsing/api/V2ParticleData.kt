@@ -32,6 +32,7 @@ data class V2ParticleData(
     var sensitiveCentering: Boolean = false,
     var origin: Vector3d = Vector3d(),
     var relPos: Vector3d = Vector3d(),
+    var sendUpdate: Boolean = true,
 ) : ProxyObject {
 
     private val defaultFields = arrayOf(
@@ -52,6 +53,10 @@ data class V2ParticleData(
         "origin",
         "relPos",
         "spawn",
+        "interpolationDelay",
+        "transformationDuration",
+        "teleportationDuration",
+        "sendUpdate",
     )
 
     private val allFields = mutableSetOf<String>().also { it += defaultFields }
@@ -78,6 +83,10 @@ data class V2ParticleData(
             "origin" -> origin
             "relPos" -> relPos
             "spawn" -> spawnExecutable
+            "interpolationDelay" -> interpolationDelay
+            "transformationDuration" -> transformationInterpolationDuration
+            "teleportationDuration" -> teleportationDuration
+            "sendUpdate" -> sendUpdate
             else -> extraData[key]
         }
     }
@@ -114,6 +123,10 @@ data class V2ParticleData(
                     "sensitiveCentering" -> sensitiveCentering = it.asBoolean()
                     "origin" -> origin = it.`as`(Vector3d::class.java)
                     "relPos" -> relPos = it.`as`(Vector3d::class.java)
+                    "interpolationDelay" -> interpolationDelay = it.asInt()
+                    "transformationDuration" -> transformationInterpolationDuration = it.asInt()
+                    "teleportationDuration" -> teleportationDuration = it.asInt()
+                    "sendUpdate" -> sendUpdate = it.asBoolean()
                 }
             }
         } else {

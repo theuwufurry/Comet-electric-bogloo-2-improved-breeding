@@ -25,19 +25,18 @@ data class Pose(
     val rot: Quaterniond,
 ) {
     val location: Location
+        get() {
+            val euler = Vector3d()
+            rot.getEulerAnglesXYZ(euler)
 
-    init {
-        val euler = Vector3d()
-        rot.getEulerAnglesXYZ(euler)
-
-        location = Location(
-            world,
-            pos.x,
-            pos.y,
-            pos.z,
-            euler.y.toFloat(), euler.x.toFloat()
-        )
-    }
+            return Location(
+                world,
+                pos.x,
+                pos.y,
+                pos.z,
+                euler.y.toFloat(), euler.x.toFloat()
+            )
+        }
 
     fun clone(): Pose {
         return Pose(world, Vector3d(pos.x, pos.y, pos.z), Quaterniond(rot.x, rot.y, rot.z, rot.w))

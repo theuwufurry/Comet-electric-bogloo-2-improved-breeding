@@ -7,6 +7,7 @@ import gg.aquatic.comet.v2.runtime.emitter.Effect
 import gg.aquatic.comet.v2.runtime.particle.V2Particle
 import gg.aquatic.waves.Waves
 import it.unimi.dsi.fastutil.ints.IntArrayList
+import org.bukkit.Location
 import org.bukkit.entity.Player
 
 /**
@@ -33,7 +34,8 @@ class V2AudienceProcessor(val effect: Effect) {
         var allDestroyPacket: WrapperPlayServerDestroyEntities? = null
         val destroyPacket = WrapperPlayServerDestroyEntities(*deadIDs.toIntArray())
 
-        val loc = effect.pose.location
+        val p = effect.pose.pos
+        val loc = Location(effect.pose.world, p.x, p.y, p.z)
 
         val chunkViewers = Waves.NMS_HANDLER.chunkViewers(loc.chunk)
 
@@ -44,6 +46,7 @@ class V2AudienceProcessor(val effect: Effect) {
                 currentViewer !in chunkViewers
             ) {
                 removedViewers += currentViewer
+                println("removing ${currentViewer.name}")
 
                 if (allDestroyPacket == null) {
                     val arr = IntArray(currentParticles.size + deadIDs.size)
@@ -75,6 +78,7 @@ class V2AudienceProcessor(val effect: Effect) {
                 chunkViewer !in currentViewers
             ) {
                 addedViewers += chunkViewer
+                println("adding ${chunkViewer.name}")
 
                 if (!calculatedSpawnPackets) {
                     calculatedSpawnPackets = true

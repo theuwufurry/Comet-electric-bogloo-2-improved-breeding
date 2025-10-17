@@ -93,8 +93,10 @@ class TemporalEffect(
                 continue
             }
 
-            dataPackets += particle.update()
-            dataPackets += particle.getPositionPacket()
+            if (data.sendUpdate) {
+                dataPackets += particle.update()
+                dataPackets += particle.getPositionPacket()
+            }
         }
 
         particles -= particlesToRemove
