@@ -4,7 +4,8 @@
 - removed all implmentation of mithic mobs and whatever 
 - hard coded all apis made by ixume 
 - removed waves 
-- updated to latest version 1.21.10 
+- updated to latest version 1.21.10
+- bundled in packet events
 
 
 you will get 0 support from me if you deside to use this
