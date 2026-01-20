@@ -12,6 +12,7 @@ version = "1.17.0"
 kotlin {
     jvmToolchain(21)
 }
+
 dependencies {
     paperweight.paperDevBundle("1.21.11-R0.1-SNAPSHOT")
 }
@@ -42,7 +43,7 @@ subprojects {
 //        compileOnly("io.lumine:Mythic-Dist:5.6.1")
 //        compileOnly("com.ticxo.modelengine:ModelEngine:R4.0.7")
 
-        compileOnly("com.github.retrooper:packetevents-spigot:2.9.5")
+        implementation("com.github.retrooper:packetevents-spigot:2.11.1")
     }
 
     kotlin {

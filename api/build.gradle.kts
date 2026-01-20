@@ -25,6 +25,7 @@ tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
 
     exclude("kotlin/**")
     exclude("org/**")
+    relocate("com.github.retrooper.packetevents", "gg.aquatic.comet.shadow.packetevents")
     relocate("kotlin", "gg.aquatic.waves.libs.kotlin")
 }
 

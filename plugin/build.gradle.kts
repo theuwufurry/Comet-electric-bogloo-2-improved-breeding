@@ -22,7 +22,7 @@ tasks {
 tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
     archiveFileName.set("Comet-${project.version}.jar")
     archiveClassifier.set("plugin")
-
+    relocate("com.github.retrooper.packetevents", "gg.aquatic.comet.shadow.packetevents")
     exclude("kotlin/**")
     exclude("org/**")
     relocate("kotlin", "gg.aquatic.waves.libs.kotlin")

@@ -5,8 +5,3 @@ api-version: '1.19'
 load: STARTUP
 libraries:
   - org.openjdk.nashorn:nashorn-core:15.6
-depend:
-  - Waves
-soft-depend:
-  - MythicMobs
-  - ModelEngine
