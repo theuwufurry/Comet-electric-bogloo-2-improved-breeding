@@ -6,7 +6,9 @@ import gg.aquatic.comet.api.Mount
 import gg.aquatic.comet.api.PreInitComponent
 import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
+import gg.aquatic.comet.api.emitter.Audience
 import gg.aquatic.comet.api.emitter.EmitterData
+import gg.aquatic.comet.api.emitter.GlobalAudience
 import gg.aquatic.comet.api.emitter.YawPitch
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
@@ -21,8 +23,6 @@ import gg.aquatic.comet.emitter.impl.OptimizedEmitter
 import gg.aquatic.comet.emitter.optimization.VirtualEmitter
 import gg.aquatic.comet.emitter.optimization.VirtualRuntime
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
-import gg.aquatic.waves.util.audience.AquaticAudience
-import gg.aquatic.waves.util.audience.GlobalAudience
 import java.util.*
 import java.util.function.Consumer
 import java.util.function.Supplier
@@ -59,7 +59,7 @@ data class UnrealizedEmitter(
         parent: Parent?,
         pose: Pose,
         environmentData: EnvironmentData,
-        audience: AquaticAudience,
+        audience: Audience,
         mount: Mount?,
         yawpitchSupplier: Supplier<YawPitch>?,
         after: Consumer<AbstractEmitter>,
@@ -129,14 +129,15 @@ data class UnrealizedEmitter(
         after: Consumer<AbstractEmitter>,
     ) {
 //        println("a pose: $pose")
-        realize(parent, pose, environmentData, GlobalAudience(), mount, yawpitchSupplier, after)
+        realize(parent, pose, environmentData,
+            GlobalAudience, mount, yawpitchSupplier, after)
     }
 
     override fun internalRealize(
         parent: Parent?,
         pose: Pose,
         environmentData: EnvironmentData,
-        audience: AquaticAudience,
+        audience: Audience,
         random: DeterministicRandom,
         uuid: UUID,
         mount: Mount?,

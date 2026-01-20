@@ -6,17 +6,16 @@ import gg.aquatic.comet.api.parsing.resourcepack.ResourcepackCreator
 import gg.aquatic.comet.command.*
 import gg.aquatic.comet.emitter.GlobalTicker
 import gg.aquatic.comet.hook.IHook
-import gg.aquatic.comet.hook.modelengine.ModelEngineHook
-import gg.aquatic.comet.hook.mythicmobs.MythicMobsHook
+//import gg.aquatic.comet.hook.modelengine.ModelEngineHook
+//import gg.aquatic.comet.hook.mythicmobs.MythicMobsHook
 import gg.aquatic.comet.parsing.ConfigLoader
 import gg.aquatic.comet.parsing.ParticleJsonParser
 import gg.aquatic.comet.api.parsing.resourcepack.packages.PackageManager
 import gg.aquatic.comet.particle.macro.CatmullParser
 import gg.aquatic.comet.particle.macro.HermiteParser
 import gg.aquatic.comet.particle.macro.LinearParser
-import gg.aquatic.waves.command.AquaticBaseCommand
-import gg.aquatic.waves.command.register
 import net.kyori.adventure.text.minimessage.MiniMessage
+import org.bukkit.Bukkit.getCommandMap
 import org.joml.Vector3f
 import org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory
 
@@ -41,23 +40,34 @@ class ParticleEmitter : AbstractParticleEmitter() {
         ResourcepackCreator.reload()
 
         GlobalTicker.init()
+        registerCometCommands()
+    }
 
-        AquaticBaseCommand(
-            "comet", "Base command of Comet plugin", mutableListOf(), mutableMapOf(
-                "reload" to ReloadParticleScriptsCommand,
-                "spawn" to SpawnCommand,
-                "clear" to ClearParticlesCommand,
-                "help" to HelpCommand,
-                "at" to AtCommand,
-                "mount" to MountedSpawnCommand,
-                "info" to InfoCommand,
-                "kill" to KillCommand
-            ),
-            helpMessage = { DummyMessage },
-        ).register("comet")
 
+    fun registerCometCommands() {
+        // Create the base command
+        val cometCommand = BaseCommand(
+            name = "comet",
+            description = "Base command of Comet plugin"
+        )
+
+        // Add subcommands
+        cometCommand.subCommands["reload"] = ReloadParticleScriptsCommand
+        cometCommand.subCommands["spawn"] = SpawnCommand
+        cometCommand.subCommands["clear"] = ClearParticlesCommand
+        cometCommand.subCommands["help"] = HelpCommand
+        cometCommand.subCommands["at"] = AtCommand
+        cometCommand.subCommands["mount"] = MountedSpawnCommand
+        cometCommand.subCommands["info"] = InfoCommand
+        cometCommand.subCommands["kill"] = KillCommand
+
+        // Register the command with Bukkit
+        getCommandMap().register("comet", cometCommand)
+
+        // Initialize hooks
         initializeHooks()
 
+        // Fancy console banner
         println(
             """
    (                          )  
@@ -78,12 +88,12 @@ class ParticleEmitter : AbstractParticleEmitter() {
 
     private fun initializeHooks() {
         val hooks = mutableListOf<IHook>()
-        if (server.pluginManager.getPlugin("MythicMobs") != null) {
-            hooks += MythicMobsHook
-        }
-        if (server.pluginManager.getPlugin("ModelEngine") != null) {
-            hooks += ModelEngineHook
-        }
+//        if (server.pluginManager.getPlugin("MythicMobs") != null) {
+//            hooks += MythicMobsHook
+//        }
+//        if (server.pluginManager.getPlugin("ModelEngine") != null) {
+//            hooks += ModelEngineHook
+//        }
         hooks.forEach {
             try {
                 it.initialize()

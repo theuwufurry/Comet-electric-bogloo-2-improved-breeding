@@ -5,7 +5,6 @@ import gg.aquatic.comet.api.parsing.resourcepack.ResourcepackCreator
 import gg.aquatic.comet.api.parsing.resourcepack.packages.PackageManager
 import gg.aquatic.comet.emitter.GlobalTicker
 import gg.aquatic.comet.parsing.ParticleJsonParser
-import gg.aquatic.waves.command.ICommand
 import org.bukkit.command.CommandSender
 import java.io.File
 

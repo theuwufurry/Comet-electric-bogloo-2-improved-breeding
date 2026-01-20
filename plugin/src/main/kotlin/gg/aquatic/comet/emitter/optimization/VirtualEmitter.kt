@@ -20,7 +20,6 @@ import gg.aquatic.comet.emitter.optimization.vec.DisplayDataVector
 import gg.aquatic.comet.emitter.optimization.vec.DisplayDataVectorCoefficients
 import gg.aquatic.comet.emitter.optimization.vec.WrappedPos
 import gg.aquatic.comet.particle.Particle
-import gg.aquatic.waves.util.audience.AquaticAudience
 import org.bukkit.entity.Player
 import org.joml.Quaterniond
 import org.joml.Quaternionf
@@ -102,7 +101,7 @@ class VirtualEmitter(
 
     private val timeCoefficient = (environmentData.data["c_time"] as? Number)?.toDouble() ?: 0.1
 
-    override val audience: AquaticAudience = object : AquaticAudience {
+    override val audience: Audience = object : Audience {
         override val uuids: Collection<UUID> = emptyList()
 
         override fun canBeApplied(player: Player): Boolean {
@@ -419,7 +418,7 @@ class VirtualEmitter(
         parent: Parent?,
         pose: Pose,
         environmentData: EnvironmentData,
-        audience: AquaticAudience,
+        audience: Audience,
         random: DeterministicRandom,
         uuid: UUID,
     ) {

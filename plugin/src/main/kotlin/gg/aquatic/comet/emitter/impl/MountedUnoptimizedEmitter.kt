@@ -18,7 +18,7 @@ import gg.aquatic.comet.emitter.SpawningProcessor
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.particle.Particle
 import gg.aquatic.comet.particle.data.EntityDataBuilder
-import gg.aquatic.waves.util.audience.AquaticAudience
+//import gg.aquatic.waves.util.audience.Audience
 import org.bukkit.Color
 import org.bukkit.entity.Player
 import org.joml.Quaternionf
@@ -43,7 +43,7 @@ class MountedUnoptimizedEmitter(
     val emitterData: EmitterData,
     override val unrealizedEmitter: AbstractUnrealizedEmitter,
     override val environmentData: EnvironmentData,
-    override val audience: AquaticAudience,
+    override val audience: Audience,
     val seed: Int = Random.nextInt(),
     override val mount: Mount,
     override val yawpitchSupplier: Supplier<YawPitch>?,
@@ -206,7 +206,7 @@ class MountedUnoptimizedEmitter(
         parent: Parent?,
         pose: Pose,
         environmentData: EnvironmentData,
-        audience: AquaticAudience,
+        audience: Audience,
         random: DeterministicRandom,
         uuid: UUID
     ) {

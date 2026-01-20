@@ -2,6 +2,7 @@ package gg.aquatic.comet.api
 
 import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.api.emitter.AbstractUnrealizedEmitter
+import gg.aquatic.comet.api.emitter.Audience
 import gg.aquatic.comet.api.emitter.YawPitch
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.optimization.updatefrequency.UpdateFrequencyComponent
@@ -13,8 +14,6 @@ import gg.aquatic.comet.api.parsing.BaseComponentParser
 import gg.aquatic.comet.api.parsing.ComponentParser
 import gg.aquatic.comet.api.parsing.PreInitComponentParser
 import gg.aquatic.comet.api.parsing.macro.MacroParser
-import gg.aquatic.waves.util.audience.AquaticAudience
-import gg.aquatic.waves.util.audience.GlobalAudience
 import org.bukkit.Location
 import java.util.function.Consumer
 import java.util.function.Supplier
@@ -59,7 +58,7 @@ object CometRegistry {
         parent: Parent? = null,
         location: Location,
         environmentData: EnvironmentData = EnvironmentData(),
-        audience: AquaticAudience = GlobalAudience(),
+        audience: Audience = gg.aquatic.comet.api.emitter.GlobalAudience,
         mount: Mount? = null,
         yawpitchSupplier: Supplier<YawPitch>? = null,
         after: Consumer<AbstractEmitter> = Consumer {  },

@@ -1,6 +1,5 @@
 package gg.aquatic.comet.command
 
-import gg.aquatic.waves.command.ICommand
 import org.bukkit.command.CommandSender
 
 object HelpCommand : ICommand {

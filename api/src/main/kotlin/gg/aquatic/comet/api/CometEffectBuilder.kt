@@ -2,12 +2,11 @@ package gg.aquatic.comet.api
 
 import gg.aquatic.comet.api.CometRegistry.unrealizedEmitterByID
 import gg.aquatic.comet.api.emitter.AbstractEmitter
+import gg.aquatic.comet.api.emitter.Audience
 import gg.aquatic.comet.api.emitter.environment.EnvironmentData
 import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.api.emitter.parent.pose
-import gg.aquatic.waves.util.audience.AquaticAudience
-import gg.aquatic.waves.util.audience.GlobalAudience
 import org.bukkit.Location
 import org.bukkit.World
 import org.joml.Quaterniond
@@ -71,9 +70,9 @@ class CometEffectBuilder(
         return this
     }
 
-    private var audience: AquaticAudience = GlobalAudience()
+    private var audience: Audience = gg.aquatic.comet.api.emitter.GlobalAudience
 
-    fun audience(audience: AquaticAudience): CometEffectBuilder {
+    fun audience(audience: Audience): CometEffectBuilder {
         this.audience = audience
         return this
     }

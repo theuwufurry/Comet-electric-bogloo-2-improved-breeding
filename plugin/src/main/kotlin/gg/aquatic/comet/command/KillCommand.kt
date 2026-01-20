@@ -3,7 +3,6 @@ package gg.aquatic.comet.command
 import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.emitter.GlobalTicker
 import gg.aquatic.comet.parsing.ParticleJsonParser
-import gg.aquatic.waves.command.ICommand
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 

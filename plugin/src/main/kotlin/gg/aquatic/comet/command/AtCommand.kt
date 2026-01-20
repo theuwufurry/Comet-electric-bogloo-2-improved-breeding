@@ -4,7 +4,6 @@ import gg.aquatic.comet.api.emitter.environment.parseEnvironmentData
 import gg.aquatic.comet.api.emitter.parent.EntityParent
 import gg.aquatic.comet.api.emitter.parent.pose
 import gg.aquatic.comet.parsing.ParticleJsonParser
-import gg.aquatic.waves.command.ICommand
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 

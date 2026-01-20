@@ -6,8 +6,6 @@ version = parent!!.version
 
 dependencies {
     implementation(project(":api"))
-    implementation(files("gradle/build/libs/Mengshe-0.0.3.23.jar"))
-    compileOnly(files("gradle/build/libs/Udar-0.4.0.1.jar"))
 }
 
 tasks {

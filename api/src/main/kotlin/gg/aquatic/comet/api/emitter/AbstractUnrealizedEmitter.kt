@@ -8,11 +8,7 @@ import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.api.emitter.random.DeterministicRandom
 import gg.aquatic.comet.api.particle.data.BillboardConstraints
-import gg.aquatic.waves.util.audience.AquaticAudience
-import gg.aquatic.waves.util.audience.GlobalAudience
-import org.bukkit.Location
 import org.joml.Vector2f
-import org.joml.Vector3d
 import java.util.*
 import java.util.function.Consumer
 import java.util.function.Supplier
@@ -45,7 +41,7 @@ abstract class AbstractUnrealizedEmitter {
         parent: Parent? = null,
         pose: Pose,
         environmentData: EnvironmentData = EnvironmentData(),
-        audience: AquaticAudience = GlobalAudience(),
+        audience: Audience = GlobalAudience,
         mount: Mount? = null,
         yawpitchSupplier: Supplier<YawPitch>? = null,
         after: Consumer<AbstractEmitter> = Consumer<AbstractEmitter> { },
@@ -55,7 +51,7 @@ abstract class AbstractUnrealizedEmitter {
         parent: Parent? = null,
         pose: Pose,
         environmentData: EnvironmentData = EnvironmentData(),
-        audience: AquaticAudience,
+        audience: Audience,
         random: DeterministicRandom,
         uuid: UUID,
         mount: Mount?,

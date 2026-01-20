@@ -6,7 +6,6 @@ import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.api.packet.PassengerManager
 import gg.aquatic.comet.emitter.optimization.CachedPath
-import gg.aquatic.waves.Waves
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitTask

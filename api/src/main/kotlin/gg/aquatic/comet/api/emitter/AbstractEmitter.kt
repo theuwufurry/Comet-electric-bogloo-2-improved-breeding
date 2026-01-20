@@ -7,7 +7,6 @@ import gg.aquatic.comet.api.emitter.parent.Parent
 import gg.aquatic.comet.api.emitter.parent.Pose
 import gg.aquatic.comet.api.emitter.random.DeterministicRandom
 import gg.aquatic.comet.api.particle.AbstractParticle
-import gg.aquatic.waves.util.audience.AquaticAudience
 import org.bukkit.entity.Player
 import org.joml.Quaternionf
 import java.util.*
@@ -44,7 +43,7 @@ abstract class AbstractEmitter : Parent {
 
     override val dead: AtomicBoolean = AtomicBoolean(false)
 
-    abstract val audience: AquaticAudience
+    abstract val audience: Audience
 
     abstract val random: DeterministicRandom
 
@@ -61,7 +60,7 @@ abstract class AbstractEmitter : Parent {
         parent: Parent? = null,
         pose: Pose,
         environmentData: EnvironmentData = EnvironmentData(),
-        audience: AquaticAudience,
+        audience: Audience,
         random: DeterministicRandom,
         uuid: UUID = random.uuid()
     )

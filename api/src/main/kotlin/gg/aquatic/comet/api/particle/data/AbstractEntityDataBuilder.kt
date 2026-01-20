@@ -1,7 +1,6 @@
 package gg.aquatic.comet.api.particle.data
 
 import gg.aquatic.comet.api.particle.UpdateFlags
-import gg.aquatic.waves.api.nms.entity.EntityDataValue
 
 abstract class AbstractEntityDataBuilder {
 

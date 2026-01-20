@@ -22,7 +22,6 @@ import gg.aquatic.comet.emitter.optimization.VirtualRuntime
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.particle.Particle
 import gg.aquatic.comet.particle.data.EntityDataBuilder
-import gg.aquatic.waves.util.audience.AquaticAudience
 import org.bukkit.entity.Player
 import org.joml.Quaternionf
 import org.joml.Vector3d
@@ -43,7 +42,7 @@ class OptimizedEmitter(
     val emitterData: EmitterData,
     override val unrealizedEmitter: AbstractUnrealizedEmitter,
     override val environmentData: EnvironmentData,
-    override val audience: AquaticAudience,
+    override val audience: Audience,
     private val internal: Boolean,
     seed: Int = Random.nextInt(),
     override val yawpitchSupplier: Supplier<YawPitch>?,
@@ -371,7 +370,7 @@ class OptimizedEmitter(
         parent: Parent?,
         pose: Pose,
         environmentData: EnvironmentData,
-        audience: AquaticAudience,
+        audience: Audience,
         random: DeterministicRandom,
         uuid: UUID,
     ) {
@@ -484,7 +483,7 @@ class OptimizedEmitter(
     override fun onKill() {
         onKillActions.forEach { it() }
         onKillActions.clear()
-       
+
         killParticles(particles)
         particles.clear()
         runtime?.kill()

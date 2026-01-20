@@ -1,7 +1,9 @@
 plugins {
     kotlin("jvm") version "2.2.0"
-    id("io.github.goooler.shadow") version "8.1.8"
+    id ("com.gradleup.shadow") version "9.3.0"
     id("co.uzzu.dotenv.gradle") version "2.0.0"
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.19"
+
 }
 
 group = "gg.aquatic"
@@ -10,10 +12,14 @@ version = "1.17.0"
 kotlin {
     jvmToolchain(21)
 }
+dependencies {
+    paperweight.paperDevBundle("1.21.11-R0.1-SNAPSHOT")
+}
 
 subprojects {
     apply(plugin = "kotlin")
-    apply(plugin = "io.github.goooler.shadow")
+    apply(plugin = "com.gradleup.shadow")
+    apply(plugin = "io.papermc.paperweight.userdev")
 
     repositories {
         maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
@@ -21,9 +27,8 @@ subprojects {
         maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
         maven { url = uri("https://repo.codemc.io/repository/maven-snapshots/") }
         maven { url = uri("https://repo.nekroplex.com/releases") }
-        maven("https://repo.papermc.io/repository/maven-public/") {
-            name = "papermc-repo"
-        }
+        maven("https://repo.papermc.io/repository/maven-public/")
+
         maven("https://oss.sonatype.org/content/groups/public/") {
             name = "sonatype"
         }
@@ -31,13 +36,11 @@ subprojects {
     }
 
     dependencies {
-        compileOnly("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
-        compileOnly("gg.aquatic.waves:Waves:1.3.6:publish")
-
+        paperweight.paperDevBundle("1.21.11-R0.1-SNAPSHOT")
         compileOnly("org.openjdk.nashorn:nashorn-core:15.4")
 
-        compileOnly("io.lumine:Mythic-Dist:5.6.1")
-        compileOnly("com.ticxo.modelengine:ModelEngine:R4.0.7")
+//        compileOnly("io.lumine:Mythic-Dist:5.6.1")
+//        compileOnly("com.ticxo.modelengine:ModelEngine:R4.0.7")
 
         compileOnly("com.github.retrooper:packetevents-spigot:2.9.5")
     }

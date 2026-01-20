@@ -1,0 +1,37 @@
+package com.ixume.udar.collisiondetection.contactgeneration
+
+import com.ixume.udar.body.A2SCollidable
+import com.ixume.udar.body.EnvironmentBody
+import com.ixume.udar.body.active.ActiveBody
+import com.ixume.udar.collisiondetection.local.LocalMathUtil
+import com.ixume.udar.dynamicaabb.AABB
+import com.ixume.udar.physics.contact.a2s.manifold.A2SManifoldCollection
+import java.util.concurrent.atomic.AtomicReference
+
+class EnvironmentContactGenerator2(
+    val activeBody: ActiveBody,
+) : A2SCollidable {
+    override fun capableCollision(other: EnvironmentBody): Int {
+        return 0
+    }
+
+    val meshes = Meshes()
+
+    override fun collides(other: EnvironmentBody, math: LocalMathUtil, out: A2SManifoldCollection): Boolean {
+        return math.envContactUtil.collides(this, activeBody, other, out)
+    }
+
+    fun tick() { }
+
+    fun startle() {
+        activeBody.startled.set(true)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other != null && other is EnvironmentContactGenerator2 && other.activeBody.id == activeBody.id
+    }
+
+    override fun hashCode(): Int {
+        return activeBody.id.hashCode()
+    }
+}

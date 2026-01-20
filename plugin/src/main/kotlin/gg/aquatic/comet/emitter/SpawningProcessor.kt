@@ -7,9 +7,10 @@ import gg.aquatic.comet.api.emitter.AbstractEmitter
 import gg.aquatic.comet.api.packet.PassengerManager
 import gg.aquatic.comet.emitter.optimization.distanceculling.DistanceCullingComponent
 import gg.aquatic.comet.particle.Particle
-import gg.aquatic.waves.Waves
+import org.bukkit.Chunk
 import org.bukkit.entity.Player
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.abs
 
 class SpawningProcessor(
     private val emitter: AbstractEmitter,
@@ -25,16 +26,17 @@ class SpawningProcessor(
         removedViewers.clear()
         addedViewers.clear()
 
-        val chunkViewers = Waves.NMS_HANDLER.chunkViewers(emitter.pose.location.chunk)
+        val chunkViewers = getChunkViewers(emitter.pose.location.chunk)
 
         for (currentViewer in currentViewers) {
             val distanceSquared = currentViewer.eyeLocation.distanceSquared(emitter.pose.location)
-            if (!currentViewer.isOnline || distanceSquared > distanceCullingComponent.viewDistance || currentViewer !in chunkViewers || !emitter.audience.canBeApplied(
-                    currentViewer
-                )
+            if (
+                !currentViewer.isOnline ||
+                distanceSquared > distanceCullingComponent.viewDistance ||
+                currentViewer !in chunkViewers ||
+                !emitter.audience.canBeApplied(currentViewer)
             ) {
                 removedViewers += currentViewer
-                continue
             }
         }
 
@@ -42,9 +44,10 @@ class SpawningProcessor(
 
         for (chunkViewer in chunkViewers) {
             val distanceSquared = chunkViewer.eyeLocation.distanceSquared(emitter.pose.location)
-            if (distanceSquared < distanceCullingComponent.viewDistance && chunkViewer !in currentViewers && emitter.audience.canBeApplied(
-                    chunkViewer
-                )
+            if (
+                distanceSquared < distanceCullingComponent.viewDistance &&
+                chunkViewer !in currentViewers &&
+                emitter.audience.canBeApplied(chunkViewer)
             ) {
                 addedViewers += chunkViewer
             }
@@ -55,10 +58,14 @@ class SpawningProcessor(
 
     fun process(dataPackets: MutableList<PacketWrapper<*>>): MutableList<Pair<Player, MutableList<Int>>> {
         emitter.particles.removeAll(deadParticles)
+
         val rawDeadParticleIDs = deadParticles.flatMap { it.entityIDs }.toMutableList()
         val deadParticleIDs: MutableList<Pair<Player, MutableList<Int>>> = mutableListOf()
+
         val particleIDs: MutableList<Int> by lazy {
-            emitter.particles.flatMap { it.entityIDs }.toMutableList().also { it.addAll(rawDeadParticleIDs) }
+            emitter.particles.flatMap { it.entityIDs }
+                .toMutableList()
+                .also { it.addAll(rawDeadParticleIDs) }
         }
 
         for (currentViewer in currentViewers) {
@@ -94,11 +101,12 @@ class SpawningProcessor(
 
     fun killParticles(particlesToKill: List<Particle>) {
         if (particlesToKill.isEmpty()) return
-        val ls = particlesToKill.flatMap { it.entityIDs }
-        val ids = ls.toIntArray()
+
+        val ids = particlesToKill.flatMap { it.entityIDs }.toIntArray()
         val destroyPacket = WrapperPlayServerDestroyEntities(*ids)
+
         for (player in currentViewers) {
-            PassengerManager.passengerMap[player.entityId]?.removeAll(ls)
+            PassengerManager.passengerMap[player.entityId]?.removeAll(ids.toList())
             PacketEvents.getAPI().playerManager.sendPacketSilently(player, destroyPacket)
         }
     }
@@ -114,8 +122,28 @@ class SpawningProcessor(
     val players: List<Player>
         get() {
             val maxDistance = distanceCullingComponent.viewDistance
-            return Waves.NMS_HANDLER.chunkViewers(emitter.pose.location.chunk)
+            return getChunkViewers(emitter.pose.location.chunk)
                 .filter { emitter.audience.canBeApplied(it) }
                 .filter { it.eyeLocation.distanceSquared(emitter.pose.location) < maxDistance }
         }
+
+    /**
+     * Replacement for Waves.NMS_HANDLER.chunkViewers(...)
+     * Matches vanilla client view distance behavior.
+     */
+    private fun getChunkViewers(chunk: Chunk): Collection<Player> {
+        val world = chunk.world
+        val cx = chunk.x
+        val cz = chunk.z
+
+        return world.players.filter { player ->
+            if (!player.isOnline) return@filter false
+
+            val pcx = player.location.chunk.x
+            val pcz = player.location.chunk.z
+            val view = player.clientViewDistance
+
+            abs(pcx - cx) <= view && abs(pcz - cz) <= view
+        }
+    }
 }

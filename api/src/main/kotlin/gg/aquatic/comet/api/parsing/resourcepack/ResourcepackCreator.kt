@@ -7,8 +7,6 @@ import com.google.gson.JsonParser
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.parsing.asStringOrNull
 import gg.aquatic.comet.api.parsing.resourcepack.packages.PackageManager
-import gg.aquatic.waves.Waves
-import gg.aquatic.waves.util.version.ServerVersion
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
 import java.awt.Color
@@ -41,11 +39,11 @@ object ResourcepackCreator {
         stack.editMeta { im ->
             im.setCustomModelData(index)
             color?.let {
-                if (!ServerVersion.ofAquatic(Waves.INSTANCE)!!.isOlder(ServerVersion.V_1_21_4)) {
-                    // TODO: Check if it is really ARGB
-                    im.customModelDataComponent.floats = listOf(index.toFloat())
-                    im.customModelDataComponent.colors = listOf(org.bukkit.Color.fromARGB(it))
-                }
+//                if (!ServerVersion.ofAquatic(Waves.INSTANCE)!!.isOlder(ServerVersion.V_1_21_4)) {
+//                    // TODO: Check if it is really ARGB
+//                    im.customModelDataComponent.floats = listOf(index.toFloat())
+//                    im.customModelDataComponent.colors = listOf(org.bukkit.Color.fromARGB(it))
+//                }
             }
         }
 
@@ -232,9 +230,9 @@ object ResourcepackCreator {
             val stack = ItemStack(ITEM_TYPE)
             stack.editMeta { im ->
                 im.setCustomModelData(index)
-                if (!ServerVersion.ofAquatic(Waves.INSTANCE)!!.isOlder(ServerVersion.V_1_21_4)) {
-                    im.customModelDataComponent.floats = listOf(index.toFloat())
-                }
+//                if (!ServerVersion.ofAquatic(Waves.INSTANCE)!!.isOlder(ServerVersion.V_1_21_4)) {
+//                    im.customModelDataComponent.floats = listOf(index.toFloat())
+//                }
             }
 
             val iObj = JsonObject()

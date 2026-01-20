@@ -1,10 +1,10 @@
 package gg.aquatic.comet.emitter.optimization
 
-import com.ixume.optimization.Costs
-import com.ixume.optimization.LocalPacketOptimizer
-import com.ixume.optimization.TimestampedContentData
-import com.ixume.optimization.TimestampedDisplayData
-import com.ixume.optimization.math.Quaternion
+import gg.aquatic.comet.emitter.optimization.Mengshe.Costs
+import gg.aquatic.comet.emitter.optimization.Mengshe.LocalPacketOptimizer
+import gg.aquatic.comet.emitter.optimization.Mengshe.TimestampedContentData
+import gg.aquatic.comet.emitter.optimization.Mengshe.TimestampedDisplayData
+import gg.aquatic.comet.emitter.optimization.Mengshe.math.Quaternion
 import java.awt.Color
 import java.util.*
 import kotlin.system.measureNanoTime
@@ -126,8 +126,8 @@ private fun mengsheOptimizeFinishedParticle(
     path.coloredTextureData[finishedParticle] = optimizedText
 }
 
-fun TimestampedPos.mengshe(): com.ixume.optimization.TimestampedPos {
-    return com.ixume.optimization.TimestampedPos(
+fun TimestampedPos.mengshe(): gg.aquatic.comet.emitter.optimization.Mengshe.TimestampedPos {
+    return gg.aquatic.comet.emitter.optimization.Mengshe.TimestampedPos(
         t = vec.time.toInt(),
         x = vec.vec.x,
         y = vec.vec.y,
