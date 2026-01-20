@@ -49,3 +49,13 @@ Performance:
 
 Bugs:
 - Particles randomly teleporting incorrectly when too many. Sync issue?
+
+// edit "improved breeding fork"
+
+removed all implmentation of mithic mobs and whatever
+hard coded all apis made by ixume
+removed waves
+updated to latest version 1.21.10
+
+
+//
