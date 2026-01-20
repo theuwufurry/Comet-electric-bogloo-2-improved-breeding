@@ -1,11 +1,15 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
     kotlin("jvm")
+    id("com.gradleup.shadow")
 }
 
 version = parent!!.version
 
 dependencies {
     implementation(project(":api"))
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.10")
 }
 
 tasks {
@@ -19,13 +23,19 @@ tasks {
     }
 }
 
-tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
+tasks.withType<ShadowJar> {
     archiveFileName.set("Comet-${project.version}.jar")
     archiveClassifier.set("plugin")
+
+    // relocate dependencies
     relocate("com.github.retrooper.packetevents", "gg.aquatic.comet.shadow.packetevents")
-    exclude("kotlin/**")
-    exclude("org/**")
-    relocate("kotlin", "gg.aquatic.waves.libs.kotlin")
+    relocate("kotlin", "gg.aquatic.comet.libs.kotlin")
+
+    // DO NOT exclude kotlin — that’s why Intrinsics crashes
+    // exclude("kotlin/**")
+    // exclude("org/**")
+    relocate("kotlin", "gg.aquatic.comet.libs.kotlin")
+    mergeServiceFiles() // always safe for META-INF services
 }
 
 tasks.processResources {

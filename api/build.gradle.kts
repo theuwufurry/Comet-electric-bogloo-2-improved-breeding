@@ -1,6 +1,12 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
     kotlin("jvm")
     `maven-publish`
+}
+
+dependencies {
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.10")
 }
 
 version = parent!!.version
@@ -19,14 +25,14 @@ tasks {
     }
 }
 
-tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
+tasks.withType<ShadowJar> {
     archiveFileName.set("Comet-${project.version}.jar")
     archiveClassifier.set("plugin")
 
     exclude("kotlin/**")
     exclude("org/**")
     relocate("com.github.retrooper.packetevents", "gg.aquatic.comet.shadow.packetevents")
-    relocate("kotlin", "gg.aquatic.waves.libs.kotlin")
+    relocate("kotlin", "gg.aquatic.comet.libs.kotlin")
 }
 
 tasks.processResources {
