@@ -1,4 +1,3 @@
-dirty fork of comet that alows me to update it
 
 // edit "improved breeding fork"
 
@@ -9,3 +8,5 @@ dirty fork of comet that alows me to update it
 
 
 //
+
+A dirty fork of comet or ParticleEmitter that alows me to update it to the latest minecraft version
