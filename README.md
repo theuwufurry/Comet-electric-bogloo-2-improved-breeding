@@ -1,8 +1,8 @@
 
-| "improved breeding fork" |
+ "improved breeding fork" 
 -------------------------------------------------------------------------------------------------
 - removed all implmentation of mithic mobs and whatever 
-- hard coded all apis made by ixume 
+- hardcoded all apis made by ixume 
 - removed waves 
 - updated to latest version 1.21.10
 - bundled in packet events
