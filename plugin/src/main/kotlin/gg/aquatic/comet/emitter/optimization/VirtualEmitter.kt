@@ -155,8 +155,6 @@ class VirtualEmitter(
         time++
         absoluteTime++
 
-//        println("V.${unrealizedEmitter.id}, TICK t:$time")
-//        parent?.pose?.let { setPose(it) }
 
         if (parent != null) {
             if (parent is Particle) {

@@ -1,5 +1,6 @@
 package gg.aquatic.comet
 
+import com.github.retrooper.packetevents.PacketEvents
 import gg.aquatic.comet.api.AbstractParticleEmitter
 import gg.aquatic.comet.api.CometRegistry
 import gg.aquatic.comet.api.parsing.resourcepack.ResourcepackCreator
@@ -14,6 +15,7 @@ import gg.aquatic.comet.api.parsing.resourcepack.packages.PackageManager
 import gg.aquatic.comet.particle.macro.CatmullParser
 import gg.aquatic.comet.particle.macro.HermiteParser
 import gg.aquatic.comet.particle.macro.LinearParser
+import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Bukkit.getCommandMap
 import org.joml.Vector3f
@@ -22,7 +24,13 @@ import org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory
 //val debugDust: Particle.DustOptions = Particle.DustOptions(Color.fromRGB(255, 255, 255), 0.6F)
 
 class ParticleEmitter : AbstractParticleEmitter() {
+    override fun onLoad() {
+        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this))
+        PacketEvents.getAPI().load()
+    }
+
     override fun onEnable() {
+        PacketEvents.getAPI().init()
         INSTANCE = this
         MINIMESSAGE = MiniMessage.miniMessage()
 

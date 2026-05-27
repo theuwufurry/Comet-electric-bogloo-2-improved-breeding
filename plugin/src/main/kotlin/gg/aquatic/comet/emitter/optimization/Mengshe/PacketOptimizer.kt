@@ -477,17 +477,17 @@ class LocalPacketOptimizer() {
             run check@{
                 var j = start
                 while (j < end) {
-                    // test all points (j + 1)..<(j + t)
+                    val exIndex = (j + t).coerceAtMost(end - 1) // clamp to last valid index
                     val sx = x(j)
                     val sy = y(j)
                     val sz = z(j)
 
-                    val ex = x(j + t)
-                    val ey = y(j + t)
-                    val ez = z(j + t)
+                    val ex = x(exIndex)
+                    val ey = y(exIndex)
+                    val ez = z(exIndex)
 
                     var k = j + 1
-                    while (k < j + t) {
+                    while (k < exIndex) {
                         val f = (k - j) / t.toDouble()
                         val px = x(k)
                         val py = y(k)
@@ -620,80 +620,89 @@ class LocalPacketOptimizer() {
         bestCost: Double, divideCost: Double,
     ): Int {
         _relevantAnchors.clear()
-        for (m in 0..<anchors.size) {
+        for (m in 0 until anchors.size) {
             val a = anchors.getInt(m)
-            if (a in start..<end) {
+            if (a in start until end) {
                 _relevantAnchors.add(a)
             }
         }
 
         _relevantUpdateAreas.clear()
-        for (m in 0..<tpUpdateAreas.size) {
+        for (m in 0 until tpUpdateAreas.size) {
             val s = tpUpdateAreas[m].first
             val e = tpUpdateAreas[m].second
             if (s < end && e > start) {
-                _relevantUpdateAreas.add((s.toLong() shl 32) and e.toLong())
+                _relevantUpdateAreas.add((s.toLong() shl 32) or e.toLong())
             }
         }
 
-        val duration = end - start
-        var t = duration
+        val maxDuration = end - start
+        var t = maxDuration
 
         while (t > 1) {
-            if (quitEarly && duration / t * costs.updateCost + divideCost >= bestCost) {
-//                println("QUIT EARLY FROM DISPLAY")
+            if (quitEarly && maxDuration / t * costs.updateCost + divideCost >= bestCost) {
                 return -1
             }
 
-            if (duration % t != 0) {
+            if (maxDuration % t != 0) {
                 t--
                 continue
             }
 
-            // must also make sure that all anchors that are within this range are covered by this period
-            for (m in 0..<_relevantAnchors.size) {
+            // Ensure all anchors in range are covered
+            var anchorsValid = true
+            for (m in 0 until _relevantAnchors.size) {
                 if ((_relevantAnchors.getInt(m) - start) % t != 0) {
-                    t--
-                    continue
+                    anchorsValid = false
+                    break
                 }
             }
+            if (!anchorsValid) {
+                t--
+                continue
+            }
 
-            for (m in 0..<_relevantUpdateAreas.size) {
+            // Ensure all tpUpdateAreas in range are compatible
+            var areasValid = true
+            for (m in 0 until _relevantUpdateAreas.size) {
                 val l = _relevantUpdateAreas.getLong(m)
                 val s = (l ushr 32).toInt()
                 val e = l.toInt()
                 if (!((s - start) % t == 0 || s + (t - (s - start) % t) < e)) {
-                    t--
-                    continue
+                    areasValid = false
+                    break
                 }
             }
+            if (!areasValid) {
+                t--
+                continue
+            }
 
+            // Validate display data within tolerance
             var valid = true
-            // test if this period fits the data within tolerance
             run check@{
                 var j = start
                 while (j < end) {
-                    // test all points (j + 1)..<(j + t)
-                    val s = displayData[j]
-                    val e = displayData[j + t]
+                    val eIndex = (j + t).coerceAtMost(end - 1)
+                    val sData = displayData[j]
+                    val eData = displayData[eIndex]
 
                     var k = j + 1
-                    while (k < j + t) {
+                    while (k < eIndex) {
                         val f = (k - j) / t.toDouble()
                         val p = displayData[k]
 
-                        val opacityDist = p.opacityDistance(interpolateOpacity(s.opacity, e.opacity, f))
+                        val opacityDist = p.opacityDistance(interpolateOpacity(sData.opacity, eData.opacity, f))
                         if (opacityDist > opacityTolerance) {
                             valid = false
                             return@check
                         }
 
                         val d = p.scaleDistance(
-                            (e.scaleX - s.scaleX) * f + s.scaleX,
-                            (e.scaleY - s.scaleY) * f + s.scaleY,
-                            (e.scaleZ - s.scaleZ) * f + s.scaleZ,
+                            (eData.scaleX - sData.scaleX) * f + sData.scaleX,
+                            (eData.scaleY - sData.scaleY) * f + sData.scaleY,
+                            (eData.scaleZ - sData.scaleZ) * f + sData.scaleZ,
                         )
-
                         if (d > scaleTolerance) {
                             valid = false
                             return@check
@@ -705,22 +714,20 @@ class LocalPacketOptimizer() {
                     j += t
                 }
 
-                // rotation checks are expensive so we do them after, in case everything else seems good
+                // rotation checks after scale/opacity
                 var i = start
                 while (i < end) {
-                    // test all points (i + 1)..<(i + t)
-                    val s = displayData[i]
-                    val e = displayData[i + t]
+                    val eIndex = (i + t).coerceAtMost(end - 1)
+                    val sData = displayData[i]
+                    val eData = displayData[eIndex]
 
                     var k = i + 1
-                    while (k < i + t) {
+                    while (k < eIndex) {
                         val f = (k - i) / t.toDouble()
                         val p = displayData[k]
 
-                        val q = _quat.set(s.rot.x, s.rot.y, s.rot.z, s.rot.w).nlerp(e.rot, f)
-                        val rd = p.rotDistance(q)
-
-                        if (rd > rotTolerance) {
+                        val q = _quat.set(sData.rot.x, sData.rot.y, sData.rot.z, sData.rot.w).nlerp(eData.rot, f)
+                        if (p.rotDistance(q) > rotTolerance) {
                             valid = false
                             return@check
                         }
@@ -732,9 +739,7 @@ class LocalPacketOptimizer() {
                 }
             }
 
-            if (valid) {
-                return t
-            }
+            if (valid) return t
 
             t--
         }
